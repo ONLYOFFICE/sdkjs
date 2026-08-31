@@ -530,11 +530,11 @@
 			const sourceParagraph = this.paragraphs[i];
 			const insertIndex = this.getInsertIndex(sourceParagraph, outlineParagraphs);
 			const shapeIndex = this.getShapeIndex(sourceParagraph);
-			let isReplaceMockParagraph = false;
+			let isUpdated = false;
 			if (shapeIndex === 0 && sourceParagraph.Index === 0) {
-				isReplaceMockParagraph = outlineView.addUpdatedParagraphWithCheckMockParagraph(sourceParagraph, insertIndex);
+				isUpdated = outlineView.addUpdatedParagraphWithCheckTitle(sourceParagraph, insertIndex);
 			}
-			if (!isReplaceMockParagraph) {
+			if (!isUpdated) {
 				outlineView.addUpdatedParagraph(sourceParagraph, insertIndex);
 				this.resetContentShapeByShape(this.getParagraphShape(sourceParagraph));
 			}
@@ -1060,11 +1060,7 @@
 			firstContentParagraph.Concat(lastContent.Content[0]);
 			lastContent.Remove_FromContent(0, 1);
 		}
-		let isNeedUseNextShapeForInsert = false;
-		if (firstShape.isGeneralTitle()) {
-			isNeedUseNextShapeForInsert = true;
-		}
-
+		const isNeedUseNextShapeForInsert = firstShape.isGeneralTitle();
 
 		if (firstSlide !== lastSlide) {
 			this.processEdgeSlides(firstShape, lastShape, isNeedUseNextShapeForInsert);
@@ -1247,11 +1243,14 @@
 			delete this.slideToInfoMap[info.slide.GetId()];
 		}
 	}
-	OutlineInfo.prototype.addSlideInfo = function (slideInfo) {
-		const outlineParagraph = slideInfo.outlineParagraph;
-		const slide = slideInfo.slide;
+	OutlineInfo.prototype.setOutlineParagraph = function (slideInfo, outlineParagraph) {
+		const previousParagraph = slideInfo.outlineParagraph;
+		if (previousParagraph) {
+			delete this.outlineParagraphToInfoMap[previousParagraph.GetId()];
+		}
+		slideInfo.setOutlineParagraph(outlineParagraph);
 		this.outlineParagraphToInfoMap[outlineParagraph.GetId()] = slideInfo;
-		this.slideToInfoMap[slide.GetId()] = slideInfo;
+		this.slideToInfoMap[slideInfo.slide.GetId()] = slideInfo;
 	};
 	OutlineInfo.prototype.getSlideInfoByParagraph = function (outlineParagraph) {
 		return this.outlineParagraphToInfoMap[outlineParagraph.GetId()];
@@ -1759,8 +1758,7 @@
 			this.sourceToOutlineMap[sourceParagraph.Get_Id()] = outlineParagraph;
 		}
 		if (pr) {
-			pr.setOutlineParagraph(outlineParagraph);
-			this.outlineInfo.addSlideInfo(pr);
+			this.outlineInfo.setOutlineParagraph(pr, outlineParagraph);
 		}
 	};
 	OutlineView.prototype.removeOutlineParagraph = function (outlineParagraph) {
@@ -1775,7 +1773,7 @@
 	OutlineView.prototype.addCopyParagraph = function (paragraph, pos, isFirstParagraph, pr) {
 		return AscFormat.ExecuteNoHistory(function () {
 			const outlineContent = this.getDocContent();
-			const copyParagraph = this.getCopyParagraph(outlineContent, paragraph, !!(pr && pr.slide));
+			const copyParagraph = this.getCopyParagraph(outlineContent, paragraph, this.isTitleSourceParagraph(paragraph));
 			outlineContent.AddToContent(pos, copyParagraph);
 			this.addOutlineParagraph(paragraph, copyParagraph, isFirstParagraph ? pr : null);
 			return copyParagraph;
@@ -2316,6 +2314,33 @@
 		const index = outlineParagraph.Index;
 		this.removeParagraph(outlineParagraph, index);
 	};
+	OutlineView.prototype.isTitleSourceParagraph = function (sourceParagraph) {
+		const parentShape = sourceParagraph && sourceParagraph.GetParentShape();
+		return !!(parentShape && parentShape.isGeneralTitle());
+	};
+	OutlineView.prototype.getTitleOutlineParagraph = function (sourceParagraph, slide) {
+		const parentShape = sourceParagraph.GetParentShape();
+		if (!parentShape || parentShape.parent !== slide) {
+			return null;
+		}
+		const content = parentShape.getDocContent();
+		const firstSourceParagraph = content && content.Content[0];
+		return firstSourceParagraph ? (this.sourceToOutlineMap[firstSourceParagraph.GetId()] || null) : null;
+	};
+	OutlineView.prototype.checkMoveSlideInfoToTitleParagraph = function (outlineParagraph) {
+		const info = this.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
+		if (!info) {
+			return;
+		}
+		const sourceParagraph = this.getSourceParagraph(outlineParagraph);
+		if (!sourceParagraph) {
+			return;
+		}
+		const titleOutlineParagraph = this.getTitleOutlineParagraph(sourceParagraph, info.slide);
+		if (titleOutlineParagraph && titleOutlineParagraph !== outlineParagraph) {
+			this.outlineInfo.setOutlineParagraph(info, titleOutlineParagraph);
+		}
+	};
 	OutlineView.prototype.getPropertiesFromSourceShape = function (sourceParagraph) {
 		if (sourceParagraph.Index === 0) {
 			const parentShape = sourceParagraph.GetParentShape();
@@ -2337,15 +2362,17 @@
 		return this.addCopyParagraph(sourceParagraph, index, sourceParagraph.Index === 0, pr);
 	};
 
-	OutlineView.prototype.addUpdatedParagraphWithCheckMockParagraph = function (sourceParagraph, index) {
+	OutlineView.prototype.addUpdatedParagraphWithCheckTitle = function (sourceParagraph, index) {
 		const docContent = this.getDocContent();
 		const outlineParagraph = docContent.Content[index];
 		if (outlineParagraph) {
 			const pr = this.getPropertiesFromSourceShape(sourceParagraph);
 			const info = this.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
 			if (info && pr && pr.slide === info.slide) {
-				this.removeParagraph(outlineParagraph, index);
-				this.addUpdatedParagraph(sourceParagraph, index, pr);
+				if (!this.getSourceParagraph(outlineParagraph)) {
+					this.removeParagraph(outlineParagraph, index);
+				}
+				this.addUpdatedParagraph(sourceParagraph, index, info);
 				return true;
 			}
 		}
@@ -2467,6 +2494,7 @@
 		for (let i = 0; i < existingOutlineParagraphs.length; i += 1) {
 			const outlineParagraph = existingOutlineParagraphs[i];
 			this.checkRecalculateContentShapeIndexes(outlineParagraph);
+			this.checkMoveSlideInfoToTitleParagraph(outlineParagraph);
 			this.unlinkOutlineParagraph(outlineParagraph);
 
 		}
@@ -2477,6 +2505,9 @@
 		if (sourceParagraph) {
 			this.setRecalculateContentShapeIndexes(sourceParagraph);
 		}
+	};
+	UpdateExistingParagraphManager.prototype.checkMoveSlideInfoToTitleParagraph = function (outlineParagraph) {
+		this.outlineView.checkMoveSlideInfoToTitleParagraph(outlineParagraph);
 	};
 	UpdateExistingParagraphManager.prototype.unlinkOutlineParagraph = function (outlineParagraph) {
 		const outlineView = this.outlineView;
@@ -3217,8 +3248,32 @@
 			this.applySavedPositionToOutline();
 		}
 	};
-	OutlineView.prototype.handleTitleEnter = function (outlineParagraph) {
+	OutlineView.prototype.getSlideInfoByTitleParagraph = function (outlineParagraph) {
 		const slideInfo = this.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
+		if (slideInfo) {
+			return slideInfo;
+		}
+		const sourceParagraph = this.getSourceParagraph(outlineParagraph);
+		if (!this.isTitleSourceParagraph(sourceParagraph)) {
+			return null;
+		}
+		return this.outlineInfo.getSlideInfoBySlide(sourceParagraph.GetParentShape().parent);
+	};
+	OutlineView.prototype.moveTailTitleParagraphs = function (sourceParagraph, titleDocContent) {
+		const sourceContent = sourceParagraph.GetParent();
+		const startIndex = sourceParagraph.GetIndex() + 1;
+		const count = sourceContent.Content.length - startIndex;
+		if (count <= 0) {
+			return;
+		}
+		for (let i = 0; i < count; i += 1) {
+			const tailParagraph = sourceContent.Content[startIndex + i];
+			titleDocContent.Add_ToContent(titleDocContent.Content.length, tailParagraph.Copy(titleDocContent));
+		}
+		sourceContent.Remove_FromContent(startIndex, count);
+	};
+	OutlineView.prototype.handleTitleEnter = function (outlineParagraph) {
+		const slideInfo = this.getSlideInfoByTitleParagraph(outlineParagraph);
 		if (!slideInfo) {
 			return;
 		}
@@ -3245,6 +3300,7 @@
 			const newSlideParagraph = titleDocContent.Content[0];
 			new SavePosManager(this).saveStartPosSourceParagraph(newSlideParagraph);
 			newSlideParagraph.Concat(newParagraph);
+			this.moveTailTitleParagraphs(sourceParagraph, titleDocContent);
 		}
 
 		if (shapesWithContent.length !== 0) {
@@ -3293,7 +3349,7 @@
 					}
 				} else if (!e.ShiftKey) {
 					if (oShape.isGeneralTitle()) {
-						const sourceParagraph = content.Content[0];
+						const sourceParagraph = content.GetCurrentParagraph() || content.Content[0];
 						const outlineParagraph = oThis.sourceToOutlineMap[sourceParagraph.GetId()];
 						newSlide = oThis.handleTitleEnter(outlineParagraph);
 					} else {
