@@ -5709,19 +5709,7 @@
 
 		if (true === isRequired) {
 			checkFunc = function(oField) {
-				function isFieldFilled(oField) {
-					if (oField instanceof AscPDF.CBaseCheckBoxField) {
-						let aWidgets = oField.GetAllWidgets();
-						return aWidgets.some(function(widget) {
-							return widget.IsChecked();
-						});
-					}
-
-					let value = oField.GetValue();
-					return Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== "";
-				}
-
-				return oField.IsRequired() && (true !== isNotFilled || !isFieldFilled(oField)) && oRoles.CanFillField(oField);
+				return oField.IsRequired() && (true !== isNotFilled || !oField.IsFilled()) && oRoles.CanFillField(oField);
 			};
 		}
 		else if (bFilterByRole) {

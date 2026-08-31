@@ -928,6 +928,22 @@
         return null;
     };
 
+	CBaseField.prototype.IsFilled = function() {
+		let isFilled = false;
+
+		let aWidgets = this.GetAllWidgets();
+		if (this instanceof AscPDF.CBaseCheckBoxField) {
+			isFilled = aWidgets.some(function(widget) {
+				return widget.IsChecked();
+			});
+		}
+		else {
+			let value = this.GetLogicValue();
+			isFilled = Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== "";
+		}
+
+		return isFilled;
+	};
     /**
 	 * Gets form value (which was commited).
 	 * @memberof CBaseField

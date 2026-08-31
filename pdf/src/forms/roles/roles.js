@@ -214,9 +214,9 @@
         for (let i = 0; i < names.length; ++i) {
             let f = oDoc.GetField(names[i]);
             if (this._IsRequiredFieldAvailable(f)) {
-                let v = f.GetValue ? f.GetValue() : undefined;
-                if (v == undefined || v === "")
-                    res.push(names[i]);
+				if (!f.IsFilled()) {
+					res.push(names[i]);
+				}
             }
         }
         return res;
