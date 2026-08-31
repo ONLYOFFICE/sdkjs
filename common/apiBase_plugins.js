@@ -2271,6 +2271,66 @@
 		correctWindowHeaderItems(this, items);
 		this.sendEvent("onPluginUpdateWindowHeaderMenu", [items]);
 	};
+	
+	/**
+	 * @typedef {Object} FloatActionButton
+	 * The floating action button displayed over the editor area.
+	 * @property {string} id - The button ID.
+	 * @property {string} [text] - The button text.
+	 * @property {string} [hint] - The button hint.
+	 * @property {string} [data] - The button data (this data will be sent to the click event callback).
+	 * @property {string} [icons] - The button icons, 28x28 px (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {boolean} [enableToggle] - Specifies if a button toggle is enabled or not.
+	 * @property {boolean} [disabled] - Specifies if the current button is disabled or not.
+	 * @property {boolean} [visible] - Specifies if the current button is visible or not.
+	 * @property {boolean} [removed] - Specifies if the button must be removed from the editor area.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/FloatActionButton.js
+	 */
+
+	/**
+	 * @typedef {Object} FloatActionButtonsMainItem
+	 * The main floating action button item.
+	 * @property {string} guid - The plugin guid.
+	 * @property {FloatActionButton[]} items - An array containing the floating action buttons for the plugin.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/FloatActionButtonsMainItem.js
+	 */
+
+	function correctFloatActionButtons(api, items)
+	{
+		let baseUrl = api.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"])
+			correctItemsWithData(items["items"], baseUrl);
+	}
+
+	/**
+	 * Adds floating action buttons over the editor area.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias AddFloatActionButtons
+	 * @param {FloatActionButtonsMainItem} items - The floating action buttons for the plugin.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddFloatActionButtons.js
+	 */
+	Api.prototype["pluginMethod_AddFloatActionButtons"] = function(items)
+	{
+		correctFloatActionButtons(this, items);
+		this.sendEvent("onPluginFloatActionButtons", [items]);
+	};
+
+	/**
+	 * Updates the floating action buttons over the editor area.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias UpdateFloatActionButtons
+	 * @param {FloatActionButtonsMainItem} items - The floating action buttons for the plugin.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateFloatActionButtons.js
+	 */
+	Api.prototype["pluginMethod_UpdateFloatActionButtons"] = function(items)
+	{
+		correctFloatActionButtons(this, items);
+		this.sendEvent("onPluginUpdateFloatActionButtons", [items]);
+	};
 
 	/**
 	 * Shows the plugin modal window.
