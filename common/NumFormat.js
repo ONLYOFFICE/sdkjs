@@ -85,6 +85,10 @@ var numFormat_ThousandText = 107;
 var numFormat_JapanEra = 108;
 var numFormat_JapanEraYear = 109;
 var numFormat_DayOfWeek = 110;
+var numFormat_DayOfWeekShort = 111;
+
+//Chinese spells the short day of week differently from its abbreviated names, the other CJK locales do not
+var g_aChineseShortDayNames = ["日", "一", "二", "三", "四", "五", "六"];
 
 var FormatStates = {Decimal: 1, Frac: 2, Scientific: 3, Slash: 4, SlashFrac: 5};
 var SignType = {Negative: 1, Null:2, Positive: 3};
@@ -903,6 +907,11 @@ NumFormat.prototype =
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
 			}
+			//Word picture switch: uppercase W is the CJK short day of week, lowercase w is a literal
+			else if ("W" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeekShort, 1, false));
+			}
 			else {
 					this._addToFormat(numFormat_Text, next);
 			}
@@ -1029,7 +1038,7 @@ NumFormat.prototype =
                 }
             }
             else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type ||
-				numFormat_DayOfWeek == item.type || numFormat_JapanEra == item.type || numFormat_JapanEraYear == item.type)
+				numFormat_DayOfWeek == item.type || numFormat_DayOfWeekShort == item.type || numFormat_JapanEra == item.type || numFormat_JapanEraYear == item.type)
             {
                 //Combine hhh sequences into one
                 var nStartType = item.type;
@@ -2245,6 +2254,13 @@ NumFormat.prototype =
 						oCurText.text += 'a'.repeat(item.val);
 					}
 				}
+				else if(numFormat_DayOfWeekShort == item.type)
+				{
+					//Word renders one symbol per W, taken from the short day names of the culture
+					var aShortDayNames = ('zh' === cultureInfoLCID.Name.substring(0, 2)) ? g_aChineseShortDayNames : cultureInfoLCID.AbbreviatedDayNames;
+					for(var j = 0; j < item.val; ++j)
+						oCurText.text += aShortDayNames[oParsedNumber.date.dayWeek];
+				}
                 else if(numFormat_JapanEra == item.type)
                 {
                     var nVal = Math.min(item.val, 3);
@@ -2741,6 +2757,12 @@ NumFormat.prototype =
 				var nIndex = (item.val > 3) ? 3 : item.val;
 				for(var j = 0; j < nIndex; ++j)
 					res += dayOfWeek;
+			}
+			else if(numFormat_DayOfWeekShort == item.type)
+			{
+				//W has no locale symbol: it exists only in Word date pictures
+				for(var j = 0; j < item.val; ++j)
+					res += "W";
 			}
             else if(numFormat_JapanEra == item.type)
             {

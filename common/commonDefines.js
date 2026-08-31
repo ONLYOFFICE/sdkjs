@@ -4635,7 +4635,7 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
-	c_oAscDateTimeFormat[lcid_zhCN]     = c_oAscDateTimeFormat[lcid_zhTW] = [
+	c_oAscDateTimeFormat[lcid_zhCN]     = [
 		"yyyy/M/d",
 		"yyyy'年'M'月'd'日'",
 		"yyyy年M月d日星期W",
@@ -4644,6 +4644,20 @@ window.AscCommon.g_cIsBeta = "false";
 		"h时m分s秒",
 		"h时m分",
 		"AM/PMh时m分",
+		"YYYY年M月d日",
+		"YYYY年M月d日星期W",
+		"YYYY年M月"
+	];
+	//Traditional Chinese writes the hour as U+6642, the same split Excel makes between its zh-Hans and zh-Hant built-in formats
+	c_oAscDateTimeFormat[lcid_zhTW]     = [
+		"yyyy/M/d",
+		"yyyy'年'M'月'd'日'",
+		"yyyy年M月d日星期W",
+		"yy.M.d",
+		"yyyy年M月",
+		"h時m分s秒",
+		"h時m分",
+		"AM/PMh時m分",
 		"YYYY年M月d日",
 		"YYYY年M月d日星期W",
 		"YYYY年M月"
