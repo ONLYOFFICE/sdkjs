@@ -1349,7 +1349,7 @@ var CPresentation = CPresentation || function(){};
 				continue;
 
 			let oForm = this.widgets[nIdx];
-			if (!oForm.IsHidden() && (!checkFunc || checkFunc(oForm))) {
+			if (!oForm.IsHidden() && (!this.activeForm || (oForm.GetFullName() !== this.activeForm.GetFullName())) && (!checkFunc || checkFunc(oForm))) {
 				oNextForm = oForm;
 				break;
 			}
@@ -1455,7 +1455,7 @@ var CPresentation = CPresentation || function(){};
 				continue;
 
 			let oForm = this.widgets[nIdx];
-			if (!oForm.IsHidden() && (!checkFunc || checkFunc(oForm))) {
+			if (!oForm.IsHidden() && (!this.activeForm || (oForm.GetFullName() !== this.activeForm.GetFullName())) && (!checkFunc || checkFunc(oForm))) {
 				oNextForm = oForm;
 				break;
 			}
@@ -1645,6 +1645,13 @@ var CPresentation = CPresentation || function(){};
             oDrDoc.TargetEnd(); // hide cursor
             oForm.AddToRedraw();
         }
+
+		if (this.IsFillingFormMode()) {
+			let oRoles = this.GetFormRoles();
+			this.SelectNextForm(function(field) {
+				return oRoles.CanFillField(field);
+			});
+		}
     };
     CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
         Asc.editor.sendEvent('asc_onHidePdfFormsActions');

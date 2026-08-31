@@ -5707,24 +5707,21 @@
 		let bFilterByRole = !!oRoles.GetCurrentRole() || oRoles.IsCurrentNoRole();
 		let checkFunc = null;
 
-		function isFieldFilled(oField) {
-			if (oField.GetType() === AscPDF.FIELD_TYPES.signature)
-				return !!(oField.IsFilled && oField.IsFilled());
-
-			let value = oField.GetValue ? oField.GetValue() : undefined;
-			return Array.isArray(value)
-				? value.length > 0
-				: value !== undefined && value !== null && value !== "";
-		}
-
 		if (true === isRequired) {
 			checkFunc = function(oField) {
-				let nType = oField.GetType();
-				return oField.IsRequired()
-					&& nType !== AscPDF.FIELD_TYPES.checkbox
-					&& nType !== AscPDF.FIELD_TYPES.radiobutton
-					&& (true !== isNotFilled || !isFieldFilled(oField))
-					&& oRoles.CanFillField(oField);
+				function isFieldFilled(oField) {
+					if (oField instanceof AscPDF.CBaseCheckBoxField) {
+						let aWidgets = oField.GetAllWidgets();
+						return aWidgets.some(function(widget) {
+							return widget.IsChecked();
+						});
+					}
+
+					let value = oField.GetValue();
+					return Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== "";
+				}
+
+				return oField.IsRequired() && (true !== isNotFilled || !isFieldFilled(oField)) && oRoles.CanFillField(oField);
 			};
 		}
 		else if (bFilterByRole) {
