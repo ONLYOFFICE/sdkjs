@@ -530,8 +530,14 @@
     CPdfFormRoles.prototype.CanFillField = function (field) {
         let role = this.GetRoleByField(field);
         if (!role) return true;
-        return !this.CurrentNoRole
-            && (!this.CurrentRole || this.CurrentRole.GetId() === role.GetId());
+		
+		let oDoc = this.document;
+		if (oDoc.IsFillingFormMode()) {
+			return !this.CurrentNoRole && this.CurrentRole != null && this.CurrentRole.GetId() === role.GetId();
+		}
+		else if (Asc.editor.IsCommentsMode()) {
+			return !this.CurrentNoRole && role.IsDefault();
+		}
     };
 
     CPdfFormRoles.prototype.IsAllRolesFilled = function () {

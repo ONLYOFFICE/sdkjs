@@ -1019,7 +1019,7 @@
         let oDoc            = this.GetDocument();
 
 		// form roles: in filling mode field actions may be run only by its role
-		if (!oDoc.IsFillingFormMode() || false === oDoc.GetFormRoles().CanFillField(this)) {
+		if (false === oDoc.GetFormRoles().CanFillField(this)) {
 			return;
 		}
 
@@ -1056,7 +1056,7 @@
         let oDoc   = this.GetDocument();
         let oRoles = oDoc.GetFormRoles();
         if (oRoles) {
-            if (!oRoles.CanFillField(this) || (!oDoc.IsFillingFormMode() && !oDoc.IsEditFieldsMode() && oDoc.GetFormRoles().IsFinal())) {
+            if (!oRoles.CanFillField(this) && !oDoc.IsEditFieldsMode()) {
                 return FIELDS_HIGHLIGHT_OTHER_ROLE;
             }
 

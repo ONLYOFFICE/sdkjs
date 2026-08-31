@@ -8895,7 +8895,7 @@ var CPresentation = CPresentation || function(){};
 			if (this.IsFillingFormMode() && (!this.activeForm || this.activeForm && false === this.GetFormRoles().CanFillField(this.activeForm))) {
 				return true;
 			}
-			else if (!this.IsEditFieldsMode() && !this.IsFillingFormMode() && this.activeForm) {
+			else if (this.IsCommentsMode() && this.activeForm && false === this.GetFormRoles().CanFillField(this.activeForm)) {
 				return true;
 			}
 		}
@@ -9577,6 +9577,9 @@ var CPresentation = CPresentation || function(){};
 	};
 	CPDFDoc.prototype.IsEditSignaturesMode = function() {
 		return false;
+	};
+	CPDFDoc.prototype.IsCommentsMode = function() {
+		return !Asc.editor.canEdit() && !Asc.editor.isViewMode && !this.IsFillingFormMode();
 	};
 	CPDFDoc.prototype.getDrawingObjects = CPDFDoc.prototype.GetController;
 

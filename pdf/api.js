@@ -1700,14 +1700,15 @@
 		}
 	};
 
+	PDFEditorApi.prototype.IsCommentsMode = function() {
+		let oDoc = this.getPDFDoc();
+		return oDoc.IsCommentsMode();
+	};
+
 	/////////////////////////////////////////////////////////////
 	///////// For filed
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.IsEditFieldsMode = function() {
-		// a finalized form forbids editing its structure — filling only
-		let oDoc = this.getPDFDoc();
-		if (oDoc && oDoc.GetFormRoles().IsFinal())
-			return false;
 		return Asc.editor.canEdit();
 	};
 	PDFEditorApi.prototype.AddTextField = function(oParams) {
