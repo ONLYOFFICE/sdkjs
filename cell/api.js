@@ -7151,8 +7151,31 @@ var editor;
 		res["spreadsheetLayout"]["formulaProps"] = {};
 		res["spreadsheetLayout"]["formulaProps"]["translate"] = AscCommonExcel.cFormulaFunctionToLocale;
 		res["spreadsheetLayout"]["formulaProps"]["docTitle"] = this.DocInfo && this.DocInfo.Title;
-		res["spreadsheetLayout"]["formulaProps"]["cellFunctionTypeTranslate"] = AscCommon.cCellFunctionLocal;
+		//errors/booleans/table parts/CELL info types - restored by build_local_rx on the converter side
+		let boolLocal = AscCommon.cBoolLocal;
+		res["spreadsheetLayout"]["formulaProps"]["localFormulaOperands"] = boolLocal && boolLocal.t ? {
+			"StructureTables": AscCommon.cStrucTableLocalColumns,
+			"CONST_TRUE_FALSE": {"t": boolLocal.t, "f": boolLocal.f},
+			"CONST_ERROR": AscCommon.cErrorLocal,
+			"CELL_FUNCTION_INFO_TYPE": AscCommon.cCellFunctionLocal
+		} : null;
 		return res;
+	};
+
+	spreadsheet_api.prototype.applyPrintLocalization = function (options) {
+		let spreadsheetLayout = options && options["spreadsheetLayout"];
+		let formulaProps = spreadsheetLayout && spreadsheetLayout["formulaProps"];
+		if (!formulaProps) {
+			return;
+		}
+
+		let translate = formulaProps["translate"];
+		if (translate) {
+			AscCommonExcel.cFormulaFunctionToLocale = translate;
+		}
+		if (formulaProps["localFormulaOperands"]) {
+			AscCommon.build_local_rx(formulaProps["localFormulaOperands"]);
+		}
 	};
 
   spreadsheet_api.prototype.asc_nativePrint = function (_printer, _page, _options) {
@@ -7275,6 +7298,7 @@ var editor;
     }
 
     this.wb.setPrintOptionsJson(_options);
+    this.applyPrintLocalization(_options);
     this.wbModel.dependencyFormulas.calcTree(null, true);
 
     var _printPagesData = this.wb.calcPagesPrint(_adjustPrint);
