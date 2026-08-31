@@ -6902,7 +6902,7 @@ function isAllowPasteLink(pastedWb) {
 		var x1ct = isMerged ? x1 : this._getColLeft(col, false, ctx) - offsetX;
 		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
 		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
-		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
+		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA, this._calcVisibleTextHeight(ct, h));
 		var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
 
 		var xb1, yb1, wb, hb, colLeft, colRight;
@@ -11227,16 +11227,37 @@ function isAllowPasteLink(pastedWb) {
         }
     };
 
-    WorksheetView.prototype._calcTextVertPos = function (y1, h, baseline, tm, align) {
+	//ms aligns only the leading lines which start inside the cell, line height is rounded as row height
+	WorksheetView.prototype._calcVisibleTextHeight = function (ct, h) {
+		let tm = ct.metrics;
+		let lines = ct.state && ct.state.lines;
+		let zoom = this.getZoom();
+		if (ct.angle || !lines || lines.length < 2 || tm.height * zoom <= h) {
+			return tm.height;
+		}
+		let res = 0, resPx = 0;
+		for (let i = 0; i < lines.length; ++i) {
+			res += lines[i].th;
+			resPx += Asc.round(lines[i].th * zoom);
+			if (resPx >= h) {
+				break;
+			}
+		}
+		return res;
+	};
+
+    WorksheetView.prototype._calcTextVertPos = function (y1, h, baseline, tm, align, visibleHeight) {
+		let textHeight = null != visibleHeight ? visibleHeight : tm.height;
         switch (align) {
 			case Asc.c_oAscVAlign.Center:
 			case Asc.c_oAscVAlign.Dist:
 			case Asc.c_oAscVAlign.Just:
-                return y1 + Asc.round(0.5 * (h - tm.height * this.getZoom()));
+                return y1 + Asc.round(0.5 * (h - textHeight * this.getZoom()));
             case Asc.c_oAscVAlign.Top:
                 return y1;
             default:
-                return baseline - Asc.round(tm.baseline * this.getZoom());
+                return baseline - Asc.round(tm.baseline * this.getZoom()) +
+					Asc.round((tm.height - textHeight) * this.getZoom());
         }
     };
 
@@ -22367,7 +22388,7 @@ function isAllowPasteLink(pastedWb) {
 		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
 		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
 		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, /*ct.cellHA*/AscCommon.align_Left);
-		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
+		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA, this._calcVisibleTextHeight(ct, h));
 		//var textW = this._calcTextWidth(x1ct, x2ct, ct.metrics, ct.cellHA);
 
 		//TODO for now decided not to consider text position. button always aligned to left edge. only left indent is considered
