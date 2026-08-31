@@ -425,7 +425,8 @@
 	GraphicObjectDrawer.prototype.startDrawShape = function () {
 		const graphics = this.getGraphics();
 		if (graphics.StartDrawShape) {
-			graphics.StartDrawShape();
+			const graphicObject = this.graphicObject;
+			graphics.StartDrawShape(undefined, !!(graphicObject.isForm && graphicObject.isForm()));
 		}
 	};
 	GraphicObjectDrawer.prototype.endDrawShape = function () {
