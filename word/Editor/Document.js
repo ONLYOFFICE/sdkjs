@@ -69,6 +69,8 @@ var Y_Top_Margin    = 20;  // 2   cm
 var X_Right_Field  = Page_Width  - X_Right_Margin;
 var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
+var FOREIGN_CURSOR_SCROLL_TOP_OFFSET = 25; // mm
+
 var docpostype_Content        = 0x00;
 var docpostype_HdrFtr         = 0x02;
 var docpostype_DrawingObjects = 0x03;
@@ -5200,27 +5202,26 @@ CDocument.prototype.CheckTargetUpdate = function()
 	
 	if (!this.NeedUpdateTarget)
 		return;
-	
+
+	if (this.ViewPosition)
+	{
+		this.CheckViewPosition();
+		return;
+	}
+
 	if (this._isSelectionVisible() && !this.ForceScrollToSelectionEnd)
 	{
 		this.NeedUpdateTarget = false;
 		return;
 	}
-	
+
 	this.ForceScrollToSelectionEnd = false;
-	
-	if (this.ViewPosition)
+
+	if (this.Controller.CanUpdateTarget() && !this.IsMovingTableBorder())
 	{
-		this.CheckViewPosition();
-	}
-	else
-	{
-		if (this.Controller.CanUpdateTarget() && !this.IsMovingTableBorder())
-		{
-			// Обновляем курсор сначала, чтобы обновить текущую страницу
-			this.RecalculateCurPos();
-			this.NeedUpdateTarget = false;
-		}
+		// Обновляем курсор сначала, чтобы обновить текущую страницу
+		this.RecalculateCurPos();
+		this.NeedUpdateTarget = false;
 	}
 };
 CDocument.prototype.CheckViewPosition = function()
@@ -5291,13 +5292,16 @@ CDocument.prototype.CheckViewPosition = function()
 /**
  * Scroll the document so that the current cursor/select position ends up at the top of the screen.
  * @param [distance=0] {number} Offset of the position from the top of the screen (in mm)
+ * @param [anchorPos] {Array} Document position to scroll to. If not specified, the current cursor/selection position is used
  */
-CDocument.prototype.AlignViewPositionToTop = function(distance)
+CDocument.prototype.AlignViewPositionToTop = function(distance, anchorPos)
 {
-	let anchorPos = this.IsTextSelectionUse() ? this.GetContentPosition(true, true) : this.GetContentPosition(false);
+	if (!anchorPos)
+		anchorPos = this.IsTextSelectionUse() ? this.GetContentPosition(true, true) : this.GetContentPosition(false);
+
 	if (!anchorPos || !anchorPos.length)
 		return;
-	
+
 	let viewPortH = this.DrawingDocument.GetVisibleMMHeight();
 	distance = Math.max(0, Math.min(distance, viewPortH - 10));
 
@@ -16751,6 +16755,20 @@ CDocument.prototype.Update_ForeignCursor = function(CursorInfo, UserId, Show, Us
 CDocument.prototype.Remove_ForeignCursor = function(UserId)
 {
 	this.CollaborativeEditing.Remove_ForeignCursor(UserId);
+};
+/**
+ * Scroll the view to the given foreign cursor, aligning it near the top of the screen
+ * @param userId {string} Connection id or short id of the co-author
+ * @returns {boolean} Whether the foreign cursor was found and scrolled to
+ */
+CDocument.prototype.ScrollToForeignCursor = function(userId)
+{
+	let anchorPos = this.CollaborativeEditing.GetForeignCursorPosition(userId);
+	if (!anchorPos)
+		return false;
+
+	this.AlignViewPositionToTop(FOREIGN_CURSOR_SCROLL_TOP_OFFSET, anchorPos);
+	return true;
 };
 CDocument.prototype.private_UpdateTargetForCollaboration = function()
 {

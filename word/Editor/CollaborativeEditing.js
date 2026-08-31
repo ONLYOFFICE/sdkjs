@@ -459,6 +459,22 @@ CWordCollaborativeEditing.prototype.Remove_ForeignCursor = function(UserId)
     this.Remove_ForeignCursorXY(UserId);
     this.Remove_ForeignCursorToShow(UserId);
 };
+CWordCollaborativeEditing.prototype.GetForeignCursorPosition = function(userId)
+{
+	let docPos = this.m_aForeignCursors[userId];
+	if (!docPos)
+	{
+		for (let id in this.m_aForeignCursorsId)
+		{
+			if (userId === this.m_aForeignCursorsId[id])
+			{
+				docPos = this.m_aForeignCursors[id];
+				break;
+			}
+		}
+	}
+	return (docPos && docPos.length ? docPos : null);
+};
 CWordCollaborativeEditing.prototype.Update_ForeignCursorsPositions = function()
 {
     for (var UserId in this.m_aForeignCursors)
