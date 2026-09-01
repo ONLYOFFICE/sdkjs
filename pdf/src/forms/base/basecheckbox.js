@@ -515,11 +515,6 @@
         
         this._options = aOpt;
 
-        let aAllWidgets = this.GetAllWidgets();
-        aAllWidgets.forEach(function(widget) {
-            widget.SetExportValue(undefined, true);
-        });
-
         let sDefValue = this.GetDefaultValue();
         let sExpValue;
         if (sDefValue) {
@@ -546,6 +541,11 @@
             this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
         }
 
+		let aAllWidgets = this.GetAllWidgets();
+        aAllWidgets.forEach(function(widget) {
+            widget.SetExportValue(undefined, true);
+        });
+		
         return true;
     };
     CBaseCheckBoxField.prototype.GetOptions = function(bInherit) {
@@ -588,10 +588,6 @@
         oField._parent = this;
 
         if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
-            if (oField.IsWidget()) {
-                oField.SyncValue();
-            }
-
             if (!aOptions) {
                 aOptions = [];
 
@@ -615,6 +611,12 @@
         if (aNewOptions) {
             this.SetOptions(aNewOptions);
         }
+
+		if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
+			if (oField.IsWidget()) {
+				oField.SyncValue();
+			}
+		}
     };
     CBaseCheckBoxField.prototype.RemoveKid = function(oField) {
         let nIndex = this._kids.indexOf(oField);
@@ -752,7 +754,10 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.SyncValue = function() {
-        if (this.GetExportValue() == this.GetLogicValue()) {
+		let aOptions = this.GetOptions();
+		let logicValue = aOptions ? aOptions[this.GetLogicValue()] : this.GetLogicValue();
+
+        if (this.GetExportValue() == logicValue) {
             this.SetChecked(true);
             this.AddToRedraw();
         }
