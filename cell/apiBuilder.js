@@ -23437,6 +23437,17 @@
 		props.type = internalType;
 		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
 
+		//ranges must be set before any formula generation - the generated formula is anchored to the first cell of the rule range
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
 		if (Operator !== undefined && (internalType === Asc.ECfType.cellIs || internalType === Asc.ECfType.containsText)) {
 			let internalOperator = FromXlFormatConditionOperatorTo(Operator);
 			if (internalOperator !== -1) {
@@ -23598,16 +23609,6 @@
 			internalType === Asc.ECfType.cellIs || internalType === Asc.ECfType.expression) {
 			props.dxf = new window['AscCommonExcel'].CellXfs();
 		}
-
-		let ranges = [];
-		if (this.range.areas) {
-			for (let i = 0; i < this.range.areas.length; i++) {
-				ranges.push(this.range.areas[i].bbox);
-			}
-		} else {
-			ranges.push(this.range.range.bbox);
-		}
-		props.ranges = ranges;
 
 		this.private_setRule(props);
 
