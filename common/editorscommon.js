@@ -1011,7 +1011,7 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, userSessionId, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, userSessionId, data, forceSaveType, fError, fsuccess)
 	{
 		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
 		let url =sSaveFileLocalUrl + '/' + docId;
@@ -1024,6 +1024,10 @@
 		}
 		if (userSessionId) {
 			url += '&' + Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId);
+		}
+		//null asks the server for the final save of the session, a type asks for an intermediate one
+		if (null !== forceSaveType && undefined !== forceSaveType) {
+			url += '&forcesavetype=' + forceSaveType;
 		}
 		asc_ajax({
 			type:        'POST',
@@ -16179,7 +16183,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, _editor.documentUserSessionId, fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, _editor.documentUserSessionId, fileData, null, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);
