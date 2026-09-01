@@ -11885,10 +11885,10 @@
 	 */
 	ApiDropCap.prototype.SetLinesToDrop = function(lines)
 	{
+		lines = AscBuilder.GetNumberParameter(lines, null);
 		if (!AscFormat.isRealNumber(lines))
 			throwException(new Error('Invalid type of parameter "lines".'));
 
-		lines = AscBuilder.GetNumberParameter(lines, 0)
 		if (lines <= 0)
 			throwException(new Error("The lines parameter must be a number greater than 0"));
 
@@ -11908,7 +11908,8 @@
 	 */
 	ApiDropCap.prototype.SetFontFamily = function(fontFamily)
 	{
-		if (typeof fontFamily !== "string")
+		fontFamily = AscBuilder.GetStringParameter(fontFamily, null);
+		if (null === fontFamily)
 			throwException(new Error('Invalid type of parameter "fontFamily".'));
 
 		if (fontFamily.trim().length === 0)

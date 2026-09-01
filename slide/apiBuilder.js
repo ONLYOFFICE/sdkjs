@@ -8961,7 +8961,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
 	 */
 	ApiTable.prototype.SetHeight = function (height) {
-		if (typeof height !== 'number' || !AscFormat.isRealNumber(height))
+		height = AscBuilder.GetNumberParameter(height, null);
+		if (!AscFormat.isRealNumber(height))
 			AscBuilder.throwException(new Error('Invalid type of parameter "height".'));
 
 		if (height < 0)
@@ -9220,7 +9221,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableTitle.js
 	 */
 	ApiTable.prototype.SetTableTitle = function(title) {
-		if (typeof title !== 'string')
+		title = AscBuilder.GetStringParameter(title, null);
+		if (null === title)
 			AscBuilder.throwException(new Error('Invalid type of parameter "title".'));
 
 		this.Drawing.setTitle(title);
@@ -9247,7 +9249,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
 	 */
 	ApiTable.prototype.SetTableDescription = function(descr) {
-		if (typeof descr !== 'string')
+		descr = AscBuilder.GetStringParameter(descr, null);
+		if (null === descr)
 			AscBuilder.throwException(new Error('Invalid type of parameter "descr".'));
 
 		this.Drawing.setDescription(descr);
@@ -10818,15 +10821,11 @@
 	 */
 	ApiTextRange.prototype.AddText = function(text, position)
 	{
-		if (typeof text !== 'string')
+		text = AscBuilder.GetStringParameter(text, null);
+		if (null === text)
 			AscBuilder.throwException(new Error('Invalid type of parameter "text".'));
 
-		if (position === undefined)
-			position = "after";
-
-		if (typeof position !== 'string')
-			AscBuilder.throwException(new Error('Invalid type of parameter "position".'));
-
+		position = AscBuilder.GetStringParameter(position, "after");
 		if ("after" !== position && "before" !== position)
 			AscBuilder.throwException(new Error('Invalid value of parameter "position".'));
 
@@ -11636,7 +11635,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
 	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
-		if (typeof fontFamily !== "string")
+		fontFamily = AscBuilder.GetStringParameter(fontFamily, null);
+		if (null === fontFamily)
 			AscBuilder.throwException(new Error('Invalid type of parameter "fontFamily".'));
 
 		if (fontFamily.trim().length === 0)
