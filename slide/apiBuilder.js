@@ -195,27 +195,41 @@
 	}
 	ApiChart.prototype = Object.create(ApiDrawing.prototype);
 	ApiChart.prototype.constructor = ApiChart;
-	
+
+	/**
+	 * Class representing the table properties.
+	 * @constructor
+	 */
+	function ApiTablePr(Parent, TablePr)
+	{
+		this.Parent  = Parent;
+		this.TablePr = TablePr;
+	}
+
+	/**
+	 * Class representing a style.
+	 * @param Style
+	 * @constructor
+	 */
+	function ApiStyle(Style)
+	{
+		AscBuilder.ApiStyle.call(this, Style);
+	}
+	ApiStyle.prototype = Object.create(AscBuilder.ApiStyle.prototype);
+	ApiStyle.prototype.constructor = ApiStyle;
+
 	/**
      * Class representing a table.
      * @param oGraphicFrame
      * @constructor
 	 * @extends {ApiDrawing}
-	 * @extends {ApiTablePr}
      */
 	function ApiTable(oGraphicFrame){
 		this.Table = oGraphicFrame.graphicObject;
 		ApiDrawing.call(this, oGraphicFrame);
-		AscBuilder.ApiTablePr.call(this, this, this.Table.Pr.Copy());
     }
     ApiTable.prototype = Object.create(ApiDrawing.prototype);
     ApiTable.prototype.constructor = ApiTable;
-	AscCommon.ExtendPrototype(ApiTable, AscBuilder.ApiTablePr);
-	ApiTable.prototype.private_OnChange = function()
-	{
-		if (this.Parent)
-			this.Parent.OnChangeTablePr(this);
-	};
 
 	/**
 	 * Class representing a set of formatting properties which shall be conditionally applied to the parts of a table
@@ -1201,6 +1215,19 @@
 	 */
 	Api.CreateSlideShowTransition = function () {
 		return new ApiSlideShowTransition(new Asc.CAscSlideTransition());
+	};
+
+	/**
+	 * Creates the empty table properties.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTablePr}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTablePr.js
+	 */
+	Api.CreateTablePr = function()
+	{
+		return this.private_CreateApiTablePr(new CTablePr());
 	};
 
     /**
@@ -2258,7 +2285,7 @@
 		for (var i = 0; i < aStyles.length; i++)
 		{
 			if (aStyles[i].GetName() === sStyleName)
-				return new AscBuilder.ApiStyle(aStyles[i]);
+				return new ApiStyle(aStyles[i]);
 		}
 		return null;
 	};
@@ -6914,13 +6941,34 @@
             {
                 if (this.Drawing.Id === drawingObjects[nDrawing].Drawing.Id)
                 {
+                    this.private_ResetSelection();
                     oParent.RemoveObject(nDrawing, 1);
                     return true;
                 }
             }
         }
-        
+
         return false;
+    };
+
+    ApiDrawing.prototype.private_ResetSelection = function()
+    {
+        let drawingParent	= this.Drawing.parent;
+        let controller		= drawingParent && drawingParent.graphicObjects;
+        if (!controller)
+            return;
+
+        if (controller.selection && controller.selection.textSelection === this.Drawing)
+        {
+            let presentation = private_GetPresentation();
+            if (presentation)
+                presentation.RemoveSelection();
+
+            controller.resetSelection();
+            return;
+        }
+
+        controller.deselectObject(this.Drawing);
     };
 
     /**
@@ -8477,10 +8525,10 @@
         return null;
     };
 
-    ApiTable.prototype.OnChangeTablePr = function(oApiTablePr)
+    ApiTable.prototype.private_RefreshTable = function()
     {
-        this.Table.Set_Pr(oApiTablePr.TablePr);
-        oApiTablePr.TablePr = this.Table.Pr.Copy();
+        if (this.Drawing)
+            this.Drawing.Refresh_RecalcData2();
     };
     ApiTable.prototype.private_PrepareTableForActions = function()
     {
@@ -8518,6 +8566,7 @@
             private_GetBoolean(isHorBand),
             private_GetBoolean(isVerBand));
         this.Table.Set_TableLook(oTableLook);
+        this.private_RefreshTable();
     };
 	/**
 	 * Gets table look properties
@@ -8599,24 +8648,24 @@
         this.Table.CurCell = _oCell;
         this.Table.AddTableColumn(_isBefore);
     };
-    /**
+	/**
 	 * Removes a table row with the specified cell. When the last row is removed, the whole table is deleted from the slide
-     * @memberof ApiTable
-     * @typeofeditors ["CPE"]
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
 	 * @param {ApiTableCell} cell - The table cell from the row which will be removed.
-     * @returns {boolean} - result of deletion
-     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
+	 * @returns {boolean} - result of deletion
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
 	ApiTable.prototype.RemoveRow = function(cell)
-    {
+	{
 		if (!(cell instanceof ApiTableCell))
 			AscBuilder.throwException('The "cell" parameter must be an instance of ApiTableCell');
 
 		if (this.Table !== cell.Cell.Row.Table)
 			AscBuilder.throwException('The "cell" parameter must belong to the current table');
 
-        this.private_PrepareTableForActions();
-        this.Table.RemoveSelection();
+		this.private_PrepareTableForActions();
+		this.Table.RemoveSelection();
 		this.Table.CurCell = cell.Cell;
 		let result = this.Table.RemoveTableRow();
 
@@ -8624,25 +8673,25 @@
 			return this.Delete();
 
 		return true;
-    };
-    /**
-     * Removes a table column with the specified cell.
-     * @memberof ApiTable
-     * @typeofeditors ["CPE"]
+	};
+	/**
+	 * Removes a table column with the specified cell.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
 	 * @param {ApiTableCell} cell - The table cell from the column which will be removed.
 	 * @returns {boolean} - result of deletion. When the last column is removed, the whole table is deleted from the slide.
-     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
+	  * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
 	ApiTable.prototype.RemoveColumn = function(cell)
-    {
+	{
 		if (!(cell instanceof ApiTableCell))
 			AscBuilder.throwException('The "cell" parameter must be an instance of ApiTableCell');
 
 		if (this.Table !== cell.Cell.Row.Table)
 			AscBuilder.throwException('The "cell" parameter must belong to the current table');
 
-        this.private_PrepareTableForActions();
-        this.Table.RemoveSelection();
+		this.private_PrepareTableForActions();
+		this.Table.RemoveSelection();
 		this.Table.CurCell = cell.Cell;
 		this.Table.SelectTable(c_oAscTableSelectionType.Column);
 		let result = this.Table.RemoveTableCells();
@@ -8651,7 +8700,7 @@
 			return this.Delete();
 
 		return result;
-    };
+	};
 
 	/**
 	 * Returns the selected cells of the current table.
@@ -8769,7 +8818,10 @@
         var _Shd   = null;
 
         if (sType === "nil") {
-            _Shd = {Value : Asc.c_oAscShdNil};
+            _Shd = {
+				Value   : Asc.c_oAscShdNil,
+				Unifill : AscFormat.CreateNoFillUniFill()
+			};
             oShd.Set_FromObject(_Shd);
             oPr.Shd = oShd;
         }
@@ -8800,6 +8852,7 @@
             oPr.Shd = null;
         
         this.Table.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
 
 	/**
@@ -9032,10 +9085,11 @@
 	 */
 	ApiTable.prototype.SetStyle = function(oStyle)
 	{
-		if (!oStyle || !(oStyle instanceof AscBuilder.ApiStyle))
+		if (!oStyle || !(oStyle instanceof ApiStyle))
 			return false;
 
 		this.Table.Set_TableStyle(oStyle.Style.Get_Id(), true);
+		this.private_RefreshTable();
 		return true;
 	};
 
@@ -9559,6 +9613,13 @@
 
 		return null;
 	};
+
+	ApiTableCell.prototype.private_RefreshTable = function()
+	{
+		let table = this.Cell.GetTable();
+		if (table && table.Parent)
+			table.Parent.Refresh_RecalcData2();
+	};
 	/**
 	 * Returns the next cell if exists.
 	 * @memberof ApiTableCell
@@ -9676,6 +9737,7 @@
 		};
 
 		this.Cell.Set_Shd(oNewShd);
+		this.private_RefreshTable();
 		return true;
 	};
 
@@ -9754,7 +9816,10 @@
         var _Shd   = null;
 
         if (sType === "nil") {
-            _Shd = {Value : Asc.c_oAscShdNil};
+            _Shd = {
+				Value   : Asc.c_oAscShdNil,
+				Unifill : AscFormat.CreateNoFillUniFill()
+			};
             oShd.Set_FromObject(_Shd);
             oPr.Shd = oShd;
         }
@@ -9772,7 +9837,7 @@
 				},
 				Unifill : Unifill
 			};
-			
+
 			oShd.Set_FromObject(_Shd);
             oPr.Shd = oShd;
         }
@@ -9781,26 +9846,11 @@
             oShd.Unifill = sType.UniFill;
             oPr.Shd = oShd;
         }
-        else 
+        else
             oPr.Shd = null;
 
         this.Cell.Set_Pr(oPr);
-    };
-    /**
-	 * Specifies the preferred width for this cell.
-	 * @memberof ApiTableCell
-	 * @typeofeditors ["CPE"]
-	 * @param {TableWidth} sType - The type of the width value.
-	 * @param {number} [nValue] - The table width value measured in positive integers.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetWidth.js
-	 */
-    ApiTableCell.prototype.SetWidth = function(sType, nValue)
-    {
-        var oPr = this.Cell.Pr.Copy();
-        oPr.TableCellW = private_GetTableMeasure(sType, nValue);
-        this.Cell.Set_Pr(oPr);
-        return true;
+        this.private_RefreshTable();
     };
     /**
      * Specifies an amount of space which shall be left between the bottom extent of the cell contents and the border
@@ -9830,6 +9880,7 @@
         else
             oPr.TableCellMar.Bottom = private_GetTableMeasure("twips", nValue);
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
     /**
      * Specifies an amount of space which shall be left between the left extent of the current cell contents and the
@@ -9859,6 +9910,7 @@
         else
             oPr.TableCellMar.Left = private_GetTableMeasure("twips", nValue);
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
     /**
      * Specifies an amount of space which shall be left between the right extent of the current cell contents and the
@@ -9888,6 +9940,7 @@
         else
             oPr.TableCellMar.Right = private_GetTableMeasure("twips", nValue);
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
     /**
      * Specifies an amount of space which shall be left between the top extent of the current cell contents and the
@@ -9917,6 +9970,7 @@
         else
             oPr.TableCellMar.Top = private_GetTableMeasure("twips", nValue);
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
 	/**
 	 * Sets the border which shall be displayed at the bottom of the current table cell.
@@ -9947,6 +10001,7 @@
 		var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Bottom = oBorder;
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
 	/**
 	 * Sets the border which shall be displayed at the left of the current table cell.
@@ -9977,6 +10032,7 @@
         var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Left = oBorder;
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
 	/**
 	 * Sets the border which shall be displayed at the right of the current table cell.
@@ -10007,6 +10063,7 @@
         var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Right = oBorder;
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
 	/**
 	 * Sets the border which shall be displayed at the top of the current table cell.
@@ -10037,6 +10094,7 @@
         var oPr = this.Cell.Pr.Copy();
         oPr.TableCellBorders.Top = oBorder;
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
 
     /**
@@ -10059,6 +10117,7 @@
 			return false;
 
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
     /**
      * Specifies the direction of the text flow for the current table cell.
@@ -10080,6 +10139,7 @@
 			return false;
 
         this.Cell.Set_Pr(oPr);
+        this.private_RefreshTable();
     };
     /**
      * Appends text to the end of the cell content.
@@ -10195,6 +10255,275 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/Clear.js
 	 */
 	ApiTableCell.prototype.Clear = AscBuilder.ApiTableCell.prototype.Clear;
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiTablePr
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiTablePr class.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @returns {"tablePr"}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/GetClassType.js
+	 */
+	ApiTablePr.prototype.GetClassType = AscBuilder.ApiTablePr.prototype.GetClassType;
+	/**
+	 * Specifies the shading which is applied to the extents of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {?ApiFill} fill - The color or pattern used to fill the current table. If not passed, the shading will be cleared.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetShd.js
+	 */
+	ApiTablePr.prototype.SetShd = function(fill)
+	{
+		if (undefined === fill || null === fill)
+		{
+			this.TablePr.Shd = undefined;
+			this.private_OnChange();
+			return true;
+		}
+
+		if (!fill.GetClassType || fill.GetClassType() !== "fill")
+			AscBuilder.throwException('The "fill" parameter must be an instance of ApiFill');
+
+		let shd     = new CDocumentShd();
+		shd.Value   = Asc.c_oAscShdClear;
+		shd.Unifill = fill.UniFill;
+
+		this.TablePr.Shd = shd;
+		this.private_OnChange();
+		return true;
+	};
+	ApiTablePr.prototype.private_SetTableBorder = function(borderName, type, size, fill)
+	{
+		if ("none" !== type && (!fill || fill.GetClassType() !== "fill"))
+			AscBuilder.throwException('The "fill" parameter must be an instance of ApiFill');
+
+		this.TablePr.TableBorders[borderName] = private_GetTableBorder(type, size, fill);
+		this.private_OnChange();
+		return true;
+	};
+	/**
+	 * Sets the border which will be displayed at the top of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The top border style.
+	 * @param {mm} size - The width of the current top border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderTop.js
+	 */
+	ApiTablePr.prototype.SetTableBorderTop = function(type, size, fill)
+	{
+		return this.private_SetTableBorder("Top", type, size, fill);
+	};
+	/**
+	 * Sets the border which will be displayed at the bottom of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The bottom border style.
+	 * @param {mm} size - The width of the current bottom border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderBottom.js
+	 */
+	ApiTablePr.prototype.SetTableBorderBottom = function(type, size, fill)
+	{
+		return this.private_SetTableBorder("Bottom", type, size, fill);
+	};
+	/**
+	 * Sets the border which will be displayed on the left of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The left border style.
+	 * @param {mm} size - The width of the current left border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderLeft.js
+	 */
+	ApiTablePr.prototype.SetTableBorderLeft = function(type, size, fill)
+	{
+		return this.private_SetTableBorder("Left", type, size, fill);
+	};
+	/**
+	 * Sets the border which will be displayed on the right of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The right border style.
+	 * @param {mm} size - The width of the current right border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderRight.js
+	 */
+	ApiTablePr.prototype.SetTableBorderRight = function(type, size, fill)
+	{
+		return this.private_SetTableBorder("Right", type, size, fill);
+	};
+	/**
+	 * Specifies the border which will be displayed on all horizontal table cell borders which are not on the outmost edge
+	 * of the parent table (all horizontal borders which are not the topmost or bottommost borders).
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The horizontal table cell border style.
+	 * @param {mm} size - The width of the current border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideH.js
+	 */
+	ApiTablePr.prototype.SetTableBorderInsideH = function(type, size, fill)
+	{
+		return this.private_SetTableBorder("InsideH", type, size, fill);
+	};
+	/**
+	 * Specifies the border which will be displayed on all vertical table cell borders which are not on the outmost edge
+	 * of the parent table (all vertical borders which are not the leftmost or rightmost borders).
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The vertical table cell border style.
+	 * @param {mm} size - The width of the current border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideV.js
+	 */
+	ApiTablePr.prototype.SetTableBorderInsideV = function(type, size, fill)
+	{
+		return this.private_SetTableBorder("InsideV", type, size, fill);
+	};
+	/**
+	 * Specifies a border which will be displayed on all table cell borders.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The border style.
+	 * @param {mm} size - The width of the current border.
+	 * @param {ApiFill} fill - The color or pattern used to fill the current border.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderAll.js
+	 */
+	ApiTablePr.prototype.SetTableBorderAll = function(type, size, fill)
+	{
+		let borderNames = ["Top", "Bottom", "Left", "Right", "InsideH", "InsideV"];
+		for (let index = 0; index < borderNames.length; index++)
+		{
+			this.private_SetTableBorder(borderNames[index], type, size, fill);
+		}
+
+		return true;
+	};
+	/**
+	 * Converts the ApiTablePr object into the JSON object.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @returns {JSON}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/ToJSON.js
+	 */
+	ApiTablePr.prototype.ToJSON = AscBuilder.ApiTablePr.prototype.ToJSON;
+	ApiTablePr.prototype.private_OnChange = function()
+	{
+		if (this.Parent)
+			this.Parent.OnChangeTablePr(this);
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiStyle
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiStyle class.
+	 * @memberof ApiStyle
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @returns {"style"}
+	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/GetClassType.js
+	 */
+	ApiStyle.prototype.GetClassType = AscBuilder.ApiStyle.prototype.GetClassType;
+	/**
+	 * Returns a name of the current style.
+	 * @memberof ApiStyle
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/GetName.js
+	 */
+	ApiStyle.prototype.GetName = AscBuilder.ApiStyle.prototype.GetName;
+	/**
+	 * Sets a name to the current style.
+	 * @memberof ApiStyle
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @param {string} styleName - The name which will be used for the current style.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetName.js
+	 */
+	ApiStyle.prototype.SetName = AscBuilder.ApiStyle.prototype.SetName;
+	/**
+	 * Returns a type of the current style.
+	 * @memberof ApiStyle
+	 * @typeofeditors ["CPE"]
+	 * @since 9.5.0
+	 * @returns {StyleType}
+	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/GetType.js
+	 */
+	ApiStyle.prototype.GetType = AscBuilder.ApiStyle.prototype.GetType;
+	/**
+	 * Returns the table properties of the current style.
+	 * @memberof ApiStyle
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @returns {?ApiTablePr} - returns null if the current style is not a table style.
+	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/GetTablePr.js
+	 */
+	ApiStyle.prototype.GetTablePr = function()
+	{
+		if (AscWord.styletype_Table !== this.Style.Get_Type())
+			return null;
+
+		return new ApiTablePr(this, this.Style.TablePr.Copy());
+	};
+	/**
+	 * Sets the table properties to the current style.
+	 * @memberof ApiStyle
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @param {ApiTablePr} tablePr - The table properties that will be set.
+	 * @returns {ApiStyle} - this
+	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetTablePr.js
+	 */
+	ApiStyle.prototype.SetTablePr = function(tablePr)
+	{
+		if (!tablePr || !tablePr.GetClassType || tablePr.GetClassType() !== "tablePr")
+			AscBuilder.throwException('The "tablePr" parameter must be an instance of ApiTablePr');
+
+		this.OnChangeTablePr(tablePr);
+		return this;
+	};
+	ApiStyle.prototype.OnChangeTablePr = function(tablePr)
+	{
+		AscBuilder.ApiStyle.prototype.OnChangeTablePr.call(this, tablePr);
+		this.private_RefreshTables();
+	};
+	ApiStyle.prototype.private_RefreshTables = function()
+	{
+		let presentation = private_GetPresentation();
+		if (presentation)
+			presentation.Recalculate();
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiTableStylePr
@@ -10227,7 +10556,10 @@
 	 * @returns {ApiTablePr}
 	 * @see office-js-api/Examples/{Editor}/ApiTableStylePr/Methods/GetTablePr.js
 	 */
-	ApiTableStylePr.prototype.GetTablePr = AscBuilder.ApiTableStylePr.prototype.GetTablePr;
+	ApiTableStylePr.prototype.GetTablePr = function()
+	{
+		return new ApiTablePr(this, this.TableStylePr.TablePr);
+	};
 	/**
 	 * Sets the table properties to the current table style properties.
 	 * @memberof ApiTableStylePr
@@ -10307,16 +10639,6 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/GetClassType.js
 	 */
 	ApiTableRowPr.prototype.GetClassType = AscBuilder.ApiTableRowPr.prototype.GetClassType;
-	/**
-	 * Specifies that the current table row will be repeated at the top of each new page wherever this table is displayed.
-	 * @memberof ApiTableRowPr
-	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
-	 * @param {boolean} isHeader - The true value means that the current table row will be repeated at the top of each new page.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/SetTableHeader.js
-	 */
-	ApiTableRowPr.prototype.SetTableHeader = AscBuilder.ApiTableRowPr.prototype.SetTableHeader;
 	/**
 	 * Sets the height to the current table row within the current table.
 	 * @memberof ApiTableRowPr
@@ -11395,6 +11717,7 @@
     Api["CreateOleObject"]                      = Api.CreateOleObject;
     Api["CreateTable"]                          = Api.CreateTable;
     Api["CreateTableRowPr"]                     = Api.CreateTableRowPr;
+    Api["CreateTablePr"]                        = Api.CreateTablePr;
     Api["CreateParagraph"]                      = Api.CreateParagraph;
     Api["CreateHyperlink"]                      = Api.CreateHyperlink;
     Api["attachEvent"]                      	= Api.attachEvent;
@@ -11833,9 +12156,26 @@
     ApiTableRow.prototype["SetRowPr"]					= ApiTableRow.prototype.SetRowPr;
 
 	ApiTableRowPr.prototype["GetClassType"]				= ApiTableRowPr.prototype.GetClassType;
-	ApiTableRowPr.prototype["SetTableHeader"]			= ApiTableRowPr.prototype.SetTableHeader;
 	ApiTableRowPr.prototype["SetHeight"]				= ApiTableRowPr.prototype.SetHeight;
 	ApiTableRowPr.prototype["ToJSON"]					= ApiTableRowPr.prototype.ToJSON;
+
+	ApiTablePr.prototype["GetClassType"]				= ApiTablePr.prototype.GetClassType;
+	ApiTablePr.prototype["SetShd"]						= ApiTablePr.prototype.SetShd;
+	ApiTablePr.prototype["SetTableBorderTop"]			= ApiTablePr.prototype.SetTableBorderTop;
+	ApiTablePr.prototype["SetTableBorderBottom"]		= ApiTablePr.prototype.SetTableBorderBottom;
+	ApiTablePr.prototype["SetTableBorderLeft"]			= ApiTablePr.prototype.SetTableBorderLeft;
+	ApiTablePr.prototype["SetTableBorderRight"]			= ApiTablePr.prototype.SetTableBorderRight;
+	ApiTablePr.prototype["SetTableBorderInsideH"]		= ApiTablePr.prototype.SetTableBorderInsideH;
+	ApiTablePr.prototype["SetTableBorderInsideV"]		= ApiTablePr.prototype.SetTableBorderInsideV;
+	ApiTablePr.prototype["SetTableBorderAll"]			= ApiTablePr.prototype.SetTableBorderAll;
+	ApiTablePr.prototype["ToJSON"]						= ApiTablePr.prototype.ToJSON;
+
+	ApiStyle.prototype["GetClassType"]					= ApiStyle.prototype.GetClassType;
+	ApiStyle.prototype["GetName"]						= ApiStyle.prototype.GetName;
+	ApiStyle.prototype["SetName"]						= ApiStyle.prototype.SetName;
+	ApiStyle.prototype["GetType"]						= ApiStyle.prototype.GetType;
+	ApiStyle.prototype["GetTablePr"]					= ApiStyle.prototype.GetTablePr;
+	ApiStyle.prototype["SetTablePr"]					= ApiStyle.prototype.SetTablePr;
 
     ApiTableCell.prototype["GetClassType"]				= ApiTableCell.prototype.GetClassType;
     ApiTableCell.prototype["GetInternalId"]				= ApiTableCell.prototype.GetInternalId;
@@ -11850,7 +12190,6 @@
     ApiTableCell.prototype["GetNext"]					= ApiTableCell.prototype.GetNext;
     ApiTableCell.prototype["GetPrevious"]				= ApiTableCell.prototype.GetPrevious;
     //ApiTableCell.prototype["SetTextPr"]				= ApiTableCell.prototype.SetTextPr;
-    ApiTableCell.prototype["SetWidth"]					= ApiTableCell.prototype.SetWidth;
     ApiTableCell.prototype["Clear"]						= ApiTableCell.prototype.Clear;
     ApiTableCell.prototype["GetBackgroundColor"]		= ApiTableCell.prototype.GetBackgroundColor;
     ApiTableCell.prototype["GetContent"]				= ApiTableCell.prototype.GetContent;
@@ -11930,6 +12269,9 @@
 	};
 	Api.private_CreateApiTableRowPr = function(oRowPr){
 		return new ApiTableRowPr(null, oRowPr);
+	};
+	Api.private_CreateApiTablePr = function(oTablePr){
+		return new ApiTablePr(null, oTablePr);
 	};
 	/**
 	 * Class representing the selection in the presentation.
