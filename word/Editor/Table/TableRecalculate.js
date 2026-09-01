@@ -1601,7 +1601,7 @@ CTable.prototype.private_RecalculateBorders = function()
 							const oLeftCell = oTempRow.GetCell(nTempCurCell - 1);
 							if (this.bPresentation) {
 								const oLeftTopCell = this.GetStartMergedCell(nTempCurCell - 1, CurRow + nTempCurRow);
-								oLeftBorder = this.private_ResolveBordersConflict(oLeftTopCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell, oTempCell === oTopMergedCell);
+								oLeftBorder = this.private_ResolveBordersConflict(oLeftTopCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell);
 							} else {
 								oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false);
 							}
@@ -1626,7 +1626,7 @@ CTable.prototype.private_RecalculateBorders = function()
 							const oRightCell = oTempRow.GetCell(nTempCurCell + 1);
 							if (this.bPresentation) {
 								const oRightTopCell = this.GetStartMergedCell(nTempCurCell + 1, CurRow + nTempCurRow);
-								oRightBorder = this.private_ResolveBordersConflict(oRightTopCell.GetBorders().Left, oTempCellBorders.Right,false, false, oRightCell === oRightTopCell, oTopMergedCell === oTempCell);
+								oRightBorder = this.private_ResolveBordersConflict(oRightTopCell.GetBorders().Left, oTempCellBorders.Right, false, false, oTempCell !== oTopMergedCell);
 							} else {
 								oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right, false, false);
 							}
@@ -1788,7 +1788,7 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 			{
 				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
 				{
-					var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell ? !nCurGrid : false, !arrBorderTopInfo.length);
+					var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell ? !nCurGrid : false);
 					var nBorderW = oBorder.GetWidth();
 					if (nMaxTopBorder < nBorderW)
 						nMaxTopBorder = nBorderW;
