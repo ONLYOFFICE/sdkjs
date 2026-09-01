@@ -9221,7 +9221,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableTitle.js
 	 */
 	ApiTable.prototype.SetTableTitle = function(title) {
-		title = AscBuilder.GetStringParameter(title, null);
+		title = AscBuilder.GetStringParameter(title, null, false);
 		if (null === title)
 			AscBuilder.throwException(new Error('Invalid type of parameter "title".'));
 
