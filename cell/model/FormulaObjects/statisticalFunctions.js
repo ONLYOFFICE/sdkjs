@@ -1806,24 +1806,100 @@ function (window, undefined) {
 	function CheckMatrix(_bLOG, pMatX, pMatY, error) {
 		let nCase;
 		let i, j;
-		let nCX = 0,
-			nCY = 0,
-			nRX = 0,
+		let nCY = 0,
 			nRY = 0,
 			M = 0,
 			N = 0;
 
+		// (1) A whole argument that is already an error (e.g. #N/A, or #DIV/0! produced by
+		//     _prepareArguments, or a referenced error cell) propagates as-is, before anything else.
+		if (pMatY && pMatY.type && pMatY.type === cElementType.error) {
+			if (Array.isArray(error)) {
+				error.push(pMatY);
+			}
+			return false;
+		}
+		// NB: check pMatX (the input operand), not the freshly created _pMatX buffer.
+		if (pMatX && pMatX.type && pMatX.type === cElementType.error) {
+			if (Array.isArray(error)) {
+				error.push(pMatX);
+			}
+			return false;
+		}
+
 		if (!pMatY || !pMatY[0]) {
+			return false;
+		}
+		if (pMatX && !pMatX[0]) {
 			return false;
 		}
 
 		nRY = pMatY.length;
-		nCY = pMatY[0].length;
+		nCY = pMatY[0] && pMatY[0].length;
 
 		let nCountY = nCY * nRY;
 		let _pMatY = [];
 		let pMatOriginalY = [];
-		let pMatOriginalX = [];
+
+		let _pMatX,
+			nRX = 0,
+			nCX = 0;
+
+		if (pMatX) {
+			_pMatX = [];
+			nRX = pMatX.length;
+			nCX = pMatX[0] && pMatX[0].length;
+		}
+
+		// (2) Shape/dimension compatibility is decided BEFORE any element type check, so that a
+		//     geometry mismatch yields #REF! even when an operand also has a wrong data type
+		//     (matches MS Excel: e.g. LINEST(A1:A2,"1") -> #REF!, not #VALUE!).
+		if (pMatX) {
+			if (nCX === nCY && nRX === nRY) {
+				nCase = 1;                  // simple regression
+				M = 1;
+				N = nCountY;
+			} else if (nCY !== 1 && nRY !== 1) {
+				//PushIllegalArgument();
+				if (Array.isArray(error)) {
+					error.push(new cError(cErrorType.bad_reference));
+				}
+				return false;
+			} else if (nCY === 1) {
+				if (nRX === nRY) {
+					nCase = 2;              // Y is column
+					N = nRY;
+					M = nCX;
+				} else if (nRY === 1 && nCX === nCY) {
+					// Y is a single value (1x1): its orientation is ambiguous. A column X (m x 1) does
+					// not match the column reading (nRX !== nRY), so read it as a row instead - each X
+					// row becomes a separate variable (matches MS Excel).
+					nCase = 3;              // Y is row
+					N = nCY;
+					M = nRX;
+				} else {
+					//PushIllegalArgument();
+					if (Array.isArray(error)) {
+						error.push(new cError(cErrorType.bad_reference));
+					}
+					return false;
+				}
+			} else if (nCX !== nCY) {
+				//PushIllegalArgument();
+				if (Array.isArray(error)) {
+					error.push(new cError(cErrorType.bad_reference));
+				}
+				return false;
+			} else {
+				nCase = 3;                  // Y is row
+				N = nCY;
+				M = nRX;
+			}
+		} else {
+			nCase = 1;                      // known_x's omitted -> {1,2,...,N} generated below
+			N = nCountY;
+			M = 1;
+		}
 
 		for (i = 0; i < pMatY.length; i++) {
 			for (j = 0; j < pMatY[i].length; j++) {
@@ -1867,19 +1943,22 @@ function (window, undefined) {
 			}
 			_pMatY = pNewY;
 		}
-
-		let _pMatX;
+		
 		if (pMatX) {
-			_pMatX = [];
-			nRX = pMatX.length;
-			nCX = pMatX[0].length;
-			let nCountX = nCX * nRX;
 			for (i = 0; i < pMatX.length; i++) {
 				for (j = 0; j < pMatX[i].length; j++) {
 					if (!pMatX[i][j]) {
 						//PushIllegalArgument();
 						return false;
 					} else {
+						// (3) X element type check -> #VALUE! (symmetric with Y; only reached after the
+						//     shapes are already known to be compatible).
+						if (pMatX[i][j].type !== cElementType.number) {
+							if (Array.isArray(error)) {
+								error.push(new cError(cErrorType.wrong_value_type));
+							}
+							return false;
+						}
 						if (!_pMatX[j]) {
 							_pMatX[j] = [];
 						}
@@ -1887,41 +1966,8 @@ function (window, undefined) {
 					}
 				}
 			}
-
-			if (nCX === nCY && nRX === nRY) {
-				nCase = 1;                  // simple regression
-				M = 1;
-				N = nCountY;
-			} else if (nCY !== 1 && nRY !== 1) {
-				//PushIllegalArgument();
-				if (Array.isArray(error)) {
-					error.push(new cError(cErrorType.bad_reference));
-				}
-				return false;
-			} else if (nCY === 1) {
-				if (nRX !== nRY) {
-					//PushIllegalArgument();
-					if (Array.isArray(error)) {
-						error.push(new cError(cErrorType.bad_reference));
-					}
-					return false;
-				} else {
-					nCase = 2;              // Y is column
-					N = nRY;
-					M = nCX;
-				}
-			} else if (nCX !== nCY) {
-				//PushIllegalArgument();
-				if (Array.isArray(error)) {
-					error.push(new cError(cErrorType.bad_reference));
-				}
-				return false;
-			} else {
-				nCase = 3;                  // Y is row
-				N = nCY;
-				M = nRX;
-			}
 		} else {
+			// known_x's omitted -> generate {1,2,...,N} (nCase/N/M already set above)
 			_pMatX = GetNewMat(nCY, nRY);
 			nCX = nCY;
 			nRX = nRY;
@@ -1936,10 +1982,6 @@ function (window, undefined) {
 					num++;
 				}
 			}
-
-			nCase = 1;
-			N = nCountY;
-			M = 1;
 		}
 
 		return {nCase: nCase, nCX: nCX, nCY: nCY, nRX: nRX, nRY: nRY, M: M, N: N, pMatX: _pMatX, pMatY: _pMatY, pMatOriginalX: _pMatX, pMatOriginalY: pMatOriginalY};
@@ -2731,6 +2773,18 @@ function (window, undefined) {
 			}
 
 		} else {
+			// MS Excel returns zero slopes (1 for LOGEST) and intercept = mean(Y) rather than an error
+			// So only the intercept (and, for LOGEST, the unit slopes) need to be written.
+			if (bConstant && N < K + 1) {
+				if (_bRKP) {
+					for (i = 0; i < K; i++) {
+						pResMat[K - 1 - i][0] = 1;
+					}
+				}
+				pResMat[K][0] = _bRKP ? Math.exp(fMeanY) : fMeanY;
+				return pResMat;
+			}
+
 			// Uses a QR decomposition X = QR. The solution B = (X'X)^(-1) * X' * Y
 			// becomes B = R^(-1) * Q' * Y
 			if (nCase === 2) // Y is column
@@ -3087,6 +3141,23 @@ function (window, undefined) {
 			res = val.tocBool().value;
 		} else if (cElementType.bool === val.type) {
 			res = val.value;
+		}
+		return res;
+	}
+
+	function fillResultFromCalcMatrix(mat, bAllowNA) {
+		// bAllowNA - true for LINEST/LOGEST - false for other
+		let res = new cArray();
+		let cols = mat.length, rows = mat[0].length;
+		for (let row = 0; row < rows; row++) {
+			if (row > 0) { 
+				res.addRow();
+			}
+
+			for (let col = 0; col < cols; col++) {
+				let value = mat[col][row];
+				res.addElement((bAllowNA && value === null) ? new cError(cErrorType.not_available) : new cNumber(value));
+			}
 		}
 		return res;
 	}
@@ -4278,6 +4349,16 @@ function (window, undefined) {
 		}
 
 		return arg;
+	}
+
+	function tryScalarToArray(arg) {
+		// wrap non array/cellref types to an array
+		if (arg && (cElementType.string === arg.type || cElementType.bool === arg.type || cElementType.empty === arg.type)) {
+			let wrappedArg = new cArray();
+			wrappedArg.addElement(arg);
+			return wrappedArg;
+		}
+		return tryNumberToArray(arg);
 	}
 
 	/**
@@ -7760,22 +7841,13 @@ function (window, undefined) {
 			
 		let	mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
 
-		if (mat && mat[0] && mat[0][0] !== undefined) {
-			let tMatrix = [], res = new cArray();
-
-			for (let i = 0; i < mat.length; i++) {
-				for (let j = 0; j < mat[i].length; j++) {
-					if (!tMatrix[j]) {
-						tMatrix[j] = [];
-					}
-					tMatrix[j][i] = new cNumber(mat[i][j]);
-				}
-			}
-
-			res.fillFromArray(tMatrix);
-			return res;
-		} else if (mat && mat.type && mat.type === cElementType.error) {
+		if (mat && mat.type && mat.type === cElementType.error) {
 			return mat;
+		} else if (mat && mat[0] && mat[0][0] !== undefined) {
+			const allowNAInResult = false;
+
+			let res = fillResultFromCalcMatrix(mat, allowNAInResult);
+			return res ? res : new cError(cErrorType.wrong_value_type);
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -8401,12 +8473,20 @@ function (window, undefined) {
 	cLINEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
 	cLINEST.prototype.enabledToSingle = {"*": true};
 	cLINEST.prototype.Calculate = function (arg) {
-		arg[0] = tryNumberToArray(arg[0]);
-		if (arg[1]) {
-			arg[1] = tryNumberToArray(arg[1]);
+		// Wrap a scalar (number/string/bool/empty) into a 1x1 array so it flows through CheckMatrix,
+		// which decides the error in the right order: size mismatch -> #REF!, else non-numeric -> #VALUE!
+		arg[0] = tryScalarToArray(arg[0]);
+		// An empty known_x's is treated as OMITTED, not as a 1x1 empty cell
+		if (arg[1] && arg[1].type !== cElementType.empty) {
+			arg[1] = tryScalarToArray(arg[1]);
 		}
 
-		let oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let types = [cElementType.array];
+		if (arg[1] && arg[1].type !== cElementType.empty) {
+			types.push(cElementType.array);
+		}
+
+		let oArguments = this._prepareArguments(arg, arguments[1], true, types);
 		let argClone = oArguments.args;
 
 		let argError;
@@ -8416,33 +8496,23 @@ function (window, undefined) {
 
 		let pMatY = argClone[0];
 		let pMatX = argClone[1];
+		if (pMatX && !pMatX.length && pMatX.type === cElementType.empty) {
+			pMatX = undefined;
+		}
+
 		let bConstant = getBoolValue(argClone[2], true);
 		let bStats = getBoolValue(argClone[3], false);
 
 		//return matrix [col][row]
 		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
-		//TODO then the function must be optimized and the final matrix immediately generated without intermediate transposition
-		if (mat && mat[0] && mat[0][0] !== undefined) {
-			let tMatrix = [], res = new cArray();
-
-			for (let i = 0; i < mat.length; i++) {
-				for (let j = 0; j < mat[i].length; j++) {
-					if (!tMatrix[j]) {
-						tMatrix[j] = [];
-					}
-					if (null === mat[i][j]) {
-						tMatrix[j][i] = new cError(cErrorType.not_available);
-					} else {
-						tMatrix[j][i] = new cNumber(mat[i][j]);
-					}
-				}
-			}
-
-			res.fillFromArray(tMatrix);
-			return res;
-		} else if (mat && mat.type && mat.type === cElementType.error) {
+		if (mat && mat.type && mat.type === cElementType.error) {
 			return mat;
+		} else if (mat && mat[0] && mat[0][0] !== undefined) {
+			const allowNAInResult = true;
+
+			let res = fillResultFromCalcMatrix(mat, allowNAInResult);
+			return res ? res : new cError(cErrorType.wrong_value_type);
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -8466,12 +8536,18 @@ function (window, undefined) {
 	cLOGEST.prototype.enabledToSingle = {"*": true};
 	cLOGEST.prototype.Calculate = function (arg) {
 
-		arg[0] = tryNumberToArray(arg[0]);
-		if (arg[1]) {
-			arg[1] = tryNumberToArray(arg[1]);
+		arg[0] = tryScalarToArray(arg[0]);
+		// An empty known_x's is treated as OMITTED, not as a 1x1 empty cell
+		if (arg[1] && arg[1].type !== cElementType.empty) {
+			arg[1] = tryScalarToArray(arg[1]);
 		}
 
-		const oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let types = [cElementType.array];
+		if (arg[1] && arg[1].type !== cElementType.empty) {
+			types.push(cElementType.array);
+		}
+
+		const oArguments = this._prepareArguments(arg, arguments[1], true, types);
 		let argClone = oArguments.args;
 
 		let argError;
@@ -8482,32 +8558,22 @@ function (window, undefined) {
 		let pMatY = argClone[0],
 			pMatX = argClone[1],
 			bConstant = getBoolValue(argClone[2], true),
-			bStats = getBoolValue(argClone[3], false),
-			res = new cArray(),
-			tMatrix = [];
+			bStats = getBoolValue(argClone[3], false);
+			
+		if (pMatX && !pMatX.length && pMatX.type === cElementType.empty) {
+			pMatX = undefined;
+		}
 
 		//return matrix [col][row]
 		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
 
-		//TODO then the function must be optimized and the final matrix immediately generated without intermediate transposition
-		if (mat && mat[0] && mat[0][0] !== undefined) {	
-			for (let i = 0; i < mat.length; i++) {
-				for (let j = 0; j < mat[i].length; j++) {
-					if (!tMatrix[j]) {
-						tMatrix[j] = [];
-					}
-					if (null === mat[i][j]) {
-						tMatrix[j][i] = new cError(cErrorType.not_available);
-					} else {
-						tMatrix[j][i] = new cNumber(mat[i][j]);
-					}
-				}
-			}
-
-			res.fillFromArray(tMatrix);
-			return res;
-		} else if (mat && mat.type && mat.type === cElementType.error) {
+		if (mat && mat.type && mat.type === cElementType.error) {
 			return mat;
+		} else if (mat && mat[0] && mat[0][0] !== undefined) {	
+			const allowNAInResult = true;
+
+			let res = fillResultFromCalcMatrix(mat, allowNAInResult);
+			return res ? res : new cError(cErrorType.wrong_value_type);
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -12255,22 +12321,13 @@ function (window, undefined) {
 
 		let mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
-		if (mat && mat[0] && mat[0][0] !== undefined) {
-			let tMatrix = [], res = new cArray();
-
-			for (let i = 0; i < mat.length; i++) {
-				for (let j = 0; j < mat[i].length; j++) {
-					if (!tMatrix[j]) {
-						tMatrix[j] = [];
-					}
-					tMatrix[j][i] = new cNumber(mat[i][j]);
-				}
-			}
-
-			res.fillFromArray(tMatrix);
-			return res;
-		} else if (mat && mat.type && mat.type === cElementType.error) {
+		if (mat && mat.type && mat.type === cElementType.error) {
 			return mat;
+		} else if (mat && mat[0] && mat[0][0] !== undefined) {
+			const allowNAInResult = false;
+
+			let res = fillResultFromCalcMatrix(mat, allowNAInResult);
+			return res ? res : new cError(cErrorType.wrong_value_type);
 		} else if (!mat && pMatY.length === 1 && pMatY[0].length === 1 && !pMatNewX) {
 			return pMatY[0][0];
 		}  else {
