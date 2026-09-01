@@ -2103,11 +2103,11 @@
 		});
 	};
 	CPushButtonField.prototype.asc_OnShowSignature = function() {
-		if (!this.IsOOSignature() || !this.IsInForm()) {
+		let oDoc = this.GetDocument();
+		if (!this.IsOOSignature() || !this.IsInForm() || !oDoc.GetFormRoles().CanFillField(this)) {
 			return;
 		}
 
-		let oDoc	= this.GetDocument();
 		let oTr		= oDoc.pagesTransform[this.GetPage()].invert;
 		let aRect	= this.GetRect();
 		let oPoint1 = oTr.TransformPoint(aRect[0], aRect[1]); // top left

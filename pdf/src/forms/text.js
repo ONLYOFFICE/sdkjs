@@ -1209,7 +1209,10 @@
                     return;
                 }
                 
-                Asc.editor.sendEvent("asc_onShowPDFFormsActions", this);
+				if (oDoc.GetFormRoles().CanFillField(this)) {
+					Asc.editor.sendEvent("asc_onShowPDFFormsActions", this);
+				}
+                
                 this.content.MoveCursorToStartPos();
             }
 
