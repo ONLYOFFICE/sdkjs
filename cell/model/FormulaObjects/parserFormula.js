@@ -4981,6 +4981,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						} else if (_ttInfo.isRange) {
 							_composable = false;
 							break;
+						} else if (_tta && (cElementType.cell === _tta.type || cElementType.cell3D === _tta.type)) {
+							//getUnusedTailArgs answers by comparing values, so a single-cell reference has to
+							//be read here - otherwise the branch a reference selects is declared dead
+							_tailArgs[_tj] = _tta.getValue();
 						} else {
 							_tailArgs[_tj] = _tta;
 						}

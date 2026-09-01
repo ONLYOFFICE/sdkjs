@@ -1769,6 +1769,10 @@ function (window, undefined) {
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
 					res = arg0.getValue();
 				}
+			} else if (cElementType.error !== arg0.type) {
+				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
+					res = arg0;
+				}
 			} else {
 				res = new cError(cErrorType.wrong_value_type);
 			}

@@ -52,6 +52,7 @@ function (window, undefined) {
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
 	var cElementType = AscCommonExcel.cElementType;
+	var _func = AscCommonExcel._func;
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	cFormulaFunctionGroup['Logical'] = cFormulaFunctionGroup['Logical'] || [];
@@ -252,6 +253,7 @@ function (window, undefined) {
 		}
 		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
+			res = arg0;
 		}
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
@@ -290,21 +292,23 @@ function (window, undefined) {
 	};
 	cIFNA.prototype.Calculate = function (arg) {
 
-		let arg0 = arg[0];
+		let arg0 = arg[0], res = arg[0];
 		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
 		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
+			res = arg0;
 		}
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
+			res = arg0;
 		}
 
 		if (arg0.type === cElementType.error && cErrorType.not_available === arg0.errorType) {
 			return arg[1].type === cElementType.array ? arg[1].getElement(0) : arg[1];
 		} else {
-			return arg[0];
+			return res;
 		}
 	};
 
@@ -359,6 +363,9 @@ function (window, undefined) {
 		var res = null;
 		for (var i = 0; i < arg.length; i++) {
 			var argN = argClone[i];
+			if (cElementType.cell === argN.type || cElementType.cell3D === argN.type) {
+				argN = argN.getValue();
+			}
 			if (cElementType.error === argN.type) {
 				res = argN;
 				break;
@@ -556,23 +563,28 @@ function (window, undefined) {
 			return null;
 		}
 		read[0] = true;
-		expression = asComparable(expression);
-		for (let i = 1; i < count; i++) {
-			if (i === count - 1) {
+		if (cElementType.error !== expression.type) {
+			expression = asComparable(expression);
+			for (let i = 1; i < count; i++) {
+				if (i === count - 1) {
+					read[i] = true;
+					break;
+				}
+				let caseValue = tailArgs[i];
+				if (!caseValue) {
+					return null;
+				}
 				read[i] = true;
-				break;
+				if (cElementType.error === caseValue.type) {
+					break;
+				}
+				caseValue = asComparable(caseValue);
+				if (true === _func[expression.type][caseValue.type](expression, caseValue, "=").value) {
+					read[i + 1] = true;
+					break;
+				}
+				i++;
 			}
-			let caseValue = tailArgs[i];
-			if (!caseValue) {
-				return null;
-			}
-			read[i] = true;
-			caseValue = asComparable(caseValue);
-			if (expression.type === caseValue.type && expression.getValue() === caseValue.getValue()) {
-				read[i + 1] = true;
-				break;
-			}
-			i++;
 		}
 		for (let j = 0; j < count; j++) {
 			if (!read[j]) {
@@ -585,22 +597,14 @@ function (window, undefined) {
 		let oArguments = this._prepareArguments(arg, arguments[1], true);
 		let argClone = oArguments.args;
 
-		let argError;
-		let argCloneOdd = argClone.filter(function(item, index) {
-			return index === 0 || index % 2 !== 0;
-		});
-
-		// check all odd arguments for errors plus the starting one(first arg)
-		if (argError = this._checkErrorArg(argCloneOdd)) {
-			return argError;
-		}
-
 		let arg0 = argClone[0];
 		if (cElementType.cell === argClone[0].type || cElementType.cell3D === argClone[0].type) {
 			arg0 = arg0.getValue()
 		}
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		arg0 = asComparable(arg0);
-		let arg0Type = arg0.type;
 
 		let res = null;
 		for (let i = 1; i < argClone.length; i++) {
@@ -613,9 +617,12 @@ function (window, undefined) {
 			if (cElementType.cell === argN.type || cElementType.cell3D === argN.type) {
 				argN = argN.getValue();
 			}
+			if (cElementType.error === argN.type) {
+				return argN;
+			}
 			argN = asComparable(argN);
 
-			if (arg0Type === argN.type && arg0.getValue() === argN.getValue()) {
+			if (true === _func[arg0.type][argN.type](arg0, argN, "=").value) {
 				res = argClone[i + 1];
 				break;
 			}
