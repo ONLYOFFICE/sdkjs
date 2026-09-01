@@ -10352,6 +10352,14 @@ CDocument.prototype.executeShortcut = function(type)
 			result = true;
 			break;
 		}
+		case Asc.c_oAscDocumentShortcutType.ChangeCase:
+		{
+			// Case-cycling logic is handled by the plugin listening for this event.
+			if (window.g_asc_plugins)
+				window.g_asc_plugins.onPluginEvent("onChangeCase", {});
+			result = true;
+			break;
+		}
 		default:
 		{
 			let customShortcut = this.Api.getCustomShortcutAction(type);

@@ -1421,6 +1421,7 @@ background-repeat: no-repeat;\
       [c_oAscDocumentShortcutType.IncreaseFontSize, 221, true, false, false],
       [c_oAscDocumentShortcutType.DecreaseFontSize, 219, true, false, false],
       [c_oAscDocumentShortcutType.SpeechWorker, 90, true, false, true],
+      [c_oAscDocumentShortcutType.ChangeCase, 114, false, true, false],
     ]);
   };
 

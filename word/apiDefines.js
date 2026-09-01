@@ -255,7 +255,8 @@ var c_oAscDocumentShortcutType = {
 	Subscript            : 44,
 	IncreaseFontSize     : 45,
 	DecreaseFontSize     : 46,
-	SpeechWorker		 : 47
+	SpeechWorker		 : 47,
+	ChangeCase           : 48
 };
 
 var c_oAscDocumentRefenceToType = {
