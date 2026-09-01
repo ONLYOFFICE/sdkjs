@@ -2585,7 +2585,10 @@
                 this.DrawFromTextBox(pdfGraphics, textBoxGraphics);
         }
 
-		this.DrawRequiredBorder(pdfGraphics);
+		if (pdfGraphics.isPrint) {
+			this.DrawRequiredBorder(pdfGraphics);
+		}
+		
 		this.DrawLocks(pdfGraphics);
         this.DrawEdit(textBoxGraphics);
 
