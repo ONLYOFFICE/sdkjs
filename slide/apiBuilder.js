@@ -8751,9 +8751,6 @@
 
 	/**
 	 * Selects a range of cells in the current table.
-	 *
-	 * Throws: Error if any of the specified indexes is not a number or is out of the table bounds.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @param {number} startCellIndex - The start cell index within the start row.
@@ -8956,9 +8953,6 @@
 	/**
 	 * Sets the total height of the current table, distributing it evenly among the table rows.
 	 * The value is applied as a minimum height for each row, so a row can be taller if its content requires more space.
-	 *
-	 * Throws: Error if the height parameter is not a number or is negative.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @param {EMU} height - The table height in English measure units.
@@ -8967,15 +8961,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
 	 */
 	ApiTable.prototype.SetHeight = function (height) {
-		if (typeof height !== 'number' || !AscFormat.isRealNumber(height)) {
+		if (typeof height !== 'number' || !AscFormat.isRealNumber(height))
 			AscBuilder.throwException(new Error('Invalid type of parameter "height".'));
-			return false;
-		}
 
-		if (height < 0) {
+		if (height < 0)
 			AscBuilder.throwException(new Error('Parameter "height" cannot be negative.'));
-			return false;
-		}
 
 		let table = this.Table;
 		if (!table)
@@ -9222,9 +9212,6 @@
 
 	/**
 	 * Sets the table title.
-	 *
-	 * Throws: Error if the title parameter is not a string.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
@@ -9233,10 +9220,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableTitle.js
 	 */
 	ApiTable.prototype.SetTableTitle = function(title) {
-		if (typeof title !== 'string') {
+		if (typeof title !== 'string')
 			AscBuilder.throwException(new Error('Invalid type of parameter "title".'));
-			return false;
-		}
 
 		this.Drawing.setTitle(title);
 		return true;
@@ -9254,9 +9239,6 @@
 	};
 	/**
 	 * Sets the table description.
-	 *
-	 * Throws: Error if the descr parameter is not a string.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @since 9.5.0
@@ -9265,10 +9247,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
 	 */
 	ApiTable.prototype.SetTableDescription = function(descr) {
-		if (typeof descr !== 'string') {
+		if (typeof descr !== 'string')
 			AscBuilder.throwException(new Error('Invalid type of parameter "descr".'));
-			return false;
-		}
 
 		this.Drawing.setDescription(descr);
 		return true;
@@ -10828,9 +10808,6 @@
 
 	/**
 	 * Adds a text to the specified position. The current range is expanded to include the added text.
-	 *
-	 * Throws: Error if the text parameter is not a string or the position parameter is not "before" or "after".
-	 *
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @param {String} text - The text that will be added.
@@ -10841,23 +10818,17 @@
 	 */
 	ApiTextRange.prototype.AddText = function(text, position)
 	{
-		if (typeof text !== 'string') {
+		if (typeof text !== 'string')
 			AscBuilder.throwException(new Error('Invalid type of parameter "text".'));
-			return false;
-		}
 
 		if (position === undefined)
 			position = "after";
 
-		if (typeof position !== 'string') {
+		if (typeof position !== 'string')
 			AscBuilder.throwException(new Error('Invalid type of parameter "position".'));
-			return false;
-		}
 
-		if ("after" !== position && "before" !== position) {
+		if ("after" !== position && "before" !== position)
 			AscBuilder.throwException(new Error('Invalid value of parameter "position".'));
-			return false;
-		}
 
 		if (text.length === 0)
 			return true;
@@ -11636,9 +11607,6 @@
 
 	/**
 	 * Sets the font size of the characters in the current text Range.
-	 *
-	 * Throws: Error if the fontSize parameter is not a number or is negative.
-	 *
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
@@ -11649,24 +11617,17 @@
 	ApiTextRange.prototype.SetFontSize = function(fontSize) {
 		fontSize = AscBuilder.GetNumberParameter(fontSize, null);
 
-		if (!AscFormat.isRealNumber(fontSize) || fontSize === null) {
+		if (!AscFormat.isRealNumber(fontSize) || fontSize === null)
 			AscBuilder.throwException(new Error('Invalid type of parameter "fontSize".'));
-			return null;
-		}
 
-		if (fontSize < 0) {
+		if (fontSize < 0)
 			AscBuilder.throwException(new Error('Parameter "fontSize" cannot be negative.'));
-			return null;
-		}
 
 		return this.private_ApplyTextPr({FontSize: private_GetHps(fontSize)});
 	};
 	
 	/**
 	 * Sets the font family for the current TextRange.
-	 *
-	 * Throws: Error if the fontFamily parameter is not a string or is empty.
-	 *
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @param {string} fontFamily - The font family or families used for the current text Range.
@@ -11675,15 +11636,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
 	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
-		if (typeof fontFamily !== "string") {
+		if (typeof fontFamily !== "string")
 			AscBuilder.throwException(new Error('Invalid type of parameter "fontFamily".'));
-			return null;
-		}
 
-		if (fontFamily.trim().length === 0) {
+		if (fontFamily.trim().length === 0)
 			AscBuilder.throwException(new Error('Parameter "fontFamily" cannot be empty.'));
-			return null;
-		}
 
 		LoadFont(fontFamily);
 		return this.private_ApplyTextPr({FontFamily: {Name: fontFamily, Index: -1}});
