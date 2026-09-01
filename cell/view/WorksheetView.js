@@ -140,7 +140,7 @@
 
     var kSelectionMarkerSize = 5;
 
-    var kHiddenHeaderIndicatorWidth = 2;
+    var kHiddenHeaderIndicatorWidth = 4;
     var kSelectionMarkerBorderSize = 2;
 
     AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellCur, "6 6", "cell");
@@ -5461,50 +5461,38 @@ function isAllowPasteLink(pastedWb) {
 		// clipping/offsets). default: own side only (both neighbours drawn); active/highlight:
 		// both lines (opposite neighbour isn't redrawn in that pass)
 		if (beforeHiddenNeighbour || afterHiddenNeighbour) {
-			var hiGap = Math.max(2, Asc.round(kHiddenHeaderIndicatorWidth * this.getZoom(true) * this.getRetinaPixelRatio()));
+			var hiGap = Math.max(4, Asc.round(kHiddenHeaderIndicatorWidth * this.getZoom(true) * this.getRetinaPixelRatio()));
 			var hiN = hiGap >> 1, hiF = hiGap - hiN;
 			var hiBoth = (style !== kHeaderDefault);
 			var hiSel = hiBoth ? _toRetina(2) : 0; // keep clear of the selection frame
-			ctx.setStrokeStyle(borderColor).setLineWidth(1).beginPath();
+			ctx.setStrokeStyle(isPrint ? borderColor : this.settings.header.style[kHeaderHighlighted].border).setLineWidth(1).beginPath();
 			if (isColHeader) {
-				var hiFrozenC = this.topLeftFrozenCell ? this.topLeftFrozenCell.getCol0() : 0;
-				var hiSplitC = hiFrozenC > 0 ? this._getColLeft(hiFrozenC) : this.cellsLeft;
 				var hiY2 = y2 - hiSel;
 				if (beforeHiddenNeighbour) {
-					if (hiFrozenC > 0 && Math.abs(x2 - hiSplitC) <= 1) {
-						t._lineVerPrevPx(ctx, hiSplitC - hiGap, y, hiY2);
-						t._lineVerPrevPx(ctx, hiSplitC, y, hiY2);
-					} else {
-						t._lineVerPrevPx(ctx, x2 - hiN, y, hiY2);
-						if (hiBoth) {
-							t._lineVerPrevPx(ctx, x2 + hiF, y, hiY2);
-						}
+					t._lineVerPrevPx(ctx, x2 - hiN, y, hiY2);
+					if (hiBoth) {
+						t._lineVerPrevPx(ctx, x2 + hiF, y, hiY2);
 					}
 				}
-				if (afterHiddenNeighbour && !(hiFrozenC > 0 && Math.abs(x - hiSplitC) <= 1)) {
-					t._lineVerPrevPx(ctx, x + hiF, y, hiY2);
-					if (hiBoth) {
+				if (afterHiddenNeighbour) {
+					var hiEdgeC = Math.abs(x - this.cellsLeft) <= 1;
+					t._lineVerPrevPx(ctx, x + hiF + (hiEdgeC ? hiN : 0), y, hiY2);
+					if (hiBoth && !hiEdgeC) {
 						t._lineVerPrevPx(ctx, x - hiN, y, hiY2);
 					}
 				}
 			} else {
-				var hiFrozenR = this.topLeftFrozenCell ? this.topLeftFrozenCell.getRow0() : 0;
-				var hiSplitR = hiFrozenR > 0 ? this._getRowTop(hiFrozenR) : this.cellsTop;
 				var hiX2 = x2 - hiSel;
 				if (beforeHiddenNeighbour) {
-					if (hiFrozenR > 0 && Math.abs(y2 - hiSplitR) <= 1) {
-						t._lineHorPrevPx(ctx, x, hiSplitR - hiGap, hiX2);
-						t._lineHorPrevPx(ctx, x, hiSplitR, hiX2);
-					} else {
-						t._lineHorPrevPx(ctx, x, y2 - hiN, hiX2);
-						if (hiBoth) {
-							t._lineHorPrevPx(ctx, x, y2 + hiF, hiX2);
-						}
+					t._lineHorPrevPx(ctx, x, y2 - hiN, hiX2);
+					if (hiBoth) {
+						t._lineHorPrevPx(ctx, x, y2 + hiF, hiX2);
 					}
 				}
-				if (afterHiddenNeighbour && !(hiFrozenR > 0 && Math.abs(y - hiSplitR) <= 1)) {
-					t._lineHorPrevPx(ctx, x, y + hiF, hiX2);
-					if (hiBoth) {
+				if (afterHiddenNeighbour) {
+					var hiEdgeR = Math.abs(y - this.cellsTop) <= 1;
+					t._lineHorPrevPx(ctx, x, y + hiF + (hiEdgeR ? hiN : 0), hiX2);
+					if (hiBoth && !hiEdgeR) {
 						t._lineHorPrevPx(ctx, x, y - hiN, hiX2);
 					}
 				}
@@ -5827,7 +5815,7 @@ function isAllowPasteLink(pastedWb) {
 		let correctH = (t.getRetinaPixelRatio() >= 2 ? _toRetina(1) : 0);
 
 		// widen clean by the indicator gap near hidden cols so the unhide line never accumulates
-		let hiGap = Math.max(2, Asc.round(kHiddenHeaderIndicatorWidth * this.getZoom(true) * this.getRetinaPixelRatio()));
+		let hiGap = Math.max(4, Asc.round(kHiddenHeaderIndicatorWidth * this.getZoom(true) * this.getRetinaPixelRatio()));
 
         var colStartTmp = Math.max(this.visibleRange.c1, colStart);
         var colEndTmp = Math.min(this.visibleRange.c2, colEnd);
@@ -5882,7 +5870,7 @@ function isAllowPasteLink(pastedWb) {
 		let correctH = _toRetina(2) + 1;
 
 		// widen clean by the indicator gap near hidden rows so the unhide line never accumulates
-		let hiGap = Math.max(2, Asc.round(kHiddenHeaderIndicatorWidth * this.getZoom(true) * this.getRetinaPixelRatio()));
+		let hiGap = Math.max(4, Asc.round(kHiddenHeaderIndicatorWidth * this.getZoom(true) * this.getRetinaPixelRatio()));
 
         var rowStartTmp = Math.max(this.visibleRange.r1, rowStart);
         var rowEndTmp = Math.min(this.visibleRange.r2, rowEnd);
