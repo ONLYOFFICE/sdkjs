@@ -666,13 +666,7 @@ function (window, undefined) {
 			//physical head shorter than the array it stands for, and reading the physical one both truncates
 			//the result and makes the out-of-range guards below fire on cells that are in range.
 			let logicalSize = arg0.getDimensions();
-			let headSize = arg0.getDimensions(true);
 			let tempArraySize, maxArraySize = {row: logicalSize.row, col: logicalSize.col};
-			//the lazy tail is carried over to the result instead of being walked cell by cell
-			let lazyIndex = cElementType.array === arg0.type && arg0.hasLazyTail && arg0.hasLazyTail();
-			//iterate the stored part only; everything past it is served by the tail composed after the loop
-			let arg0Rows = lazyIndex ? headSize.row : logicalSize.row;
-			let arg0Cols = lazyIndex ? headSize.col : logicalSize.col;
 
 			// get max array size by first loop
 			arg0.foreach2(function (elem) {
@@ -683,6 +677,11 @@ function (window, undefined) {
 					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
 				}
 			});
+
+			let headSize = arg0.getDimensions(true);
+			let lazyIndex = cElementType.array === arg0.type && arg0.hasLazyTail && arg0.hasLazyTail();
+			let arg0Rows = lazyIndex ? headSize.row : logicalSize.row;
+			let arg0Cols = lazyIndex ? headSize.col : logicalSize.col;
 
 			for (let r = 0; r < arg0Rows; r++) {
 				for (let c = 0; c < arg0Cols; c++) {

@@ -4981,12 +4981,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						} else if (_ttInfo.isRange) {
 							_composable = false;
 							break;
-						} else if (_tta && (cElementType.cell === _tta.type || cElementType.cell3D === _tta.type)) {
-							//getUnusedTailArgs answers by comparing values, so a single-cell reference has to
-							//be read here - otherwise the branch a reference selects is declared dead
-							_tailArgs[_tj] = _tta.getValue();
 						} else {
 							_tailArgs[_tj] = _tta;
+						}
+					}
+					if (_composable) {
+						//a tail value can be a single-cell reference in two ways: the argument itself, or the
+						//constant tail an argument carries (CHOOSE hands back the reference it picked). the
+						//function below answers by comparing values, so it has to be read here - otherwise the
+						//branch the reference selects is declared dead
+						for (var _dj = 0; _dj < argumentsCount; _dj++) {
+							var _dv = _tailArgs[_dj];
+							if (_dv && (cElementType.cell === _dv.type || cElementType.cell3D === _dv.type)) {
+								_tailArgs[_dj] = _dv.getValue();
+							}
 						}
 					}
 					if (_composable && _perCellArgs) {
