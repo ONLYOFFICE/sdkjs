@@ -9913,51 +9913,15 @@
 	 * Selects a range of cells in the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} startCellIndex - The start cell index within the start row.
 	 * @param {number} startRowIndex - The start row index.
-	 * @param {number} endCellIndex - The end cell index within the end row.
+	 * @param {number} startCellIndex - The start cell index within the start row.
 	 * @param {number} endRowIndex - The end row index.
+	 * @param {number} endCellIndex - The end cell index within the end row.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SelectRange.js
 	 */
-	ApiTable.prototype.SelectRange = function(startCellIndex, startRowIndex, endCellIndex, endRowIndex) {
-		startCellIndex = AscBuilder.GetIntParameter(startCellIndex, null);
-		if (null === startCellIndex)
-			AscBuilder.throwException("Start cell index must be a number");
-
-		startRowIndex = AscBuilder.GetIntParameter(startRowIndex, null);
-		if (null === startRowIndex)
-			AscBuilder.throwException("Start row index must be a number");
-
-		endCellIndex = AscBuilder.GetIntParameter(endCellIndex, null);
-		if (null === endCellIndex)
-			AscBuilder.throwException("End cell index must be a number");
-
-		endRowIndex = AscBuilder.GetIntParameter(endRowIndex, null);
-		if (null === endRowIndex)
-			AscBuilder.throwException("End row index must be a number");
-
-		let startRow = this.Table.GetRow(startRowIndex);
-		if (!startRow || startRowIndex < 0 || startRowIndex >= this.Table.Content.length)
-			AscBuilder.throwException("Start row index " + startRowIndex + " is out of bounds [0, " + (this.Table.GetRowsCount() - 1) + "]");
-
-		if (startCellIndex < 0 || startCellIndex >= startRow.Content.length)
-			AscBuilder.throwException("Start cell index " + startCellIndex + " is out of bounds [0, " + (startRow.Content.length - 1) + "]");
-
-		let endRow = this.Table.GetRow(endRowIndex);
-		if (!endRow || endRowIndex < 0 || endRowIndex >= this.Table.Content.length)
-			AscBuilder.throwException("End row index " + endRowIndex + " is out of bounds [0, " + (this.Table.GetRowsCount() - 1) + "]");
-
-		if (endCellIndex < 0 || endCellIndex >= endRow.Content.length)
-			AscBuilder.throwException("End cell index " + endCellIndex + " is out of bounds [0, " + (endRow.Content.length - 1) + "]");
-
-		let oLogicDocument = private_GetLogicDocument();
-		oLogicDocument.RemoveSelection();
-		this.Table.SelectRange(startCellIndex, startRowIndex, endCellIndex, endRowIndex);
-		this.Table.Document_SetThisElementCurrent(true);
-		return true;
-	};
+	ApiTable.prototype.SelectRange = AscBuilder.ApiTable.prototype.SelectRange;
 
 	/**
 	 * Returns the selected cells of the current table.
@@ -11158,7 +11122,7 @@
 
 		let cellIndex = this.GetIndex();
 		let rowIndex = this.GetRowIndex();
-		return oTable.SelectRange(cellIndex, rowIndex, cellIndex, rowIndex);
+		return oTable.SelectRange(rowIndex, cellIndex, rowIndex, cellIndex);
 	};
 
 	/**

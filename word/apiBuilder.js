@@ -15576,30 +15576,30 @@
 	 * Selects a range of cells in the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE", "CPE"]
-	 * @param {number} startCellIndex - The start cell index within the start row.
 	 * @param {number} startRowIndex - The start row index.
-	 * @param {number} endCellIndex - The end cell index within the end row.
+	 * @param {number} startCellIndex - The start cell index within the start row.
 	 * @param {number} endRowIndex - The end row index.
+	 * @param {number} endCellIndex - The end cell index within the end row.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SelectRange.js
 	 */
-	ApiTable.prototype.SelectRange = function(startCellIndex, startRowIndex, endCellIndex, endRowIndex) {
-		startCellIndex = GetIntParameter(startCellIndex, null);
-		if (null === startCellIndex)
-			throwException(new Error("Start cell index must be a number"));
-
+	ApiTable.prototype.SelectRange = function(startRowIndex, startCellIndex, endRowIndex, endCellIndex) {
 		startRowIndex = GetIntParameter(startRowIndex, null);
 		if (null === startRowIndex)
 			throwException(new Error("Start row index must be a number"));
 
-		endCellIndex = GetIntParameter(endCellIndex, null);
-		if (null === endCellIndex)
-			throwException(new Error("End cell index must be a number"));
+		startCellIndex = GetIntParameter(startCellIndex, null);
+		if (null === startCellIndex)
+			throwException(new Error("Start cell index must be a number"));
 
 		endRowIndex = GetIntParameter(endRowIndex, null);
 		if (null === endRowIndex)
 			throwException(new Error("End row index must be a number"));
+
+		endCellIndex = GetIntParameter(endCellIndex, null);
+		if (null === endCellIndex)
+			throwException(new Error("End cell index must be a number"));
 
 		let startRow = this.Table.GetRow(startRowIndex);
 		if (!startRow || startRowIndex < 0 || startRowIndex >= this.Table.Content.length)
@@ -33426,7 +33426,7 @@
 		let result = parseInt(parameter);
 		if (isNaN(result) || ("" + result) !== ("" + parameter))
 			return defaultValue;
-		
+
 		return result;
 	}
 	/**

@@ -8710,7 +8710,11 @@
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
 	 */
-	ApiTable.prototype.GetSelectedCells = function(){
+	ApiTable.prototype.GetSelectedCells = function()
+	{
+		if (!this.Table.IsCellSelection())
+			return [];
+		
 		let cells = [];
 		let positions = this.Table.GetSelectionArray();
 		for (let nPos = 0; nPos < positions.length; nPos++)
@@ -8718,7 +8722,7 @@
 			let pos = positions[nPos];
 			cells.push(this.GetCell(pos.Row, pos.Cell));
 		}
-		return cells
+		return cells;
 	};
 
 	/**
@@ -8753,52 +8757,15 @@
 	 * Selects a range of cells in the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @param {number} startCellIndex - The start cell index within the start row.
 	 * @param {number} startRowIndex - The start row index.
-	 * @param {number} endCellIndex - The end cell index within the end row.
+	 * @param {number} startCellIndex - The start cell index within the start row.
 	 * @param {number} endRowIndex - The end row index.
+	 * @param {number} endCellIndex - The end cell index within the end row.
 	 * @returns {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SelectRange.js
 	 */
-	ApiTable.prototype.SelectRange = function(startCellIndex, startRowIndex, endCellIndex, endRowIndex) {
-		startCellIndex = GetIntParameter(startCellIndex, null);
-		if (null === startCellIndex)
-			AscBuilder.throwException(new Error("Start cell index must be a number"));
-
-		startRowIndex = GetIntParameter(startRowIndex, null);
-		if (null === startRowIndex)
-			AscBuilder.throwException(new Error("Start row index must be a number"));
-
-		endCellIndex = GetIntParameter(endCellIndex, null);
-		if (null === endCellIndex)
-			AscBuilder.throwException(new Error("End cell index must be a number"));
-
-		endRowIndex = GetIntParameter(endRowIndex, null);
-		if (null === endRowIndex)
-			AscBuilder.throwException(new Error("End row index must be a number"));
-
-		let startRow = this.Table.GetRow(startRowIndex);
-		if (!startRow || startRowIndex < 0 || startRowIndex >= this.Table.Content.length)
-			AscBuilder.throwException(new Error("Start row index " + startRowIndex + " is out of bounds [0, " + (this.Table.GetRowsCount() - 1) + "]"));
-
-		if (startCellIndex < 0 || startCellIndex >= startRow.Content.length)
-			AscBuilder.throwException(new Error("Start cell index " + startCellIndex + " is out of bounds [0, " + (startRow.Content.length - 1) + "]"));
-
-		let endRow = this.Table.GetRow(endRowIndex);
-		if (!endRow || endRowIndex < 0 || endRowIndex >= this.Table.Content.length)
-			AscBuilder.throwException(new Error("End row index " + endRowIndex + " is out of bounds [0, " + (this.Table.GetRowsCount() - 1) + "]"));
-
-		if (endCellIndex < 0 || endCellIndex >= endRow.Content.length)
-			AscBuilder.throwException(new Error("End cell index " + endCellIndex + " is out of bounds [0, " + (endRow.Content.length - 1) + "]"));
-
-		let oPresentation = private_GetPresentation();
-		oPresentation.RemoveSelection();
-		this.Table.SelectRange(startCellIndex, startRowIndex, endCellIndex, endRowIndex);
-		this.Table.Document_SetThisElementCurrent(true);
-		this.Table.private_UpdateSelectedCellsArray();
-		return true;
-	};
+	ApiTable.prototype.SelectRange = AscBuilder.ApiTable.prototype.SelectRange;
 
     /**
      * Specifies the shading which shall be applied to the extents of the current table.
