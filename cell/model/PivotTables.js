@@ -6948,7 +6948,8 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicers = function(pivot
 		}
 	}
 	wb.deleteSlicersByPivotTableAndFields(sheetId, pivotName, cacheFieldsToDelete);
-	this.replaceSlicersPivotCacheDefinition(this.cacheDefinition, pivotCacheDefinition);
+	// do not notify slicer views here: their items are resynced later in _updateCacheDataUpdateSlicersPost
+	this.setSlicersPivotCacheDefinition(this.cacheDefinition, pivotCacheDefinition);
 };
 CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicersPost = function() {
 	var wb = this.worksheet.workbook;
@@ -6957,15 +6958,15 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicersPost = function()
 	this.syncSlicersWithPivot({});
 	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
 };
-CT_pivotTableDefinition.prototype.replaceSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
-	var wb = this.worksheet.workbook;
-	var sheetId = this.worksheet.getId();
-	var pivotName = this.name;
+CT_pivotTableDefinition.prototype.setSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
 	var slicerCaches = this.worksheet.workbook.getSlicerCachesByPivotCacheId(oldCacheDefinition.getPivotCacheId());
 	slicerCaches.forEach(function(slicerCache) {
 		slicerCache.setPivotCacheDefinition(newCacheDefinition);
 	});
-	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
+};
+CT_pivotTableDefinition.prototype.replaceSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
+	this.setSlicersPivotCacheDefinition(oldCacheDefinition, newCacheDefinition);
+	this.worksheet.workbook.slicersUpdateAfterChangePivotTable(this.worksheet.getId(), this.name);
 };
 CT_pivotTableDefinition.prototype.asc_create = function(ws, name, cacheDefinition, bbox) {
 	this.worksheet = ws;
