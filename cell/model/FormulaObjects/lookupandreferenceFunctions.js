@@ -636,6 +636,11 @@ function (window, undefined) {
 		const args = arguments;
 		let arg0 = arg[0];
 
+		const asElementValue = function (_elem) {
+			return (cElementType.cell === _elem.type || cElementType.cell3D === _elem.type) ?
+				_elem.getValue() : _elem;
+		};
+
 		const chooseArgument = function (_arg0) {
 			if (cElementType.cellsRange === _arg0.type || cElementType.cellsRange3D === _arg0.type) {
 				_arg0 = _arg0.cross(args[1]);
@@ -666,22 +671,39 @@ function (window, undefined) {
 			//physical head shorter than the array it stands for, and reading the physical one both truncates
 			//the result and makes the out-of-range guards below fire on cells that are in range.
 			let logicalSize = arg0.getDimensions();
+			let lazyIndex = cElementType.array === arg0.type && arg0.hasLazyTail && arg0.hasLazyTail();
+			let indexTailFn = lazyIndex ? arg0.getMissedValueFn() : null;
+			let headRows = lazyIndex ? arg0.rowCount : 0;
+			let headCols = lazyIndex && arg0.countElementInRow.length ? arg0.countElementInRow[0] : 0;
 			let tempArraySize, maxArraySize = {row: logicalSize.row, col: logicalSize.col};
+			let arg0Rows = lazyIndex ? headRows : logicalSize.row;
+			let arg0Cols = lazyIndex ? headCols : logicalSize.col;
 
-			// get max array size by first loop
-			arg0.foreach2(function (elem) {
+			const growByChosen = function (elem) {
+				if (!elem) {
+					return;
+				}
 				let chosenArgument = chooseArgument(elem);
 				if (chosenArgument && chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D || chosenArgument.type === cElementType.array) {
 					tempArraySize = chosenArgument.getDimensions();
 					maxArraySize.row = tempArraySize.row > maxArraySize.row ? tempArraySize.row : maxArraySize.row;
 					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
 				}
-			});
+			};
 
-			let headSize = arg0.getDimensions(true);
-			let lazyIndex = cElementType.array === arg0.type && arg0.hasLazyTail && arg0.hasLazyTail();
-			let arg0Rows = lazyIndex ? headSize.row : logicalSize.row;
-			let arg0Cols = lazyIndex ? headSize.col : logicalSize.col;
+
+			if (lazyIndex) {
+				for (let sizeRow = 0; sizeRow < arg0Rows; sizeRow++) {
+					for (let sizeCol = 0; sizeCol < arg0Cols; sizeCol++) {
+						growByChosen(arg0.getValue2(sizeRow, sizeCol));
+					}
+				}
+				if (!indexTailFn) {
+					growByChosen(arg0.getMissedValue());
+				}
+			} else {
+				arg0.foreach2(growByChosen);
+			}
 
 			for (let r = 0; r < arg0Rows; r++) {
 				for (let c = 0; c < arg0Cols; c++) {
@@ -720,6 +742,7 @@ function (window, undefined) {
 							if (elemFromChosenArgument === undefined) {
 								elemFromChosenArgument = new cEmpty();
 							}
+							elemFromChosenArgument = asElementValue(elemFromChosenArgument);
 
 							singleRow ? tempArr.push([elemFromChosenArgument]) : tempArr.push(elemFromChosenArgument);
 						}
@@ -746,6 +769,7 @@ function (window, undefined) {
 						if (elemFromChosenArgument === undefined) {
 							elemFromChosenArgument = new cEmpty();
 						}
+						elemFromChosenArgument = asElementValue(elemFromChosenArgument);
 
 						if (!resArr.array[r]) {
 							resArr.addRow();
@@ -762,15 +786,14 @@ function (window, undefined) {
 				const pickFromChosen = function (chosen, r, c) {
 					if (chosen.type !== cElementType.array && chosen.type !== cElementType.cellsRange &&
 						chosen.type !== cElementType.cellsRange3D) {
-						return chosen;
+						return asElementValue(chosen);
 					}
 					let d = chosen.getDimensions();
 					let pr = 1 === d.row ? 0 : r, pc = 1 === d.col ? 0 : c;
 					let e = chosen.getElementRowCol ? chosen.getElementRowCol(pr, pc) : chosen.getValueByRowCol(pr, pc);
-					return undefined === e ? new cEmpty() : e;
+					return undefined === e ? new cEmpty() : asElementValue(e);
 				};
 				resArr.setRealArraySize(maxArraySize.row, maxArraySize.col);
-				let indexTailFn = arg0.getMissedValueFn();
 				if (indexTailFn) {
 					resArr.setMissedValueFn(function (r, c) {
 						return pickFromChosen(chooseArgument(indexTailFn(r, c)), r, c);
@@ -783,7 +806,7 @@ function (window, undefined) {
 							return pickFromChosen(chosenTail, r, c);
 						});
 					} else {
-						resArr.setMissedValue(chosenTail);
+						resArr.setMissedValue(asElementValue(chosenTail));
 					}
 				}
 			} else if (resArr.getRowCount(true) < maxArraySize.row) {
@@ -1768,7 +1791,8 @@ function (window, undefined) {
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
 					res = arg0.getValue();
 				}
-			} else if (cElementType.error !== arg0.type) {
+			} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+				cElementType.bool === arg0.type) {
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
 					res = arg0;
 				}
