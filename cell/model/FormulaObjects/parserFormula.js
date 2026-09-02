@@ -8426,8 +8426,11 @@ function parserFormula( formula, parent, _ws ) {
 					return oRange.containCell2(parserFormula.getParent());
 				}
 			} else if (nOperandType === cElementType.table) {
-				let oRefElem = found_operand.toRef();
-				oRange = oRefElem.getRange();
+				const oParent = parserFormula.getParent();
+				const oParentRange = oParent.onFormulaEvent &&
+					oParent.onFormulaEvent(AscCommon.c_oNotifyParentType.GetRangeCell);
+				let oRefElem = found_operand.toRef(oParentRange);
+				oRange = oRefElem && oRefElem.getRange && oRefElem.getRange();
 			} else {
 				oRange = found_operand && found_operand.getRange && found_operand.getRange();
 			}
