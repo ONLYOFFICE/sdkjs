@@ -357,9 +357,6 @@
         return nCurrentH / nSourceH;
     };
     CAnnotationStamp.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() == true)
-            return;
-            
         let nScale      = this.GetOriginViewScale();
         let originView  = this.GetOriginView(oGraphicsPDF.GetDrawingPageW() * nScale, oGraphicsPDF.GetDrawingPageH() * nScale);
         let nRot        = -this.GetRotate() * Math.PI / 180;

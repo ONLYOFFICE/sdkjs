@@ -1309,9 +1309,6 @@
     };
 
     CPushButtonField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-        
         let oViewer = editor.getDocumentRenderer();
         oGraphicsPDF.SetGlobalAlpha(1);
         

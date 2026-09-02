@@ -678,9 +678,6 @@
         return this._wasChanged;  
     };
     CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() == true)
-            return;
-            
         let originView = this.GetOriginView(oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
 
         if (originView) {
