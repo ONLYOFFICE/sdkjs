@@ -549,10 +549,7 @@ CChangesPDFAnnotRC.prototype.private_SetValue = function(Value)
 	oAnnot.SetNeedRecalc(true);
 
 	oAnnot.private_UpdateRichContent && oAnnot.private_UpdateRichContent();
-
-	let oCommentData = new AscCommon.CCommentData();
-	oCommentData.Read_FromAscCommentData(oAnnot.GetAscCommentData());
-	Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommentData);
+	oAnnot.private_onChangeComment();
 };
 
 CChangesPDFAnnotRC.prototype.WriteToBinary = function(Writer)
@@ -744,12 +741,7 @@ CChangesPDFAnnotReply.prototype.Undo = function()
         }
     }
 
-	let oAscCommData = oAnnot.GetAscCommentData();
-	if (oAscCommData) {
-		let oCommData = new AscCommon.CCommentData();
-		oCommData.Read_FromAscCommentData(oAscCommData);
-		Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommData);
-	}
+	oAnnot.private_onChangeComment();
 };
 CChangesPDFAnnotReply.prototype.Redo = function()
 {
@@ -768,12 +760,7 @@ CChangesPDFAnnotReply.prototype.Redo = function()
         }
     }
 
-	let oAscCommData = oAnnot.GetAscCommentData();
-	if (oAscCommData) {
-		let oCommData = new AscCommon.CCommentData();
-		oCommData.Read_FromAscCommentData(oAscCommData);
-		Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommData);
-	}
+	oAnnot.private_onChangeComment();
 };
 CChangesPDFAnnotReply.prototype.Load = function() {
     if (this.IsAdd()) {
@@ -802,12 +789,7 @@ CChangesPDFAnnotReply.prototype.private_InsertInArrayLoad = function()
         oAnnot._replies.splice(nPos, 0, oItem);
     }
 
-	let oAscCommData = oAnnot.GetAscCommentData();
-	if (oAscCommData) {
-		let oCommData = new AscCommon.CCommentData();
-		oCommData.Read_FromAscCommentData(oAscCommData);
-		Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommData);
-	}
+	oAnnot.private_onChangeComment();
 };
 CChangesPDFAnnotReply.prototype.private_RemoveInArrayLoad = function()
 {
@@ -830,12 +812,7 @@ CChangesPDFAnnotReply.prototype.private_RemoveInArrayLoad = function()
             oAnnot._replies.splice(indexInArray, 1);
     }
 
-	let oAscCommData = oAnnot.GetAscCommentData();
-	if (oAscCommData) {
-		let oCommData = new AscCommon.CCommentData();
-		oCommData.Read_FromAscCommentData(oAscCommData);
-		Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommData);
-	}
+	oAnnot.private_onChangeComment();
 };
 CChangesPDFAnnotReply.prototype.private_GetContentChanges = function() {
     return this.Class.repliesArrayChanges;
@@ -1105,6 +1082,7 @@ CChangesPDFAnnotContents.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._contents = Value;
+	oAnnot.private_onChangeComment();
 };
 
 /**
@@ -1140,12 +1118,7 @@ CChangesPDFAnnotModDate.prototype.private_SetValue = function(Value)
 	let oAnnot = this.Class;
 	oAnnot._modDate = Value;
 	
-	let oAscCommData = oAnnot.GetAscCommentData();
-	if (oAscCommData) {
-		let oCommData = new AscCommon.CCommentData();
-		oCommData.Read_FromAscCommentData(oAscCommData);
-		Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommData);
-	}
+	oAnnot.private_onChangeComment();
 };
 
 /**
@@ -1163,12 +1136,7 @@ CChangesPDFAnnotUserId.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetUserId(Value);
-	let oAscCommData = oAnnot.GetAscCommentData();
-	if (oAscCommData) {
-		let oCommData = new AscCommon.CCommentData();
-		oCommData.Read_FromAscCommentData(oAscCommData);
-		Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommData);
-	}
+	oAnnot.private_onChangeComment();
 };
 
 /**
@@ -1186,12 +1154,7 @@ CChangesPDFAnnotAuthor.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetAuthor(Value);
-	let oAscCommData = oAnnot.GetAscCommentData();
-	if (oAscCommData) {
-		let oCommData = new AscCommon.CCommentData();
-		oCommData.Read_FromAscCommentData(oAscCommData);
-		Asc.editor.sync_ChangeCommentData(oAnnot.GetId(), oCommData);
-	}
+	oAnnot.private_onChangeComment();
 };
 
 /**

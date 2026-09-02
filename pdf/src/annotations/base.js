@@ -230,12 +230,7 @@
 		this._replies.splice(nPos, 0, oReplyAnnot);
 		
 		AscCommon.History.Add(new CChangesPDFAnnotReply(this, nPos, [oReplyAnnot], true));
-
-		let oAscCommData = this.GetAscCommentData();
-        let oCommentData = new AscCommon.CCommentData();
-		oCommentData.Read_FromAscCommentData(oAscCommData);
-
-		Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
+		this.private_onChangeComment();
 	};
     CAnnotationBase.prototype.Add_ContentChanges = function(Changes) {
         this.repliesArrayChanges.Add(Changes);
@@ -1094,6 +1089,7 @@
 
         this._display = nType;
         this.SetWasChanged(true);
+		this.AddToRedraw();
     };
     CAnnotationBase.prototype.GetDisplay = function() {
         return this._display;
@@ -1107,12 +1103,20 @@
         if (this._contents == contents)
             return;
 
+		AscCommon.History.Add(new CChangesPDFAnnotContents(this, this._contents, contents));
+
         this._contents = contents;
         
-        AscCommon.History.Add(new CChangesPDFAnnotContents(this, this._contents, contents));
-        
         this.SetWasChanged(true, false);
+		this.private_onChangeComment();
     };
+	CAnnotationBase.prototype.private_onChangeComment = function() {
+		let oAscCommData = this.GetAscCommentData();
+        let oCommentData = new AscCommon.CCommentData();
+		oCommentData.Read_FromAscCommentData(oAscCommData);
+
+		Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
+	};
     CAnnotationBase.prototype.Recalculate = function(bForce) {
         if (!this.IsShapeBased()) {
             return;

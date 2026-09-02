@@ -636,6 +636,10 @@
         if (this.GetContents() == contents)
             return;
 
+		if (this.IsInTextBox()) {
+			this.Blur(false);
+		}
+
         this.SetRichContents([{
 			"alignment": 0,
 			"bold": false,
@@ -653,14 +657,23 @@
 		}]);
 
         this.SetWasChanged(true);
+		this.private_onChangeComment();
     };
 	CAnnotationFreeText.prototype.GetContents = function() {
-		let sText = this.GetDocContent().GetText({ParaSeparator: ""});
-		if (sText.length > 1) {
-			return sText;
+		let aRichContents = this.GetRichContents();
+		if (!Array.isArray(aRichContents) || aRichContents.length === 0) {
+			return null;
 		}
 
-		return null;
+		let sText = "";
+		aRichContents.forEach(function(oItem) {
+			if (oItem && typeof oItem.text === "string") {
+				sText += oItem.text;
+			}
+		});
+
+		sText = sText.replace(/[\r\n]/g, "");
+		return sText.length > 0 ? sText : null;
 	};
     CAnnotationFreeText.prototype.IsNeedUpdateRC = function() {
         let aCurRC = this.GetRichContents();
@@ -1015,39 +1028,47 @@
     };
     /**
 	 * Exit from this annot.
-	 * @memberof CTextField
+	 * @memberof CAnnotationFreeText
 	 * @typeofeditors ["PDF"]
 	 */
-    CAnnotationFreeText.prototype.Blur = function() {
+    CAnnotationFreeText.prototype.Blur = function(createNewPoint) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
 
         oContent.SetApplyToAll(true);
-		let sText = oContent.GetSelectedText(false, {ParaSeparator: ''});
 		oContent.SetApplyToAll(false);
 
         let isNeedUpdateRC = this.IsNeedUpdateRC();
-        if ((this.GetContents() != sText || isNeedUpdateRC) && this.IsInTextBox()) {
-            oDoc.DoAction(function() {
-                this.GetContents() != sText && this.SetContents(sText);
-            
-				let aCurRc = this.GetRichContents();
-				let aNewRc = this.GetRichContents(true);
-                    
-				this._richContents = aNewRc;
+		
+		let _t = this;
+		function doBlur() {
+			let aCurRc = _t.GetRichContents();
+			let aNewRc = _t.GetRichContents(true);
+				
+			_t._richContents = aNewRc;
 
-                if (isNeedUpdateRC) {
-                    oDoc.History.Add(new CChangesFreeTextCallout(this, this._prevCallout, this.GetCallout()));
-                    oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
-                    oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
-					oDoc.History.Add(new CChangesPDFAnnotRC(this, aCurRc, aNewRc));
-                    oDoc.private_UpdateTargetForCollaboration(true);
+			if (isNeedUpdateRC) {
+				oDoc.History.Add(new CChangesFreeTextCallout(_t, _t._prevCallout, _t.GetCallout()));
+				oDoc.History.Add(new CChangesPDFAnnotRD(_t, _t._prevRectDiff, _t.GetRectangleDiff()));
+				oDoc.History.Add(new CChangesPDFAnnotRect(_t, _t._prevRect, _t.GetRect()));
+				oDoc.History.Add(new CChangesPDFAnnotRC(_t, aCurRc, aNewRc));
+				oDoc.private_UpdateTargetForCollaboration(true);
 
-					let oCommentData = new AscCommon.CCommentData();
-					oCommentData.Read_FromAscCommentData(this.GetAscCommentData());
-					Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
-                }
-            }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
+				let oCommentData = new AscCommon.CCommentData();
+				oCommentData.Read_FromAscCommentData(_t.GetAscCommentData());
+				Asc.editor.sync_ChangeCommentData(_t.GetId(), oCommentData);
+			}
+		}
+
+        if (isNeedUpdateRC && this.IsInTextBox()) {
+			if (createNewPoint !== false) {
+				oDoc.DoAction(function() {
+					doBlur();
+				}, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
+			}
+            else {
+				doBlur();
+			}
         }
         
         this.SetInTextBox(false);
