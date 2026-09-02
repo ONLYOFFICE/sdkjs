@@ -15005,6 +15005,15 @@ background-repeat: no-repeat;\
 		
 		logicDocument.ScrollToTarget();
 	};
+	
+	asc_docs_api.prototype.asc_scrollToUserCursor = function(userId)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+
+		logicDocument.ScrollToForeignCursor(userId);
+	};
 
 	asc_docs_api.prototype.asc_followUser = function(userId)
 	{
@@ -15875,6 +15884,7 @@ background-repeat: no-repeat;\
 	
 	asc_docs_api.prototype['getJsApi'] = asc_docs_api.prototype.getJsApi;
 	asc_docs_api.prototype['scrollToTarget'] = asc_docs_api.prototype.scrollToTarget;
+	asc_docs_api.prototype['asc_scrollToUserCursor'] = asc_docs_api.prototype.asc_scrollToUserCursor;
 	asc_docs_api.prototype['asc_followUser'] = asc_docs_api.prototype.asc_followUser;
 	
 	CContextMenuData.prototype['get_Type']    = CContextMenuData.prototype.get_Type;
