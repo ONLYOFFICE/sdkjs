@@ -9445,6 +9445,28 @@ CTable.prototype.Set_TableShd = function(Value, r, g, b)
 	this.Pr.Shd = _Shd;
 	this.Recalc_CompiledPr();
 };
+CTable.prototype.Set_Shd = function(Shd)
+{
+	if (undefined === Shd && undefined === this.Pr.Shd)
+		return;
+
+	if (undefined === Shd)
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesTableTableShd(this, this.Pr.Shd, undefined));
+		this.Pr.Shd = undefined;
+		this.Recalc_CompiledPr();
+	}
+	else if (undefined === this.Pr.Shd || false === this.Pr.Shd.Compare(Shd))
+	{
+		this.private_AddPrChange();
+		var _Shd = new CDocumentShd();
+		_Shd.Set_FromObject(Shd);
+		AscCommon.History.Add(new CChangesTableTableShd(this, this.Pr.Shd, _Shd));
+		this.Pr.Shd = _Shd;
+		this.Recalc_CompiledPr();
+	}
+};
 CTable.prototype.Get_Shd = function()
 {
 	var Pr = this.Get_CompiledPr(false).TablePr;

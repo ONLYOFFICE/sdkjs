@@ -9423,6 +9423,9 @@
 
 	ApiTable.prototype = Object.create(ApiDrawing.prototype);
 	ApiTable.prototype.constructor = ApiTable;
+	
+	ApiTable.prototype.private_RefreshTable = function()
+	{};
 
 	/**
 	 * Returns the type of the ApiTable object.
@@ -9931,7 +9934,7 @@
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
 	 */
-	ApiTable.prototype.GetSelectedCells = AscBuilder.ApiTable.prototype.SelectRange;
+	ApiTable.prototype.GetSelectedCells = AscBuilder.ApiTable.prototype.GetSelectedCells;
 
 	/**
 	 * Returns all cells from the columns that contain the currently selected cells.
@@ -9953,7 +9956,7 @@
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedRows.js
 	 */
-	ApiTable.prototype.GetSelectedRows = AscBuilder.ApiTable.prototype.GetSelectedColumnsCells;
+	ApiTable.prototype.GetSelectedRows = AscBuilder.ApiTable.prototype.GetSelectedRows;
 
 	/**
 	 * Adds the new rows to the current table.
@@ -10033,26 +10036,11 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function(color) {
-		if (!color || !(color instanceof AscBuilder.ApiColor))
-			return false;
-		let aContent = this.Table.Content;
-		let allCellsUpdated = true;
-		for (let nRow = 0; nRow < aContent.length; nRow++) {
-			let oRow = aContent[nRow];
-			if (!oRow) { allCellsUpdated = false; continue; }
-			for (let nCell = 0; nCell < oRow.Content.length; nCell++) {
-				let oCell = new ApiTableCell(oRow.Content[nCell]);
-				if (!oCell.SetBackgroundColor.apply(oCell, arguments))
-					allCellsUpdated = false;
-			}
-		}
-		return allCellsUpdated;
-	};
-
+	ApiTable.prototype.SetBackgroundColor = AscBuilder.ApiTable.prototype.SetBackgroundColor;
+	
 	/**
 	 * Sets the table title.
 	 * @memberof ApiTable
@@ -10363,7 +10351,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
 	 */
 	ApiTableRow.prototype.SetBackgroundColor = AscBuilder.ApiTableRow.prototype.SetBackgroundColor;
@@ -10458,6 +10446,9 @@
 	function ApiTableCell(oCell) {
 		this.Cell = oCell;
 	}
+	
+	ApiTableCell.prototype.private_RefreshTable = function()
+	{};
 
 	/**
 	 * Returns the type of the ApiTableCell class.
@@ -10633,49 +10624,11 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared (see arguments below for RGB triplet form).
 	 * @return {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetBackgroundColor = function(color) {
-		let r, g, b;
-		let bNone;
-		let isAuto, isTheme;
-
-		if (color instanceof AscBuilder.ApiColor) {
-			const rgb = color.GetRGB();
-			r = rgb['r'];
-			g = rgb['g'];
-			b = rgb['b'];
-			bNone = false;
-			isAuto = color.IsAutoColor();
-			isTheme = color.IsThemeColor();
-		} else {
-			r = AscBuilder.GetIntParameter(arguments[0], 0);
-			g = AscBuilder.GetIntParameter(arguments[1], 0);
-			b = AscBuilder.GetIntParameter(arguments[2], 0);
-			bNone = AscBuilder.GetBoolParameter(arguments[3], false);
-			isAuto = false;
-			isTheme = false;
-		}
-
-		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
-			return false;
-
-		const oUnifill = isTheme
-			? color.private_createUnifill()
-			: Api.RGB(r, g, b).private_createUnifill();
-
-		const oNewShd = {
-			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
-			Fill: {r: r, g: g, b: b, Auto: isAuto},
-			ThemeFill: isTheme ? oUnifill : undefined,
-			Unifill: oUnifill
-		};
-
-		this.Cell.Set_Shd(oNewShd);
-		return true;
-	};
-
+	ApiTableCell.prototype.SetBackgroundColor = AscBuilder.ApiTableCell.prototype.SetBackgroundColor;
+	
 	/**
 	 * Specifies an amount of space which shall be left between the top extent of the current cell contents and the
 	 * top edge border of a specific individual table cell within a table.

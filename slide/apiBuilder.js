@@ -9137,28 +9137,10 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function(color)
-	{
-		if (!color || !(color instanceof AscBuilder.ApiColor))
-			return false;
-		let aContent = this.Table.Content;
-		let allCellsUpdated = true;
-		for (let nRow = 0; nRow < aContent.length; nRow++)
-		{
-			let oRow = aContent[nRow];
-			if (!oRow) { allCellsUpdated = false; continue; }
-			for (let nCell = 0; nCell < oRow.Content.length; nCell++)
-			{
-				let oCell = new ApiTableCell(oRow.Content[nCell]);
-				if (!oCell.SetBackgroundColor.apply(oCell, arguments))
-					allCellsUpdated = false;
-			}
-		}
-		return allCellsUpdated;
-	};
+	ApiTable.prototype.SetBackgroundColor = AscBuilder.ApiTable.prototype.SetBackgroundColor;
 
 	/**
 	 * Sets the table title.
@@ -9441,7 +9423,7 @@
 	 * Sets the background color to all cells in the current table row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
@@ -9628,55 +9610,12 @@
 	 * Sets the background color to the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetBackgroundColor = function (color)
-	{
-		let r, g, b;
-		let bNone;
-		let isAuto, isTheme;
-
-		if (color instanceof AscBuilder.ApiColor)
-		{
-			const rgb = color.GetRGB();
-			r = rgb['r'];
-			g = rgb['g'];
-			b = rgb['b'];
-			bNone = false;
-			isAuto = color.IsAutoColor();
-			isTheme = color.IsThemeColor();
-		}
-		else
-		{
-			r = GetIntParameter(arguments[0], 0);
-			g = GetIntParameter(arguments[1], 0);
-			b = GetIntParameter(arguments[2], 0);
-			bNone = GetBoolParameter(arguments[3], false);
-			isAuto = false;
-			isTheme = false;
-		}
-
-		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
-			return false;
-
-		const oUnifill = isTheme
-			? color.private_createUnifill()
-			: Api.RGB(r, g, b).private_createUnifill();
-
-		const oNewShd = {
-			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
-			Fill: { r: r, g: g, b: b, Auto: isAuto },
-			ThemeFill: isTheme ? oUnifill : undefined,
-			Unifill: oUnifill,
-		};
-
-		this.Cell.Set_Shd(oNewShd);
-		this.private_RefreshTable();
-		return true;
-	};
+	ApiTableCell.prototype.SetBackgroundColor = AscBuilder.ApiTableCell.prototype.SetBackgroundColor;
 
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.

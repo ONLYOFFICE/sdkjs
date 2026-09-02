@@ -15136,16 +15136,22 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function (color) {
-		let allRowsUpdated = true;
-	
-		for (let nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++) {
-			const oRow = this.GetRow(nRow);
-			const rowUpdated = oRow.SetBackgroundColor.apply(oRow, arguments);
-			if (!rowUpdated) allRowsUpdated = false;
-		}
+	ApiTable.prototype.SetBackgroundColor = function(color) 
+	{
+		let shd = private_GetTableBackgroundShd(color, arguments);
+		if (!shd)
+			throwException(new Error("color must be a valid ApiColor, or valid RGB components (r, g, b) in range 0-255"));
 
-		return allRowsUpdated;
+		this.Table.Set_Shd(shd);
+		this.private_RefreshTable();
+
+		let result = true;
+		for (let rowIndex = 0, rowCount = this.GetRowsCount(); rowIndex < rowCount; ++rowIndex)
+		{
+			const row = this.GetRow(rowIndex);
+			result = result && row.SetBackgroundColor.apply(row, arguments);
+		}
+		return result;
 	};
 	
 	/**
@@ -16007,20 +16013,17 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
 	 */
-	ApiTableRow.prototype.SetBackgroundColor = function (color)
+	ApiTableRow.prototype.SetBackgroundColor = function(color)
 	{
-		if (!(color instanceof ApiColor))
-			throwException(new Error('Parameter "color" must be an ApiColor instance.'));
-
-		let allCellsUpdated = true;
-
-		for (let nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++) {
-			const oCell = this.GetCell(nCell);
-			const cellUpdated = oCell.SetBackgroundColor.apply(oCell, arguments);
-			if (!cellUpdated) allCellsUpdated = false;
+		let result = true;
+		
+		for (let cellIndex = 0, cellCount = this.GetCellsCount(); cellIndex < cellCount; ++cellIndex) 
+		{
+			let cell = this.GetCell(cellIndex);
+			result = result && cell.SetBackgroundColor.apply(cell, arguments);
 		}
-
-		return allCellsUpdated;
+		
+		return result;
 	};
 	/**
 	 * Returns all cells of the row as an array.
@@ -16391,43 +16394,12 @@
 	 */
 	ApiTableCell.prototype.SetBackgroundColor = function (color)
 	{
-		let r, g, b;
-		let bNone;
-		let isAuto, isTheme;
+		let shd = private_GetTableBackgroundShd(color, arguments);
+		if (!shd)
+			throwException(new Error("color must be a valid ApiColor, or valid RGB components (r, g, b) in range 0-255"));
 
-		if (color instanceof ApiColor) {
-			const rgb = color.GetRGB();
-			r = rgb['r'];
-			g = rgb['g'];
-			b = rgb['b'];
-			bNone = false;
-			isAuto = color.IsAutoColor();
-			isTheme = color.IsThemeColor();
-		} else {
-			r = GetIntParameter(arguments[0], 0);
-			g = GetIntParameter(arguments[1], 0);
-			b = GetIntParameter(arguments[2], 0);
-			bNone = GetBoolParameter(arguments[3], false);
-			isAuto = false;
-			isTheme = false;
-		}
-
-		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
-			return false;
-
-		const oUnifill = isTheme
-			? color.private_createUnifill()
-			: Api.RGB(r, g, b).private_createUnifill();
-
-		const oNewShd = {
-			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
-			Fill: { r: r, g: g, b: b, Auto: isAuto },
-			// Color: { r: r, g: g, b: b, Auto: isAuto },
-			ThemeFill: isTheme ? oUnifill : undefined,
-			// Unifill: oUnifill.createDuplicate(),
-		};
-
-		this.Cell.Set_Shd(oNewShd);
+		this.Cell.Set_Shd(shd);
+		this.private_RefreshTable();
 		return true;
 	};
 
@@ -33889,6 +33861,54 @@
 		return oShd;
 	}
 
+	function private_GetTableBackgroundShd(color, args)
+	{
+		let r = 0, g = 0, b = 0;
+		let bNone = false;
+		let isAuto = false, isTheme = false;
+
+		if (color instanceof ApiColor)
+		{
+			let rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		}
+		else if (undefined === color || null === color)
+		{
+			bNone = true;
+		}
+		else
+		{
+			r = GetIntParameter(args[0], null);
+			g = GetIntParameter(args[1], null);
+			b = GetIntParameter(args[2], null);
+			bNone = GetBoolParameter(args[3], false);
+			
+			if (null === r || null === g || null === b)
+				return null;
+		}
+		
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+			return null;
+		
+		if (bNone)
+			return {Value: Asc.c_oAscShd.Nil};
+
+		let oUnifill = isTheme ? color.private_createUnifill() : Api.RGB(r, g, b).private_createUnifill();
+
+		let shd = {
+			Value: Asc.c_oAscShd.Clear,
+			Fill: {r: r, g: g, b: b, Auto: isAuto},
+			ThemeFill: isTheme ? oUnifill : undefined,
+			Unifill: oUnifill
+		};
+
+		return shd;
+	}
+
 	function private_GetBoolean(bValue, bDefValue)
 	{
 		if (true === bValue)
@@ -34723,6 +34743,8 @@
 		this.Table.private_RecalculateGrid();
 		this.Table.private_UpdateCellsGrid();
 	};
+	ApiTable.prototype.private_RefreshTable = function()
+	{};
 	ApiStyle.prototype.OnChangeTextPr = function(oApiTextPr)
 	{
 		this.Style.Set_TextPr(oApiTextPr.TextPr);
@@ -34866,6 +34888,8 @@
 		this.CellPr = this.Cell.Pr.Copy();
 		oApiTableCellPr.CellPr = this.Cell.Pr.Copy();
 	};
+	ApiTableCell.prototype.private_RefreshTable = function() 
+	{};
 	ApiTextPr.prototype.private_OnChange = function()
 	{
 		if (this.Parent)
