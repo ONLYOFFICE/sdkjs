@@ -10250,7 +10250,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current cell.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetTextPr.js
 	 */
 	ApiTableCell.prototype.SetTextPr = AscBuilder.ApiTableCell.prototype.SetTextPr;
