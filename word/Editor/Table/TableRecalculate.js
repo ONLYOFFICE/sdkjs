@@ -1784,28 +1784,14 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 				nGridCount = nPrevGridCol + nPrevGridSpan - nCurGridCol;
 			}
 			var oPrevBottom = oPrevCell.GetBorders().Bottom;
-			if (this.bPresentation)
-			{
-				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
-				{
-					var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell ? !nCurGrid : false);
-					var nBorderW = oBorder.GetWidth();
-					if (nMaxTopBorder < nBorderW)
-						nMaxTopBorder = nBorderW;
-					arrBorderTopInfo.push(oBorder);
-				}
 
-			}
-			else
-			{
-				var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false);
-				var nBorderW = oBorder.GetWidth();
-				if (nMaxTopBorder < nBorderW)
-					nMaxTopBorder = nBorderW;
+			var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell);
+			var nBorderW = oBorder.GetWidth();
+			if (nMaxTopBorder < nBorderW)
+				nMaxTopBorder = nBorderW;
 
-				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
-					arrBorderTopInfo.push(oBorder);
-			}
+			for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
+				arrBorderTopInfo.push(oBorder);
 
 			nPrevPos++;
 			nPrevGridCol += nPrevGridSpan;
