@@ -38,7 +38,6 @@
 (function (window, undefined) {
 
 	const MIN_DELAY_CS = 2;
-	const CLICK_STEP_DELAY_MS = 1500;
 
 	function CAnimExportDelayPlanner() {
 		this.totalMs = 0;
@@ -134,9 +133,6 @@
 	};
 	CAnimExportPlan.prototype.getFrameStepMs = function () {
 		return 1000 / this.fps;
-	};
-	CAnimExportPlan.prototype.getClickDelayMs = function () {
-		return CLICK_STEP_DELAY_MS;
 	};
 
 	window["AscCommonSlide"] = window["AscCommonSlide"] || {};

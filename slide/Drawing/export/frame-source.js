@@ -225,20 +225,14 @@
 		}
 		const nodes = mainSequence.getChildrenTimeNodes();
 		for (let index = 0; index < nodes.length; ++index) {
-			if (!nodes[index].isIdle() && !nodes[index].isAtEnd()) {
+			if (!nodes[index].isIdle() && !nodes[index].isAtEnd() && !isEndlessTimeNode(nodes[index], 0)) {
 				return true;
 			}
 		}
 		return false;
 	};
-	CAnimExportFrameSource.prototype.hasEndlessAnimation = function () {
-		for (let index = 0; index < this.player.timings.length; ++index) {
-			const root = this.player.timings[index].getTimingRootNode();
-			if (isEndlessTimeNode(root, 0)) {
-				return true;
-			}
-		}
-		return false;
+	CAnimExportFrameSource.prototype.isMainSequenceFinished = function () {
+		return this.player.isMainSequenceFinished();
 	};
 	CAnimExportFrameSource.prototype.getMaxClickSteps = function () {
 		return MAX_CLICK_STEPS;

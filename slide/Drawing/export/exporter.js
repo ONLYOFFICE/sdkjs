@@ -59,11 +59,11 @@
 		this.slidePosition = 0;
 		this.slideTime = 0;
 		this.slideIdleTime = 0;
+		this.slideStepTime = 0;
 		this.clickStep = 0;
 		this.noMoreClickSteps = false;
 		this.transitionFrame = 0;
 		this.transitionFrameCount = 0;
-		this.isEndlessSlide = false;
 		this.frameCount = 0;
 		this.isTruncated = false;
 		this.isCanceled = false;
@@ -233,9 +233,9 @@
 		this.frameSource.beginSlide(item);
 		this.slideTime = 0;
 		this.slideIdleTime = 0;
+		this.slideStepTime = 0;
 		this.clickStep = 0;
 		this.noMoreClickSteps = false;
-		this.isEndlessSlide = this.frameSource.hasEndlessAnimation();
 
 		if (item.transition) {
 			if (isFirst) {
@@ -284,21 +284,24 @@
 		}
 
 		const isActive = this.frameSource.isAnimationActive();
+		const isFinished = this.noMoreClickSteps || this.frameSource.isMainSequenceFinished();
 		if (this.slideTime >= item.slideDuration &&
-			(this.isEndlessSlide || !isActive || this.slideTime >= item.slideDuration + ENDLESS_GUARD_MS)) {
+			((!isActive && isFinished) ||
+				this.slideTime >= this.slideStepTime + item.slideDuration + ENDLESS_GUARD_MS)) {
 			this.stage = STAGE_SLIDE_END;
 			return;
 		}
 		if (isActive) {
 			return;
 		}
-		if (this.slideIdleTime < this.plan.getClickDelayMs()) {
+		if (this.clickStep > 0 && this.slideIdleTime < item.slideDuration) {
 			return;
 		}
 		if (!this.noMoreClickSteps && this.clickStep < this.frameSource.getMaxClickSteps()) {
 			if (this.frameSource.nextClickStep()) {
 				++this.clickStep;
 				this.slideIdleTime = 0;
+				this.slideStepTime = this.slideTime;
 			}
 			else {
 				this.noMoreClickSteps = true;
