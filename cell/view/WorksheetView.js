@@ -9857,9 +9857,9 @@ function isAllowPasteLink(pastedWb) {
 		var th;
 		var cellType = cell.getType();
 		var wrap = align.getWrap() || align.hor === AscCommon.align_Distributed;
-		// Autofit is done for any type (except string)
 		var isNumberFormat = !cell.isEmptyTextString() && (null === cellType || CellValueType.String !== cellType);
-		if (angle || isNumberFormat || wrap) {
+		// Wrapped or rotated text needs full layout; numbers also need it while column autofit is enabled.
+		if (angle || wrap || (isNumberFormat && c_oAscCanChangeColWidth.none !== this.canChangeColWidth)) {
 			this._addCellTextToCache(cell.nCol, cell.nRow);
 			th = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(cell.nRow));
 		} else {
