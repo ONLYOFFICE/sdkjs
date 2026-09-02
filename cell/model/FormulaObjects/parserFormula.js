@@ -10178,6 +10178,13 @@ function parserFormula( formula, parent, _ws ) {
 		return _checkEntry(func && func.enabledToSingle, argPos);
 	}
 
+	function isArgPosImplicitIntersection(func, argPos, argType, args) {
+		if (!func || !func.enabledToSingle || isArgPosEnabledToSingle(func, argPos)) {
+			return false;
+		}
+		return !(func.getArrayIndex && func.getArrayIndex(argPos, argType, args));
+	}
+
 	parserFormula.prototype.checkSkipAtOperator = function(_curFunc, _curArgPos, found_operand_type) {
 		if (null == found_operand_type) {
 			return false;
@@ -10198,6 +10205,10 @@ function parserFormula( formula, parent, _ws ) {
 		}*/
 
 		return false;
+	};
+
+	parserFormula.prototype.isArrayModeFormula = function () {
+		return !!this.ref;
 	};
 
 	parserFormula.prototype._assembleWithAtOperators = function(atOperators, parseResult, opt_ignore_skip) {
@@ -10513,6 +10524,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (!opt_bbox && this.parent && this.parent.onFormulaEvent) {
 			opt_bbox = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.GetRangeCell);
 		}
+		const bKnownBbox = !!opt_bbox;
 		if (!opt_bbox) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
@@ -10639,6 +10651,24 @@ function parserFormula( formula, parent, _ws ) {
 
 					if (_isPromise) {
 						break;
+					}
+
+					//bKnownBbox: without a real position there is nothing to intersect against.
+					if (currentElement.type === cElementType.func && !this.isArrayModeFormula() &&
+						!opt_check_dynamic && !bIsSpecialFunction && !currentElement.bArrayFormula && bKnownBbox) {
+						for (let argPos = 0; argPos < _argCount; argPos++) {
+							const curArg = arg[argPos];
+							if (!curArg) {
+								continue;
+							}
+							if (cElementType.cellsRange !== curArg.type &&
+								!(cElementType.cellsRange3D === curArg.type && curArg.isSingleSheet && curArg.isSingleSheet())) {
+								continue;
+							}
+							if (isArgPosImplicitIntersection(currentElement, argPos, curArg.type, arg)) {
+								arg[argPos] = curArg.cross(opt_bbox);
+							}
+						}
 					}
 
 					//***array-formula***
@@ -11628,7 +11658,7 @@ function parserFormula( formula, parent, _ws ) {
 			oldActiveCell = AscCommonExcel.g_ActiveCell;
 		}
 
-		var isArrayFormula = !!this.ref;
+		var isArrayFormula = this.isArrayModeFormula();
 		var parentFuncStack = [];
 		var argIndexInParentStack = [];
 		let needUseSingle = AscCommonExcel.bIsSupportDynamicArrays && this.parent instanceof AscCommonExcel.CCellWithFormula;
