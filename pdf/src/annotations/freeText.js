@@ -537,6 +537,22 @@
         
         this.SetNeedRecalc(false);
     };
+	CAnnotationFreeText.prototype.setSelectionState = function (selection_state) {
+		this.resetSelection(this);
+		if (selection_state.textObject) {
+			this.selectObject(selection_state.textObject, selection_state.selectStartPage);
+
+			if (this.IsInTextBox()) {
+				this.selection.textSelection = selection_state.textObject;
+				selection_state.textObject.getDocContent().SetSelectionState(selection_state.textSelection, selection_state.textSelection.length - 1);
+			}
+		}
+		else {
+			for (var i = 0; i < selection_state.selection.length; ++i) {
+				this.selectObject(selection_state.selection[i].object, selection_state.selection[i].pageIndex);
+			}
+		}
+	};
     CAnnotationFreeText.prototype.RecalcSizes = function() {
         let oXfrm = this.getXfrm();
         if (oXfrm) {
