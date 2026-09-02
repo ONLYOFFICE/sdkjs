@@ -376,14 +376,15 @@
 			callback(self.errorText ? null : self.muxer.finish(), self.errorText);
 		}).catch(function (error) {
 			self.abort();
-			callback(null, String(error.message || error));
+			callback(null, self.errorText || (error ? String(error.message || error) : "the encoder failed to flush"));
 		});
 	};
 	CAnimExportWebmWriter.prototype.encodeTailFrame = function () {
 		if (!this.lastCanvas || this.timeUs <= this.lastFrameTimeUs) {
 			return;
 		}
-		const frame = new VideoFrame(this.lastCanvas, {timestamp: this.timeUs, duration: 0});
+		const frame = new VideoFrame(this.lastCanvas,
+			{timestamp: this.timeUs, duration: this.timeUs - this.lastFrameTimeUs});
 		this.encoder.encode(frame, {keyFrame: false});
 		frame.close();
 	};
@@ -470,12 +471,14 @@
 		this.isClosed = false;
 		this.pendingDurations = [];
 		this.lastTimestamp = -1;
+		this.isAnnexB = false;
 
 		const self = this;
 		this.encoder = new VideoEncoder({
 			output: function (chunk, metadata) {
 				if (metadata && metadata.decoderConfig) {
 					self.muxer.setDescription(metadata.decoderConfig.description);
+					self.isAnnexB = !metadata.decoderConfig.description;
 				}
 				if (chunk.timestamp < self.lastTimestamp) {
 					self.errorText = "the encoder reordered frames, which needs composition offsets";
@@ -485,7 +488,12 @@
 				const data = new Uint8Array(chunk.byteLength);
 				chunk.copyTo(data);
 				const durationMs = self.pendingDurations.length ? self.pendingDurations.shift() : 0;
-				self.muxer.addSample(data, durationMs, "key" === chunk.type);
+				if (self.isAnnexB) {
+					self.muxer.addAnnexBSample(data, durationMs, "key" === chunk.type);
+				}
+				else {
+					self.muxer.addSample(data, durationMs, "key" === chunk.type);
+				}
 			},
 			error: function (error) {
 				self.errorText = String(error.message || error);
@@ -561,7 +569,7 @@
 			callback(data, data ? null : "no frames were encoded");
 		}).catch(function (error) {
 			self.abort();
-			callback(null, String(error.message || error));
+			callback(null, self.errorText || (error ? String(error.message || error) : "the encoder failed to flush"));
 		});
 	};
 	CAnimExportMp4Writer.prototype.abort = function () {

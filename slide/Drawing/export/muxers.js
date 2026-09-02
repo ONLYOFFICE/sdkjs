@@ -473,12 +473,76 @@
 		return concat(parts);
 	}
 
+	const NAL_TYPE_MASK = 0x1F;
+	const NAL_TYPE_SPS = 7;
+	const NAL_TYPE_PPS = 8;
+	const NAL_TYPE_AUD = 9;
+	const NAL_LENGTH_SIZE = 4;
+
+	function findAnnexBUnits(data) {
+		const units = [];
+		const length = data.length;
+		let index = 0;
+		let start = -1;
+		while (index + 2 < length) {
+			if (0 !== data[index] || 0 !== data[index + 1] || 1 !== data[index + 2]) {
+				++index;
+				continue;
+			}
+			if (start >= 0) {
+				let end = index;
+				while (end > start && 0 === data[end - 1]) {
+					--end;
+				}
+				if (end > start) {
+					units.push(data.subarray(start, end));
+				}
+			}
+			index += 3;
+			start = index;
+		}
+		if (start >= 0 && start < length) {
+			let end = length;
+			while (end > start && 0 === data[end - 1]) {
+				--end;
+			}
+			if (end > start) {
+				units.push(data.subarray(start, end));
+			}
+		}
+		return units;
+	}
+	function buildAvcDecoderConfig(sps, pps) {
+		if (!sps || !pps || sps.length < 4) {
+			return null;
+		}
+		const record = new Uint8Array(11 + sps.length + pps.length);
+		let offset = 0;
+		record[offset++] = 1;
+		record[offset++] = sps[1];
+		record[offset++] = sps[2];
+		record[offset++] = sps[3];
+		record[offset++] = 0xFC | (NAL_LENGTH_SIZE - 1);
+		record[offset++] = 0xE1;
+		record.set(uint16(sps.length), offset);
+		offset += 2;
+		record.set(sps, offset);
+		offset += sps.length;
+		record[offset++] = 1;
+		record.set(uint16(pps.length), offset);
+		offset += 2;
+		record.set(pps, offset);
+		return record;
+	}
+
 	function CMp4Muxer(width, height) {
 		this.width = width;
 		this.height = height;
 		this.description = null;
 		this.samples = [];
 		this.durationMs = 0;
+		this.sps = null;
+		this.pps = null;
 	}
 	CMp4Muxer.prototype.setDescription = function (description) {
 		if (!description || this.description) {
@@ -493,6 +557,41 @@
 	CMp4Muxer.prototype.addSample = function (data, durationMs, isKeyFrame) {
 		this.samples.push({data: data, duration: Math.max(1, Math.round(durationMs)), isKeyFrame: !!isKeyFrame});
 		this.durationMs += Math.max(1, Math.round(durationMs));
+	};
+	CMp4Muxer.prototype.addAnnexBSample = function (data, durationMs, isKeyFrame) {
+		const units = findAnnexBUnits(data);
+		const payload = [];
+		let size = 0;
+		for (let index = 0; index < units.length; ++index) {
+			const unit = units[index];
+			const type = unit[0] & NAL_TYPE_MASK;
+			if (NAL_TYPE_SPS === type) {
+				this.sps = this.sps || unit;
+				continue;
+			}
+			if (NAL_TYPE_PPS === type) {
+				this.pps = this.pps || unit;
+				continue;
+			}
+			if (NAL_TYPE_AUD === type) {
+				continue;
+			}
+			payload.push(unit);
+			size += NAL_LENGTH_SIZE + unit.length;
+		}
+		if (!this.description) {
+			this.setDescription(buildAvcDecoderConfig(this.sps, this.pps));
+		}
+		const sample = new Uint8Array(size);
+		let offset = 0;
+		for (let index = 0; index < payload.length; ++index) {
+			const unit = payload[index];
+			sample.set(uint32(unit.length), offset);
+			offset += NAL_LENGTH_SIZE;
+			sample.set(unit, offset);
+			offset += unit.length;
+		}
+		this.addSample(sample, durationMs, isKeyFrame);
 	};
 	CMp4Muxer.prototype.addDurationToLastSample = function (durationMs) {
 		if (0 === this.samples.length) {
