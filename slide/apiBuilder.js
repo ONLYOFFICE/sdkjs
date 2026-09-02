@@ -8707,51 +8707,33 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTableCell[]} - An array of the currently selected cells (empty if there is no cell selection).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
 	 */
-	ApiTable.prototype.GetSelectedCells = function()
-	{
-		if (!this.Table.IsCellSelection())
-			return [];
-		
-		let cells = [];
-		let positions = this.Table.GetSelectionArray();
-		for (let nPos = 0; nPos < positions.length; nPos++)
-		{
-			let pos = positions[nPos];
-			cells.push(this.GetCell(pos.Row, pos.Cell));
-		}
-		return cells;
-	};
+	ApiTable.prototype.GetSelectedCells = AscBuilder.ApiTable.prototype.GetSelectedCells;
 
 	/**
 	 * Returns the rows that contain the currently selected cells of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTableRow[]} - An array of the rows that contain selected cells (empty if there is no cell selection).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedRows.js
 	 */
-	ApiTable.prototype.GetSelectedRows = function()
-	{
-		let rowsNum = [];
-		let rows = [];
+	ApiTable.prototype.GetSelectedRows = AscBuilder.ApiTable.prototype.GetSelectedRows;
+	
 
-		let cells = this.Table.GetSelectionArray();
-		for (let index = 0; index < cells.length; index++) {
-			let element = cells[index];
-			if (!rowsNum.includes(element.Row))
-				rowsNum.push(element.Row)
-		}
-
-		for (let i = 0; i < rowsNum.length; i++)
-		{
-			let num = rowsNum[i];
-			rows.push(this.GetRow(num));
-		}
-		return rows
-	};
+	/**
+	 * Returns all cells from the columns that contain the currently selected cells.
+	 * This method identifies which columns contain selected cells and then returns all cells
+	 * in those columns, not just the selected cells themselves.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedColumnsCells.js
+	 */
+	ApiTable.prototype.GetSelectedColumnsCells = AscBuilder.ApiTable.prototype.GetSelectedColumnsCells;	
 
 	/**
 	 * Selects a range of cells in the current table.
@@ -8762,7 +8744,7 @@
 	 * @param {number} endRowIndex - The end row index.
 	 * @param {number} endCellIndex - The end cell index within the end row.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SelectRange.js
 	 */
 	ApiTable.prototype.SelectRange = AscBuilder.ApiTable.prototype.SelectRange;
@@ -10798,11 +10780,11 @@
 	 */
 	ApiTextRange.prototype.AddText = function(text, position)
 	{
-		text = AscBuilder.GetStringParameter(text, null);
+		text = AscBuilder.GetStringParameter(text, null, false);
 		if (null === text)
 			AscBuilder.throwException(new Error('Invalid type of parameter "text".'));
-
-		position = AscBuilder.GetStringParameter(position, "after");
+		
+		position = undefined === position ? "after" : AscBuilder.GetStringParameter(position, null);
 		if ("after" !== position && "before" !== position)
 			AscBuilder.throwException(new Error('Invalid value of parameter "position".'));
 

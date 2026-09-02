@@ -15362,14 +15362,15 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTableCell[]} - An array of the currently selected cells (empty if there is no cell selection).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
 	 */
-	ApiTable.prototype.GetSelectedCells = function(){
-		let cells = [];
-
+	ApiTable.prototype.GetSelectedCells = function()
+	{
 		if (!this.Table.IsTextSelectionUse())
-			return cells;
+			return [];
+		
+		let cells = [];
 		let positions = this.Table.GetSelectionArray();
 		for (let nPos = 0; nPos < positions.length; nPos++)
 		{
@@ -15385,10 +15386,11 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedColumnsCells.js
 	 */
-	ApiTable.prototype.GetSelectedColumnsCells = function () {
+	ApiTable.prototype.GetSelectedColumnsCells = function() 
+	{
 		let cells = [];
 
 		if (!this.Table.IsTextSelectionUse())

@@ -9928,18 +9928,10 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell[]} - An array of the currently selected cells (empty if there is no cell selection).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedCells.js
 	 */
-	ApiTable.prototype.GetSelectedCells = function() {
-		let cells = [];
-		let positions = this.Table.GetSelectionArray();
-		for (let nPos = 0; nPos < positions.length; nPos++) {
-			let pos = positions[nPos];
-			cells.push(this.GetCell(pos.Row, pos.Cell));
-		}
-		return cells;
-	};
+	ApiTable.prototype.GetSelectedCells = AscBuilder.ApiTable.prototype.SelectRange;
 
 	/**
 	 * Returns all cells from the columns that contain the currently selected cells.
@@ -9948,7 +9940,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedColumnsCells.js
 	 */
 	ApiTable.prototype.GetSelectedColumnsCells = AscBuilder.ApiTable.prototype.GetSelectedColumnsCells;
@@ -9958,26 +9950,10 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableRow[]} - An array of the rows that contain selected cells (empty if there is no cell selection).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedRows.js
 	 */
-	ApiTable.prototype.GetSelectedRows = function() {
-		let rowsNum = [];
-		let rows = [];
-
-		let cells = this.Table.GetSelectionArray();
-		for (let index = 0; index < cells.length; index++) {
-			let element = cells[index];
-			if (!rowsNum.includes(element.Row))
-				rowsNum.push(element.Row);
-		}
-
-		for (let i = 0; i < rowsNum.length; i++) {
-			let num = rowsNum[i];
-			rows.push(this.GetRow(num));
-		}
-		return rows;
-	};
+	ApiTable.prototype.GetSelectedRows = AscBuilder.ApiTable.prototype.GetSelectedColumnsCells;
 
 	/**
 	 * Adds the new rows to the current table.
