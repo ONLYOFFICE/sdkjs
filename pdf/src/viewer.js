@@ -351,7 +351,8 @@
 		oAnnot.AddToRedraw();
         let nPos = this.annots.indexOf(oAnnot);
         this.annots.splice(nPos, 1);
-        
+
+		oAnnot.setBDeleted(true);
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], false));
 	};
 	CPageInfo.prototype.GetAnnots = function() {
