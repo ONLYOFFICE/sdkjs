@@ -44,6 +44,25 @@
 		}
 	}
 
+	function runWithDefaultSeparators(callback) {
+		let cultureInfo = AscCommon.g_oDefaultCultureInfo;
+		let oDefaultCultureInfo = AscCommon.g_aCultureInfos[1033];
+		let sDecimalSeparator = cultureInfo.NumberDecimalSeparator;
+		let sGroupSeparator = cultureInfo.NumberGroupSeparator;
+		let oFormulaLocaleInfo = AscCommonExcel.oFormulaLocaleInfo;
+		let bDigitSep = oFormulaLocaleInfo.DigitSep;
+		cultureInfo.NumberDecimalSeparator = oDefaultCultureInfo.NumberDecimalSeparator;
+		cultureInfo.NumberGroupSeparator = oDefaultCultureInfo.NumberGroupSeparator;
+		oFormulaLocaleInfo.DigitSep = false;
+		try {
+			return callback();
+		} finally {
+			cultureInfo.NumberDecimalSeparator = sDecimalSeparator;
+			cultureInfo.NumberGroupSeparator = sGroupSeparator;
+			oFormulaLocaleInfo.DigitSep = bDigitSep;
+		}
+	}
+
 	/**
 	 * Base class.
 	 * @global
@@ -10585,67 +10604,70 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetValue.js
 	 */
 	ApiRange.prototype.SetValue = function (data) {
-		if (!this.range)
-			return false;
+		let oThis = this;
+		return runWithDefaultSeparators(function () {
+			if (!oThis.range)
+				return false;
 
-		let worksheet = this.range.worksheet;
+			let worksheet = oThis.range.worksheet;
 
-		if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([this.range.bbox])) {
-			//throwException(new Error('Cannot modify protected sheet'));
-			return false;
-		}
+			if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([oThis.range.bbox])) {
+				//throwException(new Error('Cannot modify protected sheet'));
+				return false;
+			}
 
-		if (Array.isArray(data)) {
-			let checkDepth = function (x) {
-				return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;
-			};
-			let maxDepth = checkDepth(data);
-			if (maxDepth <= 2) {
-				if (this.range.isOneCell()) {
-					data = maxDepth == 1 ? data[0] : data[0][0];
-				} else {
-					let bbox = this.range.bbox;
-					let nRow = bbox.r2 - bbox.r1 + 1;
-					let nCol = bbox.c2 - bbox.c1 + 1;
-					for (let indC = 0; indC < nCol; indC++) {
-						for (let indR = 0; indR < nRow; indR++) {
-							let value = (maxDepth == 1 ? data[indC] : data[indR] ? data[indR][indC] : null);
-							if (value === undefined || value === null)
-								value = AscCommon.cErrorLocal["na"];
+			if (Array.isArray(data)) {
+				let checkDepth = function (x) {
+					return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;
+				};
+				let maxDepth = checkDepth(data);
+				if (maxDepth <= 2) {
+					if (oThis.range.isOneCell()) {
+						data = maxDepth == 1 ? data[0] : data[0][0];
+					} else {
+						let bbox = oThis.range.bbox;
+						let nRow = bbox.r2 - bbox.r1 + 1;
+						let nCol = bbox.c2 - bbox.c1 + 1;
+						for (let indC = 0; indC < nCol; indC++) {
+							for (let indR = 0; indR < nRow; indR++) {
+								let value = (maxDepth == 1 ? data[indC] : data[indR] ? data[indR][indC] : null);
+								if (value === undefined || value === null)
+									value = AscCommon.cErrorLocal["na"];
 
-							let cell = this.range.worksheet.getRange3((bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC));
-							let merged = cell.hasMerged();
-							if (merged)
-								cell = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
+								let cell = oThis.range.worksheet.getRange3((bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC));
+								let merged = cell.hasMerged();
+								if (merged)
+									cell = oThis.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
-							value = checkFormat(value.toString());
-							cell.setValue(value.toString());
-							if (value.type === AscCommonExcel.cElementType.number)
-								cell.setNumFormat(AscCommon.getShortDateFormat());
+								value = checkFormat(value.toString());
+								cell.setValue(value.toString());
+								if (value.type === AscCommonExcel.cElementType.number)
+									cell.setNumFormat(AscCommon.getShortDateFormat());
+							}
 						}
+						worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [oThis.range.bbox], true);
+						worksheet.workbook.oApi.onWorksheetChange(oThis.range.bbox);
+						return true;
 					}
-					worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
-					worksheet.workbook.oApi.onWorksheetChange(this.range.bbox);
-					return true;
 				}
 			}
-		}
-		if (data === undefined || data === null)
-			data = AscCommon.cErrorLocal["na"];
+			if (data === undefined || data === null)
+				data = AscCommon.cErrorLocal["na"];
 
-		data = checkFormat(data);
-		let range = this.range;
-		let merged = range.hasMerged();
-		if (merged)
-			range = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
+			data = checkFormat(data);
+			let range = oThis.range;
+			let merged = range.hasMerged();
+			if (merged)
+				range = oThis.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
-		range.setValue(data.toString());
-		if (data.type === AscCommonExcel.cElementType.number)
-			range.setNumFormat(AscCommon.getShortDateFormat());
+			range.setValue(data.toString());
+			if (data.type === AscCommonExcel.cElementType.number)
+				range.setNumFormat(AscCommon.getShortDateFormat());
 
-		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
-		worksheet.workbook.oApi.onWorksheetChange(range.bbox);
-		return true;
+			worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
+			worksheet.workbook.oApi.onWorksheetChange(range.bbox);
+			return true;
+		});
 	};
 
 	Object.defineProperty(ApiRange.prototype, "Value", {
@@ -13090,32 +13112,35 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFormulaArray.js
 	 */
 	ApiRange.prototype.SetFormulaArray = function (data) {
-		if (!this.range) {
-			return false;
-		}
+		let oThis = this;
+		return runWithDefaultSeparators(function () {
+			if (!oThis.range) {
+				return false;
+			}
 
-		let worksheet = this.range.worksheet;
+			let worksheet = oThis.range.worksheet;
 
-		if (data === undefined || data === null) {
-			data = AscCommon.cErrorLocal["na"];
-		}
+			if (data === undefined || data === null) {
+				data = AscCommon.cErrorLocal["na"];
+			}
 
-		data = checkFormat(data);
-		let range = this.range;
-		let merged = range.hasMerged();
-		if (merged) {
-			range = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
-		}
+			data = checkFormat(data);
+			let range = oThis.range;
+			let merged = range.hasMerged();
+			if (merged) {
+				range = oThis.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
+			}
 
-		range.setValue(data.toString(), null, null, range.bbox);
+			range.setValue(data.toString(), null, null, range.bbox);
 
-		if (data.type === AscCommonExcel.cElementType.number) {
-			range.setNumFormat(AscCommon.getShortDateFormat());
-		}
+			if (data.type === AscCommonExcel.cElementType.number) {
+				range.setNumFormat(AscCommon.getShortDateFormat());
+			}
 
-		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
-		worksheet.workbook.oApi.onWorksheetChange(range.bbox);
-		return true;
+			worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
+			worksheet.workbook.oApi.onWorksheetChange(range.bbox);
+			return true;
+		});
 	};
 
 	/**
