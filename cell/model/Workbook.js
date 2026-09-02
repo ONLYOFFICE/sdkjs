@@ -9486,6 +9486,10 @@
 
 				cell.clearData();
 				cell.saveContent(true);
+
+				if (t.workbook.handlers) {
+					t.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, cell, null, sheetId);
+				}
 			}
 		};
 		if(null != cell)

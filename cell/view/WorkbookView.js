@@ -7501,7 +7501,7 @@
 				this.changeSheetIndex(arg1, arg2);
 				break;
 			case AscCommonExcel.docChangedType.markModifiedSearch:
-				if (this.wb.Api.selectSearchingResults && this.props && !this.modifiedDocument) {
+				if (this.props && !this.modifiedDocument) {
 					this.wb.handlers.trigger("asc_onModifiedDocument");
 					this.setModifiedDocument(true);
 				}
@@ -7510,7 +7510,7 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.changeCellValue = function (cell) {
-		if (this.wb.Api.selectSearchingResults && this.props) {
+		if (this.props) {
 			let key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
 			if (null != this.mapFindCells[key]) {
 				let id = this.mapFindCells[key];
@@ -7540,7 +7540,7 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.changeRangeValue = function (bbox, ws) {
-		if (this.wb.Api.selectSearchingResults && bbox && this.props) {
+		if (bbox && this.props) {
 			let t = this;
 			
 			let newCell = new AscCommonExcel.Cell(ws);
@@ -7554,7 +7554,7 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.changeSheetContent = function (ws, range) {
-		if (this.wb.Api.selectSearchingResults && ws && this.props) {
+		if (ws && this.props) {
 			if (this.isNotEmpty()) {
 				if (range) {
 					this.changeRangeValue(range, ws);
