@@ -9719,7 +9719,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 	if (CheckType === AscCommon.changestype_OutlineSlideDrawingProps) {
 		const view = this.GetOutlineView();
 		if (view) {
-			const outlineSlides = view.getSlidesForLock(!(AdditionalData && AdditionalData.isRemoveAction));
+			const outlineSlides = view.getSlidesForLock(!(AdditionalData && AdditionalData.isRemoveAction), AdditionalData && AdditionalData.removeDirection);
 			for (let i = 0; i < outlineSlides.length; i += 1) {
 				const slide = outlineSlides[i];
 				if (slide.isLockedObject()) {

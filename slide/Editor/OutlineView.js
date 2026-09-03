@@ -807,20 +807,24 @@
 	RemoveOutlineParagraphsManager.prototype.getContentPosParagraph = function (docContent) {
 		return docContent.Content[docContent.CurPos.ContentPos];
 	};
-	RemoveOutlineParagraphsManager.prototype.processNotSelectedContent = function () {
-		if (this.isNeedProcessCursorAtBegin()) {
+	RemoveOutlineParagraphsManager.prototype.processNotSelectedContent = function (direction) {
+		if (direction === AscWord.Direction.FORWARD) {
+			if (this.isNeedProcessCursorAtEnd()) {
+				this.processCursorAtEnd();
+			}
+		} else if (this.isNeedProcessCursorAtBegin()) {
 			this.processCursorAtBegin();
 		} else {
-			this.processCommonPosContent();
+			this.processCommonPosContent(direction);
 		}
 	};
-	RemoveOutlineParagraphsManager.prototype.processCommonPosContent = function () {
+	RemoveOutlineParagraphsManager.prototype.processCommonPosContent = function (direction) {
 		const oThis = this;
 		const outlineView = this.outlineView;
 		outlineView.forEachSelectedContent(function (selectProps) {
 			const content = selectProps.content;
 			if (content) {
-				content.Remove(-1, true, false, false);
+				content.Remove(direction, true, false, false);
 				oThis.saveManager.saveContentPosSourceParagraph(content);
 			}
 		});
@@ -832,18 +836,36 @@
 		if (outlineParagraph.Index === 0) {
 			return;
 		}
+		this.processEdgeParagraph(outlineParagraph, AscWord.Direction.BACKWARD);
+	};
+	RemoveOutlineParagraphsManager.prototype.processCursorAtEnd = function () {
+		const docContent = this.getDocContent();
+		const outlineParagraph = this.getContentPosParagraph(docContent);
+		const nextOutlineParagraph = docContent.Content[outlineParagraph.Index + 1];
+		if (!nextOutlineParagraph) {
+			return;
+		}
+		this.processEdgeParagraph(nextOutlineParagraph, AscWord.Direction.FORWARD);
+	};
+	RemoveOutlineParagraphsManager.prototype.processEdgeParagraph = function (outlineParagraph, direction) {
 		const sourceParagraph = this.getSourceParagraph(outlineParagraph);
 		if (sourceParagraph) {
-			this.processRealCursorAtBegin(outlineParagraph);
+			this.processRealCursorAtBegin(outlineParagraph, direction);
 		} else {
 			this.processNullableContent(outlineParagraph, true);
 		}
 	};
-	RemoveOutlineParagraphsManager.prototype.processRealCursorAtBegin = function (outlineParagraph) {
+	RemoveOutlineParagraphsManager.prototype.isNeedConcatEdgeParagraphs = function (sourceParagraph, direction) {
+		if (sourceParagraph.Index !== 0) {
+			return false;
+		}
+		return direction === AscWord.Direction.FORWARD || !sourceParagraph.IsPresentationBulleted();
+	};
+	RemoveOutlineParagraphsManager.prototype.processRealCursorAtBegin = function (outlineParagraph, direction) {
 		const docContent = this.getDocContent();
 		const currentSourceParagraph = this.getSourceParagraph(outlineParagraph);
-		if (currentSourceParagraph && (currentSourceParagraph.Index !== 0 || currentSourceParagraph.IsPresentationBulleted())) {
-			this.processCommonPosContent();
+		if (currentSourceParagraph && !this.isNeedConcatEdgeParagraphs(currentSourceParagraph, direction)) {
+			this.processCommonPosContent(direction);
 		} else {
 			const previousOutlineParagraph = docContent.Content[outlineParagraph.Index - 1];
 			this.checkRemoveEdgeParagraphs(previousOutlineParagraph, outlineParagraph);
@@ -868,6 +890,11 @@
 		const docContent = this.getDocContent();
 		const paragraph = this.getContentPosParagraph(docContent);
 		return paragraph.IsCursorAtBegin();
+	};
+	RemoveOutlineParagraphsManager.prototype.isNeedProcessCursorAtEnd = function () {
+		const docContent = this.getDocContent();
+		const paragraph = this.getContentPosParagraph(docContent);
+		return paragraph.IsCursorAtEnd();
 	};
 	RemoveOutlineParagraphsManager.prototype.processSourceSelectedContent = function (content, idx, count, isOnAddText, edgeContents) {
 		const shape = content.Is_DrawingShape(true);
@@ -955,7 +982,7 @@
 			this.checkRemoveEdgeParagraphs(previousOutlineParagraph, lastOutlineParagraph, true);
 		}
 	};
-	RemoveOutlineParagraphsManager.prototype.remove = function (isOnAddText) {
+	RemoveOutlineParagraphsManager.prototype.remove = function (isOnAddText, direction) {
 		const docContent = this.getDocContent();
 		if (isOnAddText) {
 			if (!docContent.IsSelectionUse()) {
@@ -967,7 +994,8 @@
 		if (docContent.IsSelectionUse()) {
 			savedContentsOnUpdate = this.processSelectedContent(isOnAddText);
 		} else {
-			this.processNotSelectedContent();
+			const removeDirection = direction === AscWord.Direction.FORWARD ? AscWord.Direction.FORWARD : AscWord.Direction.BACKWARD;
+			this.processNotSelectedContent(removeDirection);
 		}
 		outlineView.removeSlides(this.checkSlidesForRemove, isOnAddText, savedContentsOnUpdate);
 		return savedContentsOnUpdate;
@@ -2105,14 +2133,14 @@
 		return docContent.GetSelectedText(false, oPr);
 	};
 
-	OutlineView.prototype.remove = function (bOnAddText) {
+	OutlineView.prototype.remove = function (isOnAddText, direction) {
 		const docContent = this.getDocContent();
 		const isSelectionUse = docContent && docContent.IsSelectionUse();
 		const manager = new RemoveOutlineParagraphsManager(this);
-		 const removeInfo = manager.remove(bOnAddText);
+		 const removeInfo = manager.remove(isOnAddText, direction);
 		this.update(removeInfo);
 		this.applySavedPositionToOutline();
-		if (bOnAddText && isSelectionUse) {
+		if (isOnAddText && isSelectionUse) {
 			this.checkCurrentTextObjectExtends();
 		}
 	};
@@ -2776,11 +2804,13 @@
 				returnValue = keydownresult_PreventAll;
 				break;
 			}
-			case Asc.c_oAscKeyCodes.Backspace: {
+			case Asc.c_oAscKeyCodes.Backspace:
+			case Asc.c_oAscKeyCodes.Delete: {
 				const oThis = this;
+				const direction = e.KeyCode === Asc.c_oAscKeyCodes.Delete ? AscWord.Direction.FORWARD : AscWord.Direction.BACKWARD;
 				this.checkSelectedObjectsAndCallback(function () {
-					oThis.remove();
-				}, AscDFH.historydescription_Spreadsheet_Remove, true, true, true);
+					oThis.remove(false, direction);
+				}, AscDFH.historydescription_Spreadsheet_Remove, true, true, true, direction);
 				this.updateInterfaceState()
 				this.updateSelectionState();
 				returnValue = keydownresult_PreventAll;
@@ -2863,7 +2893,27 @@
 		const startOutlineParagraph = info.outlineParagraph;
 		return startOutlineParagraph.IsSelectionFromStart() || startOutlineParagraph.IsCursorAtBegin();
 	};
-	OutlineView.prototype.getSlidesForLock = function (isRemoveBeforeAdd) {
+	OutlineView.prototype.isCursorAtEndSlide = function (slideIndex) {
+		const presentation = this.getPresentation();
+		const nextSlide = presentation.Slides[slideIndex + 1];
+		const docContent = this.getDocContent();
+		let endOutlineParagraph;
+		if (nextSlide) {
+			const nextInfo = this.outlineInfo.getSlideInfoBySlide(nextSlide);
+			if (!nextInfo) {
+				return false;
+			}
+			endOutlineParagraph = docContent.Content[nextInfo.outlineParagraph.GetIndex() - 1];
+		} else {
+			endOutlineParagraph = docContent.Content[docContent.Content.length - 1];
+		}
+
+		if (!endOutlineParagraph) {
+			return false;
+		}
+		return endOutlineParagraph.IsSelectionToEnd() || endOutlineParagraph.IsCursorAtEnd();
+	};
+	OutlineView.prototype.getSlidesForLock = function (isRemoveBeforeAdd, removeDirection) {
 		const selectedArray = this.getSelectedSlideArray();
 		if (selectedArray.length) {
 			const presentation = this.getPresentation();
@@ -2884,8 +2934,14 @@
 					}
 					return result;
 				}
-			} else if (!isRemoveBeforeAdd && this.isCursorAtBeginSlide(min)) {
-				return [presentation.Slides[min]];
+			} else if (!isRemoveBeforeAdd) {
+				if (removeDirection === AscWord.Direction.FORWARD) {
+					if (presentation.Slides[max + 1] && this.isCursorAtEndSlide(max)) {
+						return [presentation.Slides[max + 1]];
+					}
+				} else if (presentation.Slides[min - 1] && this.isCursorAtBeginSlide(min)) {
+					return [presentation.Slides[min]];
+				}
 			}
 		}
 
@@ -3718,7 +3774,7 @@
 
 
 
-	OutlineView.prototype.checkSelectedObjectsAndCallback = function (callback, historyPointType, isNeedCheckDrawings, isNeedCheckSlides, isRemoveAction) {
+	OutlineView.prototype.checkSelectedObjectsAndCallback = function (callback, historyPointType, isNeedCheckDrawings, isNeedCheckSlides, isRemoveAction, removeDirection) {
 		const presentation = this.getPresentation();
 		const pointType = AscFormat.isRealNumber(historyPointType) ? historyPointType : AscDFH.historydescription_CommonControllerCheckSelected;
 		isNeedCheckDrawings = typeof isNeedCheckDrawings === "boolean" ? isNeedCheckDrawings : true;
@@ -3730,7 +3786,7 @@
 			checkType = AscCommon.changestype_Drawing_Props;
 		}
 
-		if(checkType === null || presentation.Document_Is_SelectionLocked(checkType, {isRemoveAction: isRemoveAction}, undefined, null) === false) {
+		if(checkType === null || presentation.Document_Is_SelectionLocked(checkType, {isRemoveAction: isRemoveAction, removeDirection: removeDirection}, undefined, null) === false) {
 			presentation.StartAction(pointType);
 			callback.call(this);
 			presentation.FinalizeAction();
