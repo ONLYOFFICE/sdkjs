@@ -34595,6 +34595,9 @@
 	}
 
 	function throwException(err) {
+		if ("string" === typeof err)
+			err = new Error(err);
+
 		if (!console.error)
 			logError(err);
 		throw err;
