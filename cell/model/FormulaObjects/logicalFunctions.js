@@ -170,14 +170,10 @@ function (window, undefined) {
 	cIF.prototype.arrayIndexes = {1: 1, 2: 1};
 	cIF.prototype.getArrayIndex = function (index, type, args) {
 		let res = false;
-		if (args && args[0].type === cElementType.array) {
+		if (args && args[0] && (cElementType.array === args[0].type ||
+			cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type)) {
 			return false;
 		}
-
-		// if (type === cElementType.array) {
-		// 	return false;
-		// }
-
 		if (this.arrayIndexes) {
 			res = this.arrayIndexes[index];
 		}
