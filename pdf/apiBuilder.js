@@ -10979,7 +10979,7 @@
 				return new AscBuilder.ApiColor('theme', unifillColor.id);
 
 			if (unifillColor instanceof AscFormat.CRGBColor)
-				return Api.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+				return Api.RGB(unifillColor.RGBA.R, unifillColor.RGBA.G, unifillColor.RGBA.B);
 		}
 
 		const color = shd.Fill;

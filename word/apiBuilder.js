@@ -16426,7 +16426,7 @@
 				return new ApiColor('theme', unifillColor.id);
 
 			if (unifillColor instanceof AscFormat.CRGBColor)
-				return Api.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+				return Api.RGB(unifillColor.RGBA.R, unifillColor.RGBA.G, unifillColor.RGBA.B);
 		}
 
 		const color = shd.Fill;
@@ -17160,7 +17160,7 @@
 				return new ApiColor('theme', unifillColor.id);
 
 			if (unifillColor instanceof AscFormat.CRGBColor)
-				return Api.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+				return Api.RGB(unifillColor.RGBA.R, unifillColor.RGBA.G, unifillColor.RGBA.B);
 		}
 
 		const oColor = this.TextPr.GetColor();
@@ -17552,7 +17552,7 @@
 			if (unifillColor instanceof AscFormat.CSchemeColor)
 				apiColor = new ApiColor('theme', unifillColor.id);
 			else if (unifillColor instanceof AscFormat.CRGBColor)
-				apiColor = Api.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+				apiColor = Api.RGB(unifillColor.RGBA.R, unifillColor.RGBA.G, unifillColor.RGBA.B);
 		}
 
 		if (!apiColor)
@@ -18203,7 +18203,7 @@
 			if (unifillColor instanceof AscFormat.CSchemeColor)
 				apiColor = new ApiColor('theme', unifillColor.id);
 			else if (unifillColor instanceof AscFormat.CRGBColor)
-				apiColor = Api.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+				apiColor = Api.RGB(unifillColor.RGBA.R, unifillColor.RGBA.G, unifillColor.RGBA.B);
 		}
 
 		if (!apiColor)
@@ -27647,7 +27647,7 @@
 				return new ApiColor('theme', unifillColor.id);
 
 			if (unifillColor instanceof AscFormat.CRGBColor)
-				return Api.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+				return Api.RGB(unifillColor.RGBA.R, unifillColor.RGBA.G, unifillColor.RGBA.B);
 		}
 
 		const color = formPr.Shd.Fill || formPr.Shd.Color;
