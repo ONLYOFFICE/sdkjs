@@ -3050,7 +3050,8 @@ CInlineLevelSdt.prototype.SyncFormPrWithSameKey = function(form)
 };
 CInlineLevelSdt.prototype.Get_ParentTextTransform = function()
 {
-	return this.Paragraph.Get_ParentTextTransform();
+	let paragraph = this.GetParagraph();
+	return paragraph ? paragraph.Get_ParentTextTransform() : null;
 };
 CInlineLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 {
