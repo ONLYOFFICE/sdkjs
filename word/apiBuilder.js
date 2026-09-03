@@ -3127,9 +3127,10 @@
 	 * separate framed paragraph.
 	 * @constructor
 	 */
-	function ApiDropCap(Paragraph)
+	function ApiDropCap(paragraph, ownerParagraph)
 	{
-		this.Paragraph = Paragraph;
+		this.Paragraph		= paragraph;
+		this.OwnerParagraph	= ownerParagraph || paragraph;
 	}
 
 	/**
@@ -11725,7 +11726,7 @@
 		logicDocument.AddDropCap(position === "drop");
 
 		let dropCapPara = this.private_GetDropCapParagraph();
-		return dropCapPara ? new ApiDropCap(dropCapPara) : null;
+		return dropCapPara ? new ApiDropCap(dropCapPara, this.Paragraph) : null;
 	};
 	/**
 	 * Returns the drop cap related to the current paragraph, if any.
@@ -11738,7 +11739,7 @@
 	ApiParagraph.prototype.GetDropCap = function()
 	{
 		let dropCapPara = this.private_GetDropCapParagraph();
-		return dropCapPara ? new ApiDropCap(dropCapPara) : null;
+		return dropCapPara ? new ApiDropCap(dropCapPara, this.Paragraph) : null;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -11797,7 +11798,8 @@
 		return "dropCap";
 	};
 	/**
-	 * Returns the parent paragraph that holds the drop cap letter.
+	 * Returns the paragraph this drop cap was requested from: either the framed drop cap paragraph itself,
+	 * or the paragraph that continues its text.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph}
@@ -11806,7 +11808,7 @@
 	 */
 	ApiDropCap.prototype.GetParent = function()
 	{
-		let currentPara = this.Paragraph;
+		let currentPara = this.OwnerParagraph;
 		return new ApiParagraph(currentPara);
 	};
 	/**
