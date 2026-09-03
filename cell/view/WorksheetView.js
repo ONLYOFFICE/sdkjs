@@ -19900,6 +19900,28 @@ function isAllowPasteLink(pastedWb) {
         return (0 < val.length && 1 < val[0].getFragmentText().length && '=' === val[0].getFragmentText().charAt( 0 ));
     };
 
+	// "-7", "-7%" - a number with unary operators is a value, not a formula
+	WorksheetView.prototype._isNumberValueStack = function (outStack) {
+		if (!outStack.length || outStack[0].type !== AscCommonExcel.cElementType.number) {
+			return false;
+		}
+		let nMinus = 0, nPercent = 0;
+		for (let i = 1; i < outStack.length; ++i) {
+			let elem = outStack[i];
+			if (elem.type !== AscCommonExcel.cElementType.operator) {
+				return false;
+			}
+			if ("un_minus" === elem.name) {
+				nMinus++;
+			} else if ("%" === elem.name) {
+				nPercent++;
+			} else {
+				return false;
+			}
+		}
+		return nMinus <= 1 && nPercent <= 1;
+	};
+
     WorksheetView.prototype.canConverToFormula = function ( formulaText ) {
 		if (formulaText && formulaText.length > 1) {
 			return formulaText[0] === "+" || formulaText[0] === "-";
@@ -20024,9 +20046,7 @@ function isAllowPasteLink(pastedWb) {
 			// todo add backlight when choosing Ref/Range
 			if (newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)
 				|| !(parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount)) {
-				if ((newFP.outStack.length === 1 && newFP.outStack[0].type === AscCommonExcel.cElementType.number)
-					|| (newFP.outStack.length === 2 && newFP.outStack[0].type === AscCommonExcel.cElementType.number &&
-						newFP.outStack[1].type === AscCommonExcel.cElementType.operator && newFP.outStack[1].name === "un_minus")) {
+				if (this._isNumberValueStack(newFP.outStack)) {
 					isFormulaFromVal = false;
 					isFormula = false;
 				} else {

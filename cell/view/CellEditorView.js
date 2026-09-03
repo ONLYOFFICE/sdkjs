@@ -93,6 +93,7 @@ function (window, undefined) {
 	var codeEqually = 0x3D;
 	var codeUnarPlus = 0x2B;
 	var codeUnarMinus = 0x2D;
+	var rx_signedNumber = /^[+\-][\d.,\s]*$/;
 
 
 	/**
@@ -3650,6 +3651,11 @@ function (window, undefined) {
 		return this.EnterText(Code);
 	};
 
+	// "-7", "+7,5" - a number, not a formula
+	CellEditor.prototype._isSignedNumberInput = function () {
+		return rx_signedNumber.test(AscCommonExcel.getFragmentsText(this.options.fragments));
+	};
+
 	CellEditor.prototype.EnterText = function (codePoints) {
 		var t = this;
 
@@ -3685,7 +3691,8 @@ function (window, undefined) {
 			tmpCursorPos = t.cursorPos;
 			t.undoMode = true;
 			// add the percentage only to the line without a formula
-			if (!t._formula) {
+			// a leading sign is a formula state too, but "-7" is a number
+			if (!t._formula || t._isSignedNumberInput()) {
 				t._addChars("%");
 			}
 			t.cursorPos = tmpCursorPos;
