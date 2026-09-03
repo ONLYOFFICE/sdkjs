@@ -9585,7 +9585,7 @@
 		if (!shd || shd.Value === Asc.c_oAscShd.Nil)
 			return null;
 
-		const unifill = shd.ThemeFill;
+		const unifill = shd.ThemeFill || shd.Unifill;
 		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
 		if (unifillColor) {
 			if (unifillColor instanceof AscFormat.CSchemeColor)
