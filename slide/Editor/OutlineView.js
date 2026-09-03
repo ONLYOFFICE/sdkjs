@@ -2848,6 +2848,21 @@
 		}
 		return {Min: -1, Max: -1};
 	};
+	OutlineView.prototype.getSlideLastParagraph = function (slideIndex) {
+		const presentation = this.getPresentation();
+		const docContent = this.getDocContent();
+		const nextSlide = presentation.Slides[slideIndex + 1];
+		if (nextSlide) {
+			const nextInfo = this.outlineInfo.getSlideInfoBySlide(nextSlide);
+			if (!nextInfo) {
+				return null;
+			}
+			const nextSlideOutlineParagraph = nextInfo.outlineParagraph;
+			return  docContent.Content[nextSlideOutlineParagraph.GetIndex() - 1];
+		}
+		return docContent.Content[docContent.Content.length - 1];
+
+	};
 	OutlineView.prototype.isFullSelectedSlide = function (slideIndex) {
 		const presentation = this.getPresentation();
 		const slide = presentation.Slides[slideIndex];
@@ -2863,19 +2878,7 @@
 			return false;
 		}
 
-		const docContent = this.getDocContent();
-		let endOutlineParagraph;
-		const nextSlide = presentation.Slides[slideIndex + 1];
-		if (nextSlide) {
-			const nextInfo = this.outlineInfo.getSlideInfoBySlide(nextSlide);
-			if (!nextInfo) {
-				return false;
-			}
-			const nextSlideOutlineParagraph = nextInfo.outlineParagraph;
-			endOutlineParagraph = docContent.Content[nextSlideOutlineParagraph.GetIndex() - 1];
-		} else {
-			endOutlineParagraph = docContent.Content[docContent.Content.length - 1];
-		}
+		let endOutlineParagraph = this.getSlideLastParagraph(slideIndex);
 		if (endOutlineParagraph) {
 			return endOutlineParagraph.IsSelectedAll();
 		}
@@ -2895,20 +2898,7 @@
 		return startOutlineParagraph.IsSelectionFromStart() || startOutlineParagraph.IsCursorAtBegin();
 	};
 	OutlineView.prototype.isCursorAtEndSlide = function (slideIndex) {
-		const presentation = this.getPresentation();
-		const nextSlide = presentation.Slides[slideIndex + 1];
-		const docContent = this.getDocContent();
-		let endOutlineParagraph;
-		if (nextSlide) {
-			const nextInfo = this.outlineInfo.getSlideInfoBySlide(nextSlide);
-			if (!nextInfo) {
-				return false;
-			}
-			endOutlineParagraph = docContent.Content[nextInfo.outlineParagraph.GetIndex() - 1];
-		} else {
-			endOutlineParagraph = docContent.Content[docContent.Content.length - 1];
-		}
-
+		let endOutlineParagraph = this.getSlideLastParagraph(slideIndex);
 		if (!endOutlineParagraph) {
 			return false;
 		}
