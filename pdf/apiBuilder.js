@@ -10045,15 +10045,17 @@
 	 * Sets the table title.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sTitle - The table title to be set.
+	 * @param {string} title - The table title to be set.
 	 * @return {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableTitle.js
 	 */
-	ApiTable.prototype.SetTableTitle = function(sTitle) {
-		if (typeof sTitle !== "string" || sTitle === "")
-			return false;
-		this.Drawing.setTitle(sTitle);
+	ApiTable.prototype.SetTableTitle = function(title) {
+		title = AscBuilder.GetStringParameter(title, null, false);
+		if (null === title)
+			AscBuilder.throwException(new Error('Invalid type of parameter "title".'));
+
+		this.Drawing.setTitle(title);
 		return true;
 	};
 
@@ -10073,15 +10075,17 @@
 	 * Sets the table description.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} sDescr - The table description to be set.
+	 * @param {string} descr - The table description to be set.
 	 * @return {boolean}
 	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
 	 */
-	ApiTable.prototype.SetTableDescription = function(sDescr) {
-		if (typeof sDescr !== "string" || sDescr === "")
-			return false;
-		this.Drawing.setDescription(sDescr);
+	ApiTable.prototype.SetTableDescription = function(descr) {
+		descr = AscBuilder.GetStringParameter(descr, null, false);
+		if (null === descr)
+			AscBuilder.throwException(new Error('Invalid type of parameter "descr".'));
+
+		this.Drawing.setDescription(descr);
 		return true;
 	};
 

@@ -9180,7 +9180,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
 	 */
 	ApiTable.prototype.SetTableDescription = function(descr) {
-		descr = AscBuilder.GetStringParameter(descr, null);
+		descr = AscBuilder.GetStringParameter(descr, null, false);
 		if (null === descr)
 			AscBuilder.throwException(new Error('Invalid type of parameter "descr".'));
 
