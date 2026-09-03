@@ -783,10 +783,16 @@
 		if (!content || !content.Content.length) {
 			return;
 		}
+		const api = this.outlineView.getApi();
+		api.isDisableSetCurrentElement = true;
+		let res;
 		if (content.IsSelectionUse()) {
-			return this.processSelectedContent(callback);
+			res = this.processSelectedContent(callback);
+		} else {
+			res = this.processCursorContent(callback);
 		}
-		return this.processCursorContent(callback);
+		api.isDisableSetCurrentElement = false;
+		return res;
 	};
 
 	function RemoveOutlineParagraphsManager(outlineView) {
@@ -1254,9 +1260,6 @@
 				selectedContent.EndCollect(outlineView.getPresentation());
 				inserted = oThis.insertIntoSourceContent(content, selectedContent);
 				outlineView.setSavedRealContentState(content, selectProps.index, selectProps.count, selectProps.direction);
-				if (shape.parent) {
-					shape.parent.graphicObjects.resetSelection();
-				}
 			}
 			return inserted;
 		});

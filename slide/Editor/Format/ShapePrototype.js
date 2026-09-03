@@ -702,6 +702,9 @@ CShape.prototype.getIsSingleBody = function(x, y)
 };
 
 CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection, isReplace){
+    if (editor && editor.isDisableSetCurrentElement) {
+        return;
+    }
     if(this.parent && this.parent.graphicObjects){
 		if (isReplace === undefined)
 			isReplace = false;

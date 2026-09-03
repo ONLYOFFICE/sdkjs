@@ -301,6 +301,8 @@
 		this.isShowTableEmptyLine       = false;//true;
 		this.isShowTableEmptyLineAttack = false;//true;
 
+		this.isDisableSetCurrentElement = false;
+
 		this.bInit_word_control = false;
 		this.isDocumentModify   = false;
 
