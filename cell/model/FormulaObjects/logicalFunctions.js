@@ -52,6 +52,7 @@ function (window, undefined) {
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
 	var cElementType = AscCommonExcel.cElementType;
+	var _func = AscCommonExcel._func;
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	cFormulaFunctionGroup['Logical'] = cFormulaFunctionGroup['Logical'] || [];
@@ -169,14 +170,10 @@ function (window, undefined) {
 	cIF.prototype.arrayIndexes = {1: 1, 2: 1};
 	cIF.prototype.getArrayIndex = function (index, type, args) {
 		let res = false;
-		if (args && args[0].type === cElementType.array) {
+		if (args && args[0] && (cElementType.array === args[0].type ||
+			cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type)) {
 			return false;
 		}
-
-		// if (type === cElementType.array) {
-		// 	return false;
-		// }
-
 		if (this.arrayIndexes) {
 			res = this.arrayIndexes[index];
 		}
@@ -186,7 +183,7 @@ function (window, undefined) {
 	//only the branch the condition selects is ever read, so the other one may vary from cell to cell without
 	//affecting the answer. an unusable condition (error/non-boolean text) reads neither branch.
 	cIF.prototype.getUnusedTailArgs = function (tailArgs) {
-		let cond = tailArgs && tailArgs[0];
+		let cond = this.getTailArgValue(tailArgs, 0);
 		if (!cond || cElementType.array === cond.type) {
 			return null;
 		}
@@ -238,23 +235,31 @@ function (window, undefined) {
 	cIFERROR.prototype.argumentsMax = 2;
 	cIFERROR.prototype.argumentsType = [argType.any, argType.any];
 	cIFERROR.prototype.enabledToSingle = {"1": true};
+	cIFERROR.prototype.getUnusedTailArgs = function (tailArgs) {
+		let value = this.getTailArgValue(tailArgs, 0);
+		if (!value) {
+			return null;
+		}
+		return cElementType.error === value.type ? null : [1];
+	};
 	cIFERROR.prototype.Calculate = function (arg) {
-		let arg0 = arg[0];
+		let arg0 = arg[0], res = arg[0];
 		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
 		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
+			res = arg0;
 		}
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
+			res = arg0;
 		}
 
 		if (arg0.type === cElementType.error) {
 			return arg[1].type === cElementType.array ? arg[1].getElement(0) : arg[1];
-		} else {
-			return arg[0];
 		}
+		return res;
 	};
 
 	/**
@@ -273,23 +278,33 @@ function (window, undefined) {
 	cIFNA.prototype.isXLFN = true;
 	cIFNA.prototype.argumentsType = [argType.any, argType.any];
 	cIFNA.prototype.enabledToSingle = {"1": true};
+	cIFNA.prototype.getUnusedTailArgs = function (tailArgs) {
+		let value = this.getTailArgValue(tailArgs, 0);
+		if (!value) {
+			return null;
+		}
+		let isNA = cElementType.error === value.type && cErrorType.not_available === value.errorType;
+		return isNA ? null : [1];
+	};
 	cIFNA.prototype.Calculate = function (arg) {
 
-		let arg0 = arg[0];
+		let arg0 = arg[0], res = arg[0];
 		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
 		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
+			res = arg0;
 		}
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
+			res = arg0;
 		}
 
 		if (arg0.type === cElementType.error && cErrorType.not_available === arg0.errorType) {
 			return arg[1].type === cElementType.array ? arg[1].getElement(0) : arg[1];
 		} else {
-			return arg[0];
+			return res;
 		}
 	};
 
@@ -308,6 +323,31 @@ function (window, undefined) {
 	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
 	cIFS.prototype.enabledToSingle = {"odd": true};
+	cIFS.prototype.getUnusedTailArgs = function (tailArgs) {
+		let count = tailArgs ? tailArgs.length : 0, read = {};
+		for (let i = 0; i < count; i += 2) {
+			//only the condition is looked at; the value slot next to it is marked read without being read
+			let cond = this.getTailArgValue(tailArgs, i);
+			if (!cond) {
+				return null;
+			}
+			read[i] = true;
+			if (cElementType.error === cond.type || cElementType.string === cond.type) {
+				break;
+			}
+			if (cElementType.number !== cond.type && cElementType.bool !== cond.type) {
+				continue;
+			}
+			if (i + 1 >= count) {
+				break;
+			}
+			if (cond.tocBool().value) {
+				read[i + 1] = true;
+				break;
+			}
+		}
+		return this.collectUnusedTailArgs(read, count);
+	};
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
@@ -315,6 +355,9 @@ function (window, undefined) {
 		var res = null;
 		for (var i = 0; i < arg.length; i++) {
 			var argN = argClone[i];
+			if (cElementType.cell === argN.type || cElementType.cell3D === argN.type) {
+				argN = argN.getValue();
+			}
 			if (cElementType.error === argN.type) {
 				res = argN;
 				break;
@@ -486,6 +529,9 @@ function (window, undefined) {
 		return argResult;
 	};
 
+	function asComparable(_arg) {
+		return cElementType.empty === _arg.type ? new cNumber(0) : _arg;
+	}
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -502,44 +548,71 @@ function (window, undefined) {
 	cSWITCH.prototype.isXLFN = true;
 	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
 	cSWITCH.prototype.enabledToSingle = {"evenFrom2": true};
+	cSWITCH.prototype.getUnusedTailArgs = function (tailArgs) {
+		let count = tailArgs ? tailArgs.length : 0, read = {};
+		let expression = this.getTailArgValue(tailArgs, 0);
+		if (!expression) {
+			return null;
+		}
+		read[0] = true;
+		if (cElementType.error !== expression.type) {
+			expression = asComparable(expression);
+			for (let i = 1; i < count; i++) {
+				if (i === count - 1) {
+					read[i] = true;
+					break;
+				}
+				//only the key is looked at; the result slot next to it is marked read without being read
+				let caseValue = this.getTailArgValue(tailArgs, i);
+				if (!caseValue) {
+					return null;
+				}
+				read[i] = true;
+				if (cElementType.error === caseValue.type) {
+					break;
+				}
+				caseValue = asComparable(caseValue);
+				if (true === _func[expression.type][caseValue.type](expression, caseValue, "=").value) {
+					read[i + 1] = true;
+					break;
+				}
+				i++;
+			}
+		}
+		return this.collectUnusedTailArgs(read, count);
+	};
 	cSWITCH.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments(arg, arguments[1], true);
 		let argClone = oArguments.args;
-
-		let argError;
-		let argCloneOdd = argClone.filter(function(item, index) {
-			return index === 0 || index % 2 !== 0;
-		});
-
-		// check all odd arguments for errors plus the starting one(first arg)
-		if (argError = this._checkErrorArg(argCloneOdd)) {
-			return argError;
-		}
 
 		let arg0 = argClone[0];
 		if (cElementType.cell === argClone[0].type || cElementType.cell3D === argClone[0].type) {
 			arg0 = arg0.getValue()
 		}
-		let arg0Type = arg0.type;
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		arg0 = asComparable(arg0);
 
 		let res = null;
 		for (let i = 1; i < argClone.length; i++) {
+			if (i === argClone.length - 1) {
+				res = argClone[i];
+				break;
+			}
+
 			let argN = argClone[i];
 			if (cElementType.cell === argN.type || cElementType.cell3D === argN.type) {
 				argN = argN.getValue();
 			}
-			let argNType = argN.type;
-
-			if (arg0Type === argNType && arg0.getValue() === argN.getValue()) {
-				if (!argClone[i + 1]) {
-					return new cError(cErrorType.not_available);
-				} else {
-					res = argClone[i + 1];
-					break;
-				}
+			if (cElementType.error === argN.type) {
+				return argN;
 			}
-			if (i === argClone.length - 1) {
-				res = argClone[i];
+			argN = asComparable(argN);
+
+			if (true === _func[arg0.type][argN.type](arg0, argN, "=").value) {
+				res = argClone[i + 1];
+				break;
 			}
 			i++;
 		}
