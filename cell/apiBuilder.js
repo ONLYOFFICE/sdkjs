@@ -44,21 +44,21 @@
 		}
 	}
 
-	function runWithDefaultSeparators(callback) {
-		let cultureInfo = AscCommon.g_oDefaultCultureInfo;
-		let oDefaultCultureInfo = AscCommon.g_aCultureInfos[1033];
-		let sDecimalSeparator = cultureInfo.NumberDecimalSeparator;
-		let sGroupSeparator = cultureInfo.NumberGroupSeparator;
+	//MS Excel reads the values of its object model with the default settings whatever the editor
+	//locale is. ToDo probably it is worth switching to the default locale for the whole macro run
+	//instead of every value, but that needs a check of the other api methods and of how it plays
+	//with the current format caches
+	function runWithDefaultLocale(callback) {
+		let oValueLocaleInfo = AscCommonExcel.oValueLocaleInfo;
 		let oFormulaLocaleInfo = AscCommonExcel.oFormulaLocaleInfo;
+		let bDefault = oValueLocaleInfo.Default;
 		let bDigitSep = oFormulaLocaleInfo.DigitSep;
-		cultureInfo.NumberDecimalSeparator = oDefaultCultureInfo.NumberDecimalSeparator;
-		cultureInfo.NumberGroupSeparator = oDefaultCultureInfo.NumberGroupSeparator;
+		oValueLocaleInfo.Default = true;
 		oFormulaLocaleInfo.DigitSep = false;
 		try {
 			return callback();
 		} finally {
-			cultureInfo.NumberDecimalSeparator = sDecimalSeparator;
-			cultureInfo.NumberGroupSeparator = sGroupSeparator;
+			oValueLocaleInfo.Default = bDefault;
 			oFormulaLocaleInfo.DigitSep = bDigitSep;
 		}
 	}
@@ -10605,7 +10605,7 @@
 	 */
 	ApiRange.prototype.SetValue = function (data) {
 		let oThis = this;
-		return runWithDefaultSeparators(function () {
+		return runWithDefaultLocale(function () {
 			if (!oThis.range)
 				return false;
 
@@ -10632,7 +10632,7 @@
 							for (let indR = 0; indR < nRow; indR++) {
 								let value = (maxDepth == 1 ? data[indC] : data[indR] ? data[indR][indC] : null);
 								if (value === undefined || value === null)
-									value = AscCommon.cErrorLocal["na"];
+									value = AscCommon.cErrorOrigin["na"];
 
 								let cell = oThis.range.worksheet.getRange3((bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC));
 								let merged = cell.hasMerged();
@@ -10652,7 +10652,7 @@
 				}
 			}
 			if (data === undefined || data === null)
-				data = AscCommon.cErrorLocal["na"];
+				data = AscCommon.cErrorOrigin["na"];
 
 			data = checkFormat(data);
 			let range = oThis.range;
@@ -13113,7 +13113,7 @@
 	 */
 	ApiRange.prototype.SetFormulaArray = function (data) {
 		let oThis = this;
-		return runWithDefaultSeparators(function () {
+		return runWithDefaultLocale(function () {
 			if (!oThis.range) {
 				return false;
 			}
@@ -13121,7 +13121,7 @@
 			let worksheet = oThis.range.worksheet;
 
 			if (data === undefined || data === null) {
-				data = AscCommon.cErrorLocal["na"];
+				data = AscCommon.cErrorOrigin["na"];
 			}
 
 			data = checkFormat(data);

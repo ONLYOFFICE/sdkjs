@@ -51,6 +51,7 @@
 	var CellAddress = AscCommon.CellAddress;
 	var isRealObject = AscCommon.isRealObject;
 	var cBoolLocal = AscCommon.cBoolLocal;
+	var cBoolOrigin = AscCommon.cBoolOrigin;
 	var cErrorLocal = AscCommon.cErrorLocal;
 	var cErrorOrigin = AscCommon.cErrorOrigin;
 	var c_oAscNumFormatType = Asc.c_oAscNumFormatType;
@@ -105,6 +106,10 @@
 	var oFormulaLocaleInfo = {
 		Parse: true,
 		DigitSep: true
+	};
+
+	const oValueLocaleInfo = {
+		Default: false
 	};
 	const aRefTypes = [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D];
 
@@ -17927,34 +17932,39 @@
 	{
 		this.cleanText();
 
+		const bDefaultLocale = oValueLocaleInfo.Default;
+		const oCultureInfo = bDefaultLocale ? AscCommon.g_aCultureInfos[1033] : null;
+		const oBoolNames = bDefaultLocale ? cBoolOrigin : cBoolLocal;
+		const oErrorNames = bDefaultLocale ? cErrorOrigin : cErrorLocal;
+
 		function checkCellValueTypeError(sUpText){
 			switch (sUpText){
-				case cErrorLocal["nil"]:
+				case oErrorNames["nil"]:
 					return cErrorOrigin["nil"];
 					break;
-				case cErrorLocal["div"]:
+				case oErrorNames["div"]:
 					return cErrorOrigin["div"];
 					break;
-				case cErrorLocal["value"]:
+				case oErrorNames["value"]:
 					return cErrorOrigin["value"];
 					break;
-				case cErrorLocal["ref"]:
+				case oErrorNames["ref"]:
 					return cErrorOrigin["ref"];
 					break;
-				case cErrorLocal["name"]:
-				case cErrorLocal["name"].replace('\\', ''): // ToDo this is an incorrect fix for bug 32463 (need to redo formula parsing)
+				case oErrorNames["name"]:
+				case oErrorNames["name"].replace('\\', ''): // ToDo this is an incorrect fix for bug 32463 (need to redo formula parsing)
 					return cErrorOrigin["name"];
 					break;
-				case cErrorLocal["num"]:
+				case oErrorNames["num"]:
 					return cErrorOrigin["num"];
 					break;
-				case cErrorLocal["na"]:
+				case oErrorNames["na"]:
 					return cErrorOrigin["na"];
 					break;
-				case cErrorLocal["getdata"]:
+				case oErrorNames["getdata"]:
 					return cErrorOrigin["getdata"];
 					break;
-				case cErrorLocal["uf"]:
+				case oErrorNames["uf"]:
 					return cErrorOrigin["uf"];
 					break;
 			}
@@ -17983,10 +17993,10 @@
 		}
 		else
 		{
-			if (AscCommon.g_oFormatParser.isLocaleNumber(val))
+			if (AscCommon.g_oFormatParser.isLocaleNumber(val, oCultureInfo))
 			{
 				this.setTypeInternal(CellValueType.Number);
-				this.setValueNumberInternal(AscCommon.g_oFormatParser.parseLocaleNumber(val));
+				this.setValueNumberInternal(AscCommon.g_oFormatParser.parseLocaleNumber(val, oCultureInfo));
 				if (/E/i.test(val)) {
 					this.setNumFormat('0.00E+00');
 				}
@@ -17994,10 +18004,10 @@
 			else
 			{
 				var sUpText = val.toUpperCase();
-				if(cBoolLocal.t === sUpText || cBoolLocal.f === sUpText)
+				if(oBoolNames.t === sUpText || oBoolNames.f === sUpText)
 				{
 					this.setTypeInternal(CellValueType.Bool);
-					this.setValueNumberInternal((cBoolLocal.t === sUpText) ? 1 : 0);
+					this.setValueNumberInternal((oBoolNames.t === sUpText) ? 1 : 0);
 				}
 				else if(checkCellValueTypeError(sUpText))
 				{
@@ -18007,7 +18017,7 @@
 				else
 				{
 					//recognize format
-					var res = AscCommon.g_oFormatParser.parse(val, null, oNumFormat.getType(), oNumFormat.sFormat);
+					var res = AscCommon.g_oFormatParser.parse(val, oCultureInfo, oNumFormat.getType(), oNumFormat.sFormat);
 					if(null != res)
 					{
 						//Compare with current format, if types match - change only cell value
@@ -27119,6 +27129,7 @@
 	window['AscCommonExcel'].aStandartNumFormats = aStandartNumFormats;
 	window['AscCommonExcel'].aStandartNumFormatsId = aStandartNumFormatsId;
 	window['AscCommonExcel'].oFormulaLocaleInfo = oFormulaLocaleInfo;
+	window['AscCommonExcel'].oValueLocaleInfo = oValueLocaleInfo;
 	window['AscCommonExcel'].getDefNameIndex = getDefNameIndex;
 	window['AscCommonExcel'].getCellIndex = getCellIndex;
 	window['AscCommonExcel'].getFromCellIndex = getFromCellIndex;
