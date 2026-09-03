@@ -811,12 +811,13 @@
 		if (direction === AscWord.Direction.FORWARD) {
 			if (this.isNeedProcessCursorAtEnd()) {
 				this.processCursorAtEnd();
+				return;
 			}
 		} else if (this.isNeedProcessCursorAtBegin()) {
 			this.processCursorAtBegin();
-		} else {
-			this.processCommonPosContent(direction);
+			return;
 		}
+		this.processCommonPosContent(direction);
 	};
 	RemoveOutlineParagraphsManager.prototype.processCommonPosContent = function (direction) {
 		const oThis = this;
