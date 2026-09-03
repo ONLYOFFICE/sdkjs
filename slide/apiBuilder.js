@@ -11533,7 +11533,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
 	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
-		fontFamily = AscBuilder.GetStringParameter(fontFamily, null);
+		fontFamily = AscBuilder.GetStringParameter(fontFamily, null, false);
 		if (null === fontFamily)
 			AscBuilder.throwException(new Error('Invalid type of parameter "fontFamily".'));
 
