@@ -187,7 +187,7 @@ function (window, undefined) {
 	//only the branch the condition selects is ever read, so the other one may vary from cell to cell without
 	//affecting the answer. an unusable condition (error/non-boolean text) reads neither branch.
 	cIF.prototype.getUnusedTailArgs = function (tailArgs) {
-		let cond = tailArgs && tailArgs[0];
+		let cond = this.getTailArgValue(tailArgs, 0);
 		if (!cond || cElementType.array === cond.type) {
 			return null;
 		}
@@ -240,7 +240,7 @@ function (window, undefined) {
 	cIFERROR.prototype.argumentsType = [argType.any, argType.any];
 	cIFERROR.prototype.enabledToSingle = {"1": true};
 	cIFERROR.prototype.getUnusedTailArgs = function (tailArgs) {
-		let value = tailArgs && tailArgs[0];
+		let value = this.getTailArgValue(tailArgs, 0);
 		if (!value) {
 			return null;
 		}
@@ -283,7 +283,7 @@ function (window, undefined) {
 	cIFNA.prototype.argumentsType = [argType.any, argType.any];
 	cIFNA.prototype.enabledToSingle = {"1": true};
 	cIFNA.prototype.getUnusedTailArgs = function (tailArgs) {
-		let value = tailArgs && tailArgs[0];
+		let value = this.getTailArgValue(tailArgs, 0);
 		if (!value) {
 			return null;
 		}
@@ -328,9 +328,10 @@ function (window, undefined) {
 	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
 	cIFS.prototype.enabledToSingle = {"odd": true};
 	cIFS.prototype.getUnusedTailArgs = function (tailArgs) {
-		let count = tailArgs ? tailArgs.length : 0, read = {}, unused = [];
+		let count = tailArgs ? tailArgs.length : 0, read = {};
 		for (let i = 0; i < count; i += 2) {
-			let cond = tailArgs[i];
+			//only the condition is looked at; the value slot next to it is marked read without being read
+			let cond = this.getTailArgValue(tailArgs, i);
 			if (!cond) {
 				return null;
 			}
@@ -349,12 +350,7 @@ function (window, undefined) {
 				break;
 			}
 		}
-		for (let j = 0; j < count; j++) {
-			if (!read[j]) {
-				unused.push(j);
-			}
-		}
-		return unused.length ? unused : null;
+		return this.collectUnusedTailArgs(read, count);
 	};
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
@@ -557,8 +553,8 @@ function (window, undefined) {
 	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
 	cSWITCH.prototype.enabledToSingle = {"evenFrom2": true};
 	cSWITCH.prototype.getUnusedTailArgs = function (tailArgs) {
-		let count = tailArgs ? tailArgs.length : 0, read = {}, unused = [];
-		let expression = count ? tailArgs[0] : null;
+		let count = tailArgs ? tailArgs.length : 0, read = {};
+		let expression = this.getTailArgValue(tailArgs, 0);
 		if (!expression) {
 			return null;
 		}
@@ -570,7 +566,8 @@ function (window, undefined) {
 					read[i] = true;
 					break;
 				}
-				let caseValue = tailArgs[i];
+				//only the key is looked at; the result slot next to it is marked read without being read
+				let caseValue = this.getTailArgValue(tailArgs, i);
 				if (!caseValue) {
 					return null;
 				}
@@ -586,12 +583,7 @@ function (window, undefined) {
 				i++;
 			}
 		}
-		for (let j = 0; j < count; j++) {
-			if (!read[j]) {
-				unused.push(j);
-			}
-		}
-		return unused.length ? unused : null;
+		return this.collectUnusedTailArgs(read, count);
 	};
 	cSWITCH.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments(arg, arguments[1], true);

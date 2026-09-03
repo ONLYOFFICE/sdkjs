@@ -4171,9 +4171,31 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	//single value. tailArgs holds the tail value of every argument whose tail IS a single value, and a hole
 	//where the argument varies from cell to cell. an index in the returned list means the answer does not
 	//depend on that argument, so a per-cell argument there does not stop the fold.
+	//a slot holds the argument as Calculate gets it, so a single-cell reference is still a REFERENCE here -
+	//read it with getTailArgValue before looking at its type, and never write back into tailArgs: the same
+	//array is passed to Calculate afterwards, where a function that works on references needs it intact.
 	//default: nothing is known, every argument counts.
 	cBaseFunction.prototype.getUnusedTailArgs = function (tailArgs) {
 		return null;
+	};
+	//reads a tail slot that is a single-cell reference; anything else, a hole included, comes back as it is.
+	//only a reference is read - getValue() on a plain value yields a raw JS value, not an element
+	cBaseFunction.prototype.getTailArgValue = function (tailArgs, index) {
+		var arg = tailArgs && tailArgs[index];
+		if (arg && (cElementType.cell === arg.type || cElementType.cell3D === arg.type)) {
+			return arg.getValue();
+		}
+		return arg;
+	};
+	//turns the slots a function reported reading into the list of slots it did not
+	cBaseFunction.prototype.collectUnusedTailArgs = function (read, count) {
+		var unused = [];
+		for (var i = 0; i < count; i++) {
+			if (!read[i]) {
+				unused.push(i);
+			}
+		}
+		return unused;
 	};
 	cBaseFunction.prototype.Assemble2 = function (arg, start, count) {
 
@@ -4987,17 +5009,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					}
 					if (_composable && _perCellArgs) {
 						//an argument that varies from cell to cell blocks the fold unless the function states it
-						//never reads it - IF, for one, only ever reaches the branch its condition selects.
-						//the question is answered by comparing values, so a single-cell reference is read into
-						//a COPY - _tailArgs itself keeps the reference for the Calculate below, which is what
-						//a function that works on references (OFFSET, for one) needs
-						var _probeArgs = new Array(argumentsCount);
-						for (var _dj = 0; _dj < argumentsCount; _dj++) {
-							var _dv = _tailArgs[_dj];
-							_probeArgs[_dj] = (_dv && (cElementType.cell === _dv.type || cElementType.cell3D === _dv.type)) ?
-								_dv.getValue() : _dv;
-						}
-						var _unusedArgs = t.getUnusedTailArgs(_probeArgs);
+						//never reads it - IF, for one, only ever reaches the branch its condition selects
+						var _unusedArgs = t.getUnusedTailArgs(_tailArgs);
 						for (var _pj = 0; _pj < _perCellArgs.length; _pj++) {
 							if (!_unusedArgs || -1 === _unusedArgs.indexOf(_perCellArgs[_pj])) {
 								_composable = false;
