@@ -8105,7 +8105,7 @@
 	{
 		let oProps = new AscCommon.CSearchSettings();
 		oProps.SetText(oProperties["searchString"]);
-		oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties.matchCase : true);
+		oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties["matchCase"] : true);
 
 		var oSearchEngine = this.Document.Search(oProps);
 		if (!oSearchEngine)
