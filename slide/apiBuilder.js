@@ -6764,6 +6764,7 @@
     {
         var fPosX = private_EMU2MM(nPosX);
         var fPosY = private_EMU2MM(nPosY);
+		AscFormat.CheckSpPrXfrm(this.Drawing);
         if(this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
         {
             this.Drawing.spPr.xfrm.setOffX(fPosX);
