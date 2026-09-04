@@ -5548,78 +5548,6 @@
 	};
 
 	/**
-	 * Creates a bullet for a paragraph with the numbering character or symbol specified with the numType parameter.
-	 * @memberof Api
-	 * @typeofeditors ["CPE", "PDFE", "CSE"]
-	 * @param {BulletType} numType - The numbering type the paragraphs will be numbered with.
-	 * @param {number} startAt - The number the first numbered paragraph will start with.
-	 * @returns {ApiBullet}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
-	 */
-	Api.CreateNumbering = function(numType, startAt)
-	{
-		var oBullet             = new AscFormat.CBullet();
-		oBullet.bulletType      = new AscFormat.CBulletType();
-		oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
-		switch (numType)
-		{
-			case "ArabicPeriod" :
-			{
-				oBullet.bulletType.AutoNumType = 12;
-				break;
-			}
-			case "ArabicParenR":
-			{
-				oBullet.bulletType.AutoNumType = 11;
-				break;
-			}
-			case "RomanUcPeriod":
-			{
-				oBullet.bulletType.AutoNumType = 34;
-				break;
-			}
-			case "RomanLcPeriod":
-			{
-				oBullet.bulletType.AutoNumType = 31;
-				break;
-			}
-			case "AlphaLcParenR":
-			{
-				oBullet.bulletType.AutoNumType = 1;
-				break;
-			}
-			case "AlphaLcPeriod":
-			{
-				oBullet.bulletType.AutoNumType = 2;
-				break;
-			}
-			case "AlphaUcParenR":
-			{
-				oBullet.bulletType.AutoNumType = 4;
-				break;
-			}
-			case "AlphaUcPeriod":
-			{
-				oBullet.bulletType.AutoNumType = 5;
-				break;
-			}
-			case "None":
-			{
-				oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_NONE;
-				break;
-			}
-		}
-		if (oBullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM)
-		{
-			if (AscFormat.isRealNumber(startAt))
-			{
-				oBullet.bulletType.startAt = startAt;
-			}
-		}
-		return new ApiBullet(oBullet);
-	};
-
-	/**
 	 * Creates a new inline container.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -33366,6 +33294,7 @@
 	window['AscBuilder'].ApiStroke           = ApiStroke;
 	window['AscBuilder'].ApiShadow           = ApiShadow;
 	window['AscBuilder'].ApiDropCap          = ApiDropCap;
+	window['AscBuilder'].ApiBullet           = ApiBullet;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1582,6 +1582,8 @@
 		return new ApiChart(oChartSpace);
 	};
 
+	Api.CreateNumbering = AscBuilder.Slide.Api.CreateNumbering;
+
 	/**
 	 * Returns the object by it's internal ID.
 	 * @memberof Api
@@ -11959,6 +11961,7 @@
 	Api["CreateTable"]				= Api.CreateTable;
 	Api["CreateTableRowPr"]			= Api.CreateTableRowPr;
 	Api["CreateChart"]				= Api.CreateChart;
+	Api["CreateNumbering"]			= Api.CreateNumbering;
 	Api["GetByInternalId"]			= Api.GetByInternalId;
 
 	// ApiDocument

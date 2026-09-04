@@ -1230,6 +1230,78 @@
 		return this.private_CreateApiTablePr(new CTablePr());
 	};
 
+	/**
+	 * Creates a bullet for a paragraph with the numbering character or symbol specified with the numType parameter.
+	 * @memberof Api
+	 * @typeofeditors ["CPE", "PDFE", "CSE"]
+	 * @param {BulletType} numType - The numbering type the paragraphs will be numbered with.
+	 * @param {number} startAt - The number the first numbered paragraph will start with.
+	 * @returns {ApiBullet}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
+	 */
+	Api.CreateNumbering = function(numType, startAt)
+	{
+		var oBullet             = new AscFormat.CBullet();
+		oBullet.bulletType      = new AscFormat.CBulletType();
+		oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
+		switch (numType)
+		{
+			case "ArabicPeriod" :
+			{
+				oBullet.bulletType.AutoNumType = 12;
+				break;
+			}
+			case "ArabicParenR":
+			{
+				oBullet.bulletType.AutoNumType = 11;
+				break;
+			}
+			case "RomanUcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 34;
+				break;
+			}
+			case "RomanLcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 31;
+				break;
+			}
+			case "AlphaLcParenR":
+			{
+				oBullet.bulletType.AutoNumType = 1;
+				break;
+			}
+			case "AlphaLcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 2;
+				break;
+			}
+			case "AlphaUcParenR":
+			{
+				oBullet.bulletType.AutoNumType = 4;
+				break;
+			}
+			case "AlphaUcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 5;
+				break;
+			}
+			case "None":
+			{
+				oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_NONE;
+				break;
+			}
+		}
+		if (oBullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM)
+		{
+			if (AscFormat.isRealNumber(startAt))
+			{
+				oBullet.bulletType.startAt = startAt;
+			}
+		}
+		return new AscBuilder.ApiBullet(oBullet);
+	};
+
     /**
 	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
@@ -11604,6 +11676,7 @@
     Api["CreateTable"]                          = Api.CreateTable;
     Api["CreateTableRowPr"]                     = Api.CreateTableRowPr;
     Api["CreateTablePr"]                        = Api.CreateTablePr;
+    Api["CreateNumbering"]                      = Api.CreateNumbering;
     Api["CreateParagraph"]                      = Api.CreateParagraph;
     Api["CreateHyperlink"]                      = Api.CreateHyperlink;
     Api["attachEvent"]                      	= Api.attachEvent;
@@ -12618,6 +12691,7 @@
 	AscBuilder.Slide["ApiOleObject"]     = AscBuilder.Slide.ApiOleObject     = ApiOleObject;
 	AscBuilder.Slide["ApiTable"]         = AscBuilder.Slide.ApiTable         = ApiTable;
 	AscBuilder.Slide["ApiChart"]         = AscBuilder.Slide.ApiChart         = ApiChart;
+	AscBuilder.Slide["CreateNumbering"]  = AscBuilder.Slide.CreateNumbering  = Api.CreateNumbering;
 
 	AscBuilder.Slide.init = function()
 	{
