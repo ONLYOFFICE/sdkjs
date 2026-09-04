@@ -799,11 +799,12 @@
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
 	 *
-	 * @param {(ApiUniColor[] | ApiRGBColor[] | ApiColor[])} arrColors - Set of colors which are referred to as a color scheme.
+	 * @param {(ApiUniColor[] | ApiRGBColor[] | ApiColor[] | string[])} arrColors - Set of colors which are referred to as a color scheme.
 	 * The color scheme is responsible for defining a list of twelve colors.
 	 * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
+	 * A color may also be given as a HEX string ("#1a2b3c" or "#abc", with or without the leading "#").
 	 * @param {string} sName - Theme color scheme name.
-	 * @returns {?ApiThemeColorScheme}
+	 * @returns {?ApiThemeColorScheme} - returns null if the array does not hold exactly twelve colors this method can read.
 	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeColorScheme.js
 	 */
@@ -814,6 +815,13 @@
             return null;
 
 		arrColors = arrColors.map(function (color) {
+			if (typeof color === "string") {
+				const hex = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color);
+				if (!hex)
+					return null;
+				color = Api.Color("#" + hex[1]);
+			}
+
 			if (color instanceof AscBuilder.ApiColor) {
 				const rgb = color.GetRGB();
 				const safeCopy = Api.RGB(rgb['r'], rgb['g'], rgb['b']);
@@ -823,6 +831,12 @@
 
 			return color;
 		});
+
+        for (var nCheck = 0; nCheck < 12; nCheck++)
+        {
+            if (!arrColors[nCheck] || !arrColors[nCheck].Unicolor)
+                return null;
+        }
 
         var oClrScheme = new AscFormat.ClrScheme();
         oClrScheme.setName(sName);
@@ -1290,6 +1304,13 @@
 			{
 				oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_NONE;
 				break;
+			}
+			default:
+			{
+				// The type is already set to AUTONUM above, so a numbering the
+				// switch does not know would leave AutoNumType unset and hand
+				// back a bullet that renders as neither number nor symbol.
+				return null;
 			}
 		}
 		if (oBullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM)
