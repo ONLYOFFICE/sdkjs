@@ -1048,11 +1048,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CAnnotationFreeText.prototype.Blur = function(createNewPoint) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-
-        oContent.SetApplyToAll(true);
-		oContent.SetApplyToAll(false);
+        let oDoc = this.GetDocument();
 
         let isNeedUpdateRC = this.IsNeedUpdateRC();
 		
@@ -1068,6 +1064,8 @@
 				oDoc.History.Add(new CChangesPDFAnnotRD(_t, _t._prevRectDiff, _t.GetRectangleDiff()));
 				oDoc.History.Add(new CChangesPDFAnnotRect(_t, _t._prevRect, _t.GetRect()));
 				oDoc.History.Add(new CChangesPDFAnnotRC(_t, aCurRc, aNewRc));
+				_t.SetWasChanged(true);
+
 				oDoc.private_UpdateTargetForCollaboration(true);
 
 				let oCommentData = new AscCommon.CCommentData();
