@@ -1591,7 +1591,68 @@
 	 * @returns {ApiBullet}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
 	 */
-	Api.CreateNumbering = AscBuilder.Slide.Api.CreateNumbering;
+	Api.CreateNumbering = function(numType, startAt)
+	{
+		var oBullet             = new AscFormat.CBullet();
+		oBullet.bulletType      = new AscFormat.CBulletType();
+		oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_AUTONUM;
+		switch (numType)
+		{
+			case "ArabicPeriod" :
+			{
+				oBullet.bulletType.AutoNumType = 12;
+				break;
+			}
+			case "ArabicParenR":
+			{
+				oBullet.bulletType.AutoNumType = 11;
+				break;
+			}
+			case "RomanUcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 34;
+				break;
+			}
+			case "RomanLcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 31;
+				break;
+			}
+			case "AlphaLcParenR":
+			{
+				oBullet.bulletType.AutoNumType = 1;
+				break;
+			}
+			case "AlphaLcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 2;
+				break;
+			}
+			case "AlphaUcParenR":
+			{
+				oBullet.bulletType.AutoNumType = 4;
+				break;
+			}
+			case "AlphaUcPeriod":
+			{
+				oBullet.bulletType.AutoNumType = 5;
+				break;
+			}
+			case "None":
+			{
+				oBullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_NONE;
+				break;
+			}
+		}
+		if (oBullet.bulletType.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM)
+		{
+			if (AscFormat.isRealNumber(startAt))
+			{
+				oBullet.bulletType.startAt = startAt;
+			}
+		}
+		return new AscBuilder.ApiBullet(oBullet);
+	};
 
 	/**
 	 * Returns the object by it's internal ID.
