@@ -463,7 +463,7 @@
 
         let oProps = new AscCommon.CSearchSettings();
         oProps.SetText(oProperties["searchString"]);
-        oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties.matchCase : true);
+        oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties["matchCase"] : true);
 
         var oSearchEngine = this.WordControl.m_oLogicDocument.Search(oProps);
         if (!oSearchEngine)
