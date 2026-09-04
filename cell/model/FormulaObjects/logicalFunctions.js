@@ -234,7 +234,7 @@ function (window, undefined) {
 	cIFERROR.prototype.argumentsMin = 2;
 	cIFERROR.prototype.argumentsMax = 2;
 	cIFERROR.prototype.argumentsType = [argType.any, argType.any];
-	cIFERROR.prototype.enabledToSingle = {"1": true};
+	cIFERROR.prototype.enabledToSingle = {"*": true};
 	cIFERROR.prototype.getUnusedTailArgs = function (tailArgs) {
 		let value = this.getTailArgValue(tailArgs, 0);
 		if (!value) {
@@ -277,7 +277,7 @@ function (window, undefined) {
 	cIFNA.prototype.argumentsMax = 2;
 	cIFNA.prototype.isXLFN = true;
 	cIFNA.prototype.argumentsType = [argType.any, argType.any];
-	cIFNA.prototype.enabledToSingle = {"1": true};
+	cIFNA.prototype.enabledToSingle = {"*": true};
 	cIFNA.prototype.getUnusedTailArgs = function (tailArgs) {
 		let value = this.getTailArgValue(tailArgs, 0);
 		if (!value) {
@@ -322,7 +322,7 @@ function (window, undefined) {
 	cIFS.prototype.argumentsMin = 2;
 	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
-	cIFS.prototype.enabledToSingle = {"odd": true};
+	cIFS.prototype.enabledToSingle = {"*": true};
 	cIFS.prototype.getUnusedTailArgs = function (tailArgs) {
 		let count = tailArgs ? tailArgs.length : 0, read = {};
 		for (let i = 0; i < count; i += 2) {
@@ -547,7 +547,7 @@ function (window, undefined) {
 	cSWITCH.prototype.argumentsMax = 126;
 	cSWITCH.prototype.isXLFN = true;
 	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
-	cSWITCH.prototype.enabledToSingle = {"evenFrom2": true};
+	cSWITCH.prototype.enabledToSingle = {"*": true};
 	cSWITCH.prototype.getUnusedTailArgs = function (tailArgs) {
 		let count = tailArgs ? tailArgs.length : 0, read = {};
 		let expression = this.getTailArgValue(tailArgs, 0);

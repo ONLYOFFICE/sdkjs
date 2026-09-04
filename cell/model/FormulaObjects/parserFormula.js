@@ -5110,7 +5110,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 					_checkArrayIndex = checkArrayIndex(j);
 					if (!_checkArrayIndex) {
-						if (/*cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type ||*/ cElementType.array === tempArg.type) {
+						if (cElementType.array === tempArg.type) {
+							res = true
+						} else if (!returnFormulaType && isArgPosEnabledToSingle(t, j) &&
+							(cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type)) {
 							res = true
 						}
 					}

@@ -631,7 +631,7 @@ function (window, undefined) {
 	// todo add arrayIndex to all n-arguments (in array)
 	cCHOOSE.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1};
 	cCHOOSE.prototype.argumentsType = [argType.number, [argType.any]];
-	cCHOOSE.prototype.enabledToSingle = {"allFrom": 1};
+	cCHOOSE.prototype.enabledToSingle = {"*": true};
 	cCHOOSE.prototype.Calculate = function (arg) {
 		const args = arguments;
 		let arg0 = arg[0];
