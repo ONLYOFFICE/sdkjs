@@ -19632,11 +19632,12 @@ function isAllowPasteLink(pastedWb) {
 
 		//lock all if large replaced range
 		let bCollaborativeEditing = this.collaborativeEditing.getCollaborativeEditing();
-		if (options.isReplaceAll && (false === bCollaborativeEditing || (this.workbook.SearchEngine && this.workbook.SearchEngine.checkMaxReplacedCells()))) {
+		if (options.isSync || (options.isReplaceAll && (false === bCollaborativeEditing || (this.workbook.SearchEngine && this.workbook.SearchEngine.checkMaxReplacedCells())))) {
 			let aReplaceCellsUnion = false === bCollaborativeEditing ? aReplaceCells : new AscCommonExcel.MultiplyRange(aReplaceCells).getUnionRanges();
 			this._isLockedCells(aReplaceCellsUnion, /*subType*/null, function (success) {
 				if (!success) {
-					callback && callback();
+					options.error = true;
+					callback && callback(options);
 					return;
 				}
 				t._replaceCellTextFast(aReplaceCells, options, lockDraw, callback, true);
@@ -19647,13 +19648,18 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	WorksheetView.prototype._replaceCellTextFast = function (aReplaceCells, options, lockDraw, callback, oneUser) {
-		// Use CReplaceCellTextManager for asynchronous text replacement processing
+		// Use CReplaceCellTextManager for text replacement processing
 		if (!this._replaceCellTextManager) {
 			this._replaceCellTextManager = new CReplaceCellTextManager();
 		}
 
-		// Start asynchronous processing using timer
-		this._replaceCellTextManager.Begin(this, aReplaceCells, options, lockDraw, callback, oneUser);
+		if (options.isSync) {
+			// Process all cells at once, without timer
+			this._replaceCellTextManager.BeginSync(this, aReplaceCells, options, lockDraw, callback, oneUser);
+		} else {
+			// Start asynchronous processing using timer
+			this._replaceCellTextManager.Begin(this, aReplaceCells, options, lockDraw, callback, oneUser);
+		}
 	};
 
 	WorksheetView.prototype._replaceCellText = function (aReplaceCells, options, lockDraw, callback, oneUser) {
@@ -31619,7 +31625,8 @@ function isAllowPasteLink(pastedWb) {
 	};
 
 	CReplaceCellTextManager.prototype.IsContinue = function() {
-		return (this.Index < this.replaceCells.length);
+		// Start is reset by End() - processing could be interrupted by an error inside DoAction
+		return (this.Start && this.Index < this.replaceCells.length);
 	};
 
 	CReplaceCellTextManager.prototype.DoAction = function() {

@@ -3667,6 +3667,7 @@
 
 			this.specificRange = null;
 			this.isForMacros = null;
+			this.isSync = null;
 			this.activeCell = null;
 			this.wsIndex = -1;  // forced worksheet index for ApiRange.Find (-1 = use active)
 
@@ -3819,6 +3820,9 @@
 		};
 		asc_CFindOptions.prototype.asc_setIsForMacros = function (val) {
 			this.isForMacros = val;
+		};
+		asc_CFindOptions.prototype.asc_setIsSync = function (val) {
+			this.isSync = val;
 		};
 		asc_CFindOptions.prototype.asc_setWsIndex = function (val) {
 			this.wsIndex = (val !== undefined && val !== null) ? val : -1;
@@ -4423,6 +4427,7 @@
 		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
 		prot["asc_setActiveCell"] = prot.asc_setActiveCell;
 		prot["asc_setIsForMacros"] = prot.asc_setIsForMacros;
+		prot["asc_setIsSync"] = prot.asc_setIsSync;
 
 
 		window["AscCommonExcel"].findResults = findResults;

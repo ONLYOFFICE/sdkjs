@@ -12371,11 +12371,11 @@
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			engine.Reset();
 			engine = this.range.worksheet.workbook.oApi.wb.Search(options);
-			// True if matches found; replaceCellText is async so write completion cannot be confirmed.
 			let hasMatches = engine.GetCount() > 0;
 			if (hasMatches) {
 				let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
 				options.asc_setIsForMacros(true);
+				options.asc_setIsSync(true);
 				if (ReplaceAll)
 					engine.SetCurrent(id);
 				else
