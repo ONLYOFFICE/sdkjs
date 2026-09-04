@@ -698,8 +698,8 @@ CTableRow.prototype =
 
 	Refresh_RecalcData : function(Data)
 	{
-		let oTable = this.GetTable();
-		if (!oTable)
+		let table = this.GetTable();
+		if (!table)
 			return;
 
 		let isNeedRecalc = false;
@@ -722,19 +722,23 @@ CTableRow.prototype =
 
 		for (let nCurCell = 0, nCellsCount = this.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
 		{
-			oTable.RecalcInfo.Add_Cell(this.GetCell(nCurCell));
+			table.RecalcInfo.Add_Cell(this.GetCell(nCurCell));
 		}
 
-		oTable.RecalcInfo.RecalcBorders();
+		table.RecalcInfo.RecalcBorders();
 
 		if (isNeedRecalc)
 			this.Refresh_RecalcData2(0, 0);
 	},
 
-    Refresh_RecalcData2 : function(CellIndex, Page_rel)
-    {
-        this.Table.Refresh_RecalcData2( this.Index, Page_rel );
-    },
+	Refresh_RecalcData2 : function(CellIndex, Page_rel)
+	{
+		let table = this.GetTable();
+		if (!table)
+			return;
+
+		table.Refresh_RecalcData2(this.Index, Page_rel);
+	},
     //-----------------------------------------------------------------------------------
     // Функции для работы с совместным редактирования
     //-----------------------------------------------------------------------------------

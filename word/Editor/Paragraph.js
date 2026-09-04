@@ -14438,6 +14438,9 @@ Paragraph.prototype.Get_ParentObject_or_DocumentPos = function()
 };
 Paragraph.prototype.Refresh_RecalcData = function(Data)
 {
+	if (!this.Parent)
+		return;
+	
 	var Type = Data.Type;
 
 	var bNeedRecalc = false;
@@ -14578,6 +14581,9 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 };
 Paragraph.prototype.Refresh_RecalcData2 = function(CurPage)
 {
+	if (!this.Parent)
+		return;
+	
 	if (!CurPage)
 		CurPage = 0;
 

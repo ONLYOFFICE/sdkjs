@@ -93,32 +93,29 @@ CChangesDocumentAddItem.prototype.Undo = function()
 	var oDocument = this.Class;
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
-		var Pos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-		const RemovedElement = oDocument.Content[Pos];
+		let pos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		const RemovedElement = oDocument.Content[pos];
 		oDocument.UpdateSectionsBeforeRemove([RemovedElement], false);
 		RemovedElement.OnDetach();
 
-		var Elements = oDocument.Content.splice(Pos, 1);
+		var Elements = oDocument.Content.splice(pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
-		oDocument.private_ReindexContent(Pos);
-		oDocument.private_UpdateSelectionPosOnRemove(Pos, 1);
+		oDocument.private_ReindexContent(pos);
+		oDocument.private_UpdateSelectionPosOnRemove(pos, 1);
 
-		if (Pos > 0)
-		{
-			if (Pos <= oDocument.Content.length - 1)
-			{
-				oDocument.Content[Pos - 1].Next = RemovedElement;
-				RemovedElement.Prev     = oDocument.Content[Pos - 1];
-			}
-			else
-			{
-				oDocument.Content[Pos - 1].Next = null;
-			}
-		}
-		else if (Pos <= oDocument.Content.length - 1)
-		{
-			RemovedElement.Prev = null;
-		}
+		let prev = pos > 0 ? oDocument.Content[pos - 1] : null;
+		let next = pos < oDocument.Content.length ? oDocument.Content[pos] : null;
+		
+		if (prev)
+			prev.Set_DocumentNext(next);
+		
+		if (next)
+			next.Set_DocumentPrev(prev);
+		
+		RemovedElement.Set_DocumentNext(null);
+		RemovedElement.Set_DocumentPrev(null);
+		RemovedElement.SetParent(null);
+
 		RemovedElement.UpdatePresentationOutline();
 	}
 };
@@ -128,34 +125,24 @@ CChangesDocumentAddItem.prototype.Redo = function()
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
 		var Element = this.Items[nIndex];
-		var Pos     = true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex];
+		let pos     = true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex];
 
-		oDocument.Content.splice(Pos, 0, Element);
+		oDocument.Content.splice(pos, 0, Element);
 		oDocument.private_RecalculateNumbering([Element]);
-		oDocument.private_ReindexContent(Pos);
-		oDocument.private_UpdateSelectionPosOnAdd(Pos, 1);
-
-		if (Pos > 0)
-		{
-			oDocument.Content[Pos - 1].Next = Element;
-			Element.Prev                    = oDocument.Content[Pos - 1];
-		}
-		else
-		{
-			Element.Prev = null;
-		}
-
-		if (Pos < oDocument.Content.length - 1)
-		{
-			oDocument.Content[Pos + 1].Prev = Element;
-			Element.Next                    = oDocument.Content[Pos + 1];
-		}
-		else
-		{
-			Element.Next = null;
-		}
-
-		Element.Parent = oDocument;
+		oDocument.private_ReindexContent(pos);
+		oDocument.private_UpdateSelectionPosOnAdd(pos, 1);
+		
+		let prev = pos > 0 ? oDocument.Content[pos - 1] : null;
+		let next = pos + 1 < oDocument.Content.length ? oDocument.Content[pos + 1] : null;
+		if (prev)
+			prev.Set_DocumentNext(Element);
+		if (next)
+			next.Set_DocumentPrev(Element);
+		
+		Element.Set_DocumentPrev(prev);
+		Element.Set_DocumentNext(next);
+		Element.SetParent(oDocument);
+		
 		oDocument.UpdateSectionsAfterAdd([Element]);
 		Element.OnAttach();
 		Element.UpdatePresentationOutline();
@@ -174,50 +161,39 @@ CChangesDocumentAddItem.prototype.Load = function(Color)
 	var oDocument = this.Class;
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
-		var Pos     = oDocument.m_oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
+		let pos     = oDocument.m_oContentChanges.Check(AscCommon.contentchanges_Add, true !== this.UseArray ? this.Pos + nIndex : this.PosArray[nIndex]);
 		var Element = this.Items[nIndex];
 
-		Pos = Math.min(Pos, oDocument.Content.length);
+		pos = Math.min(pos, oDocument.Content.length);
+		
+		if (!Element)
+			continue;
+		
+		oDocument.Content.splice(pos, 0, Element);
+		oDocument.private_RecalculateNumbering([Element]);
+		oDocument.private_ReindexContent(pos);
+		
+		let prev = pos > 0 ? oDocument.Content[pos - 1] : null;
+		let next = pos + 1 < oDocument.Content.length ? oDocument.Content[pos + 1] : null;
+		if (prev)
+			prev.Set_DocumentNext(Element);
+		if (next)
+			next.Set_DocumentPrev(Element);
 
-		if (null != Element)
+		Element.Set_DocumentPrev(prev);
+		Element.Set_DocumentNext(next);
+		Element.SetParent(oDocument);
+
+		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oDocument, pos);
+		oDocument.private_UpdateSelectionPosOnAdd(pos, 1);
+
+		if (Element.IsParagraph())
 		{
-			if (Pos > 0)
-			{
-				oDocument.Content[Pos - 1].Next = Element;
-				Element.Prev                    = oDocument.Content[Pos - 1];
-			}
-			else
-			{
-				Element.Prev = null;
-			}
-
-			if (Pos <= oDocument.Content.length - 1)
-			{
-				oDocument.Content[Pos].Prev = Element;
-				Element.Next                = oDocument.Content[Pos];
-			}
-			else
-			{
-				Element.Next = null;
-			}
-
-			Element.Parent = oDocument;
-
-			oDocument.Content.splice(Pos, 0, Element);
-			oDocument.private_RecalculateNumbering([Element]);
-			oDocument.private_ReindexContent(Pos);
-
-			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oDocument, Pos);
-			oDocument.private_UpdateSelectionPosOnAdd(Pos, 1);
-
-			if (Element.IsParagraph())
-			{
-				Element.RecalcCompiledPr(true);
-				Element.UpdateOutline();
-			}
-			oDocument.UpdateSectionsAfterAdd([Element]);
-			Element.OnAttach();
+			Element.RecalcCompiledPr(true);
+			Element.UpdateOutline();
 		}
+		oDocument.UpdateSectionsAfterAdd([Element]);
+		Element.OnAttach();
 	}
 };
 CChangesDocumentAddItem.prototype.IsRelated = function(oChanges)
@@ -246,76 +222,67 @@ CChangesDocumentRemoveItem.prototype.Undo = function()
 {
 	var oDocument = this.Class;
 
-	var Array_start = oDocument.Content.slice(0, this.Pos);
-	var Array_end   = oDocument.Content.slice(this.Pos);
+	var arrayStart = oDocument.Content.slice(0, this.Pos);
+	var arrayEnd   = oDocument.Content.slice(this.Pos);
 
 	oDocument.private_RecalculateNumbering(this.Items);
 	oDocument.private_ReindexContent(this.Pos);
-	oDocument.Content = Array_start.concat(this.Items, Array_end);
-	
+	oDocument.Content = arrayStart.concat(this.Items, arrayEnd);
+
 	oDocument.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 
-	var nStartIndex = Math.max(this.Pos - 1, 0);
-	var nEndIndex   = Math.min(oDocument.Content.length - 1, this.Pos + this.Items.length + 1);
-	for (var nIndex = nStartIndex; nIndex <= nEndIndex; ++nIndex)
+	let startIndex = Math.max(this.Pos - 1, 0);
+	let endIndex   = Math.min(oDocument.Content.length - 1, this.Pos + this.Items.length + 1);
+	for (let index = startIndex; index <= endIndex; ++index)
 	{
-		var oElement = oDocument.Content[nIndex];
-		if (nIndex > 0)
-			oElement.Prev = oDocument.Content[nIndex - 1];
-		else
-			oElement.Prev = null;
-
-		if (nIndex < oDocument.Content.length - 1)
-			oElement.Next = oDocument.Content[nIndex + 1];
-		else
-			oElement.Next = null;
-
-		oElement.Parent = oDocument;
+		let element = oDocument.Content[index];
+		element.Set_DocumentPrev(index > 0 ? oDocument.Content[index - 1] : null);
+		element.Set_DocumentNext(index < oDocument.Content.length - 1 ? oDocument.Content[index + 1] : null);
+		element.SetParent(oDocument);
 	}
 	oDocument.UpdateSectionsAfterAdd(this.Items);
 	for (let i = 0; i < this.Items.length; ++i)
 	{
-		const oElement = this.Items[i];
-		oElement.OnAttach();
-		oElement.UpdatePresentationOutline();
+		const element = this.Items[i];
+		element.OnAttach();
+		element.UpdatePresentationOutline();
 	}
 };
 CChangesDocumentRemoveItem.prototype.Redo = function()
 {
 	var oDocument = this.Class;
-	
+
 	let removedElements = oDocument.Content.slice(this.Pos, this.Pos + this.Items.length);
 	oDocument.UpdateSectionsBeforeRemove(removedElements, false);
 
 	for (let i = 0; i < removedElements.length; ++i)
 	{
-		const oRemovedElement = removedElements[i];
-		oRemovedElement.OnDetach();
-		oRemovedElement.UpdatePresentationOutline();
+		const removedElement = removedElements[i];
+		removedElement.OnDetach();
+		removedElement.UpdatePresentationOutline();
 	}
 
-	var Elements = oDocument.Content.splice(this.Pos, this.Items.length);
-	oDocument.private_RecalculateNumbering(Elements);
+	let elements = oDocument.Content.splice(this.Pos, this.Items.length);
+	oDocument.private_RecalculateNumbering(elements);
 	oDocument.private_ReindexContent(this.Pos);
 
 	oDocument.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 
-	var Pos = this.Pos;
-	if (Pos > 0)
+	let pos  = this.Pos;
+	let prev = pos > 0 ? oDocument.Content[pos - 1] : null;
+	let next = pos < oDocument.Content.length ? oDocument.Content[pos] : null;
+
+	if (prev)
+		prev.Set_DocumentNext(next);
+
+	if (next)
+		next.Set_DocumentPrev(prev);
+
+	for (let i = 0; i < elements.length; ++i)
 	{
-		if (Pos <= oDocument.Content.length - 1)
-		{
-			oDocument.Content[Pos - 1].Next = oDocument.Content[Pos];
-			oDocument.Content[Pos].Prev     = oDocument.Content[Pos - 1];
-		}
-		else
-		{
-			oDocument.Content[Pos - 1].Next = null;
-		}
-	}
-	else if (Pos <= oDocument.Content.length - 1)
-	{
-		oDocument.Content[Pos].Prev = null;
+		elements[i].Set_DocumentNext(null);
+		elements[i].Set_DocumentPrev(null);
+		elements[i].SetParent(null);
 	}
 };
 CChangesDocumentRemoveItem.prototype.private_WriteItem = function(Writer, Item)
@@ -331,49 +298,46 @@ CChangesDocumentRemoveItem.prototype.Load = function(Color)
 	var oDocument = this.Class;
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
-		var Pos = oDocument.m_oContentChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos : this.PosArray[nIndex]);
+		let pos = oDocument.m_oContentChanges.Check(AscCommon.contentchanges_Remove, true !== this.UseArray ? this.Pos : this.PosArray[nIndex]);
 
 		// действие совпало, не делаем его
-		if (false === Pos)
+		if (false === pos)
 			continue;
-		
-		oDocument.UpdateSectionsBeforeRemove([oDocument.Content[Pos]], false);
-		oDocument.Content[Pos].OnDetach();
 
-		var Elements = oDocument.Content.splice(Pos, 1);
-		oDocument.private_RecalculateNumbering(Elements);
-		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oDocument, Pos, 1);
-		oDocument.private_UpdateSelectionPosOnRemove(Pos, 1);
+		let removedElement = oDocument.Content[pos];
+		oDocument.UpdateSectionsBeforeRemove([removedElement], false);
+		removedElement.OnDetach();
 
-		for (var nElementIndex = 0; nElementIndex < Elements.length; ++nElementIndex)
+		let elements = oDocument.Content.splice(pos, 1);
+		oDocument.private_RecalculateNumbering(elements);
+		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oDocument, pos, 1);
+		oDocument.private_UpdateSelectionPosOnRemove(pos, 1);
+
+		for (let elementIndex = 0; elementIndex < elements.length; ++elementIndex)
 		{
-			if (Elements[nElementIndex].IsParagraph())
+			if (elements[elementIndex].IsParagraph())
 			{
-				Elements[nElementIndex].RecalcCompiledPr(true);
-				Elements[nElementIndex].UpdateOutline();
+				elements[elementIndex].RecalcCompiledPr(true);
+				elements[elementIndex].UpdateOutline();
 			}
 		}
 
-		if (Pos > 0)
-		{
-			if (Pos <= oDocument.Content.length - 1)
-			{
-				oDocument.Content[Pos - 1].Next = oDocument.Content[Pos];
-				oDocument.Content[Pos].Prev     = oDocument.Content[Pos - 1];
-			}
-			else
-			{
-				oDocument.Content[Pos - 1].Next = null;
-			}
-		}
-		else if (Pos <= oDocument.Content.length - 1)
-		{
-			oDocument.Content[Pos].Prev = null;
-		}
+		let prev = pos > 0 ? oDocument.Content[pos - 1] : null;
+		let next = pos < oDocument.Content.length ? oDocument.Content[pos] : null;
 
-		if (0 <= Pos && Pos <= oDocument.Content.length - 1)
+		if (prev)
+			prev.Set_DocumentNext(next);
+
+		if (next)
+			next.Set_DocumentPrev(prev);
+
+		removedElement.Set_DocumentNext(null);
+		removedElement.Set_DocumentPrev(null);
+		removedElement.SetParent(null);
+
+		if (0 <= pos && pos <= oDocument.Content.length - 1)
 		{
-			oDocument.private_ReindexContent(Pos);
+			oDocument.private_ReindexContent(pos);
 		}
 	}
 };

@@ -4523,6 +4523,9 @@ CTable.prototype.Get_ParentObject_or_DocumentPos = function()
 };
 CTable.prototype.Refresh_RecalcData = function(Data)
 {
+	if (!this.Parent)
+		return;
+	
 	var Type = Data.Type;
 
 	var bNeedRecalc = false;
@@ -4602,6 +4605,9 @@ CTable.prototype.Refresh_RecalcData = function(Data)
 };
 CTable.prototype.Refresh_RecalcData2 = function(nRowIndex, nCurPage)
 {
+	if (!this.Parent)
+		return;
+	
 	// Если Index < 0, значит данный элемент еще не был добавлен в родительский класс
 	if (this.Index >= 0)
 	{

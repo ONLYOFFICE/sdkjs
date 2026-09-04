@@ -5494,15 +5494,20 @@ ParaRun.prototype.private_CheckInstrText = function(oItem)
 
 ParaRun.prototype.Refresh_RecalcData = function(oData)
 {
-	let oPara = this.GetParagraph();
 	if (this.IsMathRun())
 	{
-		if (this.Parent !== null && this.Parent !== undefined)
-		{
+		if (this.Parent)
 			this.Parent.Refresh_RecalcData();
-		}
+		
+		return;
 	}
-	else if (-1 !== this.StartLine && oPara)
+	
+	let oPara = this.GetParagraph();
+	if (!oPara)
+		return;
+	
+	let page = undefined;
+	if (-1 !== this.StartLine)
 	{
 		var nCurLine = this.StartLine;
 
@@ -5532,22 +5537,19 @@ ParaRun.prototype.Refresh_RecalcData = function(oData)
 				nCurLine = this.StartLine + this.protected_GetLinesCount() - 1;
 		}
 
+		page = 0;
 		for (var nCurPage = 0, nPagesCount = oPara.GetPagesCount(); nCurPage < nPagesCount; ++nCurPage)
 		{
 			var oPage = oPara.Pages[nCurPage];
 			if (oPage.StartLine <= nCurLine && nCurLine <= oPage.EndLine)
 			{
-				oPara.Refresh_RecalcData2(nCurPage);
-				return;
+				page = nCurPage;
+				break;
 			}
 		}
-
-		oPara.Refresh_RecalcData2(0);
 	}
-	else if (oPara)
-	{
-		oPara.Refresh_RecalcData2();
-	}
+	
+	oPara.Refresh_RecalcData2(page);
 };
 ParaRun.prototype.Refresh_RecalcData2 = function()
 {
