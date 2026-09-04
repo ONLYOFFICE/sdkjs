@@ -1551,7 +1551,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableRowPr}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTableRowPr.js
 	 */
 	Api.CreateTableRowPr = function() {
@@ -1753,7 +1753,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} sStyleName - The name of the table style to look up.
 	 * @returns {ApiStyle | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetStyle.js
 	 */
 	ApiDocument.prototype.GetStyle = function(sStyleName) {
@@ -4300,7 +4300,7 @@
 	 * @memberof ApiButtonField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string} - The image URL, or an empty string if the field has no image.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiButtonField/Methods/GetValue.js
 	 */
 	ApiButtonField.prototype.GetValue = function() {
@@ -4639,7 +4639,7 @@
 	 * @constructor
 	 * @typeofeditors ["PDFE"]
 	 * @extends {ApiButtonField}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 */
 	function ApiSignatureField(oField) {
 		ApiButtonField.call(this, oField);
@@ -4653,7 +4653,7 @@
 	 * @memberof ApiSignatureField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"signatureField"}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiSignatureField/Methods/GetClassType.js
 	 */
 	ApiSignatureField.prototype.GetClassType = function() {
@@ -8605,7 +8605,7 @@
 	 * Removes the current graphic object from the selection.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Unselect.js
 	 */
@@ -8660,7 +8660,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetName.js
 	 */
 	ApiDrawing.prototype.GetName = function() {
@@ -8674,7 +8674,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} name - The name which will be set to the current drawing.
 	 * @returns {boolean} - Returns true if the name was successfully set, otherwise returns false.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetName.js
 	 */
 	ApiDrawing.prototype.SetName = function(name) {
@@ -8691,7 +8691,7 @@
 	 * Sets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} title - The title to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
@@ -8711,7 +8711,7 @@
 	 * Gets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The title of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
 	 */
@@ -8727,7 +8727,7 @@
 	 * Sets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} description - The description to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
@@ -8747,7 +8747,7 @@
 	 * Gets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The description of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
 	 */
@@ -8763,7 +8763,7 @@
 	 * Get horizontal flip of current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean | null} Returns true if the figure is flipped horizontally, false if not, or null if the drawing properties are not available.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipH.js
 	 */
@@ -8777,7 +8777,7 @@
 	 * Get vertical flip of current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean | null} Returns true if the figure is flipped vertically, false if not, or null if the drawing properties are not available.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipV.js
 	 */
@@ -8791,7 +8791,7 @@
 	 * Sets the horizontal flip of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipH.js
@@ -8811,7 +8811,7 @@
 	 * Sets the vertical flip of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {boolean} bFlip - Specifies if the figure will be flipped vertically or not.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipV.js
@@ -8831,7 +8831,7 @@
 	 * Returns the lock value for the specified lock type of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
@@ -8851,7 +8851,7 @@
 	 * Sets the lock value to the specified lock type of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @param {boolean} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {boolean}
@@ -8876,7 +8876,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
 	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
 	 */
 	ApiDrawing.prototype.SetLockAspect = function(bAspect) {
@@ -8891,7 +8891,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
 	 */
 	ApiDrawing.prototype.GetLockAspect = function() {
@@ -8904,7 +8904,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFill.js
 	 */
 	ApiDrawing.prototype.SetFill = function(fill) {
@@ -8933,7 +8933,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiFill | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFill.js
 	 */
 	ApiDrawing.prototype.GetFill = function() {
@@ -8957,7 +8957,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
 	 */
 	ApiDrawing.prototype.Fill = ApiDrawing.prototype.SetFill;
@@ -8968,7 +8968,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js
 	 */
 	ApiDrawing.prototype.SetLine = function(stroke) {
@@ -9009,7 +9009,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiStroke | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLine.js
 	 */
 	ApiDrawing.prototype.GetLine = function() {
@@ -9033,7 +9033,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
 	 * @returns {boolean} - returns false if the graphic object does not support shadow.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
 	 */
 	ApiDrawing.prototype.SetShadow = function(shadow) {
@@ -9057,7 +9057,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiShadow | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
 	 */
 	ApiDrawing.prototype.GetShadow = function() {
@@ -9074,7 +9074,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
 	 */
 	ApiDrawing.prototype.SetOutLine = ApiDrawing.prototype.SetLine;
@@ -9314,7 +9314,7 @@
 	 * @param {?EMU} nRight - Right padding.
 	 * @param {?EMU} nBottom - Bottom padding.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetPaddings.js
 	 */
 	ApiShape.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom) {
@@ -9338,7 +9338,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {TextFitType} fitType - The text autofit type.
 	 * @returns {boolean} - returns false if the type is invalid or the shape doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetTextFit.js
 	 */
 	ApiShape.prototype.SetTextFit = function(fitType) {
@@ -9362,7 +9362,7 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
 	 * @returns {TextFitType} - The text autofit type.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetTextFit.js
 	 */
 	ApiShape.prototype.GetTextFit = function() {
@@ -9728,7 +9728,7 @@
 	 * @param {EMU} width - The table width measured in English measure units.
 	 * @param {EMU} height - The table height measured in English measure units.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetSize.js
 	 */
 	ApiTable.prototype.SetSize = function(width, height) {
@@ -9754,7 +9754,7 @@
 	 * @param {number} columnIndex - The zero-based column index.
 	 * @param {EMU} width - The column width measured in English measure units.
 	 * @returns {EMU | null} - Returns the actual column width set (in EMU), or null if the column index is invalid.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetColumnWidth.js
 	 */
 	ApiTable.prototype.SetColumnWidth = function(columnIndex, width) {
@@ -9799,7 +9799,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} columnIndex - The zero-based column index.
 	 * @returns {EMU | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetColumnWidth.js
 	 */
 	ApiTable.prototype.GetColumnWidth = function(columnIndex) {
@@ -9818,7 +9818,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {EMU} nValue - The table height in English measure units.
 	 * @returns {EMU | null} - Returns the requested height (in EMU), or null if the table has no rows.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
 	 */
 	ApiTable.prototype.SetHeight = function(nValue) {
@@ -9846,7 +9846,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRowsCount.js
 	 */
 	ApiTable.prototype.GetRowsCount = function() {
@@ -9860,7 +9860,7 @@
 	 * @param {number} rowIndex - The row index in the current table.
 	 * @param {number} cellIndex - The cell index in the specified row.
 	 * @returns {?ApiTableCell}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetCell.js
 	 */
 	ApiTable.prototype.GetCell = function(rowIndex, cellIndex) {
@@ -9889,7 +9889,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @type {ApiTableRow[]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 */
 	Object.defineProperty(ApiTable.prototype, "Rows", {
 		get: function() {
@@ -9902,7 +9902,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @type {ApiTableCell[][]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 */
 	Object.defineProperty(ApiTable.prototype, "Cells", {
 		get: function() {
@@ -9966,7 +9966,7 @@
 	 * @param {Number} nCount - Count of rows to be added.
 	 * @param {boolean} [isBefore=false] - Adds the new rows before (true) or after (false) the specified cell.
 	 * @returns {ApiTable}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddRows.js
 	 */
 	ApiTable.prototype.AddRows = function(oCell, nCount, isBefore) {
@@ -9987,7 +9987,7 @@
 	 * @param {Number} nCount - Count of columns to be added.
 	 * @param {boolean} [isBefore=false] - Adds the new columns before (true) or after (false) the specified cell.
 	 * @returns {ApiTable}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddColumns.js
 	 */
 	ApiTable.prototype.AddColumns = function(oCell, nCount, isBefore) {
@@ -10008,7 +10008,7 @@
 	 * @param {number} nPos - The position in the cell where the specified element will be added.
 	 * @param {DocumentElement} oElement - The document element which will be added at the current position.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddElement.js
 	 */
 	ApiTable.prototype.AddElement = function(oCell, nPos, oElement) {
@@ -10047,7 +10047,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} title - The table title to be set.
 	 * @return {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableTitle.js
 	 */
 	ApiTable.prototype.SetTableTitle = function(title) {
@@ -10064,7 +10064,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @return {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableTitle.js
 	 */
 	ApiTable.prototype.GetTableTitle = function() {
@@ -10077,7 +10077,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} descr - The table description to be set.
 	 * @return {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
 	 */
 	ApiTable.prototype.SetTableDescription = function(descr) {
@@ -10094,7 +10094,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @return {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableDescription.js
 	 */
 	ApiTable.prototype.GetTableDescription = function() {
@@ -10107,7 +10107,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiStyle} oStyle - The table style to apply.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetStyle.js
 	 */
 	ApiTable.prototype.SetStyle = function(oStyle) {
@@ -10241,7 +10241,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableRow | null} - returns null if row is last.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetNext.js
 	 */
 	ApiTableRow.prototype.GetNext = function() {
@@ -10257,7 +10257,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableRow | null} - returns null if row is first.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetPrevious.js
 	 */
 	ApiTableRow.prototype.GetPrevious = function() {
@@ -10273,7 +10273,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetParentTable.js
 	 */
 	ApiTableRow.prototype.GetParentTable = function() {
@@ -10292,7 +10292,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetInternalId.js
 	 */
 	ApiTableRow.prototype.GetInternalId = AscBuilder.ApiTableRow.prototype.GetInternalId;
@@ -10302,7 +10302,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {Number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetIndex.js
 	 */
 	ApiTableRow.prototype.GetIndex = AscBuilder.ApiTableRow.prototype.GetIndex;
@@ -10314,7 +10314,7 @@
 	 * @param {Number} nCount - Count of rows to be added.
 	 * @param {boolean} [isBefore=false] - Specifies if the rows will be added before or after the current row.
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/AddRows.js
 	 */
 	ApiTableRow.prototype.AddRows = AscBuilder.ApiTableRow.prototype.AddRows;
@@ -10324,7 +10324,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell | null} - return null if can't merge.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/MergeCells.js
 	 */
 	ApiTableRow.prototype.MergeCells = AscBuilder.ApiTableRow.prototype.MergeCells;
@@ -10334,7 +10334,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - returns false if parent table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/Clear.js
 	 */
 	ApiTableRow.prototype.Clear = AscBuilder.ApiTableRow.prototype.Clear;
@@ -10344,7 +10344,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - return false if parent table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/Remove.js
 	 */
 	ApiTableRow.prototype.Remove = AscBuilder.ApiTableRow.prototype.Remove;
@@ -10366,7 +10366,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableRowPr} oApiTableRowPr - The table row properties.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetRowPr.js
 	 */
 	ApiTableRow.prototype.SetRowPr = AscBuilder.ApiTableRow.prototype.SetRowPr;
@@ -10377,7 +10377,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current row.
 	 * @returns {boolean} - returns false if parent table doesn't exist or param is invalid.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetTextPr.js
 	 */
 	ApiTableRow.prototype.SetTextPr = AscBuilder.ApiTableRow.prototype.SetTextPr;
@@ -10403,7 +10403,7 @@
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"tableRowPr"}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/GetClassType.js
 	 */
 	ApiTableRowPr.prototype.GetClassType = AscBuilder.ApiTableRowPr.prototype.GetClassType;
@@ -10414,7 +10414,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isHeader - The true value means that the current table row will be repeated at the top of each new page.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/SetTableHeader.js
 	 */
 	ApiTableRowPr.prototype.SetTableHeader = AscBuilder.ApiTableRowPr.prototype.SetTableHeader;
@@ -10426,7 +10426,7 @@
 	 * @param {("auto" | "atLeast")} sHRule - The rule to apply the height value to the current table row or ignore it.
 	 * @param {twips} [nValue] - The height for the current table row measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/SetHeight.js
 	 */
 	ApiTableRowPr.prototype.SetHeight = AscBuilder.ApiTableRowPr.prototype.SetHeight;
@@ -10851,7 +10851,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current cell.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetTextPr.js
 	 */
 	ApiTableCell.prototype.SetTextPr = AscBuilder.ApiTableCell.prototype.SetTextPr;
@@ -10861,7 +10861,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetInternalId.js
 	 */
 	ApiTableCell.prototype.GetInternalId = AscBuilder.ApiTableCell.prototype.GetInternalId;
@@ -10871,7 +10871,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {Number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetIndex.js
 	 */
 	ApiTableCell.prototype.GetIndex = AscBuilder.ApiTableCell.prototype.GetIndex;
@@ -10881,7 +10881,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetRowIndex.js
 	 */
 	ApiTableCell.prototype.GetRowIndex = function() {
@@ -10897,7 +10897,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableRow | null} - returns null if parent row doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetParentRow.js
 	 */
 	ApiTableCell.prototype.GetParentRow = function() {
@@ -10913,7 +10913,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetParentTable.js
 	 */
 	ApiTableCell.prototype.GetParentTable = function() {
@@ -10932,7 +10932,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell | null} - returns null if cell is last.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetNext.js
 	 */
 	ApiTableCell.prototype.GetNext = function() {
@@ -10948,7 +10948,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell | null} - returns null is cell is first.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetPrevious.js
 	 */
 	ApiTableCell.prototype.GetPrevious = function() {
@@ -10964,7 +10964,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @return {ApiColor | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetBackgroundColor.js
 	 */
 	ApiTableCell.prototype.GetBackgroundColor = function() {
@@ -10999,7 +10999,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
 	 */
 	ApiTableCell.prototype.SetColumnBackgroundColor = function(color) {
@@ -11030,7 +11030,7 @@
 	 * @param {TableWidth} sType - The type of the width value.
 	 * @param {number} [nValue] - The table width value measured in positive integers.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetWidth.js
 	 */
 	ApiTableCell.prototype.SetWidth = function(sType, nValue) {
@@ -11045,7 +11045,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/Select.js
 	 */
 	ApiTableCell.prototype.Select = function() {
@@ -11065,7 +11065,7 @@
 	 * @param {Number} nCount - Count of rows to be added.
 	 * @param {boolean} [isBefore=false] - Specifies if the new rows will be added before or after the current cell.
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/AddRows.js
 	 */
 	ApiTableCell.prototype.AddRows = AscBuilder.ApiTableCell.prototype.AddRows;
@@ -11077,7 +11077,7 @@
 	 * @param {Number} nCount - Count of columns to be added.
 	 * @param {boolean} [isBefore=false] - Specifies if the new columns will be added before or after the current cell.
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/AddColumns.js
 	 */
 	ApiTableCell.prototype.AddColumns = AscBuilder.ApiTableCell.prototype.AddColumns;
@@ -11087,7 +11087,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - returns false if table doesn't exist.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/RemoveColumn.js
 	 */
 	ApiTableCell.prototype.RemoveColumn = AscBuilder.ApiTableCell.prototype.RemoveColumn;
@@ -11097,7 +11097,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} Is the table empty after removing.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/RemoveRow.js
 	 */
 	ApiTableCell.prototype.RemoveRow = AscBuilder.ApiTableCell.prototype.RemoveRow;
@@ -11107,7 +11107,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @return {boolean} - returns false if parent row is invalid.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/Clear.js
 	 */
 	ApiTableCell.prototype.Clear = AscBuilder.ApiTableCell.prototype.Clear;

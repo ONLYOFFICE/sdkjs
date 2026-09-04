@@ -7822,7 +7822,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Calculate.js
 	 */
 	Api.Calculate = function () {
@@ -7839,7 +7839,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Redraw.js
 	 */
 	Api.Redraw = function () {
@@ -8441,7 +8441,7 @@
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/Calculate.js
 	 */
 	ApiWorkbook.prototype.Calculate = function () {
@@ -8457,7 +8457,7 @@
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/Redraw.js
 	 */
 	ApiWorkbook.prototype.Redraw = function () {
@@ -9216,7 +9216,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPageSetup}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPageSetup.js
 	 */
 	ApiWorksheet.prototype.GetPageSetup = function () {
@@ -9638,7 +9638,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiDrawing[]} aDrawings - An array of drawings to group.
 	 * @returns {ApiGroup | null} - Returns null if the drawings cannot be grouped or when called in the document builder.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GroupDrawings.js
 	 */
 	ApiWorksheet.prototype.GroupDrawings = function(aDrawings) {
@@ -13742,7 +13742,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
 	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
 	 */
 	ApiDrawing.prototype.SetLockAspect = function(bAspect)
@@ -13759,7 +13759,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
 	 */
 	ApiDrawing.prototype.GetLockAspect = function()
@@ -13826,7 +13826,7 @@
 	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFill.js
 	 */
 	ApiDrawing.prototype.SetFill = function (fill) {
@@ -13861,7 +13861,7 @@
 	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
 	 * @returns {boolean} - returns false if param is invalid.
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
 	 */
 	ApiDrawing.prototype.Fill = ApiDrawing.prototype.SetFill;
@@ -13874,7 +13874,7 @@
 	 *
 	 * @returns {ApiFill | null}
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFill.js
 	 */
 	ApiDrawing.prototype.GetFill = function () {
@@ -13946,7 +13946,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js
 	 */
 	ApiDrawing.prototype.SetLine = ApiDrawing.prototype.SetOutLine;
@@ -13955,7 +13955,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiStroke | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLine.js
 	 */
 	ApiDrawing.prototype.GetLine = function()
@@ -13980,7 +13980,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
 	 * @returns {boolean} - returns false if the graphic object does not support shadow.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
 	 */
 	ApiDrawing.prototype.SetShadow = function(shadow)
@@ -14005,7 +14005,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiShadow | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
 	 */
 	ApiDrawing.prototype.GetShadow = function()
@@ -14020,7 +14020,7 @@
 	 * Sets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} title - The title to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
@@ -14042,7 +14042,7 @@
 	 * Gets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The title of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
 	 */
@@ -14059,7 +14059,7 @@
 	 * Sets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} description - The description to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
@@ -14081,7 +14081,7 @@
 	 * Gets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The description of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
 	 */
@@ -14146,7 +14146,7 @@
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/Ungroup.js
 	 */
 	ApiGroup.prototype.Ungroup = function() {
@@ -17026,7 +17026,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The left margin size measured in millimeters.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetLeftMargin.js
 	 */
 	ApiPageSetup.prototype.GetLeftMargin = function () {
@@ -17038,7 +17038,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nMargin - The left margin size measured in millimeters.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetLeftMargin.js
 	 */
 	ApiPageSetup.prototype.SetLeftMargin = function (nMargin) {
@@ -17058,7 +17058,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The right margin size measured in millimeters.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetRightMargin.js
 	 */
 	ApiPageSetup.prototype.GetRightMargin = function () {
@@ -17070,7 +17070,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nMargin - The right margin size measured in millimeters.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetRightMargin.js
 	 */
 	ApiPageSetup.prototype.SetRightMargin = function (nMargin) {
@@ -17090,7 +17090,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The top margin size measured in millimeters.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetTopMargin.js
 	 */
 	ApiPageSetup.prototype.GetTopMargin = function () {
@@ -17102,7 +17102,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nMargin - The top margin size measured in millimeters.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetTopMargin.js
 	 */
 	ApiPageSetup.prototype.SetTopMargin = function (nMargin) {
@@ -17122,7 +17122,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The bottom margin size measured in millimeters.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetBottomMargin.js
 	 */
 	ApiPageSetup.prototype.GetBottomMargin = function () {
@@ -17134,7 +17134,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nMargin - The bottom margin size measured in millimeters.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetBottomMargin.js
 	 */
 	ApiPageSetup.prototype.SetBottomMargin = function (nMargin) {
@@ -17154,7 +17154,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The header margin size measured in millimeters.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetHeaderMargin.js
 	 */
 	ApiPageSetup.prototype.GetHeaderMargin = function () {
@@ -17166,7 +17166,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nMargin - The header margin size measured in millimeters.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetHeaderMargin.js
 	 */
 	ApiPageSetup.prototype.SetHeaderMargin = function (nMargin) {
@@ -17190,7 +17190,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The footer margin size measured in millimeters.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFooterMargin.js
 	 */
 	ApiPageSetup.prototype.GetFooterMargin = function () {
@@ -17202,7 +17202,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nMargin - The footer margin size measured in millimeters.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFooterMargin.js
 	 */
 	ApiPageSetup.prototype.SetFooterMargin = function (nMargin) {
@@ -17233,7 +17233,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetAlignMarginsHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.GetAlignMarginsHeaderFooter = function () {
@@ -17245,7 +17245,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bAlign - Specifies whether the header and footer are aligned with the page margins.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetAlignMarginsHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.SetAlignMarginsHeaderFooter = function (bAlign) {
@@ -17338,7 +17338,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The center footer text (may contain formatting codes such as &P, &D).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterFooter.js
 	 */
 	ApiPageSetup.prototype.GetCenterFooter = function () {
@@ -17350,7 +17350,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The center footer text (may contain formatting codes such as &P, &D).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterFooter.js
 	 */
 	ApiPageSetup.prototype.SetCenterFooter = function (sText) {
@@ -17370,7 +17370,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The left footer text (may contain formatting codes such as &P, &D).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetLeftFooter.js
 	 */
 	ApiPageSetup.prototype.GetLeftFooter = function () {
@@ -17382,7 +17382,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The left footer text (may contain formatting codes such as &P, &D).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetLeftFooter.js
 	 */
 	ApiPageSetup.prototype.SetLeftFooter = function (sText) {
@@ -17402,7 +17402,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The right footer text (may contain formatting codes such as &P, &D).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetRightFooter.js
 	 */
 	ApiPageSetup.prototype.GetRightFooter = function () {
@@ -17414,7 +17414,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The right footer text (may contain formatting codes such as &P, &D).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetRightFooter.js
 	 */
 	ApiPageSetup.prototype.SetRightFooter = function (sText) {
@@ -17434,7 +17434,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The center header text (may contain formatting codes such as &P, &D).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterHeader.js
 	 */
 	ApiPageSetup.prototype.GetCenterHeader = function () {
@@ -17446,7 +17446,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The center header text (may contain formatting codes such as &P, &D).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterHeader.js
 	 */
 	ApiPageSetup.prototype.SetCenterHeader = function (sText) {
@@ -17466,7 +17466,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The left header text (may contain formatting codes such as &P, &D).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetLeftHeader.js
 	 */
 	ApiPageSetup.prototype.GetLeftHeader = function () {
@@ -17478,7 +17478,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The left header text (may contain formatting codes such as &P, &D).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetLeftHeader.js
 	 */
 	ApiPageSetup.prototype.SetLeftHeader = function (sText) {
@@ -17498,7 +17498,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The right header text (may contain formatting codes such as &P, &D).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetRightHeader.js
 	 */
 	ApiPageSetup.prototype.GetRightHeader = function () {
@@ -17510,7 +17510,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The right header text (may contain formatting codes such as &P, &D).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetRightHeader.js
 	 */
 	ApiPageSetup.prototype.SetRightHeader = function (sText) {
@@ -17530,7 +17530,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterHorizontally.js
 	 */
 	ApiPageSetup.prototype.GetCenterHorizontally = function () {
@@ -17542,7 +17542,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bCenter - Specifies whether the worksheet is centered horizontally on the page.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterHorizontally.js
 	 */
 	ApiPageSetup.prototype.SetCenterHorizontally = function (bCenter) {
@@ -17563,7 +17563,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetCenterVertically.js
 	 */
 	ApiPageSetup.prototype.GetCenterVertically = function () {
@@ -17575,7 +17575,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bCenter - Specifies whether the worksheet is centered vertically on the page.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetCenterVertically.js
 	 */
 	ApiPageSetup.prototype.SetCenterVertically = function (bCenter) {
@@ -17596,7 +17596,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetDifferentFirstPageHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.GetDifferentFirstPageHeaderFooter = function () {
@@ -17608,7 +17608,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bDifferent - Specifies whether a different header and footer is used on the first page.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetDifferentFirstPageHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.SetDifferentFirstPageHeaderFooter = function (bDifferent) {
@@ -17629,7 +17629,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetOddAndEvenPagesHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.GetOddAndEvenPagesHeaderFooter = function () {
@@ -17641,7 +17641,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bDifferent - Specifies whether different headers and footers are used on odd and even pages.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetOddAndEvenPagesHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.SetOddAndEvenPagesHeaderFooter = function (bDifferent) {
@@ -17662,7 +17662,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetScaleWithDocHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.GetScaleWithDocHeaderFooter = function () {
@@ -17674,7 +17674,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bScale - Specifies whether the header and footer are scaled with the document.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetScaleWithDocHeaderFooter.js
 	 */
 	ApiPageSetup.prototype.SetScaleWithDocHeaderFooter = function (bScale) {
@@ -17696,7 +17696,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFirstPageNumber.js
 	 */
 	ApiPageSetup.prototype.GetFirstPageNumber = function () {
@@ -17708,7 +17708,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nNumber - The first page number.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFirstPageNumber.js
 	 */
 	ApiPageSetup.prototype.SetFirstPageNumber = function (nNumber) {
@@ -17736,7 +17736,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFitToPagesWide.js
 	 */
 	ApiPageSetup.prototype.GetFitToPagesWide = function () {
@@ -17749,7 +17749,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPages - The number of pages wide (0 for automatic).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFitToPagesWide.js
 	 */
 	ApiPageSetup.prototype.SetFitToPagesWide = function (nPages) {
@@ -17773,7 +17773,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFitToPagesTall.js
 	 */
 	ApiPageSetup.prototype.GetFitToPagesTall = function () {
@@ -17786,7 +17786,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPages - The number of pages tall (0 for automatic).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetFitToPagesTall.js
 	 */
 	ApiPageSetup.prototype.SetFitToPagesTall = function (nPages) {
@@ -17810,7 +17810,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {PageOrientation}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetOrientation.js
 	 */
 	ApiPageSetup.prototype.GetOrientation = function () {
@@ -17822,7 +17822,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {PageOrientation} sOrientation - The page orientation type.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetOrientation.js
 	 */
 	ApiPageSetup.prototype.SetOrientation = function (sOrientation) {
@@ -17843,7 +17843,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetParent.js
 	 */
 	ApiPageSetup.prototype.GetParent = function () {
@@ -17860,7 +17860,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintGridlines.js
 	 */
 	ApiPageSetup.prototype.GetPrintGridlines = function () {
@@ -17872,7 +17872,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Specifies whether the cell gridlines are printed.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintGridlines.js
 	 */
 	ApiPageSetup.prototype.SetPrintGridlines = function (bPrint) {
@@ -17893,7 +17893,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintHeadings.js
 	 */
 	ApiPageSetup.prototype.GetPrintHeadings = function () {
@@ -17905,7 +17905,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Specifies whether the row and column headings are printed.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintHeadings.js
 	 */
 	ApiPageSetup.prototype.SetPrintHeadings = function (bPrint) {
@@ -17926,7 +17926,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The scaling factor measured in percent (10-400).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetZoom.js
 	 */
 	ApiPageSetup.prototype.GetZoom = function () {
@@ -17939,7 +17939,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nZoom - The scaling factor measured in percent (10-400).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetZoom.js
 	 */
 	ApiPageSetup.prototype.SetZoom = function (nZoom) {
@@ -17963,7 +17963,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintArea.js
 	 */
 	ApiPageSetup.prototype.GetPrintArea = function () {
@@ -17982,7 +17982,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range address (e.g. "A1:D20"); comma-separated for several areas. Empty clears the print area.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintArea.js
 	 */
 	ApiPageSetup.prototype.SetPrintArea = function (sRange) {
@@ -18026,7 +18026,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintTitleRows.js
 	 */
 	ApiPageSetup.prototype.GetPrintTitleRows = function () {
@@ -18039,7 +18039,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The rows to repeat (e.g. "$1:$1"). Empty string clears the print title rows.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintTitleRows.js
 	 */
 	ApiPageSetup.prototype.SetPrintTitleRows = function (sRange) {
@@ -18065,7 +18065,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPrintTitleColumns.js
 	 */
 	ApiPageSetup.prototype.GetPrintTitleColumns = function () {
@@ -18078,7 +18078,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The columns to repeat (e.g. "$A:$A"). Empty string clears the print title columns.
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPrintTitleColumns.js
 	 */
 	ApiPageSetup.prototype.SetPrintTitleColumns = function (sRange) {
@@ -18121,7 +18121,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {PaperSize}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetPaperSize.js
 	 */
 	ApiPageSetup.prototype.GetPaperSize = function () {
@@ -18135,7 +18135,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {PaperSize} sPaperSize - The paper size (an xlPaperSize constant name, e.g. "xlPaperA4").
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/SetPaperSize.js
 	 */
 	ApiPageSetup.prototype.SetPaperSize = function (sPaperSize) {
@@ -18165,7 +18165,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPage}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetEvenPage.js
 	 */
 	ApiPageSetup.prototype.GetEvenPage = function () {
@@ -18183,7 +18183,7 @@
 	 * @memberof ApiPageSetup
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPage}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPageSetup/Methods/GetFirstPage.js
 	 */
 	ApiPageSetup.prototype.GetFirstPage = function () {
@@ -18206,7 +18206,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiHeaderFooter}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetCenterHeader.js
 	 */
 	ApiPage.prototype.GetCenterHeader = function () {
@@ -18223,7 +18223,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiHeaderFooter}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetLeftHeader.js
 	 */
 	ApiPage.prototype.GetLeftHeader = function () {
@@ -18240,7 +18240,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiHeaderFooter}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetRightHeader.js
 	 */
 	ApiPage.prototype.GetRightHeader = function () {
@@ -18257,7 +18257,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiHeaderFooter}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetLeftFooter.js
 	 */
 	ApiPage.prototype.GetLeftFooter = function () {
@@ -18274,7 +18274,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiHeaderFooter}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetCenterFooter.js
 	 */
 	ApiPage.prototype.GetCenterFooter = function () {
@@ -18291,7 +18291,7 @@
 	 * @memberof ApiPage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiHeaderFooter}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetRightFooter.js
 	 */
 	ApiPage.prototype.GetRightFooter = function () {
@@ -18344,7 +18344,7 @@
 	 * @memberof ApiHeaderFooter
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The section text (may contain formatting codes such as &P, &D).
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiHeaderFooter/Methods/GetText.js
 	 */
 	ApiHeaderFooter.prototype.GetText = function () {
@@ -18357,7 +18357,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The section text (may contain formatting codes such as &P, &D).
 	 * @returns {boolean} - Returns true if the operation is successful.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiHeaderFooter/Methods/SetText.js
 	 */
 	ApiHeaderFooter.prototype.SetText = function (sText) {
@@ -25063,7 +25063,7 @@
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
 	 */
 	ApiFormatCondition.prototype.GetStopIfTrue = function() {
@@ -25078,7 +25078,7 @@
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
 	 */
 	ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
@@ -25854,7 +25854,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetStopIfTrue.js
 	 */
 	ApiAboveAverage.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
@@ -25864,7 +25864,7 @@
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetStopIfTrue.js
 	 */
 	ApiAboveAverage.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
@@ -26109,7 +26109,7 @@
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetStopIfTrue.js
 	 */
 	ApiColorScale.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
@@ -27503,7 +27503,7 @@
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetStopIfTrue.js
 	 */
 	ApiDatabar.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
@@ -28299,7 +28299,7 @@
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetStopIfTrue.js
 	 */
 	ApiIconSetCondition.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
@@ -29525,7 +29525,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetStopIfTrue.js
 	 */
 	ApiTop10.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
@@ -29535,7 +29535,7 @@
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetStopIfTrue.js
 	 */
 	ApiTop10.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
@@ -29834,7 +29834,7 @@
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetStopIfTrue.js
 	 */
 	ApiUniqueValues.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
@@ -29844,7 +29844,7 @@
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetStopIfTrue.js
 	 */
 	ApiUniqueValues.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
