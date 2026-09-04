@@ -31533,16 +31533,16 @@ function isAllowPasteLink(pastedWb) {
 
 				var frozenRange;
 				if (0 <= cFrozen && 0 <= rFrozen) {
-					frozenRange = new asc_Range(this._getFrozenScrollCol0(), this._getFrozenScrollRow0(), cFrozen, rFrozen);
+					frozenRange = new asc_Range(ws._getFrozenScrollCol0(), ws._getFrozenScrollRow0(), cFrozen, rFrozen);
 					intersectionVisibleRange = frozenRange.intersection(range);
 				}
 				if (!intersectionVisibleRange && 0 <= cFrozen) {
-					frozenRange = new asc_Range(0, ws.visibleRange.r1, cFrozen, ws.visibleRange.r2);
+					frozenRange = new asc_Range(ws._getFrozenScrollCol0(), ws.visibleRange.r1, cFrozen, ws.visibleRange.r2);
 					intersectionVisibleRange = frozenRange.intersection(range);
 
 				}
 				if (!intersectionVisibleRange && 0 <= rFrozen) {
-					frozenRange = new asc_Range(ws.visibleRange.c1, 0, ws.visibleRange.c2, rFrozen);
+					frozenRange = new asc_Range(ws.visibleRange.c1, ws._getFrozenScrollRow0(), ws.visibleRange.c2, rFrozen);
 					intersectionVisibleRange = frozenRange.intersection(range);
 				}
 			}
