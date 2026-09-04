@@ -1754,8 +1754,9 @@
     CBaseField.prototype.Refresh_ContentChanges = function(){};
     CBaseField.prototype.Clear_ContentChanges = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged, viewSync) {
-        let oViewer   = Asc.editor.getDocumentRenderer();
-        let canChange = !oViewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges() && !AscCommon.g_oIdCounter.IsLoad();
+		let oViewer   		= Asc.editor.getDocumentRenderer();
+        let isNativeBuilder	= window["NATIVE_EDITOR_ENJINE"] && !window["IS_NATIVE_EDITOR"];
+		let canChange		= !oViewer.IsOpenFormsInProgress && (AscCommon.History.CanAddChanges() || isNativeBuilder);
 
         let changed = this._wasChanged !== isChanged && canChange;
         if (changed) {
