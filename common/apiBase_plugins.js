@@ -1928,7 +1928,7 @@
 	 * @param {boolean} isDisabled - Specifies whether to disable (true) or enable (false) the button.
 	 *
 	 * @alias SetButtonDisabled
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetButtonDisabled.js
 	 */
 	Api.prototype['pluginMethod_SetButtonDisabled'] = function (index, isDisabled) {

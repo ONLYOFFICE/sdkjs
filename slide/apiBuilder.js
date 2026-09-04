@@ -1092,7 +1092,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTableRowPr}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTableRowPr.js
 	 */
 	Api.CreateTableRowPr = function()
@@ -2225,7 +2225,7 @@
 	 * Returns the table that is currently selected or being edited in the presentation.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiTable | null} The active table object if exactly one table is selected or being edited; otherwise, null.
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetActiveTable.js
 	 */
@@ -2240,7 +2240,7 @@
 	 * Returns the shape that is currently selected or being edited in the presentation.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiShape | null} The active shape object if exactly one shape is selected or being edited; otherwise, null.
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetActiveShape.js
 	 */
@@ -2275,7 +2275,7 @@
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @param {string} sStyleName - The name of the table style to look up.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiStyle | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetStyle.js
 	 */
@@ -2298,7 +2298,7 @@
 	 * @param {boolean} [byWords=false] - Specifies whether to move by words instead of by character.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveCursorLeft.js
 	 */
 	ApiPresentation.prototype.MoveCursorLeft = function(count, addToSelect, byWords)
@@ -2321,7 +2321,7 @@
 	 * @param {boolean} [byWords=false] - Specifies whether to move by words instead of by character.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveCursorRight.js
 	 */
 	ApiPresentation.prototype.MoveCursorRight = function(count, addToSelect, byWords)
@@ -2344,7 +2344,7 @@
 	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveCursorUp.js
 	 */
 	ApiPresentation.prototype.MoveCursorUp = function(count, addToSelect)
@@ -2367,7 +2367,7 @@
 	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveCursorDown.js
 	 */
 	ApiPresentation.prototype.MoveCursorDown = function(count, addToSelect)
@@ -2420,7 +2420,7 @@
 	 * @memberof ApiPresentation
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/InsertParagraphBreak.js
 	 */
 	ApiPresentation.prototype.InsertParagraphBreak = function()
@@ -2437,7 +2437,7 @@
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/Search.js
 	 */
 	ApiPresentation.prototype.Search = function(text, isMatchCase, isWholeWords)
@@ -2455,7 +2455,7 @@
 	 * @param {boolean} [properties.matchCase=false] - Case sensitive or not.
 	 * @param {boolean} [properties.wholeWords=false] - Whether to search for whole words only.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SearchAndReplace.js
 	 */
 	ApiPresentation.prototype.SearchAndReplace = function(properties)
@@ -2539,7 +2539,7 @@
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Search.js
 	 */
 	ApiSlide.prototype.Search = function(text, isMatchCase, isWholeWords)
@@ -2555,7 +2555,7 @@
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Search.js
 	 */
 	ApiMaster.prototype.Search = function(text, isMatchCase, isWholeWords)
@@ -2571,7 +2571,7 @@
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/Search.js
 	 */
 	ApiLayout.prototype.Search = function(text, isMatchCase, isWholeWords)
@@ -2807,7 +2807,7 @@
      * @memberof ApiMaster
      * @typeofeditors ["CPE"]
      * @returns {ApiFill | null} - returns null if the slide master doesn't exist or has no background fill.
-     * @since 9.5.0
+     * @since 10.0.0
      * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetBackground.js
      */
     ApiMaster.prototype.GetBackground = function(){
@@ -3250,7 +3250,7 @@
      * @memberof ApiLayout
      * @typeofeditors ["CPE"]
      * @returns {ApiFill | null} - returns null if the slide layout doesn't exist or has no background fill.
-     * @since 9.5.0
+     * @since 10.0.0
      * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetBackground.js
      */
     ApiLayout.prototype.GetBackground = function(){
@@ -4372,7 +4372,7 @@
      * @memberof ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {ApiFill | null} - returns null if the slide doesn't exist or has no background fill.
-     * @since 9.5.0
+     * @since 10.0.0
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetBackground.js
      */
     ApiSlide.prototype.GetBackground = function(){
@@ -7176,7 +7176,7 @@
 	 * Sets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} title - The title to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
@@ -7198,7 +7198,7 @@
 	 * Gets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The title of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
 	 */
@@ -7215,7 +7215,7 @@
 	 * Sets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} description - The description to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
@@ -7237,7 +7237,7 @@
 	 * Gets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The description of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
 	 */
@@ -7439,7 +7439,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
 	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
 	 */
 	ApiDrawing.prototype.SetLockAspect = function(bAspect)
@@ -7456,7 +7456,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
 	 */
 	ApiDrawing.prototype.GetLockAspect = function()
@@ -7707,7 +7707,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFill.js
 	 */
 	ApiDrawing.prototype.SetFill = ApiDrawing.prototype.Fill;
@@ -7716,7 +7716,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiFill | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFill.js
 	 */
 	ApiDrawing.prototype.GetFill = function()
@@ -7787,7 +7787,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js
 	 */
 	ApiDrawing.prototype.SetLine = ApiDrawing.prototype.SetOutLine;
@@ -7796,7 +7796,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiStroke | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLine.js
 	 */
 	ApiDrawing.prototype.GetLine = function()
@@ -7821,7 +7821,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
 	 * @returns {boolean} - returns false if the graphic object does not support shadow.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
 	 */
 	ApiDrawing.prototype.SetShadow = function(shadow)
@@ -7846,7 +7846,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiShadow | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
 	 */
 	ApiDrawing.prototype.GetShadow = function()
@@ -7863,7 +7863,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTextRange|null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTextRange.js
 	 */
 	ApiDrawing.prototype.GetTextRange = function() {
@@ -7883,7 +7883,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/IsTextRange.js
 	 */
 	ApiDrawing.prototype.IsTextRange = function() {
@@ -7898,7 +7898,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTextRange|null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/CreateTextRange.js
 	 */
 	ApiDrawing.prototype.CreateTextRange = function() {
@@ -8114,7 +8114,7 @@
      * @typeofeditors ["CPE"]
      * @param {TextFitType} fitType - The text autofit type.
      * @returns {boolean} - returns false if the type is invalid or the shape doesn't exist.
-     * @since 9.5.0
+     * @since 10.0.0
      * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetTextFit.js
      */
     ApiShape.prototype.SetTextFit = function(fitType)
@@ -8140,7 +8140,7 @@
      * @memberof ApiShape
      * @typeofeditors ["CPE"]
      * @returns {TextFitType} - The text autofit type.
-     * @since 9.5.0
+     * @since 10.0.0
      * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetTextFit.js
      */
     ApiShape.prototype.GetTextFit = function()
@@ -8906,7 +8906,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {EMU} height - The table height in English measure units.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
 	 */
 	ApiTable.prototype.SetHeight = function (height) {
@@ -8962,7 +8962,7 @@
 	 * Returns a number of rows in the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRowsCount.js
 	 */
@@ -8975,7 +8975,7 @@
 	 * Returns a cell by its position.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {number} rowIndex - The row index in the current table.
 	 * @param {number} cellIndex - The cell index in the specified row.
 	 * @returns {ApiTableCell|null}
@@ -9008,7 +9008,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @type {ApiTableRow[]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 */
 	Object.defineProperty(ApiTable.prototype, "Rows", {
 		get: function()
@@ -9022,7 +9022,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @type {ApiTableCell[][]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 */
 	Object.defineProperty(ApiTable.prototype, "Cells", {
 		get: function()
@@ -9038,7 +9038,7 @@
 	 * Sets the style for the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiStyle} oStyle - The table style to apply.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetStyle.js
@@ -9057,7 +9057,7 @@
 	 * Adds the new rows to the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiTableCell} [oCell] - The cell after which the new rows will be added. If not specified, the new rows will be added at the end of the table.
 	 * @param {Number} nCount - Count of rows to be added.
 	 * @param {boolean} [isBefore=false] - Adds the new rows before (true) or after (false) the specified cell.
@@ -9080,7 +9080,7 @@
 	 * Adds the new columns to the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiTableCell} [oCell] - The cell after which the new columns will be added. If not specified, the new columns will be added at the end of the table.
 	 * @param {Number} nCount - Count of columns to be added.
 	 * @param {boolean} [isBefore=false] - Adds the new columns before (true) or after (false) the specified cell.
@@ -9103,7 +9103,7 @@
 	 * Adds a paragraph using its position in the cell.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiTableCell} oCell - The cell where the specified element will be added.
 	 * @param {number} nPos - The position in the cell where the specified element will be added.
 	 * @param {DocumentElement} oElement - The document element which will be added at the current position.
@@ -9146,7 +9146,7 @@
 	 * Sets the table title.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} title - The table title to be set.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableTitle.js
@@ -9163,7 +9163,7 @@
 	 * Returns the table title.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @return {string}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableTitle.js
 	 */
@@ -9174,7 +9174,7 @@
 	 * Sets the table description.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} descr - The table description.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableDescription.js
@@ -9191,7 +9191,7 @@
 	 * Returns the table description.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableDescription.js
 	 */
@@ -9203,7 +9203,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Clear.js
 	 */
 	ApiTable.prototype.Clear = AscBuilder.ApiTable.prototype.Clear;
@@ -9357,7 +9357,7 @@
 	 * Returns an internal id of the current table row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetInternalId.js
 	 */
@@ -9366,7 +9366,7 @@
 	 * Returns the current row index.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {Number}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetIndex.js
 	 */
@@ -9375,7 +9375,7 @@
 	 * Adds the new rows to the current table.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {Number} nCount - Count of rows to be added.
 	 * @param {boolean} [isBefore=false] - Specifies if the rows will be added before or after the current row.
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
@@ -9386,7 +9386,7 @@
 	 * Merges the cells in the current row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiTableCell | null} - return null if can't merge.
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/MergeCells.js
 	 */
@@ -9395,7 +9395,7 @@
 	 * Clears the content from the current row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean} - returns false if parent table doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/Clear.js
 	 */
@@ -9404,7 +9404,7 @@
 	 * Removes the current table row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean} - return false if parent table doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/Remove.js
 	 */
@@ -9413,7 +9413,7 @@
 	 * Sets the text properties to the current row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current row.
 	 * @returns {boolean} - returns false if parent table doesn't exist or param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetTextPr.js
@@ -9435,7 +9435,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTableRowPr} oApiTableRowPr - The table row properties.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetRowPr.js
 	 */
 	ApiTableRow.prototype.SetRowPr = AscBuilder.ApiTableRow.prototype.SetRowPr;
@@ -9461,7 +9461,7 @@
 	 * Returns an internal id of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetInternalId.js
 	 */
@@ -9473,7 +9473,7 @@
 	 * Returns the current cell index.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {Number}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetIndex.js
 	 */
@@ -9485,7 +9485,7 @@
 	 * Returns an index of the parent row.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {number | null}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetRowIndex.js
 	 */
@@ -9501,7 +9501,7 @@
 	 * Returns a parent row of the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiTableRow | null} - returns null if parent row doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetParentRow.js
 	 */
@@ -9517,7 +9517,7 @@
 	 * Returns a parent table of the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetParentTable.js
 	 */
@@ -9543,7 +9543,7 @@
 	 * Returns the next cell if exists.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiTableCell | null} - returns null if cell is last.
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetNext.js
 	 */
@@ -9559,7 +9559,7 @@
 	 * Returns the previous cell if exists.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiTableCell | null} - returns null is cell is first. 
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetPrevious.js
 	 */
@@ -9576,7 +9576,7 @@
 	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @return {ApiColor | null}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetBackgroundColor.js
 	 */
@@ -9621,7 +9621,7 @@
 	 * Sets the background color to all cells in the column containing the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
@@ -9664,7 +9664,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTextRange|null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetTextRange.js
 	 */
 	ApiTableCell.prototype.GetTextRange = function() {
@@ -9864,7 +9864,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
@@ -9895,7 +9895,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
@@ -9926,7 +9926,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
@@ -9957,7 +9957,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {BorderType} sType - The cell bottom border style.
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
@@ -10069,7 +10069,7 @@
 	 * Selects the current table cell in the presentation.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/Select.js
 	 */
 	ApiTableCell.prototype.Select = function()
@@ -10086,7 +10086,7 @@
 	 * Adds the new rows to the current table.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {Number} nCount - Count of rows to be added.
 	 * @param {boolean} [isBefore=false] - Specifies if the new rows will be added before or after the current cell.
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
@@ -10097,7 +10097,7 @@
 	 * Adds the new columns to the current table.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {Number} nCount - Count of columns to be added.
 	 * @param {boolean} [isBefore=false] - Specifies if the new columns will be added before or after the current cell.
 	 * @returns {ApiTable | null} - returns null if parent table doesn't exist.
@@ -10108,7 +10108,7 @@
 	 * Removes a column containing the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean} - returns false if table doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/RemoveColumn.js
 	 */
@@ -10117,7 +10117,7 @@
 	 * Removes a row containing the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean} Is the table empty after removing.
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/RemoveRow.js
 	 */
@@ -10126,7 +10126,7 @@
 	 * Clears the content from the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @return {boolean} - returns false if parent row is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/Clear.js
 	 */
@@ -10333,7 +10333,7 @@
 	 * Returns a type of the ApiStyle class.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {"style"}
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/GetClassType.js
 	 */
@@ -10342,7 +10342,7 @@
 	 * Returns a name of the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/GetName.js
 	 */
@@ -10351,7 +10351,7 @@
 	 * Sets a name to the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} styleName - The name which will be used for the current style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetName.js
@@ -10361,7 +10361,7 @@
 	 * Returns a type of the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {StyleType}
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/GetType.js
 	 */
@@ -10420,7 +10420,7 @@
 	 * Returns a type of the ApiTableStylePr class.
 	 * @memberof ApiTableStylePr
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {"tableStylePr"}
 	 * @see office-js-api/Examples/{Editor}/ApiTableStylePr/Methods/GetClassType.js
 	 */
@@ -10429,7 +10429,7 @@
 	 * Returns a type of the current table conditional style.
 	 * @memberof ApiTableStylePr
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {TableStyleOverrideType}
 	 * @see office-js-api/Examples/{Editor}/ApiTableStylePr/Methods/GetType.js
 	 */
@@ -10438,7 +10438,7 @@
 	 * Returns a set of the table properties which will be applied to all the regions within a table which match the conditional formatting type.
 	 * @memberof ApiTableStylePr
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiTablePr}
 	 * @see office-js-api/Examples/{Editor}/ApiTableStylePr/Methods/GetTablePr.js
 	 */
@@ -10452,7 +10452,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTablePr} oTablePr - The table properties to apply.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableStylePr/Methods/SetTablePr.js
 	 */
 	ApiTableStylePr.prototype.SetTablePr = function(oTablePr)
@@ -10520,7 +10520,7 @@
 	 * Returns a type of the ApiTableRowPr class.
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {"tableRowPr"}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/GetClassType.js
 	 */
@@ -10529,7 +10529,7 @@
 	 * Sets the height to the current table row within the current table.
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {("auto" | "atLeast")} sHRule - The rule to apply the height value to the current table row or ignore it.
 	 * @param {twips} [nValue] - The height for the current table row measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
@@ -10540,7 +10540,7 @@
 	 * Converts the ApiTableRowPr object into the JSON object.
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {JSON}
 	 * @see office-js-api/Examples/{Editor}/ApiTableRowPr/Methods/ToJSON.js
 	 */
@@ -10647,7 +10647,7 @@
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @returns {"textRange"}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetClassType.js
 	 */
 	ApiTextRange.prototype.GetClassType = function() {
@@ -10661,7 +10661,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {number} nIndex
 	 * @returns {ApiParagraph|null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetParagraph.js
 	 */
 	ApiTextRange.prototype.GetParagraph = function(nIndex)
@@ -10690,7 +10690,7 @@
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiParagraph[]}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetAllParagraphs.js
 	 */
 	ApiTextRange.prototype.GetAllParagraphs = function() {
@@ -10714,7 +10714,7 @@
 	 * @param {String} text - The text that will be added.
 	 * @param {"after" | "before"} [position = "after"] - The position where the text will be added ("before" or "after" the range specified).
 	 * @return {boolean} - returns true if the text was successfully added.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/AddText.js
 	 */
 	ApiTextRange.prototype.AddText = function(text, position)
@@ -10808,7 +10808,7 @@
 	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
 	 * @typeofeditors ["CPE"]
 	 * @returns {string}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetText.js
 	 */
 	ApiTextRange.prototype.GetText = function(options) {
@@ -10845,7 +10845,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTextRange} oRange
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/ExpandTo.js
 	 */
 	ApiTextRange.prototype.ExpandTo = function(oRange) {
@@ -10866,7 +10866,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTextRange} oRange
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/IntersectWith.js
 	 */
 	ApiTextRange.prototype.IntersectWith = function(oRange) {
@@ -10887,7 +10887,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {string} sText - New text value.
 	 * @returns {ApiTextRange} this
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetText.js
 	 */
 	ApiTextRange.prototype.SetText = function(sText) {
@@ -10922,7 +10922,7 @@
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Select.js
 	 */
 	ApiTextRange.prototype.Select = function() {
@@ -10961,7 +10961,7 @@
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @returns {number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetStartPos.js
 	 */
 	ApiTextRange.prototype.GetStartPos = function() {
@@ -10973,7 +10973,7 @@
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @returns {number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetEndPos.js
 	 */
 	ApiTextRange.prototype.GetEndPos = function() {
@@ -10986,7 +10986,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {number} nPos - Start position.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetStartPos.js
 	 */
 	ApiTextRange.prototype.SetStartPos = function(nPos) {
@@ -11003,7 +11003,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {number} nPos - End position.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetEndPos.js
 	 */
 	ApiTextRange.prototype.SetEndPos = function(nPos) {
@@ -11021,7 +11021,7 @@
 	 * @param {number} [nStart=0] - Start offset (0-based) relative to the beginning of this range.
 	 * @param {number} [nEnd=-1]  - End offset relative to the beginning of this range. -1 means the end of this range.
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetRange.js
 	 */
 	ApiTextRange.prototype.GetRange = function(nStart, nEnd) {
@@ -11059,7 +11059,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {number} [nPos=0] - The desired cursor position.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/MoveCursorToPos.js
 	 */
 	ApiTextRange.prototype.MoveCursorToPos = function(nPos) {
@@ -11117,7 +11117,7 @@
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean} - returns false if the range is empty.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Delete.js
 	 */
 	ApiTextRange.prototype.Delete = function() {
@@ -11163,7 +11163,7 @@
 	 * @param {boolean} [bMatchCase=false] - Case-sensitive search.
 	 * @param {boolean} [bWholeWords=false] - Match whole words only.
 	 * @returns {ApiTextRange|null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Find.js
 	 */
 	ApiTextRange.prototype.Find = function(sFindWhat, nAfter, bMatchCase, bWholeWords) {
@@ -11209,7 +11209,7 @@
 	 * @param {boolean} [bMatchCase=false]  - Case-sensitive search.
 	 * @param {boolean} [bWholeWords=false] - Match whole words only.
 	 * @returns {ApiTextRange} this
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Replace.js
 	 */
 	ApiTextRange.prototype.Replace = function(sFindWhat, sReplaceWith, bMatchCase, bWholeWords) {
@@ -11279,7 +11279,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} isBold
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetBold.js
 	 */
 	ApiTextRange.prototype.SetBold = function(isBold) {
@@ -11293,7 +11293,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} isCaps - Specifies if the Range contents are displayed capitalized or not.
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetCaps.js
 	 */
 	ApiTextRange.prototype.SetCaps = function(isCaps)
@@ -11308,7 +11308,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiColor} color
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetColor.js
 	 */
 	ApiTextRange.prototype.SetColor = function(color) {
@@ -11354,7 +11354,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} isDoubleStrikeout
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetDoubleStrikeout.js
 	 */
 	ApiTextRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout) {
@@ -11368,7 +11368,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {highlightColor} sColor
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetHighlight.js
 	 */
 	ApiTextRange.prototype.SetHighlight = function(sColor) {
@@ -11390,7 +11390,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} isItalic
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetItalic.js
 	 */
 	ApiTextRange.prototype.SetItalic = function(isItalic) {
@@ -11404,7 +11404,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} isStrikeout
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetStrikeout.js
 	 */
 	ApiTextRange.prototype.SetStrikeout = function(isStrikeout) {
@@ -11419,7 +11419,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current Range are displayed capitalized two points smaller or not.
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetSmallCaps.js
 	 */
 	ApiTextRange.prototype.SetSmallCaps = function(isSmallCaps) {
@@ -11433,7 +11433,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetSpacing.js
 	 */
 	ApiTextRange.prototype.SetSpacing = function(spacing) {
@@ -11450,7 +11450,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {boolean} isUnderline - Specifies if the contents of the current Range are displayed underlined or not.
 	 * @returns {ApiTextRange}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetUnderline.js
 	 */
 	ApiTextRange.prototype.SetUnderline = function(isUnderline) {
@@ -11467,7 +11467,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {("baseline" | "subscript" | "superscript")} type - The vertical alignment type applied to the text contents.
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetVertAlign.js
 	 */
 	ApiTextRange.prototype.SetVertAlign = function(type) {
@@ -11493,7 +11493,7 @@
 	//  * @typeofeditors ["CPE"]
 	//  * @param {number} offset
 	//  * @returns {ApiTextRange | null}
-	//  * @since 9.5.0
+	//  * @since 10.0.0
 	//  * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetBaselineOffset.js
 	//  */
 	// ApiTextRange.prototype.SetBaselineOffset = function(offset) {
@@ -11508,7 +11508,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontSize.js
 	 */
 	ApiTextRange.prototype.SetFontSize = function(fontSize) {
@@ -11529,7 +11529,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {string} fontFamily - The font family or families used for the current text Range.
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
 	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
@@ -11562,7 +11562,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be applied to the current range.
 	 * @returns {ApiTextRange | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetTextPr.js
 	 */
 	ApiTextRange.prototype.SetTextPr = function(oTextPr) {
@@ -11577,7 +11577,7 @@
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE"]
 	 * @return {ApiTextPr}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetTextPr.js
 	 */
 	ApiTextRange.prototype.GetTextPr = function()

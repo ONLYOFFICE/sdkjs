@@ -3246,7 +3246,7 @@
 	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current hyperlink.
 	 * @memberof ApiHyperlink
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {?ParagraphLikeContainer} - returns null if the hyperlink has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetParent.js
 	 */
@@ -3259,7 +3259,7 @@
 	 * Returns the position (index) of the current hyperlink within its parent element.
 	 * @memberof ApiHyperlink
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {Number} - returns -1 if the hyperlink has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetPosInParent.js
 	 */
@@ -4833,7 +4833,7 @@
 	 * @param {string} text - An equation written as a linear text string.
 	 * @param {"unicode" | "latex" | "mathml"} [format="unicode"] - The format of the specified linear representation.
 	 * @returns {ApiMath}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateMath.js
 	 */
 	Api.CreateMath = function(text, format)
@@ -5446,7 +5446,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {ShadowSettings} settings - The shadow properties.
 	 * @returns {ApiShadow}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShadow.js
 	 */
 	Api.CreateShadow = function(settings)
@@ -6414,7 +6414,7 @@
 	 * Returns the position (index) of the specified element within the current document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {DocumentElement} element - The document element (paragraph, table or block content control) whose index will be returned.
 	 * @returns {Number} - returns -1 if the element is not a direct child of the current document content.
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetElementIndex.js
@@ -9457,7 +9457,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTable|null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetActiveTable.js
 	 */
 	ApiDocument.prototype.GetActiveTable = function()
@@ -9764,7 +9764,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
 	 * @param {ApiRange} [oRange] - The range that the table of contents replaces. If omitted, the table of contents is inserted at the current position.
 	 * @returns {?ApiTableOfContents}
@@ -9791,7 +9791,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
 	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
 	 * @param {ApiRange} [oRange] - The range that the table of figures replaces. If omitted, the table of figures is inserted at the current position.
@@ -10429,7 +10429,7 @@
 	 * @param {number} [page] - The page number. If not specified, the current page is used.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToHeader.js
 	 */
 	ApiDocument.prototype.MoveCursorToHeader = function(page)
@@ -10450,7 +10450,7 @@
 	 * @param {number} [page] - The page number. If not specified, the current page is used.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToFooter.js
 	 */
 	ApiDocument.prototype.MoveCursorToFooter = function(page)
@@ -10470,7 +10470,7 @@
 	 * @memberof ApiDocument
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorToMainDocument.js
 	 */
 	ApiDocument.prototype.MoveCursorToMainDocument = function()
@@ -10885,7 +10885,7 @@
 	 * Returns true if the paragraph has no content elements (only the paragraph end mark).
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/IsEmpty.js
 	 */
@@ -11691,7 +11691,7 @@
 	 * @param {("none" | "drop" | "margin")} position - The drop cap type: "none" removes the drop cap, "drop" places
 	 * it within the text, "margin" places it in the margin.
 	 * @returns {?ApiDropCap} - The created drop cap, or null if the drop cap could not be created or was removed.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetDropCap.js
 	 */
 	ApiParagraph.prototype.SetDropCap = function(position)
@@ -11733,7 +11733,7 @@
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDropCap} - The drop cap, or null if the paragraph has no drop cap.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetDropCap.js
 	 */
 	ApiParagraph.prototype.GetDropCap = function()
@@ -11790,7 +11790,7 @@
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {"dropCap"}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetClassType.js
 	 */
 	ApiDropCap.prototype.GetClassType = function()
@@ -11803,7 +11803,7 @@
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetParent.js
 	 */
 	ApiDropCap.prototype.GetParent = function()
@@ -11816,7 +11816,7 @@
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {("none" | "drop" | "margin")}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetPosition.js
 	 */
 	ApiDropCap.prototype.GetPosition = function()
@@ -11839,7 +11839,7 @@
 	 * @param {("none" | "drop" | "margin")} position - The drop cap type: "none" removes the drop cap, "drop" places
 	 * it within the text, "margin" places it in the margin.
 	 * @returns {?ApiDropCap} - Returns null if the drop cap was removed with "none".
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetPosition.js
 	 */
 	ApiDropCap.prototype.SetPosition = function(position)
@@ -11868,7 +11868,7 @@
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetLinesToDrop.js
 	 */
 	ApiDropCap.prototype.GetLinesToDrop = function()
@@ -11882,7 +11882,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {number} lines - The number of lines that the drop cap occupies. Must be a number greater than 0.
 	 * @returns {ApiDropCap}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetLinesToDrop.js
 	 */
 	ApiDropCap.prototype.SetLinesToDrop = function(lines)
@@ -11905,7 +11905,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} fontFamily - The font family name used for the drop cap letter.
 	 * @returns {ApiDropCap}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetFontFamily.js
 	 */
 	ApiDropCap.prototype.SetFontFamily = function(fontFamily)
@@ -11928,7 +11928,7 @@
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {twips}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/GetDistanceFromText.js
 	 */
 	ApiDropCap.prototype.GetDistanceFromText = function()
@@ -11943,7 +11943,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} distance - The distance between the drop cap and the paragraph text. Must be a non-negative number.
 	 * @returns {ApiDropCap}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetDistanceFromText.js
 	 */
 	ApiDropCap.prototype.SetDistanceFromText = function(distance)
@@ -11962,7 +11962,7 @@
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/Clear.js
 	 */
 	ApiDropCap.prototype.Clear = function()
@@ -12153,7 +12153,7 @@
 	 * Returns the document content that contains the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the paragraph has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetParent.js
 	 */
@@ -12172,7 +12172,7 @@
 	 * Returns the position (index) of the specified element within the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ParagraphContent} element - The inline element (run, inline content control, form, etc.) whose index will be returned.
 	 * @returns {Number} - returns -1 if the element is not a direct child of the current paragraph.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetElementIndex.js
@@ -13395,7 +13395,7 @@
 	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {?ParagraphLikeContainer} - returns null if the run has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetParent.js
 	 */
@@ -13408,7 +13408,7 @@
 	 * Returns the position (index) of the current run within its parent element.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {Number} - returns -1 if the run has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetPosInParent.js
 	 */
@@ -13627,7 +13627,7 @@
 	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current math element.
 	 * @memberof ApiMath
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {?ParagraphLikeContainer} - returns null if the math element has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetParent.js
 	 */
@@ -13640,7 +13640,7 @@
 	 * Returns the position (index) of the current math element within its parent element.
 	 * @memberof ApiMath
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {Number} - returns -1 if the math element has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiMath/Methods/GetPosInParent.js
 	 */
@@ -15180,7 +15180,7 @@
 	 * Returns the document content that contains the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the table has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetParent.js
 	 */
@@ -15283,7 +15283,7 @@
 	 * @param {number} columnIndex - The zero-based column index.
 	 * @param {EMU} width - The column width measured in English measure units.
 	 * @returns {EMU | null} - Returns the actual column width set (in EMU), or null if the column index is invalid.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetColumnWidth.js
 	 */
 	ApiTable.prototype.SetColumnWidth = function(columnIndex, width){
@@ -15327,7 +15327,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {number} columnIndex - The zero-based column index.
 	 * @returns {EMU | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetColumnWidth.js
 	 */
 	ApiTable.prototype.GetColumnWidth = function(columnIndex){
@@ -15345,7 +15345,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {EMU} nValue - The table height in English measure units.
 	 * @returns {EMU | null} - Returns the requested height (in EMU), or null if the table has no rows.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetHeight.js
 	 */
 	ApiTable.prototype.SetHeight = function(nValue){
@@ -15443,7 +15443,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTableRow[]} - An array of table row objects that contain at least one selected cell.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetSelectedRows.js
 	 */
 	ApiTable.prototype.GetSelectedRows = function()
@@ -15678,7 +15678,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 * @returns {EMU | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetHeight.js
 	 */
 	ApiTableRow.prototype.GetHeight = function()
@@ -15751,7 +15751,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableRowPr} oApiTableRowPr - The table row properties.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetRowPr.js
 	 */
 	ApiTableRow.prototype.SetRowPr = function(oApiTableRowPr)
@@ -20699,7 +20699,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFill.js
 	 */
 	ApiDrawing.prototype.SetFill = ApiDrawing.prototype.Fill;
@@ -20708,7 +20708,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiFill | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFill.js
 	 */
 	ApiDrawing.prototype.GetFill = function()
@@ -20777,7 +20777,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
 	 * @returns {boolean} - returns false if param is invalid or not supported for the current graphic object.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLine.js
 	 */
 	ApiDrawing.prototype.SetLine = ApiDrawing.prototype.SetOutLine;
@@ -20786,7 +20786,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiStroke | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLine.js
 	 */
 	ApiDrawing.prototype.GetLine = function()
@@ -20811,7 +20811,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {?ApiShadow} shadow - The shadow to apply, or null to remove the current shadow.
 	 * @returns {boolean} - returns false if the graphic object does not support shadow.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetShadow.js
 	 */
 	ApiDrawing.prototype.SetShadow = function(shadow)
@@ -20836,7 +20836,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiShadow | null}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetShadow.js
 	 */
 	ApiDrawing.prototype.GetShadow = function()
@@ -20907,7 +20907,7 @@
 	 * Sets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} title - The title to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetTitle.js
@@ -20930,7 +20930,7 @@
 	 * Gets the title of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The title of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTitle.js
 	 */
@@ -20947,7 +20947,7 @@
 	 * Sets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {string} description - The description to set for the current drawing.
 	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetDescription.js
@@ -20970,7 +20970,7 @@
 	 * Gets the description of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {string | null} - The description of the current drawing, or null if not set.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetDescription.js
 	 */
@@ -21176,7 +21176,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
 	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
 	 */
 	ApiDrawing.prototype.SetLockAspect = function(bAspect)
@@ -21192,7 +21192,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
 	 */
 	ApiDrawing.prototype.GetLockAspect = function()
@@ -21205,7 +21205,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} bOverlap - Specifies whether this drawing object can overlap other drawing objects.
 	 * @returns {void}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetAllowOverlap.js
 	 */
 	ApiDrawing.prototype.SetAllowOverlap = function(bOverlap) {
@@ -21217,7 +21217,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetAllowOverlap.js
 	 */
 	ApiDrawing.prototype.GetAllowOverlap = function() {
@@ -22664,7 +22664,7 @@
 	 * @param {boolean} bShow - Whether to show or hide the data table below the chart.
 	 * @param {boolean} [bShowKeys=false] - Whether to show the legend keys in the data table.
 	 * @returns {boolean}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetShowDataTable.js
 	 */
 	ApiChart.prototype.SetShowDataTable = function(bShow, bShowKeys)
@@ -22706,7 +22706,7 @@
 	 * @param {ApiTextPr} textPr - The text properties to apply to the data labels.
 	 * @returns {boolean} - Returns true if the text properties were applied successfully, false otherwise.
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetDataLabelsTextPr.js
 	 */
 	ApiChart.prototype.SetDataLabelsTextPr = function (textPr) {
@@ -22727,7 +22727,7 @@
 	 * @param {ApiTextPr} textPr - The text properties to apply to the data label.
 	 * @returns {boolean} - Returns true if the text properties were applied successfully, false otherwise.
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetPointDataLabelTextPr.js
 	 */
 	ApiChart.prototype.SetPointDataLabelTextPr = function (seriesIndex, pointIndex, textPr) {
@@ -23611,7 +23611,7 @@
 	 * @memberof ApiShadow
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ShadowSettings}
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiShadow/Methods/GetSettings.js
 	 */
 	ApiShadow.prototype.GetSettings = function()
@@ -23732,7 +23732,7 @@
 	 * @param {LineEndSize} [length="medium"] - The length of the beginning arrow.
 	 * @returns {boolean}
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetBeginArrow.js
 	 */
 	ApiStroke.prototype.SetBeginArrow = function (type, width, length) {
@@ -23776,7 +23776,7 @@
 	 *
 	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetBeginArrow.js
 	 */
 	ApiStroke.prototype.GetBeginArrow = function () {
@@ -23801,7 +23801,7 @@
 	 * @param {LineEndSize} [length="medium"] - The length of the ending arrow.
 	 * @returns {boolean}
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetEndArrow.js
 	 */
 	ApiStroke.prototype.SetEndArrow = function (type, width, length) {
@@ -23845,7 +23845,7 @@
 	 *
 	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
 	 *
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetEndArrow.js
 	 */
 	ApiStroke.prototype.GetEndArrow = function () {
@@ -24855,7 +24855,7 @@
 	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current inline content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {?ParagraphLikeContainer} - returns null if the content control has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetParent.js
 	 */
@@ -24868,7 +24868,7 @@
 	 * Returns the position (index) of the current inline content control within its parent element.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {Number} - returns -1 if the content control has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetPosInParent.js
 	 */
@@ -24883,7 +24883,7 @@
 	 * Returns the position (index) of the specified element within the current inline content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @param {ParagraphContent} element - The inline element (run, inline content control, form, etc.) whose index will be returned.
 	 * @returns {Number} - returns -1 if the element is not a direct child of the current inline content control.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetElementIndex.js
@@ -26875,7 +26875,7 @@
 	 * Returns the document content that contains the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {ApiDocument | ApiDocumentContent | null} - returns the main document, a document part (table cell, header/footer, footnote, etc.), or null if the content control has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetParent.js
 	 */
@@ -27230,7 +27230,7 @@
 	 * Returns the parent element (a paragraph or an inline content control) that directly contains the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {?ParagraphLikeContainer} - returns null if the form has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetParent.js
 	 */
@@ -27243,7 +27243,7 @@
 	 * Returns the position (index) of the current form within its parent element.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @returns {Number} - returns -1 if the form has no parent.
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetPosInParent.js
 	 */
