@@ -1250,7 +1250,7 @@
 	 * @typeofeditors ["CPE", "CSE"]
 	 * @param {BulletType} numType - The numbering type the paragraphs will be numbered with.
 	 * @param {number} startAt - The number the first numbered paragraph will start with.
-	 * @returns {ApiBullet}
+	 * @returns {?ApiBullet} - returns null if numType is not one of the BulletType values.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
 	 */
 	Api.CreateNumbering = function(numType, startAt)
@@ -1307,9 +1307,7 @@
 			}
 			default:
 			{
-				// The type is already set to AUTONUM above, so a numbering the
-				// switch does not know would leave AutoNumType unset and hand
-				// back a bullet that renders as neither number nor symbol.
+				// undefined oBullet.bulletType.AutoNumType
 				return null;
 			}
 		}

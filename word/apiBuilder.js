@@ -34106,7 +34106,7 @@
 	function private_getHighlightColorByName(sColor)
 	{
 		var oColor;
-		switch (sColor)
+		switch (typeof sColor === 'string' ? sColor.toLowerCase() : sColor)
 		{
 			case "black":
 				oColor = {r: 0, g: 0, b: 0};
@@ -34132,28 +34132,28 @@
 			case "white":
 				oColor = {r: 255, g: 255, b: 255};
 				break;
-			case "darkBlue":
+			case "darkblue":
 				oColor = {r: 0, g: 0, b: 139};
 				break;
-			case "darkCyan":
+			case "darkcyan":
 				oColor = {r: 0, g: 139, b: 139};
 				break;
-			case "darkGreen":
+			case "darkgreen":
 				oColor = {r: 0, g: 100, b: 0};
 				break;
-			case "darkMagenta":
+			case "darkmagenta":
 				oColor = {r: 128, g: 0, b: 128};
 				break;
-			case "darkRed":
+			case "darkred":
 				oColor = {r: 139, g: 0, b: 0};
 				break;
-			case "darkYellow":
+			case "darkyellow":
 				oColor = {r: 128, g: 128, b: 0};
 				break;
-			case "darkGray":
+			case "darkgray":
 				oColor = {r: 169, g: 169, b: 169};
 				break;
-			case "lightGray":
+			case "lightgray":
 				oColor = {r: 211, g: 211, b: 211};
 				break;
 		}
