@@ -31708,11 +31708,53 @@
 			drawingObjects.calculateObjectMetrics(base, drawingObjects.mmToPx(ext.cx), drawingObjects.mmToPx(ext.cy), true, true);
 			to = base.to;
 		} else {
-			to = {col: from.col, colOff: from.colOff + ext.cx, row: from.row, rowOff: from.rowOff + ext.cy};
+			to = private_CalculateDrawingBaseTo(drawing.worksheet, from, ext);
 		}
 		drawing.setDrawingBaseCoords(from.col, from.colOff, from.row, from.rowOff,
 			to.col, to.colOff, to.row, to.rowOff,
 			drawingBase.Pos.X, drawingBase.Pos.Y, ext.cx, ext.cy);
+	}
+
+	function private_GetColumnWidthMM(worksheet, col) {
+		if (worksheet.getColHidden(col)) {
+			return 0;
+		}
+		let width = worksheet.getColWidth(col);
+		if (!(width > 0)) {
+			width = AscCommonExcel.oDefaultMetrics.ColWidthChars;
+		}
+		return worksheet.modelColWidthToColWidth(width) * AscCommon.g_dKoef_pix_to_mm;
+	}
+
+	function private_GetRowHeightMM(worksheet, row) {
+		if (worksheet.getRowHidden(row)) {
+			return 0;
+		}
+		let height = worksheet.getRowHeight(row);
+		if (!(height > 0)) {
+			height = AscCommonExcel.oDefaultMetrics.RowHeight;
+		}
+		return AscCommonExcel.convertPtToPx(height) * AscCommon.g_dKoef_pix_to_mm;
+	}
+
+	function private_CalculateDrawingBaseTo(worksheet, from, ext) {
+		let col = from.col;
+		let colOff = from.colOff + ext.cx;
+		let colWidth = private_GetColumnWidthMM(worksheet, col);
+		while (col < AscCommon.gc_nMaxCol0 && colOff > colWidth) {
+			colOff -= colWidth;
+			col++;
+			colWidth = private_GetColumnWidthMM(worksheet, col);
+		}
+		let row = from.row;
+		let rowOff = from.rowOff + ext.cy;
+		let rowHeight = private_GetRowHeightMM(worksheet, row);
+		while (row < AscCommon.gc_nMaxRow0 && rowOff > rowHeight) {
+			rowOff -= rowHeight;
+			row++;
+			rowHeight = private_GetRowHeightMM(worksheet, row);
+		}
+		return {col: col, colOff: colOff, row: row, rowOff: rowOff};
 	}
 
 	function private_MakeBorder(lineStyle, color) {
