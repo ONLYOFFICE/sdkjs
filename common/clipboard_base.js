@@ -1423,6 +1423,34 @@
 			});
 		},
 
+		Paste_Internal : function()
+		{
+			if (null == this.LastCopyBinary || 0 === this.LastCopyBinary.length)
+				return false;
+
+			let format = this.LastCopyBinary[0].type;
+			let data = this.LastCopyBinary[0].data;
+			let text_data = null;
+			for (let i = 0; i < this.LastCopyBinary.length; i++)
+			{
+				if (c_oAscClipboardDataFormat.Internal === this.LastCopyBinary[i].type)
+				{
+					format = c_oAscClipboardDataFormat.Internal;
+					data = this.LastCopyBinary[i].data;
+				}
+				else if (c_oAscClipboardDataFormat.Text === this.LastCopyBinary[i].type)
+				{
+					text_data = this.LastCopyBinary[i].data;
+				}
+			}
+
+			if (!data)
+				return false;
+
+			this.Api.asc_PasteData(format, data, null, text_data);
+			return true;
+		},
+
 		Button_Copy : function(oldCopy)
 		{
 			if (!this.isCopyEnabled()) {
@@ -1572,31 +1600,9 @@
 					_ret = false;
 				}
 
-				if (!_ret && null != oThis.LastCopyBinary)
+				if (!_ret)
 				{
-					var _isInternal = false;
-					var _internal_data = null;
-					var _text_data = null;
-					for (var i = 0; i < oThis.LastCopyBinary.length; i++)
-					{
-						if (c_oAscClipboardDataFormat.Internal === oThis.LastCopyBinary[i].type)
-						{
-							_internal_data = oThis.LastCopyBinary[i].data;
-							_isInternal = true;
-						}
-						else if (c_oAscClipboardDataFormat.Text === oThis.LastCopyBinary[i].type)
-						{
-							_text_data = oThis.LastCopyBinary[i].data;
-						}
-					}
-					if (_isInternal)
-					{
-						oThis.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal_data, null, _text_data);
-					}
-					else if (oThis.LastCopyBinary.length > 0)
-					{
-						oThis.Api.asc_PasteData(oThis.LastCopyBinary[0].type, oThis.LastCopyBinary[0].data, null, _text_data);
-					}
+					oThis.Paste_Internal();
 				}
 				return _ret;
 			}

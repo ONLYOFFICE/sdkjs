@@ -10005,17 +10005,18 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange?} [destination] - The cell range where the clipboard contents should be pasted. If this argument is omitted, the current selection is used.
+	 * @returns {boolean} - Returns false if there is nothing to paste. Only the data copied by the editor itself is available, the system clipboard can be read asynchronously only.
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/Paste.js
 	 */
 	ApiWorksheet.prototype.Paste = function (destination) {
-		var oApi = Asc.editor;
+		let res = false;
 		if (destination) {
 			if (destination instanceof ApiRange) {
 				AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
 				let ws =  destination.range.worksheet;
 				private_executeOtherActiveSheet(ws, destination.areas || [destination.range], function () {
-					oApi && oApi.asc_Paste();
+					res = private_pasteInternal();
 				});
 			} else {
 				throwException(new Error('Invalid destination'));
@@ -10024,9 +10025,10 @@
 			AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
 			let ws = this.worksheet;
 			private_executeOtherActiveSheet(ws, null, function () {
-				oApi && oApi.asc_Paste();
+				res = private_pasteInternal();
 			});
 		}
+		return res;
 	};
 
 	/**
@@ -11988,6 +11990,7 @@
 	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - The mathematical operation which will be applied to the copied data.
 	 * @param {boolean} [bSkipBlanks=false] - Specifies whether to avoid replacing values in the paste area when blank cells occur in the copy area.
 	 * @param {boolean} [bTranspose=false] - Specifies whether the pasted data will be transposed from rows to columns.
+	 * @returns {boolean} - Returns false if there is nothing to paste. Only the data copied by the editor itself is available, the system clipboard can be read asynchronously only.
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/PasteSpecial.js
 	 */
@@ -12076,12 +12079,13 @@
 		specialPasteProps.asc_setSkipBlanks(!!bSkipBlanks);
 		specialPasteProps.asc_setTranspose(!!bTranspose);
 
-		let oApi = Asc.editor;
 		AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+		let res = false;
 		let ws =  this.range.worksheet;
 		private_executeOtherActiveSheet(ws, this.areas || [this.range], function () {
-			oApi && oApi.asc_Paste();
+			res = private_pasteInternal();
 		});
+		return res;
 	};
 
 	/**
@@ -31964,6 +31968,10 @@
 			logError(err);
 		throw err;
 	}
+	function private_pasteInternal() {
+		return !!(AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.Paste_Internal());
+	}
+
 	function private_executeOtherActiveSheet(ws, ranges, func) {
 		let oldActiveSheet = ws && ws.workbook && ws.workbook.getActive();
 		let isChangedActiveSheet;
