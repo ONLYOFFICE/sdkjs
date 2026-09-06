@@ -19846,15 +19846,12 @@
 		let fWidth = private_EMU2MM(nWidth);
 		let fHeight = private_EMU2MM(nHeight);
 		this.getParaDrawing().setExtent(fWidth, fHeight);
-		if(this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setExtX(fWidth);
-			this.Drawing.spPr.xfrm.setExtY(fHeight);
-			this.getParaDrawing().SetSizeRelV(undefined);
-			this.getParaDrawing().SetSizeRelH(undefined);
-		}
-
-		
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setExtX(fWidth);
+		xfrm.setExtY(fHeight);
+		this.getParaDrawing().SetSizeRelV(undefined);
+		this.getParaDrawing().SetSizeRelH(undefined);
 		return true;
 	};
 	/**
@@ -20473,13 +20470,15 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipH(bFlip);
+		let paraDrawing  = this.getParaDrawing();
+		if (paraDrawing)
 		{
-			this.Drawing.spPr.xfrm.setFlipH(bFlip);
-			return true;
+			paraDrawing.CheckWH();
 		}
-
-		return false;
+		return true;
 	};
 
 	/**
@@ -20496,13 +20495,15 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipV(bFlip);
+		let paraDrawing  = this.getParaDrawing();
+		if (paraDrawing)
 		{
-			this.Drawing.spPr.xfrm.setFlipV(bFlip);
-			return true;
+			paraDrawing.CheckWH();
 		}
-
-		return false;
+		return true;
 	};
 
 	/**
@@ -20510,36 +20511,24 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
-	 * @returns {boolean}
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorFlip.js
 	 */	
 	ApiDrawing.prototype.SetHorFlip = function(bFlip)
 	{
-		if (this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setFlipH(bFlip);
-			return true;
-		}
-			
-		return false;
+		return this.SetFlipH(bFlip);
 	};
 	/**
 	 * Flips the current drawing vertically.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} bFlip - Specifies if the figure will be flipped vertically or not.
-	 * @returns {boolean} - returns false if param is invalid.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetVertFlip.js
 	 */	
 	ApiDrawing.prototype.SetVertFlip = function(bFlip)
 	{
-		if (typeof(bFlip) !== "boolean")
-			return false;
-
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
-			this.Drawing.spPr.xfrm.setFlipV(bFlip);
-		
-		return true;
+		return this.SetFlipV(bFlip);
 	};
 	/**
 	 * Scales the height of the figure using the specified coefficient.
@@ -20559,10 +20548,9 @@
 		var currentWidth  = oParaDrawing.getXfrmExtX();
 
 		oParaDrawing.setExtent(currentWidth, currentHeight * coefficient);
-		if(this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setExtY(currentHeight * coefficient);
-		}
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setExtY(currentHeight * coefficient);
 
 		return true;
 	};
@@ -20583,10 +20571,9 @@
 		var currentWidth  = oParaDrawing.getXfrmExtX();
 
 		oParaDrawing.setExtent(currentWidth * coefficient, currentHeight);
-		if(this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setExtX(currentWidth * coefficient);
-		}
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setExtX(currentWidth * coefficient);
 
 		return true;
 	};
@@ -21068,6 +21055,7 @@
 			return false;
 		}
 
+		this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
 		oXfrm.setRot(nRotAngle * Math.PI / 180);
 
@@ -21089,14 +21077,8 @@
 	 */
 	ApiDrawing.prototype.GetRotation = function()
 	{
-		if (!this.Drawing.canRotate()) {
-			return 0;
-		}
-
-		let oXfrm = this.Drawing.getXfrm();
-		let nRad = oXfrm.getRot();
-
-		return nRad * 180 / Math.PI
+		this.Drawing.checkRecalculateTransform();
+		return this.Drawing.rot * 180 / Math.PI;
 	};
 	/**
 	 * Sets whether the aspect ratio of the drawing is locked.

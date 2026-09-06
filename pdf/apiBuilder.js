@@ -8510,10 +8510,10 @@
 		let fPosX = private_EMU2MM(posX);
 		let fPosY = private_EMU2MM(posY);
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm) {
-			this.Drawing.spPr.xfrm.setOffX(fPosX);
-			this.Drawing.spPr.xfrm.setOffY(fPosY);
-		}
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setOffX(fPosX);
+		xfrm.setOffY(fPosY);
 
 		return true;
 	};
@@ -8889,12 +8889,10 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm) {
-			this.Drawing.spPr.xfrm.setFlipH(bFlip);
-			return true;
-		}
-
-		return false;
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipH(bFlip);
+		return true;
 	};
 	/**
 	 * Sets the vertical flip of the current drawing.
@@ -8909,12 +8907,10 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm) {
-			this.Drawing.spPr.xfrm.setFlipV(bFlip);
-			return true;
-		}
-
-		return false;
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipV(bFlip);
+		return true;
 	};
 	/**
 	 * Returns the lock value for the specified lock type of the current drawing.

@@ -6855,12 +6855,10 @@
     {
         var fPosX = private_EMU2MM(nPosX);
         var fPosY = private_EMU2MM(nPosY);
-		AscFormat.CheckSpPrXfrm(this.Drawing);
-        if(this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
-        {
-            this.Drawing.spPr.xfrm.setOffX(fPosX);
-            this.Drawing.spPr.xfrm.setOffY(fPosY);
-        }
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setOffX(fPosX);
+		xfrm.setOffY(fPosY);
     };
 
     /**
@@ -7493,13 +7491,10 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setFlipH(bFlip);
-			return true;
-		}
-
-		return false;
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipH(bFlip);
+		return true;
 	};
 
 	/**
@@ -7516,13 +7511,10 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setFlipV(bFlip);
-			return true;
-		}
-
-		return false;
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipV(bFlip);
+		return true;
 	};
 
 	/**

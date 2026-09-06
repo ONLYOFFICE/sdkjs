@@ -13533,12 +13533,12 @@
 	ApiDrawing.prototype.SetSize = function (nWidth, nHeight) {
 		var fWidth = nWidth / 36000.0;
 		var fHeight = nHeight / 36000.0;
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm) {
-			this.Drawing.spPr.xfrm.setExtX(fWidth);
-			this.Drawing.spPr.xfrm.setExtY(fHeight);
-			this.Drawing.setDrawingBaseExt(fWidth, fHeight);
-			private_SetDrawingBaseTo(this.Drawing);
-		}
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setExtX(fWidth);
+		xfrm.setExtY(fHeight);
+		this.Drawing.setDrawingBaseExt(fWidth, fHeight);
+		private_SetDrawingBaseTo(this.Drawing);
 	};
 
 	/**
@@ -13712,7 +13712,7 @@
 		if (!this.Drawing.canRotate()) {
 			return false;
 		}
-
+		this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
 		oXfrm.setRot(nRotAngle * Math.PI / 180);
 		return true;
@@ -13727,14 +13727,8 @@
 	 */
 	ApiDrawing.prototype.GetRotation = function()
 	{
-		if (!this.Drawing.canRotate()) {
-			return 0;
-		}
-
-		let oXfrm = this.Drawing.getXfrm();
-		let nRad = oXfrm.getRot();
-
-		return nRad * 180 / Math.PI
+		this.Drawing.checkRecalculateTransform();
+		return this.Drawing.rot * 180 / Math.PI;
 	};
 
 	/**
@@ -13783,13 +13777,10 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setFlipH(bFlip);
-			return true;
-		}
-
-		return false;
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipH(bFlip);
+		return true;
 	};
 
 	/**
@@ -13806,13 +13797,10 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
-			this.Drawing.spPr.xfrm.setFlipV(bFlip);
-			return true;
-		}
-
-		return false;
+		this.Drawing.checkTransformBeforeApply();
+		const xfrm = this.Drawing.getXfrm();
+		xfrm.setFlipV(bFlip);
+		return true;
 	};
 
 	/**
