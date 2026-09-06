@@ -63,6 +63,17 @@
 		}
 	}
 
+	// returns the string form Excel gives a VBA argument, null when the type has no string form
+	function getVbaString(value) {
+		if (typeof value === "string") {
+			return value;
+		}
+		if (typeof value === "number" && isFinite(value)) {
+			return String(value);
+		}
+		return null;
+	}
+
 	/**
 	 * Base class.
 	 * @global
@@ -10182,7 +10193,7 @@
 			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
-        this.range.cleanAll();
+		range.cleanText();
 		ws.deletePivotTables(bbox);
     };
 
@@ -10837,10 +10848,18 @@
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
 			case Asc.c_oAscSelectionType.RangeCol:
+				if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+					throwException(new Error('Cannot modify protected sheet'));
+					return false;
+				}
 				worksheet.setColHidden(isHidden, bbox.c1, bbox.c2);
 				break;
 
 			case Asc.c_oAscSelectionType.RangeRow:
+				if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+					throwException(new Error('Cannot modify protected sheet'));
+					return false;
+				}
 				worksheet.setRowHidden(isHidden, bbox.r1, bbox.r2);
 				break;
 		}
@@ -11324,7 +11343,15 @@
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
 			return false;
 		}
-		this.range.setNumFormat(sFormat);
+		// Excel ignores Null and maps both Empty and an empty mask to General
+		if (sFormat === null) {
+			return true;
+		}
+		let sMask = (sFormat === undefined || sFormat === "") ? "General" : getVbaString(sFormat);
+		if (sMask === null) {
+			return false;
+		}
+		this.range.setNumFormat(sMask);
 		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "NumberFormat", {
@@ -13132,6 +13159,10 @@
 			let merged = range.hasMerged();
 			if (merged) {
 				range = oThis.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
+			}
+
+			if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([range.bbox])) {
+				return false;
 			}
 
 			range.setValue(data.toString(), null, null, range.bbox);
@@ -15923,10 +15954,12 @@
 			if (end > opt.len) end = opt.len - 1;
 			let first = editor._findFragment(begin, opt.fragments);
 			let last = editor._findFragmentToInsertInto(end, opt.fragments);
-			let isBold = true;
+			let isBold;
 			if (first && last) {
-				for (let i = first.index; i <= last.index; i++) {
-					if (!opt.fragments[i].format.getBold()) {
+				// use the first fragment's bold value as the baseline, null only if a later fragment disagrees
+				isBold = opt.fragments[first.index].format.getBold();
+				for (let i = first.index + 1; i <= last.index; i++) {
+					if (opt.fragments[i].format.getBold() !== isBold) {
 						isBold = null;
 						break;
 					}

@@ -21253,6 +21253,7 @@
 		AscCommonExcel.CellStyleStorage.cleanStyleOnlyDirectStyles(this.worksheet, this.bbox, !!this.worksheet.bExcludeHiddenRows);
 		AscCommon.History.EndTransaction();
 	};
+	//todo hyperlinks are dropped by setValue, but Excel removes a link only when one of the two ranges contains the other
 	Range.prototype.cleanText = function () {
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
