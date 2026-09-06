@@ -6017,7 +6017,6 @@
 							_rule = _rule.clone();
 							_rule.id = _id;
 							_rule.isLock = isLocked;
-							_rule.recalcInterfaceFormula(sheet, true);
 						}
 						rules.push(_rule);
 					}
@@ -6037,7 +6036,6 @@
 						_rule = _rule.clone();
 						_rule.id = _id;
 						_rule.isLock = isLocked;
-						_rule.recalcInterfaceFormula(sheet, true);
 					}
 					rules.push(_rule);
 				}
@@ -13793,7 +13791,6 @@
 			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(updateRange));
 		}
 
-		to.recalcInterfaceFormula(this);
 		from.set(to, addToHistory, this);
 	};
 
@@ -13810,7 +13807,6 @@
 		}
 
 
-		val.recalcInterfaceFormula(this);
 		this.addConditionalFormattingRule(val);
 		this.cleanConditionalFormattingRangeIterator();
 		if (addToHistory) {

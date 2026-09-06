@@ -269,11 +269,6 @@
 			this.isLock = oRule.isLock;
 		}
 	};
-	CConditionalFormattingRule.prototype.recalcInterfaceFormula = function (ws, toInterface) {
-		for (var i = 0; i < this.aRuleElements.length; i++) {
-			this.aRuleElements[i].recalcFormula && this.aRuleElements[i].recalcFormula(ws, toInterface);
-		}
-	};
 	CConditionalFormattingRule.prototype.Write_ToBinary2 = function (writer) {
 		//for wrapper
 		//writer.WriteLong(this.getObjectType());
@@ -1148,7 +1143,7 @@
 			return this.text;
 		}
 		var ruleElement = this.aRuleElements[1];
-		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaLocaleStr(true) : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getTimePeriod = function () {
 		return this.timePeriod;
@@ -1185,11 +1180,11 @@
 	};
 	CConditionalFormattingRule.prototype.asc_getValue1 = function () {
 		var ruleElement = this.aRuleElements[0];
-		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaStr(true) : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaLocaleStr(true) : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getValue2 = function () {
 		var ruleElement = this.aRuleElements[1];
-		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaStr(true) : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaLocaleStr(true) : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getColorScaleOrDataBarOrIconSetRule = function () {
 		if ((Asc.ECfType.dataBar === this.type || Asc.ECfType.iconSet === this.type ||
@@ -1267,6 +1262,7 @@
 				val = val.slice(1);
 			}
 			this.ranges = [];
+			val = correctRefFromInterface(val);
 
 			let wb = Asc.editor && Asc.editor.wbModel;
 			let _ranges;
@@ -1287,7 +1283,7 @@
 
 	CConditionalFormattingRule.prototype.asc_setContainsText = function (val) {
 		if (val[0] === "=") {
-			val = val.slice(1);
+			val = correctFromInterface(val);
 			//generate array
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
@@ -1395,7 +1391,7 @@
 					res = "LEN(TRIM(" + firstCellInRange + "))=0";
 					break;
 				case Asc.ECfType.timePeriod:
-					res = _generateTimePeriodFunction();
+					_generateTimePeriodFunction();
 					break;
 			}
 		}
@@ -2195,14 +2191,6 @@
 			}
 		}
 	};
-	CFormulaCF.prototype.recalcFormula = function (ws, toInterface) {
-		var f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-		//to interface we parse model formula without localization, from interface - with localization
-		let isParsed = toInterface ? f.parse() : f.parse(true, true);
-		if (isParsed) {
-			this.Text = toInterface ? f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true) : f.assemble();
-		}
-	};
 	CFormulaCF.prototype.getFormula = function (ws, opt_parent) {
 		this.init(ws, opt_parent);
 		return this._f;
@@ -2228,9 +2216,18 @@
 		return true;
 	};
 	CFormulaCF.prototype.getFormulaStr = function (needBuild) {
+		return this._getFormulaStr(needBuild, false);
+	};
+	CFormulaCF.prototype.getFormulaLocaleStr = function (needBuild) {
+		return this._getFormulaStr(needBuild, true);
+	};
+	CFormulaCF.prototype._getFormulaStr = function (needBuild, toLocale) {
+		var assembleFormula = function (f) {
+			return toLocale ? f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true) : f.assemble();
+		};
 		var res = null;
 		if (this._f) {
-			res = this._f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+			res = assembleFormula(this._f);
 		} else if (needBuild) {
 			var oWB = Asc.editor && Asc.editor.wbModel;
 			if (oWB) {
@@ -2238,7 +2235,7 @@
 				if (ws) {
 					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
 					_f.parse();
-					res = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+					res = assembleFormula(_f);
 				}
 			}
 		}
@@ -2563,8 +2560,10 @@
 		return this.Type;
 	};
 	CConditionalFormatValueObject.prototype.asc_getVal = function () {
+		if (null === this.Val || undefined === this.Val)
+			return this.Val;
 		if (!isNumeric(this.Val))
-			return "=" + this.Val;
+			return "=" + correctToInterface(this.Val);
 		return AscCommon.g_oFormatParser.toLocaleNumber(this.Val);
 	};
 	CConditionalFormatValueObject.prototype.asc_setGte = function (val) {
@@ -2575,6 +2574,8 @@
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
 		this.Val = correctFromInterface(val);
+		this.formula = null;
+		this.formulaParent = null;
 	};
 	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
 		if (this.Gte === elem.Gte && this.Type === elem.Type && this.Val === elem.Val && this.Type === elem.Type) {
@@ -2929,27 +2930,38 @@
 		}
 	}
 
+	function getBoolLiteral(val) {
+		var _val = val.toUpperCase();
+		var local = AscCommon.cBoolLocal;
+		if ("TRUE" === _val || (local && local.t === _val)) {
+			return "TRUE";
+		}
+		if ("FALSE" === _val || (local && local.f === _val)) {
+			return "FALSE";
+		}
+		return null;
+	}
+
 	function correctFromInterface(val) {
 		if (typeof val === "number")
 			return val + "";
-		let _num = AscCommon.g_oFormatParser.tryParseLocaleNumber(val);
+		let _parsed = val[0] === "=" ? null : AscCommon.g_oFormatParser.parse(val);
+		let _num = _parsed && null != _parsed.value ? _parsed.value : null;
 		if (_num !== null) {
-			val = String(_num);
+			val = typeof _num === "number" ? _num + "" : String(_num);
 		} else {
-			let isDate;
 			let isFormula;
+			let isBool;
 
 			if (val[0] === "=") {
 				val = val.slice(1);
 				isFormula = true;
 			} else {
-				isDate = AscCommon.g_oFormatParser.parseDate(val, AscCommon.g_oDefaultCultureInfo);
+				isBool = getBoolLiteral(val);
 			}
 
-			//store number
-			if (isDate) {
-				val = isDate.value;
-				return typeof val === "number" ? val + "" : val;
+			if (isBool) {
+				return isBool;
 			}
 
 			if (!isFormula) {
@@ -2960,14 +2972,49 @@
 					let ws = oWB.getActiveWs();
 					if (ws) {
 						let _f = new AscCommonExcel.parserFormula(val, null, ws);
-						_f.parse(true, true);
-						val = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+						if (_f.parse(true, true)) {
+							val = _f.assemble();
+						}
 					}
 				}
 			}
 		}
 
 		return val;
+	}
+
+	function correctToInterface(val) {
+		if (typeof val !== "string" || val === "") {
+			return val;
+		}
+		let oWB = Asc.editor && Asc.editor.wbModel;
+		if (oWB) {
+			let ws = oWB.getActiveWs();
+			if (ws) {
+				let _f = new AscCommonExcel.parserFormula(val, null, ws);
+				if (_f.parse()) {
+					val = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+				}
+			}
+		}
+		return val;
+	}
+
+	function correctRefFromInterface(val) {
+		var sep = AscCommon.FormulaSeparators.functionArgumentSeparator;
+		var defSep = AscCommon.FormulaSeparators.functionArgumentSeparatorDef;
+		if (typeof val !== "string" || !sep || sep === defSep) {
+			return val;
+		}
+		var res = "", inQuotes = false;
+		for (var i = 0; i < val.length; i++) {
+			var c = val[i];
+			if ("'" === c) {
+				inQuotes = !inQuotes;
+			}
+			res += (!inQuotes && c === sep) ? defSep : c;
+		}
+		return res;
 	}
 
 	function addQuotes(val) {
