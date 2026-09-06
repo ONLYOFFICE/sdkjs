@@ -144,6 +144,7 @@
 	 * @property {string} Address - Returns the range address.
 	 * @property {string} Value - Returns a value from the first cell of the specified range or sets it to this cell.
 	 * @property {string} Formula - Returns a formula from the first cell of the specified range or sets it to this cell.
+	 * @property {string | null} FormulaArray - Returns the array formula of the specified range or sets it to this range.
 	 * @property {string} Value2 - Returns the value2 (value without format) from the first cell of the specified range or sets it to this cell.
 	 * @property {string} Text - Returns the text from the first cell of the specified range or sets it to this cell.
 	 * @property {ApiColor} FontColor - Sets the text color to the current cell range with the previously created color object.
@@ -1099,12 +1100,13 @@
 	 */
 	Api.Intersect = function (Range1, Range2) {
 		let result = null;
-		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
-			var res = Range1.range.bbox.intersection(Range2.range.bbox);
+		if (Range1.range.worksheet.getId() === Range2.range.worksheet.getId()) {
+			let res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
 				throwException(new Error('Ranges do not intersect.'));
 			} else {
-				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
+				// the result belongs to the sheet of the arguments, not to the active sheet
+				result = new ApiRange(Range1.range.worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
 			throwException(new Error('Ranges should be from one worksheet.'));
@@ -8627,7 +8629,7 @@
 	ApiWorksheet.prototype.GetCells = function (row, col) {
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
-			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
+			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol || row > AscCommon.gc_nMaxRow) {
 				throwException(new Error('Invalid paremert "row" or "col".'));
 				result = null;
 			} else {
@@ -8636,19 +8638,20 @@
 				result = new ApiRange(this.worksheet.getRange3(row, col, row, col));
 			}
 		} else if (typeof row == "number") {
-			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
+			// row is a 1-based linear index over the whole sheet, row-major, gc_nMaxCol cells per row
+			let maxIndex = AscCommon.gc_nMaxRow * AscCommon.gc_nMaxCol;
+			if (row < 1 || row > maxIndex) {
 				throwException(new Error('Invalid paremert "row".'));
 				result = null;
 			} else {
-				row--;
-				let r = (row) ? (row / AscCommon.gc_nMaxCol0) >> 0 : row;
-				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
-				if (r && c) c--;
+				let n0 = row - 1;
+				let r = (n0 / AscCommon.gc_nMaxCol) >> 0;
+				let c = n0 % AscCommon.gc_nMaxCol;
 				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
 			}
 
 		} else if (typeof col == "number") {
-			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
+			if (col < 1 || col > AscCommon.gc_nMaxCol) {
 				throwException(new Error('Invalid paremert "col".'));
 				result = null;
 			} else {
@@ -13197,7 +13200,7 @@
 
 	Object.defineProperty(ApiRange.prototype, "FormulaArray", {
 		get: function () {
-			return this.GetValue();
+			return this.GetFormulaArray();
 		},
 		set: function (sValue) {
 			this.SetFormulaArray(sValue);
