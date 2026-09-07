@@ -632,21 +632,25 @@ const DIGIT_BASES = [
 	0x1810, // Mongolian			 ᠐᠑᠒᠓᠔᠕᠖᠗᠘᠙
 ];
 
+// IE-11 compatible version: no \p{Nd} regex, no codePointAt/fromCodePoint
 function normalizeDigits(s) {
-	return s.replace(/\p{Nd}/gu, function (ch) {
-		let code = ch.codePointAt(0);
-		// out of ascii range
-		if (code >= ASCII_ZERO && code <= ASCII_ZERO + DIGITS_COUNTS) {
-			return ch;
-		}
-		for (const base of DIGIT_BASES) {
-			if (code >= base && code <= base + DIGITS_COUNTS) {
-				// fromCodePoint support for the full range of Unicode characters
-				return String.fromCodePoint(ASCII_ZERO + (code - base)); 
+	let result = "";
+	for (let i = 0; i < s.length; i++) {
+		let code = s.charCodeAt(i);
+		let replaced = s.charAt(i);
+		// skip ASCII digits and any non-digit char; only convert "foreign" digits
+		if (code < ASCII_ZERO || code > ASCII_ZERO + DIGITS_COUNTS) {
+			for (let j = 0; j < DIGIT_BASES.length; j++) {
+				let base = DIGIT_BASES[j];
+				if (code >= base && code <= base + DIGITS_COUNTS) {
+					replaced = String.fromCharCode(ASCII_ZERO + (code - base));
+					break;
+				}
 			}
 		}
-		return ch;
-	});
+		result += replaced;
+	}
+	return result;
 }
 function normalizeNumericInput(s) {
 	return normalizeDigits(s)
