@@ -527,6 +527,9 @@
 		const bContentIndex = this.getContentIndex(bParagraph);
 		return aContentIndex - bContentIndex;
 	};
+	UpdateNewParagraphsManager.prototype.isTitleFirstParagraph = function (sourceParagraph) {
+		return this.getShapeIndex(sourceParagraph) === 0 && sourceParagraph.Index === 0;
+	};
 	UpdateNewParagraphsManager.prototype.update = function () {
 		const outlineView = this.outlineView;
 		const outlineDocContent = this.outlineView.getDocContent();
@@ -534,9 +537,8 @@
 		for (let i = 0; i < this.paragraphs.length; i++) {
 			const sourceParagraph = this.paragraphs[i];
 			const insertIndex = this.getInsertIndex(sourceParagraph, outlineParagraphs);
-			const shapeIndex = this.getShapeIndex(sourceParagraph);
 			let isUpdated = false;
-			if (shapeIndex === 0 && sourceParagraph.Index === 0) {
+			if (this.isTitleFirstParagraph(sourceParagraph)) {
 				isUpdated = outlineView.addUpdatedParagraphWithCheckTitle(sourceParagraph, insertIndex);
 			}
 			if (!isUpdated) {
@@ -563,7 +565,7 @@
 				const slideIndex = slideInfo.slide.num;
 				const sourceSlideIndex = this.getSlideIndex(sourceParagraph);
 				if (slideIndex === sourceSlideIndex) {
-					return i;
+					return this.isTitleFirstParagraph(sourceParagraph) ? i : i + 1;
 				} else if (slideIndex < sourceSlideIndex) {
 					return i + 1;
 				}
