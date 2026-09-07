@@ -991,6 +991,9 @@
 	};
 	RemoveOutlineParagraphsManager.prototype.remove = function (isOnAddText, direction) {
 		const docContent = this.getDocContent();
+		if (!docContent || !docContent.Content.length) {
+			return;
+		}
 		if (isOnAddText) {
 			if (!docContent.IsSelectionUse()) {
 				return;
