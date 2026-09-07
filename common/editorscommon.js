@@ -2915,7 +2915,7 @@
 		rx_ref3D              = new XRegExp("^(?<name_from>[^:]+)(:(?<name_to>[^:]+))?!"),
 		rx_ref_external       = /^(\[{1}(\d*)\]{1})/,
 		rx_ref_external2      = /^(\[{1}(\d*)\]{1})/,
-		rx_number             = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
+		rx_number             = new XRegExp('^[ ]*[+-]?\\p{Nd}*(\\p{Nd}|\\.)\\p{Nd}*([eE][+-]?\\p{Nd}+)?', 'gu'),
 		rx_RightParentheses   = /^ *\)/,
 		rx_Comma              = /^ *[,;] */,
 		rx_arraySeparators    = /^ *[,;] */,
@@ -2936,7 +2936,7 @@
 		rx_defName            = new test_defName(),
 		rx_protectedRangeName = new test_rx_protectedRangeName(),
 		rx_arraySeparatorsDef = /^ *[,;] */,
-		rx_numberDef          = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
+		rx_numberDef          = new XRegExp ('^[ ]*[+-]?\\p{Nd}*(\\p{Nd}|\\.)\\p{Nd}*([eE][+-]?\\p{Nd}+)?'),
 		rx_CommaDef           = /^ *[,;] */,
 		//not merging with named range check for now. consider merge later. in formula parser, merge skips isName and goes to isFunc
 		rx_r1c1DefError       = /^(?!(([Rr]|[Cc]|([Rr][Cc]))(\d)))/i,
@@ -4330,7 +4330,7 @@
 			FormulaSeparators.arrayRowSeparator = ";";
 			FormulaSeparators.arrayColSeparator = "\\";
 			FormulaSeparators.functionArgumentSeparator = ";";
-			rx_number = new RegExp("^ *[+-]?\\d*(\\d|\\" + FormulaSeparators.digitSeparator + ")\\d*([eE][+-]?\\d+)?");
+			rx_number = new XRegExp("^ *[+-]?\\p{Nd}*(\\p{Nd}|\\" + FormulaSeparators.digitSeparator + ")\\p{Nd}*([eE][+-]?\\p{Nd}+)?");
 			rx_Comma = new RegExp("^ *[" + FormulaSeparators.functionArgumentSeparator + "] *");
 			rx_arraySeparators = new RegExp("^ *[" + FormulaSeparators.arrayRowSeparator + "\\" + FormulaSeparators.arrayColSeparator + "] *");
 		}
@@ -4340,7 +4340,7 @@
 			FormulaSeparators.arrayColSeparator = FormulaSeparators.arrayColSeparatorDef;
 			FormulaSeparators.digitSeparator = FormulaSeparators.digitSeparatorDef;
 			FormulaSeparators.functionArgumentSeparator = FormulaSeparators.functionArgumentSeparatorDef;
-			rx_number = new RegExp("^ *[+-]?\\d*(\\d|\\" + FormulaSeparators.digitSeparatorDef + ")\\d*([eE][+-]?\\d+)?");
+			rx_number = new XRegExp("^ *[+-]?\\p{Nd}*(\\p{Nd}|\\" + FormulaSeparators.digitSeparatorDef + ")\\p{Nd}*([eE][+-]?\\p{Nd}+)?");
 			rx_Comma = new RegExp("^ *[" + FormulaSeparators.functionArgumentSeparatorDef + "] *");
 			rx_arraySeparators = new RegExp("^ *[" + FormulaSeparators.arrayRowSeparatorDef + "\\" + FormulaSeparators.arrayColSeparatorDef + "] *");
 		}

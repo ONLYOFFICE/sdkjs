@@ -609,6 +609,50 @@ Math.fmod = function ( a, b ) {
 	return Number( (a - (this.floor( a / b ) * b)).toPrecision( cExcelSignificantDigits ) );
 };
 
+/* block of normalization of non-standard numbers for the parseFloat method */
+const ASCII_ZERO = 0x30;
+const DIGITS_COUNTS = 10; // number of all digits
+const DIGIT_BASES = [
+	0x0660, // Arabic-Indic			 ٠١٢٣٤٥٦٧٨٩
+	0x06F0, // Extended Arabic-Indic ۰۱۲۳۴۵۶۷۸۹ (Persian/Urdu)
+	0x0966, // Devanagari			 ०१२३४५६७८९ (Hindi/Marathi/Nepali)
+	0x09E6, // Bengali				 ০১২৩৪৫৬৭৮৯
+	0x0A66, // Gurmukhi				 ੦੧੨੩੪੫੬੭੮੯  (Punjabi)
+	0x0AE6, // Gujarati				 ૦૧૨૩૪૫૬૭૮૯
+	0x0B66, // Oriya				 ୦୧୨୩୪୫୬୭୮୯
+	0x0BE6, // Tamil				 ௦௧௨௩௪௫௬௭௮௯
+	0x0C66, // Telugu				 ౦౧౨౩౪౫౬౭౮౯
+	0x0CE6, // Kannada				 ೦೧೨೩೪೫೬೭೮೯
+	0x0D66, // Malayalam			 ൦൧൨൩൪൫൬൭൮൯
+	0x0E50, // Thai					 ๐๑๒๓๔๕๖๗๘๙
+	0x0ED0, // Lao					 ໐໑໒໓໔໕໖໗໘໙
+	0x0F20, // Tibetan				 ༠༡༢༣༤༥༦༧༨༩
+	0x1040, // Myanmar				 ၀၁၂၃၄၅၆၇၈၉ (Burmese)
+	0x17E0, // Khmer				 ០១២៣៤៥៦៧៨៩
+	0x1810, // Mongolian			 ᠐᠑᠒᠓᠔᠕᠖᠗᠘᠙
+];
+
+function normalizeDigits(s) {
+	return s.replace(/\p{Nd}/gu, function (ch) {
+		let code = ch.codePointAt(0);
+		// out of ascii range
+		if (code >= ASCII_ZERO && code <= ASCII_ZERO + DIGITS_COUNTS) {
+			return ch;
+		}
+		for (const base of DIGIT_BASES) {
+			if (code >= base && code <= base + DIGITS_COUNTS) {
+				// fromCodePoint support for the full range of Unicode characters
+				return String.fromCodePoint(ASCII_ZERO + (code - base)); 
+			}
+		}
+		return ch;
+	});
+}
+function normalizeNumericInput(s) {
+	return normalizeDigits(s)
+		.replace(/\u066B/g, '.')	// ARABIC DECIMAL SEPARATOR
+		.replace(/\u2396/g, '.');	// DECIMAL SEPARATOR KEY SYMBOL
+}
 
 
 parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
@@ -794,7 +838,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cString.prototype.constructor = cString;
 	cString.prototype.type = cElementType.string;
 	cString.prototype.tocNumber = function (doNotParseNum) {
-		var res, m = this.value;
+		let res;
 		if (this.value === "") {
 			res = new cNumber(0);
 		}
@@ -803,13 +847,17 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		 m = this.value.substring( 1, this.value.length - 1 );
 		 }*/
 
-		if (g_oFormatParser.isLocaleNumber(this.value)) {
-			var numberValue = g_oFormatParser.parseLocaleNumber(this.value);
+		// normalize non-standard (Indo-Arabic, etc.) digits and decimal separators so that
+		// strings like "૧૨૩" (Gujarati) are recognized by the locale-aware number parsers
+		let _numberNormalized = normalizeNumericInput(this.value);
+
+		if (g_oFormatParser.isLocaleNumber(_numberNormalized)) {
+			let numberValue = g_oFormatParser.parseLocaleNumber(_numberNormalized);
 			if (!isNaN(numberValue)) {
 				res = new cNumber(numberValue);
 			}
 		} else {
-			var parseRes = !doNotParseNum ? AscCommon.g_oFormatParser.parse(this.value) : null;
+			let parseRes = !doNotParseNum ? AscCommon.g_oFormatParser.parse(_numberNormalized) : null;
 			if (null != parseRes) {
 				res = new cNumber(parseRes.value);
 			} else {
@@ -8505,7 +8553,12 @@ function parserFormula( formula, parent, _ws ) {
 							return false;
 						}
 					}
-					arr.addElement(new cNumber(parseFloat(ph.operand_str)));
+					// arr.addElement(new cNumber(parseFloat(ph.operand_str)));
+
+					let _numberNormalized = normalizeNumericInput(ph.operand_str);
+					let _number = parseFloat(_numberNormalized);
+					arr.addElement(new cNumber(_numberNormalized));
+
 					operator = {isOperator: false, operatorName: ""};
 				} else if (parserHelp.isOperator.call(ph, t.Formula, ph.pCurrPos)) {
 					operator.isOperator = true;
@@ -9027,7 +9080,9 @@ function parserFormula( formula, parent, _ws ) {
 
 			/* Numbers*/ else if (parserHelp.isNumber.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {
 				if (ph.operand_str !== "." && parseResult.checkNumberOperator(elemArr)) {
-					var _number = parseFloat(ph.operand_str);
+					// var _number = parseFloat(ph.operand_str);
+					let _numberNormalized = normalizeNumericInput(ph.operand_str);
+					let _number = parseFloat(_numberNormalized);
 					//TODO need to do check for negative numbers
 					if (!_checkReferenceCount((_number >= 65536 || !Number.isInteger(_number)) ? 1.25 : 0.5)) {
 						return false;
