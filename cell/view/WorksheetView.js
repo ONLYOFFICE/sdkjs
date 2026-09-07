@@ -29576,6 +29576,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var arrFormula = pastedData[1];
 		var adjustFormatArr = [];
+		var pastedExternalRefs = [];
 		for (i = 0; i < arrFormula.length; ++i) {
 			var rangeF = arrFormula[i].range;
 			var valF = arrFormula[i].val;
@@ -29621,6 +29622,24 @@ function isAllowPasteLink(pastedWb) {
 			// 	//t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
 			// 	ws.updateExternalReferenceByCell(rangeF, true);
 			// }
+
+			let refs = ws.getExternalReferencesByCell(rangeF, true);
+			if (refs) {
+				pastedExternalRefs.push.apply(pastedExternalRefs, refs);
+			}
+		}
+
+
+		if (pastedExternalRefs && pastedExternalRefs.length) {
+			const seen = {}, uniqueRefs = [];
+			for (let k = 0; k < pastedExternalRefs.length; k++) {
+				let key = pastedExternalRefs[k].asc_getPath();
+				if (key != null && !seen[key]) {
+					seen[key] = 1;
+					uniqueRefs.push(pastedExternalRefs[k]);
+				}
+			}
+			ws.workbook.doUpdateExternalReference(uniqueRefs, null, true);
 		}
 
 		ws.model.workbook.dependencyFormulas.unlockRecal();
