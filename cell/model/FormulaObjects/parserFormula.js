@@ -5112,7 +5112,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					if (!_checkArrayIndex) {
 						if (cElementType.array === tempArg.type) {
 							res = true
-						} else if (!returnFormulaType && isArgPosEnabledToSingle(t, j) &&
+						} else if (!returnFormulaType && !isArgPosEnabledToSingle(t, j) &&
 							(cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type)) {
 							res = true
 						}
