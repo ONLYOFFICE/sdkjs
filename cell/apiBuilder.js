@@ -1101,28 +1101,41 @@
 	};
 
 	/**
-	 * Returns the ApiRange object that represents the rectangular intersection of two or more ranges. If one or more ranges from a different worksheet are specified, an error will be returned.
+	 * Returns the ApiRange object that represents the rectangular intersection of two or more ranges.
+	 * If one or more ranges from a different worksheet are specified, an error will be returned.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range1 - One of the intersecting ranges. At least two Range objects must be specified.
 	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
+	 * @param {ApiRange} [Range3-Range30] - Up to 28 additional intersecting ranges. These arguments are optional.
 	 * @returns {ApiRange | null}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Intersect.js
 	 */
 	Api.Intersect = function (Range1, Range2) {
-		let result = null;
-		if (Range1.range.worksheet.getId() === Range2.range.worksheet.getId()) {
-			let res = Range1.range.bbox.intersection(Range2.range.bbox);
-			if (!res) {
-				throwException(new Error('Ranges do not intersect.'));
-			} else {
-				// the result belongs to the sheet of the arguments, not to the active sheet
-				result = new ApiRange(Range1.range.worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
-			}
-		} else {
-			throwException(new Error('Ranges should be from one worksheet.'));
+		if (arguments.length < 2) {
+			throwException(new Error('At least two ranges must be specified.'));
 		}
-		return result;
+		if (arguments.length > 30) {
+			throwException(new Error('No more than 30 ranges can be specified.'));
+		}
+		for (let i = 0; i < arguments.length; i++) {
+			if (!(arguments[i] instanceof ApiRange) || !arguments[i].range) {
+				throwException(new Error('Incorrect range at position ' + (i + 1) + '.'));
+			}
+		}
+		let ws = Range1.range.worksheet;
+		let bbox = Range1.range.bbox;
+		for (let i = 1; i < arguments.length; i++) {
+			let current = arguments[i].range;
+			if (current.worksheet.getId() !== ws.getId()) {
+				throwException(new Error('Ranges should be from one worksheet.'));
+			}
+			bbox = bbox.intersection(current.bbox);
+			if (!bbox) {
+				throwException(new Error('Ranges do not intersect.'));
+			}
+		}
+		return new ApiRange(ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2));
 	};
 
 	/**
