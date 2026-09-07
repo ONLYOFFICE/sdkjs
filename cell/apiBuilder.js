@@ -10685,11 +10685,20 @@
 
 			data = checkFormat(data);
 			let range = oThis.range;
-			let merged = range.hasMerged();
+			let sValue = data.toString();
+			let bOffsetFormula = !range.isOneCell() && sValue.length > 1 && sValue[0] === "=";
+			let merged = bOffsetFormula ? null : range.hasMerged();
 			if (merged)
 				range = oThis.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
-			range.setValue(data.toString());
+			if (bOffsetFormula) {
+				let anchor = new AscCommon.CellBase(range.bbox.r1, range.bbox.c1);
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					range.setValue(sValue, null, null, null, undefined, undefined, anchor);
+				});
+			} else {
+				range.setValue(sValue);
+			}
 			if (data.type === AscCommonExcel.cElementType.number)
 				range.setNumFormat(AscCommon.getShortDateFormat());
 

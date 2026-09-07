@@ -19321,7 +19321,7 @@
 			return new Range(this.worksheet, r1, c1, r2, c2);
 		}
 	};
-	Range.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps){
+	Range.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps, opt_offsetAnchor){
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
 		//didn't want to introduce additional parameter, so if byRef == null
@@ -19332,6 +19332,9 @@
 			_formula = new AscCommonExcel.parserFormula(val.substr(1), null, this.worksheet);
 			if (!_formula.parse(true)) {
 				_formula = null;
+			} else if (opt_offsetAnchor) {
+				anchorRow = opt_offsetAnchor.row;
+				anchorCol = opt_offsetAnchor.col;
 			} else {
 				var _selection = this.worksheet.getSelection();
 				activeCell = _selection.activeCell;
@@ -19366,7 +19369,8 @@
 				_formula.outStack = [];
 				_formula.parse(true);
 				var offset = new AscCommon.CellBase(cell.nRow - anchorRow, cell.nCol - anchorCol);
-				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
+				_formula.changeOffset(offset, null, true);
+				_val = "=" + (opt_offsetAnchor ? _formula.assemble(true) : _formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true));
 			}
 			// when creating new array formulas, it is necessary to transfer information about the dynamic array because regular ref is used
 			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps);
