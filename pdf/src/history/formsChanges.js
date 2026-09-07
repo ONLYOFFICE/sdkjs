@@ -40,7 +40,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value]			= CChangesPDFFormValu
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Parent_Value]		= CChangesPDFFormParentValue;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Format_Value]		= CChangesPDFFormFormatValue;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Changed]			= CChangesPDFFormChanged;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Add_Kid]			= CChangesPDFFormKidsContent;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Kids_Content]		= CChangesPDFFormKidsContent;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Change_Display]	= CChangesPDFFormDisplay;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Border_Color]		= CChangesPDFFormBorderColor;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_BG_Color]			= CChangesPDFFormBGrColor;
@@ -319,7 +319,7 @@ function CChangesPDFFormKidsContent(Class, Pos, Items, bAdd)
 }
 CChangesPDFFormKidsContent.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
 CChangesPDFFormKidsContent.prototype.constructor = CChangesPDFFormKidsContent;
-CChangesPDFFormKidsContent.prototype.Type = AscDFH.historyitem_Pdf_Form_Add_Kid;
+CChangesPDFFormKidsContent.prototype.Type = AscDFH.historyitem_Pdf_Form_Kids_Content;
 
 CChangesPDFFormKidsContent.prototype.Undo = function()
 {

@@ -626,22 +626,33 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        let nFormNumber = 1;
+		let aWidgets = this.widgets;
+		if (bLastUsedName) {
+			for (let i = aWidgets.length - 1; i >= 0; i--) {
+				if (aWidgets[i].GetType() == nFieldType) {
+					return aWidgets[i].GetFullName();
+				}
+			}
+		}
 
-        while (true) {
-            const fullName = sFormType + nFormNumber;
-            const oField = Object.values(AscCommon.g_oTableId.m_aPairs).find(function(elm) {
-                return elm.IsForm && elm.IsForm() && elm.GetFullName() === fullName
-            });
-        
-            if (!oField) break;
-        
-            if (oField.GetType() === nFieldType && bLastUsedName) {
-                return fullName;
-            }
-        
-            nFormNumber = AscCommon.g_oIdCounter.GetNewIdForPdfForm();
-        }
+		let nFormNumber = 1;
+		while (true) {
+			const fullName = sFormType + nFormNumber;
+
+			let oField;
+			for (let i = aWidgets.length - 1; i >= 0; i--) {
+				if (aWidgets[i].GetFullName() == fullName) {
+					oField = aWidgets[i];
+					break;
+				}
+			}
+
+			if (!oField) {
+				break;
+			}
+
+			nFormNumber++;
+		}
 
         return sFormType + nFormNumber;
     };
@@ -5176,18 +5187,9 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        let aPartNames = sName.split('.').filter(function(item) {
-            if (item != "")
-                return item;
-        })
-
-        let sPartName = aPartNames[0];
-        for (let i = 0; i < aPartNames.length; i++) {
-            for (let j = 0; j < this.widgets.length; j++) {
-                if (this.widgets[j].GetFullName() == sPartName) // checks by full name
-                    return this.widgets[j];
-            }
-            sPartName += "." + aPartNames[i + 1];
+        for (let i = 0; i < this.widgets.length; i++) {
+            if (this.widgets[i].GetFullName() === sName)
+                return this.widgets[i];
         }
 
         return null;

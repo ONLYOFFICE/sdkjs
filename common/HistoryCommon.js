@@ -4154,7 +4154,7 @@
 
 	// common
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
-	AscDFH.historyitem_Pdf_Form_Add_Kid			= AscDFH.historyitem_type_Pdf_Form | 2;
+	AscDFH.historyitem_Pdf_Form_Kids_Content	= AscDFH.historyitem_type_Pdf_Form | 2;
 	AscDFH.historyitem_Pdf_Form_Change_Display	= AscDFH.historyitem_type_Pdf_Form | 4;
 	AscDFH.historyitem_Pdf_Form_Changed			= AscDFH.historyitem_type_Pdf_Form | 5;
 	AscDFH.historyitem_Pdf_Form_Parent_Value	= AscDFH.historyitem_type_Pdf_Form | 6;

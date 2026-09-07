@@ -544,7 +544,10 @@
         this._partialName = sName;
 
         this.SetWasChanged(true);
-        this.SetNeedUpdateEditShape(true);
+
+		this.GetAllWidgets().forEach(function(widget) {
+			widget.SetNeedUpdateEditShape(true);
+		});
 
 		return true;
     };
@@ -983,7 +986,7 @@
     };
 
     /**
-	 * Checks if all kids are widgets (and have same names).
+	 * Checks if the field is a widget or all its kids are widgets with the same full name as the parent.
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
@@ -993,20 +996,16 @@
 		}
 
         let aKids = this.GetKids();
-        if (aKids.length > 0) {
-            if (aKids[0].IsWidget() == false)
+        if (0 === aKids.length)
+            return false;
+
+        let sFullName = this.GetFullName();
+        for (let nKid = 0; nKid < aKids.length; nKid++) {
+            if (!aKids[nKid].IsWidget() || aKids[nKid].GetFullName() !== sFullName)
                 return false;
-
-            let sFullName = aKids[0].GetFullName();
-            for (let i = 1; i < aKids.length; i++) {
-                if (sFullName != aKids[i].GetFullName() || aKids[i].IsWidget() == false)
-                    return false;
-            }
-
-            return true;
         }
 
-        return false;
+        return true;
     };
     /**
      * Does the actions setted for specifed trigger type.
@@ -1644,109 +1643,130 @@
     };
 
     CBaseField.prototype.SetName = function(sName) {
-        let oDoc        = this.GetDocument();
-		let oRoles	 	= oDoc.GetFormRoles();
-        let nFieldType  = this.GetType();
-        let sRolesOldFullName = this.GetFullName();
-
-        while (sName.indexOf('..') != -1)
-            sName = sName.replace(new RegExp("\.\.", "g"), ".");
-
-        let oExistsWidget = oDoc.GetField(sName);
-        // if there's a widget field with this name then don't add
-        if (oExistsWidget && oExistsWidget.GetType() != nFieldType)
-            return false; // TODO throw error for field name change
-
-        // get partial names
-        let aPartNames = sName.split('.').filter(function(item) {
-            if (item != "")
-                return item;
-        });
-
-        // by format no more than 20 nesting levels
-        if (aPartNames.length > 20)
+        if ("string" !== typeof sName)
             return false;
 
-        // remove field from parent
-        let oParent = this.GetParent();
-        if (oParent) {
-            oParent.RemoveKid(this);
-        }
+        let aPartNames = sName.split(".").filter(Boolean);
+        if (0 === aPartNames.length || aPartNames.length > 20)
+            return false;
 
-        let aWidgetForms = oDoc.GetAllWidgets(sName);
+        sName = aPartNames.join(".");
 
-        if (aPartNames.length > 0) {
-            let oExistsField = oDoc.GetField(sName);
-            let oParentField;
+        let sOldFullName = this.GetFullName();
+        if (sName === sOldFullName)
+            return true;
 
-            if (oExistsField) {
-                if (!oExistsField.IsWidget()) {
-                    if (!oExistsField.IsLogicalRoot()) {
-                        return false;
-                    }
-                    else {
-                        oParentField = oExistsField;
-                    }
-                }
-            }
+        let oDoc = this.GetDocument();
+        let nFieldType = this.GetType();
+        let oExistsWidget = oDoc.GetField(sName);
 
-            let bParentInherit = !oParentField;
-            if (!oParentField) {
-                if (oExistsField) {
-                    let sFullName = aPartNames[0];
+        if (oExistsWidget && oExistsWidget.IsWidget() && oExistsWidget.GetType() !== nFieldType)
+            return false;
 
-                    for (let i = 0; i < aPartNames.length; i++) {
-                        if (i !== 0) {
-                            sFullName += "." + aPartNames[i];
-                        }
+        let oTargetField = oExistsWidget && oExistsWidget.GetFullName() === sName ? oExistsWidget : null;
 
-                        let oField = oDoc.GetField(sFullName);
-                        if (oField && !oField.IsWidget()) {
-                            oParentField = oField;
-                        }
-                        
-                        if (!oField || oField.IsWidget()) {
-                            let oNewParent = oDoc.CreateField(aPartNames[i], nFieldType, []);
-    
-                            if (oParentField) {
-                                oParentField.AddKid(oNewParent);
-                            }
-                            
-                            oParentField = oNewParent;
-                        }
-                    }
-                }
-                // will be field-widget
-                else {
-                    if (oParent) {
-                        this.DrainLogicFrom(oParent, false);
-                    }
-                    
-                    this.SetPartialName(sName);
-                    oRoles.RenameField(sRolesOldFullName, this.GetFullName());
-                    return true;
-                }
-            }
+        if (oTargetField && oTargetField.GetType() !== nFieldType)
+            return false;
 
-            if (bParentInherit) {
-                oParentField.DrainLogicFrom(oExistsField);
+        if (oTargetField && !oTargetField.IsWidget() && !oTargetField.IsLogicalRoot())
+            return false;
 
-                aWidgetForms.forEach(function(widget) {
-                    widget.SetPartialName(undefined);
-                    oParentField.AddKid(widget);
-                });
-            }
+        let oPrevLogicParent = this.GetParent(true);
+        let bTargetExists = !!oTargetField;
+        let oNewLogicParent = private_GetOrCreateFieldParent(
+            oDoc, aPartNames, bTargetExists, nFieldType, this
+        );
+        if (false === oNewLogicParent)
+            return false;
 
+        let oCurrentParent = this.GetParent();
+        if (oCurrentParent)
+            oCurrentParent.RemoveKid(this);
+
+        if (bTargetExists) {
             this.SetPartialName(undefined);
-            oParentField.AddKid(this);
         }
+        else {
+            this.SetPartialName(aPartNames[aPartNames.length - 1]);
+            if (oPrevLogicParent)
+                this.DrainLogicFrom(oPrevLogicParent, false);
+        }
+
+        if (oNewLogicParent)
+            oNewLogicParent.AddKid(this);
 
         this.Commit();
-
-        oRoles.RenameField(sRolesOldFullName, this.GetFullName());
+        oDoc.GetFormRoles().RenameField(sOldFullName, this.GetFullName());
 
         return true;
     };
+
+    function private_GetFieldPath(oDoc, aPartNames) {
+        let aFields = [];
+        let sFullName = "";
+
+        for (let nPart = 0; nPart < aPartNames.length; nPart++) {
+            sFullName += (0 === nPart ? "" : ".") + aPartNames[nPart];
+
+            let oField = oDoc.GetField(sFullName);
+            aFields.push(oField && oField.GetFullName() === sFullName ? oField : null);
+        }
+
+        return aFields;
+    }
+
+    function private_GetOrCreateFieldParent(oDoc, aPartNames, bTargetExists, nFieldType, oRenamedField) {
+        let aFieldPath = private_GetFieldPath(oDoc, aPartNames);
+        let nParentsCount = bTargetExists ? aPartNames.length : aPartNames.length - 1;
+
+        let oLogicParent = null;
+        let sFullName = "";
+
+        for (let nPart = 0; nPart < nParentsCount; nPart++) {
+            sFullName += (0 === nPart ? "" : ".") + aPartNames[nPart];
+
+            let oField = aFieldPath[nPart];
+            if (oField) {
+                let bLogicalField = oField.IsLogicalRoot();
+                let bExactTarget = bTargetExists && nPart === nParentsCount - 1;
+                let bRenamedWidget = oField === oRenamedField;
+
+                if (bLogicalField && !bExactTarget && !bRenamedWidget)
+                    return false;
+
+                if (!oField.IsWidget()) {
+                    oLogicParent = oField;
+                    continue;
+                }
+            }
+
+            let oNewParent = oDoc.CreateField(aPartNames[nPart], nFieldType, []);
+            if (oLogicParent)
+                oLogicParent.AddKid(oNewParent);
+
+            if (oField) {
+                let aWidgets = oDoc.GetAllWidgets(sFullName);
+                oNewParent.DrainLogicFrom(oField);
+
+                for (let nWidget = 0; nWidget < aWidgets.length; nWidget++) {
+                    let oWidget = aWidgets[nWidget];
+                    if (oWidget === oRenamedField)
+                        continue;
+
+                    let oWidgetParent = oWidget.GetParent();
+                    if (oWidgetParent)
+                        oWidgetParent.RemoveKid(oWidget);
+
+                    oWidget.SetPartialName(undefined);
+                    oNewParent.AddKid(oWidget);
+                }
+            }
+
+            oLogicParent = oNewParent;
+        }
+
+        return oLogicParent;
+    }
     CBaseField.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };
