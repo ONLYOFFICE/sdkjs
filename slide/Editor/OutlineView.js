@@ -337,8 +337,9 @@
 	SavedPosition.prototype.apply = function (outlineView) {
 		const docContent = outlineView.getDocContent();
 		if (!docContent) {
-			return;
+			return false;
 		}
+		let isApplied = false;
 		if (this.startPos) {
 			docContent.RemoveSelection();
 			const startPos = this.startPos.getPosition(outlineView);
@@ -348,14 +349,18 @@
 			}
 			if (startPos && endPos) {
 				docContent.SetContentSelection(startPos, endPos, 0, 0, 0);
+				isApplied = true;
 			} else if (startPos) {
 				docContent.SetContentPosition(startPos, 0, 0);
+				isApplied = true;
 			} else if (endPos) {
 				docContent.SetContentPosition(endPos, 0, 0);
+				isApplied = true;
 			}
 
 			outlineView.updateSelectionState();
 		}
+		return isApplied;
 	};
 	function ContentPosition(pos) {
 		this.pos = pos;
@@ -2143,13 +2148,46 @@
 	OutlineView.prototype.remove = function (isOnAddText, direction) {
 		const docContent = this.getDocContent();
 		const isSelectionUse = docContent && docContent.IsSelectionUse();
+		const removeStartIndex = this.getRemoveStartIndex();
 		const manager = new RemoveOutlineParagraphsManager(this);
 		 const removeInfo = manager.remove(isOnAddText, direction);
 		this.update(removeInfo);
-		this.applySavedPositionToOutline();
+		const isPositionSaved = !this.isEmptySavedPosition();
+		const isPositionApplied = this.applySavedPositionToOutline();
+		if (isPositionSaved && !isPositionApplied && !isOnAddText) {
+			this.moveCursorToOutlineIndex(removeStartIndex);
+		}
 		if (isOnAddText && isSelectionUse) {
 			this.checkCurrentTextObjectExtends();
 		}
+	};
+	OutlineView.prototype.getRemoveStartIndex = function () {
+		const docContent = this.getDocContent();
+		if (!docContent) {
+			return -1;
+		}
+		if (!docContent.IsSelectionUse()) {
+			return docContent.CurPos.ContentPos;
+		}
+		return Math.min(docContent.Selection.StartPos, docContent.Selection.EndPos);
+	};
+	OutlineView.prototype.moveCursorToOutlineIndex = function (index) {
+		const docContent = this.getDocContent();
+		if (!docContent || index < 0 || !docContent.Content.length) {
+			return;
+		}
+		docContent.Update_ContentIndexing();
+		docContent.RemoveSelection();
+		if (index < docContent.Content.length) {
+			const paragraph = docContent.Content[index];
+			paragraph.SetThisElementCurrent();
+			paragraph.MoveCursorToStartPos();
+		} else {
+			const paragraph = docContent.Content[docContent.Content.length - 1];
+			paragraph.SetThisElementCurrent();
+			paragraph.MoveCursorToEndPos();
+		}
+		this.updateSelectionState();
 	};
 	OutlineView.prototype.removeSlides = function (slideForRemoveMap, isOnAddText, savedContentsOnUpdate) {
 		const slides = [];
@@ -2199,14 +2237,14 @@
 		presentation.DrawingDocument.UpdateThumbnailsAttack();
 		this.update(savedContentsOnUpdate);
 		const lastSlideIndex = presentation.GetSlidesCount() - 1;
-		const currentPage = Math.min(lastSlideIndex, minSlideIndex + 1);
+		const currentPage = Math.min(lastSlideIndex, minSlideIndex);
 		presentation.Recalculate();
 		presentation.DrawingDocument.m_oWordControl.GoToPage(currentPage, undefined, undefined, true);
 		const docContent = this.getDocContent();
 		if (docContent && currentPage !== -1 && this.isEmptySavedPosition()) {
 			docContent.RemoveSelection();
 			const slidePositions = this.getSlidePositions(presentation.Slides[currentPage]);
-			if (lastSlideIndex >= minSlideIndex + 1) {
+			if (lastSlideIndex >= minSlideIndex) {
 				docContent.SetContentPosition(slidePositions.startPos, 0, 0);
 			} else {
 				docContent.SetContentPosition(slidePositions.endPos, 0, 0);
@@ -2254,8 +2292,9 @@
 	};
 	OutlineView.prototype.applySavedPositionToOutline = function () {
 		const savedPosition = this.getSavedPosition();
-		savedPosition.apply(this);
+		const isApplied = savedPosition.apply(this);
 		this.resetPosition();
+		return isApplied;
 	}
 	OutlineView.prototype.setSavedPosition = function (position) {
 		this.savedPosition = position;
@@ -3039,15 +3078,9 @@
 		return 0;
 	};
 	OutlineView.prototype.selectPage = function (pageNum) {
-		const docContent = this.getDocContent();
-		if (docContent) {
-			docContent.RemoveSelection();
-			const paragraph = this.getTitleSlideParagraph(pageNum);
-			if (paragraph) {
-				paragraph.MoveCursorToStartPos();
-				paragraph.SetThisElementCurrent();
-			}
-			this.updateSelectionState();
+		const paragraph = this.getTitleSlideParagraph(pageNum);
+		if (paragraph) {
+			this.moveCursorToOutlineIndex(paragraph.GetIndex());
 		}
 	};
 	OutlineView.prototype.getThumbnailHeight = function () {
