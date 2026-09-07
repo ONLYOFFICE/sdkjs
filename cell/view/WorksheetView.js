@@ -14847,22 +14847,23 @@ function isAllowPasteLink(pastedWb) {
                 offsetX = offsetFrozen.offsetX;
             }
             else {
-                vrCol = 0;
+                vrCol = this._getFrozenScrollCol0();
             }
 
             if ( row >= rFrozen ) {
                 offsetY = offsetFrozen.offsetY;
             }
             else {
-                vrRow = 0;
+                vrRow = this._getFrozenScrollRow0();
             }
         }
 
         var xL = this._getColLeft(col);
         var yL = this._getRowTop(row);
         // Recalculate X and Y relative to visible area
-        xL -= (this._getOffsetX(vrCol));
-        yL -= (this._getOffsetY(vrRow));
+        // checkFrozen resets the smooth scroll correction for cells inside frozen panes
+        xL -= (this._getOffsetX(vrCol, true));
+        yL -= (this._getOffsetY(vrRow, true));
         // Recalculate X and Y relative to frozen area
         xL += offsetX;
         yL += offsetY;
