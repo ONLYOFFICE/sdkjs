@@ -317,15 +317,19 @@
 	 * @memberof Api
 	 * @alias PasteHtml
 	 * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
+	 * @param {Object} [options] - Additional paste options.
+	 * @param {boolean} [options.MergeLast=false] - Defines if the last pasted paragraph is merged into the paragraph
+	 * it is pasted into instead of being inserted as a paragraph of its own. Use it to replace a part of a paragraph
+	 * without breaking it in two. Word document editor only.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PasteHtml.js
 	 */
-	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
+	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText, options) {
 		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		return this._pluginMethod_PasteHtml(htmlText, function(){
 			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
-		});
+		}, options);
 	};
-	Api.prototype._pluginMethod_PasteHtml = function(htmlText, callback) {
+	Api.prototype._pluginMethod_PasteHtml = function(htmlText, callback, options) {
 		if (!AscCommon.g_clipboardBase
 			|| !this.canEdit()
 			|| document.getElementById("pmpastehtml"))
@@ -375,9 +379,19 @@
 		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
 		AscCommon.g_clipboardBase.bSaveFormat = false;
 		let _t = this;
+
+		let logicDocument = this.private_GetLogicDocument();
+		let isMergeLast   = !!(options && options["MergeLast"]) && logicDocument && logicDocument.IsDocumentEditor();
+		let oldMergeLast  = isMergeLast ? logicDocument.MergeLastOnInsertContent : false;
+		if (isMergeLast)
+			logicDocument.MergeLastOnInsertContent = true;
+
 		_t.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
 			function()
 			{
+				if (isMergeLast)
+					logicDocument.MergeLastOnInsertContent = oldMergeLast;
+
 				_t.decrementCounterLongAction();
 				
 				let fCallback = function()

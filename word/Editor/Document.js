@@ -1475,6 +1475,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.ClearNotesOnPreDelete     = true;  // Очищать ли сноски при удалении (выключаем, при сплите параграфа) // TODO: Объединить с PreventPreDelete
 	this.ForceScrollToSelectionEnd = false; // При некоторых действиях (переход стрелками), нужно переместиться к концу селекта, даже если часть селекта видна
 	this.UpdateTargetOnRecalculate = true;
+	this.MergeLastOnInsertContent  = false; // Force to merge last para when inserting content
 
 	this.DrawTableMode = {
 		Start  : false,

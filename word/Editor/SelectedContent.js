@@ -863,9 +863,16 @@
 			editor.sendEvent("asc_onAddSignature", sLastSignatureId);
 		}
 	};
+	/**
+	 * @returns {boolean}
+	 */
+	CSelectedContent.prototype.private_IsMergeLastOnInsert = function()
+	{
+		return !!(this.LogicDocument && this.LogicDocument.MergeLastOnInsertContent);
+	};
 	CSelectedContent.prototype.private_IsInlineInsert = function()
 	{
-		return (1 === this.Elements.length && !this.Elements[0].SelectedAll && this.Elements[0].Element.IsParagraph() && (!this.Elements[0].Element.IsEmpty() || this.ForceInline));
+		return (1 === this.Elements.length && (!this.Elements[0].SelectedAll || this.private_IsMergeLastOnInsert()) && this.Elements[0].Element.IsParagraph() && (!this.Elements[0].Element.IsEmpty() || this.ForceInline));
 	};
 	CSelectedContent.prototype.private_IsOverwriteTableCells = function()
 	{
@@ -1183,7 +1190,7 @@
 		if (oParagraphE
 			&& this.Elements.length > 1
 			&& this.Elements[nEndPos].Element.IsParagraph()
-			&& !this.Elements[nEndPos].SelectedAll)
+			&& (!this.Elements[nEndPos].SelectedAll || this.private_IsMergeLastOnInsert()))
 		{
 			oParagraphE.ConcatBefore(this.Elements[nEndPos].Element, this.Select ? -1 : 0);
 			nEndPos--;
