@@ -19845,13 +19845,14 @@
 	{
 		let fWidth = private_EMU2MM(nWidth);
 		let fHeight = private_EMU2MM(nHeight);
-		this.getParaDrawing().setExtent(fWidth, fHeight);
 		this.Drawing.checkTransformBeforeApply();
 		const xfrm = this.Drawing.getXfrm();
 		xfrm.setExtX(fWidth);
 		xfrm.setExtY(fHeight);
-		this.getParaDrawing().SetSizeRelV(undefined);
-		this.getParaDrawing().SetSizeRelH(undefined);
+		const oParaDrawing = this.getParaDrawing();
+		oParaDrawing.CheckWH();
+		oParaDrawing.SetSizeRelV(undefined);
+		oParaDrawing.SetSizeRelH(undefined);
 		return true;
 	};
 	/**
@@ -20543,15 +20544,12 @@
 		if (typeof(coefficient) !== "number")
 			return false;
 
-		let oParaDrawing = this.getParaDrawing();
-		var currentHeight = oParaDrawing.getXfrmExtY();
-		var currentWidth  = oParaDrawing.getXfrmExtX();
-
-		oParaDrawing.setExtent(currentWidth, currentHeight * coefficient);
+		const oParaDrawing = this.getParaDrawing();
+		const nCurrentHeight = oParaDrawing.getXfrmExtY();
 		this.Drawing.checkTransformBeforeApply();
 		const xfrm = this.Drawing.getXfrm();
-		xfrm.setExtY(currentHeight * coefficient);
-
+		xfrm.setExtY(nCurrentHeight * coefficient);
+		oParaDrawing.CheckWH();
 		return true;
 	};
 	/**
@@ -20566,15 +20564,12 @@
 	{
 		if (typeof(coefficient) !== "number")
 			return false;
-		let oParaDrawing  = this.getParaDrawing();
-		var currentHeight = oParaDrawing.getXfrmExtY();
-		var currentWidth  = oParaDrawing.getXfrmExtX();
-
-		oParaDrawing.setExtent(currentWidth * coefficient, currentHeight);
+		const oParaDrawing  = this.getParaDrawing();
+		const nCurrentWidth  = oParaDrawing.getXfrmExtX();
 		this.Drawing.checkTransformBeforeApply();
 		const xfrm = this.Drawing.getXfrm();
-		xfrm.setExtX(currentWidth * coefficient);
-
+		xfrm.setExtX(nCurrentWidth * coefficient);
+		oParaDrawing.CheckWH();
 		return true;
 	};
 	/**
