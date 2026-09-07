@@ -12169,12 +12169,13 @@
 	/**
 	 * Properties to make search and replace.
 	 * @typedef {Object} ReplaceData
-	 * @property {string | undefined} What - The data to search for.
+	 * @property {string | RegExp | undefined} What - The data to search for, or a regular expression to match the cell text. When a RegExp is passed, the MatchCase and Wildcards parameters are ignored (control case sensitivity with the "i" flag instead). Add the "g" flag to replace every occurrence inside a cell - without it only the first occurrence is replaced, while a string always replaces every occurrence.
 	 * @property {string} Replacement - The replacement string.
 	 * @property {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
 	 * @property {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
 	 * @property {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @property {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * @property {boolean} Wildcards - Specifies whether to interpret the search text as a wildcard pattern: "*" matches any character sequence, "?" matches any single character, use "~*" / "~?" to find the literal "*" / "?" characters. The default value is "false".
 	 * @property {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 * @see office-js-api/Examples/Enumerations/ReplaceData.js
 	 */
@@ -12211,6 +12212,7 @@
 			SearchOrder = arguments[4];
 			SearchDirection = arguments[5];
 			MatchCase = arguments[6];
+			Wildcards = arguments[7];
 		}
 
 		let isRegExp = (What instanceof RegExp);
@@ -12361,7 +12363,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Replace.js
 	 */
 	ApiRange.prototype.Replace = function (oReplaceData) {
-		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
+		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, Wildcards, ReplaceAll;
 
 		if (arguments.length === 1) {
 			if (AscCommon.isRealObject(oReplaceData)) {
@@ -12371,6 +12373,7 @@
 				SearchOrder = oReplaceData['SearchOrder'];
 				SearchDirection = oReplaceData['SearchDirection'];
 				MatchCase = oReplaceData['MatchCase'];
+				Wildcards = oReplaceData['Wildcards'];
 				ReplaceAll = oReplaceData['ReplaceAll'];
 			} else {
 				return false;
@@ -12383,20 +12386,36 @@
 			SearchDirection = arguments[4];
 			MatchCase = arguments[5];
 			ReplaceAll = arguments[6];
+			Wildcards = arguments[7];
 		}
 
-		if (typeof What === 'string' && typeof Replacement === 'string') {
+		let isRegExp = (What instanceof RegExp);
+		if ((typeof What === 'string' || isRegExp) && typeof Replacement === 'string') {
 			let options = new Asc.asc_CFindOptions();
-			options.asc_setFindWhat(What);
+			options.asc_setFindWhat(isRegExp ? What.source : What);
 			options.asc_setReplaceWith(Replacement);
 			options.asc_setScanForward(SearchDirection != 'xlPrevious');
-			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			if (isRegExp) {
+				// keep the cell text unlowered for a RegExp - case sensitivity is governed by its "i" flag
+				options.asc_setIsMatchCase(true);
+			} else {
+				MatchCase && options.asc_setIsMatchCase(MatchCase);
+			}
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this["Address"]);
 			options.asc_setWsIndex(this.range.worksheet.index);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
+			if (isRegExp) {
+				options.isWildcard = true;
+				// used as it is: the replace stage substitutes the pattern with String.replace, so its "g"
+				// flag decides whether every occurrence inside a cell is replaced or only the first one
+				options.findRegExp = What;
+			} else if (Wildcards) {
+				options.isWildcard = true;
+				options.findRegExp = AscCommonExcel.getFindRegExp(What, options, true);
+			}
 			if (typeof ReplaceAll !== 'boolean')
 				ReplaceAll = true;
 

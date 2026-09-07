@@ -3897,7 +3897,9 @@
   	if (!options.isMatchCase) {
   		options.findWhat = options.findWhat.toLowerCase();
   	}
-  	options.findRegExp = AscCommonExcel.getFindRegExp(options.findWhat, options, true);
+  	if (!(options.isWildcard && options.findRegExp)) {
+  		options.findRegExp = AscCommonExcel.getFindRegExp(options.findWhat, options, true);
+  	}
 
     History.Create_NewPoint();
     History.StartTransaction();
