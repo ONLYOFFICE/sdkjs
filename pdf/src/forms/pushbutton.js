@@ -2321,8 +2321,14 @@
     CPushButtonField.prototype.Commit = function() {
     };
 
-    CPushButtonField.prototype.Reset = function() {
-    };
+	CPushButtonField.prototype.Reset = function() {
+		this.GetAllWidgets().forEach(function(widget) {
+			widget.SetImage("");
+			widget.SetImageRasterId("", AscPDF.APPEARANCE_TYPES.normal);
+			widget.SetImageRasterId("", AscPDF.APPEARANCE_TYPES.mouseDown);
+			widget.SetImageRasterId("", AscPDF.APPEARANCE_TYPES.rollover);
+		});
+	};
 	CPushButtonField.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
