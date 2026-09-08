@@ -1146,7 +1146,73 @@
 			}
 		}
 
+		if (this.Config.renderTextPr && 'html' === sType)
+		{
+			let directStyle = this.private_GetDirectTextPrStyle(oRun.Run);
+			if (directStyle)
+				sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'wholly', directStyle);
+		}
+
 		return sOutputText;
+	};
+	/**
+	 * @param {ParaRun} run
+	 * @returns {string}
+	 */
+	CMarkdownConverter.prototype.private_GetDirectTextPrStyle = function(run)
+	{
+		var textPr = run ? run.Pr : null;
+		if (!textPr)
+			return "";
+
+		function private_ColorToHex(color)
+		{
+			if (!color || true === color.Auto)
+				return null;
+			
+			let r = (undefined !== color.r) ? color.r : color.R;
+			let g = (undefined !== color.g) ? color.g : color.G;
+			let b = (undefined !== color.b) ? color.b : color.B;
+			if (undefined === r || undefined === g || undefined === b)
+				return null;
+
+			function private_Part(value)
+			{
+				var part = Math.max(0, Math.min(255, value | 0)).toString(16);
+				return (1 === part.length) ? ("0" + part) : part;
+			}
+
+			return "#" + private_Part(r) + private_Part(g) + private_Part(b);
+		}
+
+		var styles = [];
+
+		if (textPr.RFonts && textPr.RFonts.Ascii && textPr.RFonts.Ascii.Name)
+			styles.push("font-family:'" + textPr.RFonts.Ascii.Name + "'");
+
+		if (undefined !== textPr.FontSize)
+			styles.push("font-size:" + textPr.FontSize + "pt");
+
+		var colorHex = private_ColorToHex(textPr.Color);
+		if (!colorHex && textPr.Unifill && textPr.Unifill.getRGBAColor)
+			colorHex = private_ColorToHex(textPr.Unifill.getRGBAColor());
+		if (colorHex)
+			styles.push("color:" + colorHex);
+
+		if (textPr.HighLight && highlight_None !== textPr.HighLight)
+		{
+			var highlightHex = private_ColorToHex(textPr.HighLight);
+			if (highlightHex)
+				styles.push("background-color:" + highlightHex);
+		}
+
+		if (undefined !== textPr.Spacing && 0 !== textPr.Spacing)
+			styles.push("letter-spacing:" + (textPr.Spacing / 20) + "pt");
+
+		if (true === textPr.SmallCaps)
+			styles.push("font-variant:small-caps");
+
+		return styles.join(";");
 	};
 	CMarkdownConverter.prototype.HandleTable = function(oTable)
 	{

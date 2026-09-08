@@ -5034,6 +5034,16 @@ CTable.prototype.Can_IncreaseParagraphLevel = function(bIncrease)
 		this.CurCell.Content.Can_IncreaseParagraphLevel(bIncrease);
 	}
 };
+CTable.prototype.private_GetSelectionDirection = function()
+{
+	let startPos = this.Selection.StartPos.Pos;
+	let endPos   = this.Selection.EndPos.Pos;
+
+	if (startPos.Row < endPos.Row || (startPos.Row === endPos.Row && startPos.Cell <= endPos.Cell))
+		return AscWord.Direction.FORWARD;
+
+	return AscWord.Direction.BACKWARD;
+};
 CTable.prototype.GetSelectionBounds = function(isForceCellSelection)
 {
 	var isUseSelection = this.IsCellSelection();
@@ -5082,12 +5092,7 @@ CTable.prototype.GetSelectionBounds = function(isForceCellSelection)
 		Y = this.RowsInfo[EndPos.Row].Y[CurPage];
 		H = this.RowsInfo[EndPos.Row].H[CurPage];
 
-		var Direction = 1;
-		if (this.Selection.StartPos.Pos.Row < this.Selection.EndPos.Pos.Row || (this.Selection.StartPos.Pos.Row === this.Selection.EndPos.Pos.Row && this.Selection.StartPos.Pos.Cell <= this.Selection.EndPos.Pos.Cell))
-			Direction = 1;
-		else
-			Direction = -1;
-
+		var Direction = this.private_GetSelectionDirection();
 		var EndRect = {X : TableX + X0, Y : Y, W : X1 - X0, H : H, Page : CurPage + this.GetAbsoluteStartPage()};
 
 		return {Start : BeginRect, End : EndRect, Direction : Direction};
@@ -16322,6 +16327,7 @@ CTable.prototype.private_SetSelectionData = function(oData)
 		}
 	}
 
+	let direction = this.private_GetSelectionDirection();
 	for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
 	{
 		var oPos = this.Selection.Data[nIndex];
@@ -16337,7 +16343,7 @@ CTable.prototype.private_SetSelectionData = function(oData)
 			if (!oCell)
 				continue;
 
-			oCell.GetContent().SelectAll();
+			oCell.GetContent().SelectAll(direction);
 		}
 	}
 };
@@ -16367,6 +16373,7 @@ CTable.prototype.private_UpdateSelectionInCells = function()
 
 	if (this.IsCellSelection())
 	{
+		let direction = this.private_GetSelectionDirection();
 		for (var nIndex = 0, nCount = this.Selection.Data.length; nIndex < nCount; ++nIndex)
 		{
 			var oPos = this.Selection.Data[nIndex];
@@ -16378,7 +16385,7 @@ CTable.prototype.private_UpdateSelectionInCells = function()
 			if (!oCell)
 				continue;
 
-			oCell.GetContent().SelectAll();
+			oCell.GetContent().SelectAll(direction);
 		}
 	}
 };

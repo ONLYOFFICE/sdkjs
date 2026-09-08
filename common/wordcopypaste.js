@@ -4574,7 +4574,9 @@ PasteProcessor.prototype =
 				var oPasteController  = this.oLogicDocument.DrawingObjects;
 				this.oSelectedDrawing = oPasteController.selectedObjects.length > 0 && !oPasteController.getTargetDocContent()
 					? oPasteController.selectedObjects[0].parent : null;
-				this.oLogicDocument.RemoveBeforePaste();
+					
+				if (!this.doNotInsertInDoc)
+					this.oLogicDocument.RemoveBeforePaste();
 
 				if (oDocState)
 					this.oDocument.LoadDocumentState(oDocState);
