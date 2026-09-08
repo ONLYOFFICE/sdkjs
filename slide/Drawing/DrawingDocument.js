@@ -2856,19 +2856,13 @@ function CDrawingDocument()
 			dKoefY = g_dKoef_mm_to_pix;
 		}
 		let oTextMatrix = this.TextMatrix;
-
-		// Hide the track polygon in DE and CE to match MS behavior.
-		let editorId = Asc.editor && Asc.editor.getEditorId();
-		let bDrawRect = editorId !== AscCommon.c_oEditorId.Presentation && editorId !== AscCommon.c_oEditorId.Spreadsheet;
-		if (bDrawRect)
+		for (nIndex = 0; nIndex < PathLng; nIndex++)
 		{
-			for (nIndex = 0; nIndex < PathLng; nIndex++)
-			{
-				oPath = this.MathTrack.GetPolygon(nIndex);
-				this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
-				this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
-			}
+			oPath = this.MathTrack.GetPolygon(nIndex);
+			this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
+			this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, xDst, yDst, oTextMatrix);
 		}
+		
 		for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
 		{
 			oPath =  this.MathTrack.GetSelectPath(nIndex);
