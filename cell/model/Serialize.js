@@ -11533,9 +11533,18 @@
             }
             else if ( c_oSerWorksheetsTypes.PageSetup == type )
             {
+                var oPageSetupToRead = oWorksheet.PagePrintOptions.pageSetup;
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
-                    return oThis.ReadPageSetup(t,l, oWorksheet.PagePrintOptions.pageSetup);
+                    return oThis.ReadPageSetup(t,l, oPageSetupToRead);
                 });
+				//documentation default - letter
+                if(null === oPageSetupToRead.paperSize)
+                {
+                    var oDefaultSize = DocumentPageSize.getSizeById(EPageSize.pagesizeLetterPaper);
+                    oPageSetupToRead.asc_setWidth(oDefaultSize.w_mm);
+                    oPageSetupToRead.asc_setHeight(oDefaultSize.h_mm);
+                    oPageSetupToRead.asc_setPaperSize(EPageSize.pagesizeLetterPaper);
+                }
             }
             else if ( c_oSerWorksheetsTypes.PrintOptions == type )
             {
