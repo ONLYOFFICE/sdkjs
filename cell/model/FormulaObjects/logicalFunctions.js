@@ -349,7 +349,7 @@ function (window, undefined) {
 		return this.collectUnusedTailArgs(read, count);
 	};
 	cIFS.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
+		var oArguments = this._prepareArguments(arg, arguments[1], true, null, false, null, this.enabledToSingle);
 		var argClone = oArguments.args;
 
 		var res = null;
@@ -582,7 +582,7 @@ function (window, undefined) {
 		return this.collectUnusedTailArgs(read, count);
 	};
 	cSWITCH.prototype.Calculate = function (arg) {
-		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let oArguments = this._prepareArguments(arg, arguments[1], true, null, false, null, this.enabledToSingle);
 		let argClone = oArguments.args;
 
 		let arg0 = argClone[0];

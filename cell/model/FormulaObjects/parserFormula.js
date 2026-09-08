@@ -4305,7 +4305,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return calculateFunc(argsArray);
 	};
-	cBaseFunction.prototype._prepareArguments = function (args, arg1, bAddFirstArrElem, typeArray, bFirstRangeElem, notArrayError) {
+	cBaseFunction.prototype._prepareArguments = function (args, arg1, bAddFirstArrElem, typeArray, bFirstRangeElem, notArrayError, opt_nativeRangeArgs) {
 		var newArgs = [];
 		var indexArr = null;
 
@@ -4349,6 +4349,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			} else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
 				if (cElementType.cellsRange3D === arg.type && !arg.isSingleSheet()) {
 					newArgs[i] = new cError(cErrorType.bad_reference);
+				} else if (_checkEntry(opt_nativeRangeArgs, i)) {
+					newArgs[i] = arg;
 				} else {
 					newArgs[i] = bFirstRangeElem ? arg.getValueByRowCol(0,0) : arg.cross(arg1);
 					if (newArgs[i] === null) {
