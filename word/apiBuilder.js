@@ -824,9 +824,9 @@
 				return "";
 
 			var oRunTextPr = oRun.Run.Get_CompiledPr();
-			if (oRunTextPr.VertAlign === 1)
+			if (oRunTextPr.VertAlign === AscCommon.vertalign_SuperScript)
 				return "sup";
-			else if (oRunTextPr.VertAlign === 2)
+			else if (oRunTextPr.VertAlign === AscCommon.vertalign_SubScript)
 				return "sub";
 
 			return "";
