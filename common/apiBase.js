@@ -1460,11 +1460,10 @@
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 		}
 
-        if (this.DocInfo.get_Encrypted() && AscCommon.CryptoProvider && !AscCommon.CryptoProvider.isLocalFile(true))
-        {
-        	var t = this;
-            AscCommon.CryptoProvider.openFileCrypt(this.DocInfo.get_Title(), this.DocInfo.get_Url(), function () {t.openFileCryptCallback.apply(t, arguments);});
-        }
+		if (this.DocInfo.get_Encrypted() && AscCommon.CryptoProvider && !AscCommon.CryptoProvider.isLocalFile(true))
+		{
+			this.onEndLoadFile({ onlyoffice_crypto : true });
+		}
 	};
 	baseEditorsApi.prototype._openChartOrLocalDocument           = function()
 	{
@@ -3317,6 +3316,14 @@
 		}
 		if (this.isLoadFullApi && this.DocInfo && this.openResult && this._isLoadedModules())
 		{
+			if (this.openResult.onlyoffice_crypto === true)
+			{
+				var t = this;
+				AscCommon.CryptoProvider.openFileCrypt(this.DocInfo.get_Title(), this.DocInfo.get_Url(), function () {t.openFileCryptCallback.apply(t, arguments);});
+				this.openResult = null;
+				return;
+			}
+
 			let editorId = AscCommon.getEditorBySignature(this.openResult.data);
 			let isNativeFormat = AscCommon.checkNativeViewerSignature(this.openResult.data);
 			if (this.isPdfEditor() ? !isNativeFormat : this.editorId !== editorId) {
