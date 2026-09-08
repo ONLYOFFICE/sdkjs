@@ -2249,7 +2249,8 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 		this.StopFollowUser();
 		this.History.DiscardRedoPoints();
 		
-		if (!window['AscCommon'].g_specialPasteHelper.pasteStart)
+		if (!window['AscCommon'].g_specialPasteHelper.pasteStart
+			&& !window['AscCommon'].g_specialPasteHelper.doNotHideButtonOnFinalize)
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	}
 	else

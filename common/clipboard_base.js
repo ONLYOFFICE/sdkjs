@@ -1743,6 +1743,8 @@
 		this.endRecalcDocument = false;//for documents, whether document recalculation is finished. needed to correctly calculate paste button icon position
 		this.doNotShowButton = false;
 		this.visiblePasteButton = true;
+		//the paste itself finalizes the action, and such a finalize must not hide the button we have just shown
+		this.doNotHideButtonOnFinalize = false;
 
 		//active range before first paste
 		this.selectionRange = null;
@@ -1856,7 +1858,9 @@
 
 			var _logicDoc = this.Api && this.Api.WordControl ? this.Api.WordControl.m_oLogicDocument : null;
 			if (_logicDoc && _logicDoc.Action && _logicDoc.Action.Start && this.Api._finalizeAction) {
+				this.doNotHideButtonOnFinalize = true;
 				this.Api._finalizeAction();
+				this.doNotHideButtonOnFinalize = false;
 			}
 		},
 		
