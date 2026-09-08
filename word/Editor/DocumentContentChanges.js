@@ -71,6 +71,7 @@ CChangesDocumentContentAddItem.prototype.Undo = function()
 		const removedElement = oDocument.Content[pos];
 		oDocument.UpdateSectionsBeforeRemove([removedElement], false);
 		removedElement.OnDetach();
+		removedElement.UpdatePresentationOutline();
 
 		var elements = oDocument.Content.splice(pos, 1);
 		oDocument.private_RecalculateNumbering(elements);
@@ -89,8 +90,6 @@ CChangesDocumentContentAddItem.prototype.Undo = function()
 		removedElement.Set_DocumentNext(null);
 		removedElement.Set_DocumentPrev(null);
 		removedElement.SetParent(null);
-
-		removedElement.UpdatePresentationOutline();
 	}
 	this.Class.Recalculated = false;
 };
