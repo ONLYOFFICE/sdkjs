@@ -2095,12 +2095,12 @@
 		return false;
 	};
 	CPushButtonField.prototype.IsOOSignature = function() {
-		let oMeta = this.GetMeta();
-		if (oMeta["isOOSignature"]) {
-			return true;
-		}
-
-		return false;
+		return this.GetAllWidgets().some(function(widget) {
+			let oMeta = widget.GetMeta();
+			if (oMeta["isOOSignature"]) {
+				return true;
+			}
+		});
 	};
 	CPushButtonField.prototype.asc_OnShowSignature = function() {
 		if (!this.IsOOSignature() || !this.IsInForm()) {
@@ -2144,8 +2144,7 @@
 	};
 	CPushButtonField.prototype.IsNeedDrawHighlight = function() {
 		let isNeed = AscPDF.CBaseField.prototype.IsNeedDrawHighlight.call(this);
-
-		if (isNeed && this.IsOOSignature() && !this.GetImageRasterId()) {
+		if (isNeed && this.IsOOSignature()) {
 			return true;
 		}
 
@@ -2322,8 +2321,14 @@
     CPushButtonField.prototype.Commit = function() {
     };
 
-    CPushButtonField.prototype.Reset = function() {
-    };
+	CPushButtonField.prototype.Reset = function() {
+		this.GetAllWidgets().forEach(function(widget) {
+			widget.SetImage("");
+			widget.SetImageRasterId("", AscPDF.APPEARANCE_TYPES.normal);
+			widget.SetImageRasterId("", AscPDF.APPEARANCE_TYPES.mouseDown);
+			widget.SetImageRasterId("", AscPDF.APPEARANCE_TYPES.rollover);
+		});
+	};
 	CPushButtonField.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
