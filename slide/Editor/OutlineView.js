@@ -2369,7 +2369,7 @@
 		return !!(parentShape && parentShape.isGeneralTitle());
 	};
 	OutlineView.prototype.getTitleOutlineParagraph = function (sourceParagraph, slide) {
-		const parentShape = sourceParagraph.GetParentShape();
+		const parentShape = sourceParagraph.GetParentShape() || slide.getOutlineTitleShape();
 		if (!parentShape || parentShape.parent !== slide) {
 			return null;
 		}
