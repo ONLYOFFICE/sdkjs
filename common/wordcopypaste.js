@@ -2750,15 +2750,16 @@ function GetContentFromHtml(api, html, callback) {
 	//need document -> write, because some props not compile if use innerHTML(sub/sup tags give only "baseline")
 	//TODO use iframe from clipboard_base
 	AscCommon.g_clipboardBase.CommonIframe_PasteStart(html, null, function (oHtmlElem) {
-		if (oHtmlElem) {
-			var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, function (selectedContent) {
-				if (selectedContent) {
-					callback(selectedContent);
-				}
-			});
-			oPasteProcessor.doNotInsertInDoc = true;
-			oHtmlElem && oPasteProcessor.Start(oHtmlElem);
+		if (!oHtmlElem) {
+			callback && callback(null);
+			return;
 		}
+
+		var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, function (selectedContent) {
+			callback && callback(selectedContent ? selectedContent : null);
+		});
+		oPasteProcessor.doNotInsertInDoc = true;
+		oPasteProcessor.Start(oHtmlElem);
 	});
 }
 
@@ -3269,7 +3270,7 @@ PasteProcessor.prototype =
 	    {
 		    bCheckOneGraphicObjectSpecialProps = this._specialPasteGetElemType(aNewContent[0]) === para_Drawing;
 	    }
-		if (oTable && !aNewContent[0].IsTable() && oTable.IsCellSelection())
+		if (!this.doNotInsertInDoc && oTable && !aNewContent[0].IsTable() && oTable.IsCellSelection())
 		{
 			var arrSelectedCells = oTable.GetSelectionArray(true);
 			var nPrevRow      = -1;
