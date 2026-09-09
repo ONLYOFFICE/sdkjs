@@ -9748,54 +9748,52 @@ CTable.prototype.MergeTableCells = function(isClearMerge)
 	if (false === bCanMerge)
 		return false;
 
-	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && !oLogicDocument.IsDocumentEditor())
-		oLogicDocument = undefined;
-
 	// Объединяем содержимое всех ячеек в левую верхнюю ячейку. (Все выделенные
 	// ячейки идут у нас последовательно, начиная с левой верхней), и объединяем
 	// сами ячейки.
 
 	var Pos_tl  = this.Selection.Data[0];
 	var Cell_tl = this.GetRow(Pos_tl.Row).GetCell(Pos_tl.Cell);
-
-	// Добавляем содержимое данной ячейки к содержимому левой верхней ячейки
-	// Комментарии сохраняем, т.к. метка начала комментария при этом перенесится только еще в более раннюю
-	// позицию, поэтому нарушения логики быть не должно
-	// TODO: Возможно стоить обновление позиций комментариев запихнуть внутрь CDocumentContent.AddContent
-
-	var isRemoveComments = null;
-	if (oLogicDocument)
-	{
-		isRemoveComments = oLogicDocument.RemoveCommentsOnPreDelete;
-		oLogicDocument.RemoveCommentsOnPreDelete = false;
-	}
-
-	var oMainCellContent = Cell_tl.GetContent();
-	var arrMovedComments = [];
-	for (var nIndex = 1; nIndex < this.Selection.Data.length; ++nIndex)
-	{
-		var oPos         = this.Selection.Data[nIndex];
-		var oCellContent = this.GetRow(oPos.Row).GetCell(oPos.Cell).GetContent();
-
-		oCellContent.GetAllComments(arrMovedComments);
-		oMainCellContent.AddContent(oCellContent.Content);
-		oCellContent.ClearContent();
-	}
-
-	if (oLogicDocument)
-	{
-		var oCommentsManager = oLogicDocument.GetCommentsManager();
-		for (var nIndex = 0, nCount = arrMovedComments.length; nIndex < nCount; ++nIndex)
+	
+	let _t = this;
+	AscCommon.executeNoPreDelete(function(){
+		let mainCellContent = Cell_tl.GetContent();
+		let elements = [];
+		
+		// Follow MS behaviour: for every cell in the selection except the last one, 
+		// skip its trailing empty paragraph. If all cells were empty, then leave 
+		// the top-left cell's content unchanged.
+		for (let index = 0; index < _t.Selection.Data.length; ++index)
 		{
-			var oCommentMark = arrMovedComments[nIndex].Comment;
-			var oComment = oCommentsManager.GetById(oCommentMark.GetCommentId());
-			if (oComment)
-				oComment.UpdatePosition();
+			let pos = _t.Selection.Data[index];
+			let row = _t.GetRow(pos.Row);
+			let cell = row ? row.GetCell(pos.Cell) : null;
+			let cellContent = cell ? cell.GetContent() : null;
+			if (!cellContent)
+				continue;
+			
+			let endPos = cellContent.GetElementsCount();
+			let lastElem = endPos ? cellContent.GetElement(endPos - 1) : null;
+			if (lastElem && lastElem.IsParagraph() && lastElem.IsEmpty() && index !== _t.Selection.Data.length - 1)
+				--endPos;
+			
+			if (endPos <= 0)
+				continue;
+			
+			for (let elementIndex = 0; elementIndex < endPos; ++elementIndex)
+			{
+				elements.push(cellContent.GetElement(elementIndex));
+			}
+			
+			cellContent.ClearContent();
 		}
+		
+		if (elements.length <= 0 || (1 === elements.length && elements[0].IsParagraph() && elements[0].IsEmpty()))
+			return;
+		
+		mainCellContent.AddContent(elements);
 
-		oLogicDocument.RemoveCommentsOnPreDelete = isRemoveComments;
-	}
+	}, this.GetLogicDocument());
 
 	if (true !== isClearMerge)
 	{
