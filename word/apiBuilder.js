@@ -846,7 +846,11 @@
 				{
 					case para_Drawing:
 					{
-						if (Item.IsPicture())
+						if (oCMarkdownConverter.Config.drawingPlaceholders)
+						{
+							sText += String.fromCharCode(AscBuilder.CMarkdownConverter.DrawingPlaceholder);
+						}
+						else if (Item.IsPicture())
 						{
 							if (sType === 'markdown')
 								sText += oCMarkdownConverter.Config.base64img ? '![](' + Item.GraphicObj.getBase64Img() + ')' : '![](' + Item.GraphicObj.getImageUrl() + ')';
@@ -954,7 +958,20 @@
 			}
 		}
 
-		if (sOutputText.trim() === "" && hasPicture === false)
+		var hasDrawing = false;
+		if (this.Config.drawingPlaceholders)
+		{
+			for (var nPos = 0, nLen = oRun.Run.Content.length; nPos < nLen; ++nPos)
+			{
+				if (para_Drawing === oRun.Run.Content[nPos].Type)
+				{
+					hasDrawing = true;
+					break;
+				}
+			}
+		}
+
+		if (sOutputText.trim() === "" && false === hasPicture && false === hasDrawing)
 			return sOutputText;
 
 		if (!this.isCodeBlock)
@@ -1016,7 +1033,7 @@
 				var sVertAlgn = GetVertAlign(oRun);
 				
 
-				if (hasPicture)
+				if (hasPicture || hasDrawing)
 					sOutputText = GetTextWithPicture.call(this, oRun);
 
 				if (sVertAlgn)
@@ -1263,6 +1280,7 @@
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#39;');
 	};
+	CMarkdownConverter.DrawingPlaceholder = 0xFFFC;
 	/**
 	 * Class representing a continuous region in a document. 
 	 * Each Range object is determined by the position of the start and end characters.

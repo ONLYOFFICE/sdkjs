@@ -1931,6 +1931,9 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 
 	if (Item.SetParent)
 		Item.SetParent(this);
+	
+	if (Item.SetParagraph)
+		Item.SetParagraph(this.GetParagraph());
 
 	// Здесь проверка на возвожность добавления в историю стоит заранее для ускорения открытия файлов, чтобы
 	// не создавалось лишних классов
