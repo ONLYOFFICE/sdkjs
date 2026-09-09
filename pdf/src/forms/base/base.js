@@ -1056,7 +1056,7 @@
         let oDoc   = this.GetDocument();
         let oRoles = oDoc.GetFormRoles();
         if (oRoles) {
-            if (!oRoles.CanFillField(this) && !oDoc.IsEditFieldsMode()) {
+            if (!oRoles.CanFillField(this) && !oDoc.IsEditFieldsMode() || Asc.editor.isRestrictionSignatures()) {
                 return FIELDS_HIGHLIGHT_OTHER_ROLE;
             }
 
