@@ -12502,6 +12502,50 @@ PasteProcessor.prototype =
 		return bIsPlainText;
 	},
 
+	//katex/mathjax render a formula twice: <math> plus a visual twin; we keep the math
+	_isMathVisualDuplicate: function (node) {
+		//in katex/mathjax the <math> is not a direct sibling of the twin but a level deeper,
+		var isMathHolder = function (elem) {
+			var arrMath = "math" === elem.nodeName.toLowerCase() ? [elem] : elem.getElementsByTagName("math");
+			for (var j = 0; j < arrMath.length; j++) {
+				if ("" !== trimString(arrMath[j].textContent || "")) {
+					return true;
+				}
+			}
+			return false;
+		};
+		var isVisualTwin = function (elem) {
+			var sClass = elem.getAttribute("class");
+			return (sClass && -1 !== (" " + sClass + " ").indexOf(" katex-html ")) ||
+				"true" === elem.getAttribute("aria-hidden");
+		};
+		if (!node || Node.ELEMENT_NODE !== node.nodeType || !node.getAttribute ||
+			!isVisualTwin(node) || isMathHolder(node)) {
+			return false;
+		}
+		var parent = node.parentNode;
+		if (!parent || Node.ELEMENT_NODE !== parent.nodeType) {
+			return false;
+		}
+		//drop the twin only if the formula itself is there to replace it
+		var bHasMath = false;
+		for (var i = 0; i < parent.childNodes.length; i++) {
+			var oChild = parent.childNodes[i];
+			if (Node.TEXT_NODE === oChild.nodeType) {
+				if (oChild.nodeValue && "" !== trimString(oChild.nodeValue)) {
+					return false;
+				}
+			} else if (Node.ELEMENT_NODE === oChild.nodeType) {
+				if (isMathHolder(oChild)) {
+					bHasMath = true;
+				} else if (!isVisualTwin(oChild)) {
+					return false;
+				}
+			}
+		}
+		return bHasMath;
+	},
+
 	_Execute: function (node, pPr, bRoot, bAddParagraph, bInBlock, arrShapes, arrImages, arrTables) {
 		//bAddParagraph flag affecting _Decide_AddParagraph function, whether to add paragraph or not.
 		//bAddParagraph is set to true when block element is encountered and at end of block element
@@ -13787,6 +13831,10 @@ PasteProcessor.prototype =
 					i = j;
 					continue;
 				}
+			}
+
+			if (oThis._isMathVisualDuplicate(child)) {
+				continue;
 			}
 
 			parseChildNodes();
