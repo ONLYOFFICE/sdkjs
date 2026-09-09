@@ -6025,7 +6025,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return false;
 	}
-	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
+	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula, localFormula) {
 		var activeCell = ws.getSelection().activeCell;
 		var bbox = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
 		// ToDo in parser formula
@@ -6073,18 +6073,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		};
 
-		forEachElementInRef(pushRanges, ref, ws, checkFormula);
+		forEachElementInRef(pushRanges, ref, ws, checkFormula, localFormula);
 		return ranges;
 	}
 
-	function forEachElementInRef(callback, ref, ws, checkFormula) {
+	function forEachElementInRef(callback, ref, ws, checkFormula, localFormula) {
 		//TODO calling check that this may be a print-only formula. need to check everywhere - for this need to review all related functionality
 		var isFormula;
 		if(checkFormula && ref) {
 			var parseResult = new AscCommonExcel.ParseResult([]);
 			var parsed = new AscCommonExcel.parserFormula(ref, null, ws);
-			parsed.parse(undefined, undefined, parseResult);
-			isFormula = parsed.calculate();
+			if (parsed.parse(localFormula, localFormula, parseResult)) {
+				isFormula = parsed.calculate();
+			}
 		}
 
 		if (isFormula && isFormula.type !== cElementType.error) {
@@ -6108,7 +6109,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 				var _f = new AscCommonExcel.parserFormula(refItem, null, ws);
 				var parseResult = new AscCommonExcel.ParseResult([]);
-				if (_f.parse(null, null, parseResult)) {
+				if (_f.parse(localFormula, localFormula, parseResult)) {
 					for (let i = 0; i < parseResult.refPos.length; i++) {
 						if (callback(parseResult.refPos[i])) {
 							break;

@@ -18126,7 +18126,8 @@
         if(!oWS) {
             return [];
         }
-        var aParsed = AscCommonExcel.getRangeByRef(_sFormula, oWS, undefined, true);
+        var aParsed = AscCommonExcel.getRangeByRef(_sFormula, oWS, undefined, true,
+            options && options.checkFormula, options && options.localFormula);
         for(var nParsed = aParsed.length - 1; nParsed > -1; nParsed--) {
             if(!aParsed[nParsed].bbox || !aParsed[nParsed].worksheet) {
                 aParsed.splice(nParsed, 1);
@@ -20239,7 +20240,7 @@
 		}
 	};
 
-    function isValidChartRange(sRange) {
+    function isValidChartRange(sRange, options) {
         if(sRange === "") {
             return Asc.c_oAscError.ID.No;
         }
@@ -20247,7 +20248,7 @@
         if(sRange[0] === "=") {
             sCheck = sRange.slice(1);
         }
-        var aRanges = AscFormat.fParseChartFormulaExternal(sCheck);
+        var aRanges = AscFormat.fParseChartFormulaExternal(sCheck, options);
         return (aRanges.length !== 0) ? Asc.c_oAscError.ID.No : Asc.c_oAscError.ID.DataRangeError;
     }
 

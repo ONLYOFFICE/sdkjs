@@ -4131,9 +4131,10 @@
 		{
 			if(dataRange)
 			{
-				if(Asc.c_oAscError.ID.No === AscFormat.isValidChartRange(dataRange))
+				let oOptions = {checkFormula: true, localFormula: true};
+				if(Asc.c_oAscError.ID.No === AscFormat.isValidChartRange(dataRange, oOptions))
 				{
-					range = AscFormat.fParseChartFormulaExternal(dataRange);
+					range = AscFormat.fParseChartFormulaExternal(dataRange, oOptions);
 				}
 			}
 		}
