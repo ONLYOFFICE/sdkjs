@@ -4253,19 +4253,7 @@ var CPresentation = CPresentation || function(){};
 			return false;
 		}
 
-		// when change annot props -> exit from FreeText annot textbox and select it.
-		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot) {
-			let oAcitveObj = this.GetActiveObject();
-			if (oAcitveObj && oAcitveObj.IsAnnot() && oAcitveObj.IsFreeText() && oAcitveObj.IsInTextBox()) {
-				this.BlurActiveObject();
-
-				let oController = this.GetController();
-				oController.selectObject(oAcitveObj, oAcitveObj.GetPage())
-				oController.selection.groupSelection = oAcitveObj;
-				oAcitveObj.selectedObjects = [oAcitveObj.GetTextBoxShape()];
-			}
-		}
-		else if (nDescription === AscDFH.historydescription_Presentation_ParagraphAdd) {
+		if (nDescription === AscDFH.historydescription_Presentation_ParagraphAdd) {
 			let oAcitveObj = this.GetActiveObject();
 			if (oAcitveObj && oAcitveObj.IsForm() && !this.IsEditFieldsMode()) {
 				return false;
@@ -4299,6 +4287,14 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.Remove_LastPoint();
         }
 
+		// first set global history
+		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot) {
+			let oAcitveObj = this.GetActiveObject();
+			if (oAcitveObj && oAcitveObj.IsAnnot() && oAcitveObj.IsFreeText() && oAcitveObj.IsInTextBox()) {
+				this.SetGlobalHistory();
+			}
+		}
+
         var isNewPoint = AscCommon.History.Create_NewPoint(nDescription, oSelectionState);
         
         if (oAdditional.objects) {
@@ -4327,6 +4323,19 @@ var CPresentation = CPresentation || function(){};
             // this.Action.Redraw.End      = undefined;
             this.Action.Additional      = {};
         }
+
+		// apply current text changes in free text annot
+		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot) {
+			let oAcitveObj = this.GetActiveObject();
+			if (oAcitveObj && oAcitveObj.IsAnnot() && oAcitveObj.IsFreeText() && oAcitveObj.IsInTextBox()) {
+				oAcitveObj.Blur(false);
+
+				let oController = this.GetController();
+				oController.selectObject(oAcitveObj, oAcitveObj.GetPage())
+				oController.selection.groupSelection = oAcitveObj;
+				oAcitveObj.selectedObjects = [oAcitveObj.GetTextBoxShape()];
+			}
+		}
 
         if ([AscDFH.historydescription_Pdf_ExecActions, AscDFH.historydescription_Pdf_ClickCheckbox, AscDFH.historydescription_Pdf_FieldCommit, AscDFH.historydescription_Pdf_FieldImportImage, AscDFH.historydescription_Document_PasteHotKey].includes(nDescription)) {
             this.CheckActionLock();
