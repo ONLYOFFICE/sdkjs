@@ -2103,6 +2103,125 @@
 		return this.Document.SetCalculateOrder(names);
 	};
 
+	/**
+	 * Splits current pdf file with specified pages.
+	 * @typeofeditors ["PDFE"]
+	 * @param {number[]} [indexes] - pages indexes for split (returns result for all pages if the parameter is omitted.)
+	 * @returns {PdfFile}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/Split.js
+	 */
+	ApiDocument.prototype.Split = function(indexes) {
+		if (undefined === indexes) {
+			indexes = [];
+			let nPagesCount = this.GetPagesCount();
+			for (let i = 0; i < nPagesCount; i++) {
+				indexes.push(i);
+			}
+		}
+
+		indexes = AscBuilder.GetArrayParameter(indexes, null);
+		if (!indexes) {
+			AscBuilder.throwException("The indexes parameter must be a valid array")
+		}
+
+		return new PdfFile(this.Document.GetPagesBinary(indexes, false));
+	};
+
+	/**
+	 * Merges pdf files to current document in specified position.
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} [position] - page index to merge pdf files (paste to end if omitted)
+	 * @param {number} [deleteCount=0] - number of existing pages to replace starting at position, limited to the remaining pages
+	 * @param {PdfFile[] | Base64[]} [files] - pdf files
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/Merge.js
+	 */
+	ApiDocument.prototype.Merge = function(position, deleteCount, files) {
+		let nPages = this.GetPagesCount();
+
+		position = AscBuilder.GetNumberParameter(position, nPages);
+		if (null == position || position % 1 !== 0 || position < 0 || position > nPages) {
+			AscBuilder.throwException("The position parameter must be a valid position");
+		}
+
+		deleteCount = AscBuilder.GetNumberParameter(deleteCount, 0);
+		if (deleteCount % 1 !== 0 || deleteCount < 0) {
+			AscBuilder.throwException("The deleteCount parameter must be a non-negative integer");
+		}
+		deleteCount = Math.min(deleteCount, nPages - position);
+
+		files = undefined === files ? [] : AscBuilder.GetArrayParameter(files, null);
+		if (!files) {
+			AscBuilder.throwException("The files parameter must be a valid array");
+		}
+
+		let binaries = files.map(function(file) {
+			if (file instanceof PdfFile) {
+				return file.Binary;
+			}
+
+			let base64 = AscBuilder.GetStringParameter(file, null);
+			if (!base64) {
+				AscBuilder.throwException("Each file must be a PdfFile object or a valid Base64 string");
+			}
+
+			return AscCommon.Base64.decode(base64);
+		});
+
+		for (let i = 0; i < binaries.length; i++) {
+			let nPagesBeforeMerge = this.GetPagesCount();
+			if (!this.Document.MergePagesBinary(position, binaries[i])) {
+				return false;
+			}
+
+			position += this.GetPagesCount() - nPagesBeforeMerge;
+		}
+
+		if (deleteCount > 0) {
+			for (let i = 0; i < deleteCount; i++) {
+				this.RemovePage(position);
+			}
+		}
+
+		return true;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// PdfFile
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a pdf file in binary format.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function PdfFile(binaryData) {
+		this.Binary = binaryData;
+	}
+
+	/**
+	 * Returns a type of the PdfFile class.
+	 * @memberof PdfFile
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"pdfFile"}
+	 * @see office-js-api/Examples/{Editor}/PdfFile/Methods/GetClassType.js
+	 */
+	PdfFile.prototype.GetClassType = function() {
+		return "pdfFile";
+	};
+
+	/**
+	 * Returns pdf file in base64 format.
+	 * @memberof PdfFile
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Base64}
+	 * @see office-js-api/Examples/{Editor}/PdfFile/Methods/ToBase64.js
+	 */
+	PdfFile.prototype.ToBase64 = function() {
+		return AscCommon.Base64.encode(this.Binary, 0, this.Binary.length);
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -12064,6 +12183,12 @@
 	ApiDocument.prototype["GetSelectedText"]				= ApiDocument.prototype.GetSelectedText;
 	ApiDocument.prototype["GetCalculateOrder"]				= ApiDocument.prototype.GetCalculateOrder;
 	ApiDocument.prototype["SetCalculateOrder"]				= ApiDocument.prototype.SetCalculateOrder;
+	ApiDocument.prototype["Split"]							= ApiDocument.prototype.Split;
+	ApiDocument.prototype["Merge"]							= ApiDocument.prototype.Merge;
+
+	// PdfFile
+	PdfFile.prototype["GetClassType"]						= PdfFile.prototype.GetClassType;
+	PdfFile.prototype["ToBase64"]							= PdfFile.prototype.ToBase64;
 
 	// ApiPage
 	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;
