@@ -3427,15 +3427,19 @@ function isAllowPasteLink(pastedWb) {
 			let horizontalCentered = pageOptions && pageOptions.asc_getHorizontalCentered();
 			let verticalCentered = pageOptions && pageOptions.asc_getVerticalCentered();
 			if (horizontalCentered) {
-				let _offset = (pageWidthWithoutFieldsHeadings - realPageWidth) / 2;
-				_page.pageClipRectLeft += _offset;
-				_page.leftFieldInPx += _offset;
+				let _offset = (pageWidthWithoutFieldsHeadings - (realPageWidth + _page.titleWidth)) / 2;
+				if (_offset > 0) {
+					_page.pageClipRectLeft += _offset;
+					_page.leftFieldInPx += _offset;
+				}
 			}
 
 			if (verticalCentered) {
-				let _offset = (pageHeightWithoutFieldsHeadings - realPageHeight) / 2;
-				_page.pageClipRectTop += _offset;
-				_page.topFieldInPx += _offset;
+				let _offset = (pageHeightWithoutFieldsHeadings - (realPageHeight + _page.titleHeight)) / 2;
+				if (_offset > 0) {
+					_page.pageClipRectTop += _offset;
+					_page.topFieldInPx += _offset;
+				}
 			}
 		};
 
