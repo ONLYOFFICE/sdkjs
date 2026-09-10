@@ -529,14 +529,11 @@
 
     CPdfFormRoles.prototype.CanFillField = function (field) {
         let role = this.GetRoleByField(field);
-        if (!role) return true;
+        if (!role || !this.CurrentNoRole && this.CurrentRole == null) return true;
 		
 		let oDoc = this.document;
 		if (oDoc.IsFillingFormMode()) {
 			return !this.CurrentNoRole && this.CurrentRole != null && this.CurrentRole.GetId() === role.GetId();
-		}
-		else if (Asc.editor.IsCommentsMode()) {
-			return !this.CurrentNoRole && role.IsDefault();
 		}
     };
 

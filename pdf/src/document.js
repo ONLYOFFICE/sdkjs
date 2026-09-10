@@ -8908,9 +8908,6 @@ var CPresentation = CPresentation || function(){};
 			if (this.IsFillingFormMode() && (!this.activeForm || this.activeForm && false === this.GetFormRoles().CanFillField(this.activeForm))) {
 				return true;
 			}
-			else if (this.IsCommentsMode() && this.activeForm && false === this.GetFormRoles().CanFillField(this.activeForm)) {
-				return true;
-			}
 		}
 
         AscCommon.CollaborativeEditing.OnStart_CheckLock();
