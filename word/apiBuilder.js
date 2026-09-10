@@ -16907,7 +16907,7 @@
 			styleId = style.Style.Get_Id();
 		}
 		else
-			return;
+			return this;
 
 		let _style = private_GetLogicDocument().GetStyles().Get(styleId);
 		if (!_style || _style.Get_Type() !== styletype_Character)
@@ -17761,7 +17761,7 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {?(ApiStyle | string)} style - The style of the paragraph to be set, or the name of an existing style, or <em>undefined</em>/<em>null</em> to remove the style.
-	 * @returns {boolean}
+	 * @returns {ApiParaPr} this paragraph properties.
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetStyle.js
 	 */
 	ApiParaPr.prototype.SetStyle = function(style)
@@ -17770,7 +17770,7 @@
 		{
 			this.ParaPr.PStyle = undefined;
 			this.private_OnChange();
-			return true;
+			return this;
 		}
 
 		let styleId;
@@ -17785,7 +17785,7 @@
 			styleId = style.Style.Get_Id();
 		}
 		else
-			return false;
+			return this;
 		
 		let _style = private_GetLogicDocument().GetStyles().Get(styleId);
 		if (!_style || _style.Get_Type() !== styletype_Paragraph)
@@ -17793,7 +17793,7 @@
 
 		this.ParaPr.PStyle = styleId;
 		this.private_OnChange();
-		return true;
+		return this;
 	};
 	/**
 	 * Returns the paragraph style method.
