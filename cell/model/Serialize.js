@@ -5764,7 +5764,7 @@
 			if (null != dataValidation.list) {
 				this.memory.WriteByte(c_oSer_DataValidation.List);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(dataValidation.list);
+				this.memory.WriteString2(dataValidation.list.text);
 			}
 		};
 		this.WriteSheetProtection = function(sheetProtection)

@@ -174,19 +174,14 @@
 		}
 
 		const toListPreview = function (data) {
-			const parts = data.val
-				.split(/[,]/g)
-				.map(function (s) {
-					return s.trim();
-				})
-				.filter(Boolean);
+			const parts = data.val.split(/[,]/g);
 
 			if (parts.length > 1) {
 				t.asc_setValue(parts.join(AscCommon.FormulaSeparators.functionArgumentSeparator));
 				return;
 			}
 
-			t.asc_setValue((parts[0] || data.val).trim());
+			t.asc_setValue(parts[0] !== undefined ? parts[0] : data.val);
 		}
 
 		// fix the text from quotes
@@ -250,14 +245,6 @@
 		return AscCommonExcel.UndoRedoDataTypes.DataValidationInner;
 	};
 	CDataValidation.prototype._init = function (ws, doNotBuildDependencies) {
-		//list convert to formula
-		if (this.list) {
-			if (!this.formula1 && !this.formula2) {
-				this.formula1 = this.list;
-			}
-			this.list = null;
-		}
-
 		if (this.formula1) {
 			this.formula1._init(ws, null, doNotBuildDependencies);
 		}
@@ -295,6 +282,7 @@
 		res.promptTitle = this.promptTitle;
 		res.formula1 = this.formula1 ? this.formula1.clone() : null;
 		res.formula2 = this.formula2 ? this.formula2.clone() : null;
+		res.list = this.list ? this.list.clone() : null;
 		if (needSaveId) {
 			res.Id = this.Id;
 		}
@@ -341,7 +329,7 @@
 		if (errorEqual) {
 			if (obj.allowBlank === this.allowBlank && obj.showDropDown === this.showDropDown && obj.showInputMessage === this.showInputMessage) {
 				if (obj.type === this.type && obj.imeMode === this.imeMode && obj.operator === this.operator && obj.prompt === this.prompt) {
-					if (obj.promptTitle === this.promptTitle && compareFormulas(obj.formula1, this.formula1) && compareFormulas(obj.formula2, this.formula2)) {
+					if (obj.promptTitle === this.promptTitle && compareFormulas(obj.formula1, this.formula1) && compareFormulas(obj.formula2, this.formula2) && compareFormulas(obj.list, this.list)) {
 						return true;
 					}
 				}
@@ -419,6 +407,13 @@
 		} else {
 			writer.WriteBool(false);
 		}
+
+		if (null != this.list) {
+			writer.WriteBool(true);
+			this.list.Write_ToBinary2(writer);
+		} else {
+			writer.WriteBool(false);
+		}
 	};
 	CDataValidation.prototype.Read_FromBinary2 = function (reader) {
 		if (reader.GetBool()) {
@@ -466,6 +461,11 @@
 			obj = new CDataFormula();
 			obj.Read_FromBinary2(reader);
 			this.formula2 = obj;
+		}
+		if (reader.GetBool()) {
+			obj = new CDataFormula();
+			obj.Read_FromBinary2(reader);
+			this.list = obj;
 		}
 	};
 	CDataValidation.prototype.setSqRef = function (sqRef) {
@@ -631,11 +631,76 @@
 		}
 		return false;
 	};
-	CDataValidation.prototype._getListValues = function (ws) {
-		var aValue, aData;
 
-		var f = this.formula1;
-		var offset;
+	function parseX12acList(str) {
+		// ',' — <x12ac:list> always uses comma as the item separator, regardless of locale
+		const protectCommas = AscCommon.FormulaSeparators.functionArgumentSeparator !== ",";
+		const items = [];
+		let currentArgument = "";
+		let inQuotes = false;
+
+		for (let i = 0; i < str.length; i++) {
+			const ch = str[i];
+
+			if (ch === '"') {
+				if (inQuotes && str[i + 1] === '"') {
+					// The escaped quote is part of the value in both locales
+					currentArgument += '"';
+					++i;
+				} else {
+					// The structural quotation mark is not included in the value
+					inQuotes = !inQuotes;
+				}
+			} else if (ch === "," && (!protectCommas || !inQuotes)) {
+				// inQuotes is not reset here
+				// in locales with "," separator, the separator can be inside the string.
+				items.push(currentArgument);
+				currentArgument = "";
+			} else {
+				currentArgument += ch;
+			}
+		}
+
+		// Empty, repeated and whitespace-only items are part of the validation list.
+		// Do not normalize data while decoding the file representation.
+		items.push(currentArgument);
+		return items;
+	}
+
+	function needsX12acQuote(value) {
+		// ',' is the invariant <x12ac:list> separator and '"' is its structural quote
+		// an item containing either can't be stored in formula1 unambiguously
+		return typeof value === "string" && (value.indexOf(",") !== -1 || value.indexOf("\"") !== -1);
+	}
+
+	function buildX12acList(items) {
+		// <x12ac:list> always uses the invariant ',' separator. The local UI
+		// separator must never leak into the file representation.
+		// quoting items that need protection and escaping inner '"' as '""'
+		return items.map(function (item) {
+			return needsX12acQuote(item) ? "\"" + item.replace(/\"/g, "\"\"") + "\"" : item;
+		}).join(",");
+	}
+
+	CDataValidation.prototype._getListValues = function (ws) {
+		let aValue, aData;
+
+		// Modern versions of OOXML use the <x12ac:list> tag inside this block 
+		// to serialize explicit inline data validation lists containing complex text or floating-point decimals natively
+		// So we use .list text as proirity over a .formula text value
+		if (this.list && this.type === Asc.EDataValidationType.List) {
+			let listText = "";
+			if (this.list && this.list.text != null) {
+				listText = this.list.text;
+				let parseTextArray = parseX12acList(listText);
+				if (parseTextArray && parseTextArray.length > 0) {
+					return [parseTextArray, aData];
+				}
+			}
+		}
+
+		let f = this.formula1;
+		let offset;
 		if (f && f._formula) {
 			//if the formula contains references to ranges, they need to be shifted depending on the active area
 			offset = this.calculateOffset(ws);
@@ -644,22 +709,10 @@
 			}
 		}
 
-		var list = f && f.getValue(ws, false, null, offset);
+		let list = f && f.getValue(ws, false, null, offset);
 		if (list && AscCommonExcel.cElementType.error !== list.type) {
 			if (AscCommonExcel.cElementType.string === list.type) {
 				aValue = list.getValue().split(AscCommon.FormulaSeparators.functionArgumentSeparatorDef);
-				if (aValue && aValue.length) {
-					for (var i = 0; i < aValue.length; i++) {
-						//trim only at the beginning of the string
-						if (aValue[i] && aValue[i].length) {
-							var pos = 0;
-							while ((pos < aValue[i].length) && (aValue[i][pos] == ' ')) {
-								++pos;
-							}
-							aValue[i] = pos ? aValue[i].substr(pos) : aValue[i];
-						}
-					}
-				}
 			} else if (AscCommonExcel.cElementType.array === list.type) {
 				let seenValues = {};
 				aValue = [];
@@ -1145,6 +1198,12 @@
 	};
 
 	CDataValidation.prototype.correctToInterface = function (ws) {
+		if (this.type === Asc.EDataValidationType.List && this.list && typeof this.list.text === "string") {
+			// rework formula if we have x12list already - unusual separator
+			this.formula1 = new CDataFormula(parseX12acList(this.list.text).join(
+				AscCommon.FormulaSeparators.functionArgumentSeparator
+			));
+		} 
 		if (this.formula1) {
 			this.formula1.correctToInterface(ws, this);
 		}
@@ -1154,29 +1213,45 @@
 	};
 
 	CDataValidation.prototype.correctFromInterface = function (ws) {
-		var t = this;
+		const t = this;
+		const uiSep = AscCommon.FormulaSeparators.functionArgumentSeparator;
+		const defSep = AscCommon.FormulaSeparators.functionArgumentSeparatorDef;
 
-		var addQuotes = function (_val) {
-			var _res;
-			if (_val[0] === '"') {
-				_res = _val.replace(/\"/g, "\"\"");
-				_res = "\"" + _res + "\"";
-			} else {
-				_res = "\"" + _val + "\"";
-			}
-			return _res;
+		const addQuotes = function (_val) {
+			return "\"" + _val.replace(/\"/g, "\"\"") + "\"";
 		};
 
-		var doCorrect = function (_formula) {
-			var _val = _formula.text;
-			var isNumeric = isNum(_val);
+		const doCorrect = function (_formula) {
+			let _val = _formula.text;
+			const isListFormula1 = t.type === Asc.EDataValidationType.List && _formula === t.formula1;
+			const isNumeric = isNum(_val);
+			
+			if (isListFormula1 && typeof _val === "string" && _val[0] !== "=") {
+				// Resolve item boundaries while the local separator is still available.
+				// Both OOXML representations are then built independently from the
+				// same lossless array of logical values.
+				const itemsArray = _val.split(uiSep);
+
+				t.list = (uiSep && defSep && uiSep !== defSep) 
+					? new CDataFormula(buildX12acList(itemsArray)) 
+					: null;
+
+				_formula.text = addQuotes(itemsArray.join(defSep));
+				return;
+			}
+
+			if (isListFormula1) {
+				// A range/formula source must not retain a stale inline x12ac:list.
+				t.list = null;
+			}
+
+			
 			if (isNumeric) {
 				if (t.type === Asc.EDataValidationType.List) {
 					_formula.text = '"' + _formula.text + '"';
 				}
 			} else {
-				var isDate;
-				var isFormula;
+				let isDate, isFormula, _tempFormula;
 				if (!isNumeric) {
 					if (_val[0] === "=") {
 						_val = _val.slice(1);
@@ -1189,7 +1264,7 @@
 							_formula.text = _val;
 							return;
 						}
-						var _tempFormula = new CDataFormula(_val);
+						_tempFormula = new CDataFormula(_val);
 						isFormula = _tempFormula.getValue(ws, null, true);
 					} else if (t.type !== Asc.EDataValidationType.List) {
 						isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
@@ -1202,21 +1277,6 @@
 					return;
 				}
 
-				if (t.type === Asc.EDataValidationType.List && typeof _formula.text === "string" && _formula.text[0] !== "=") {
-					const uiSep = AscCommon.FormulaSeparators.functionArgumentSeparator;
-					const defSep = AscCommon.FormulaSeparators.functionArgumentSeparatorDef;
-
-					if (uiSep && defSep && uiSep !== defSep) {
-						_formula.text = _formula.text
-							.split(uiSep)
-							.map(function(s) {
-								return s.trim();
-							})
-							.filter(Boolean)
-							.join(defSep);
-					}
-				}
-
 				if (!isFormula) {
 					_formula.text = addQuotes(_formula.text);
 				} else if (_tempFormula && _tempFormula._formula) {
@@ -1224,6 +1284,10 @@
 				}
 			}
 		};
+
+		if (this.type !== Asc.EDataValidationType.List) {
+			this.list = null;
+		}
 
 		if (this.formula1) {
 			doCorrect(this.formula1);

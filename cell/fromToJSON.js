@@ -2771,6 +2771,7 @@
 		return {
 			"formula1": oDataValidation.formula1 != null ? this.SerFormula(oDataValidation.formula1) : undefined,
 			"formula2": oDataValidation.formula2 != null ? this.SerFormula(oDataValidation.formula2) : undefined,
+			"list":     oDataValidation.list != null ? this.SerFormula(oDataValidation.list) : undefined,
 
 			"allowBlank":       oDataValidation.allowBlank != null ? oDataValidation.allowBlank : undefined,
 			"error":            oDataValidation.error != null ? oDataValidation.error : undefined,
@@ -5503,6 +5504,8 @@
 			oDataValidation.formula1 = new Asc.CDataFormula(oParsed["formula1"]);
 		if (oParsed["formula2"] != null)
 			oDataValidation.formula2 = new Asc.CDataFormula(oParsed["formula2"]);
+		if (oParsed["list"] != null)
+			oDataValidation.list = new Asc.CDataFormula(oParsed["list"]);
 
 		return oDataValidation;
 	};
