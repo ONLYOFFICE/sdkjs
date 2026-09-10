@@ -4407,6 +4407,9 @@ function isAllowPasteLink(pastedWb) {
 			let pageWidth, pageHeight;
 			//increase clipping area by half the maximum border size - the maximum protruding part beyond the sheet
 			let borderDiff = 2;//Math.ceil(1.5)
+			//the printScale transform in doDraw runs only for contexts exposing .Transform (CPdfPrinter);
+			//print preview draws on a DrawingContext and already has the scale in the editor zoom
+			let titleDiv = (printScale !== 1 && drawingCtx.Transform) ? printScale : 1;
 			if(printPagesData.titleRowRange || printPagesData.titleColRange) {
 				if(printPagesData.titleRowRange && printPagesData.titleColRange){
 					clipLeft = printPagesData.pageClipRectLeft - borderDiff;
@@ -4434,7 +4437,7 @@ function isAllowPasteLink(pastedWb) {
 					clipWidthShape = pageWidth;
 					clipHeightShape = printPagesData.titleHeight;
 
-					doDraw(printPagesData.titleRowRange, printPagesData.titleWidth/printScale, 0);
+					doDraw(printPagesData.titleRowRange, printPagesData.titleWidth/titleDiv, 0);
 				}
 				if(printPagesData.titleColRange){
 					clipLeft = printPagesData.pageClipRectLeft - borderDiff;
@@ -4449,7 +4452,7 @@ function isAllowPasteLink(pastedWb) {
 					clipWidthShape = printPagesData.titleWidth;
 					clipHeightShape = pageHeight;
 
-					doDraw(printPagesData.titleColRange, 0, printPagesData.titleHeight/printScale);
+					doDraw(printPagesData.titleColRange, 0, printPagesData.titleHeight/titleDiv);
 				}
 
 				pageWidth = (t.getCellLeft(printPagesData.pageRange.c2 + 1, 0) - t.getCellLeft(printPagesData.pageRange.c1, 0)) * printScale;
@@ -4465,7 +4468,7 @@ function isAllowPasteLink(pastedWb) {
 				clipWidthShape = pageWidth;
 				clipHeightShape = pageHeight;
 
-				doDraw(printPagesData.pageRange, printPagesData.titleWidth/printScale, printPagesData.titleHeight/printScale);
+				doDraw(printPagesData.pageRange, printPagesData.titleWidth/titleDiv, printPagesData.titleHeight/titleDiv);
 			} else {
 				//pageClipRectWidth - page width without considering the changed (*scale) header - as at 100%
 				//therefore in calculations we subtract the header size as at 100%
