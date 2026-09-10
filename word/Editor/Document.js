@@ -8276,6 +8276,32 @@ CDocument.prototype.SelectCurrentWord = function()
 	return true;
 };
 /**
+ * Select current sentence where cursor is placed
+ * @returns {boolean}
+ */
+CDocument.prototype.SelectCurrentSentence = function()
+{
+	if (this.IsSelectionUse() && !this.IsTextSelectionUse())
+		return false;
+
+	if (this.IsSelectionUse())
+		this.RemoveSelection();
+
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return false;
+
+	paragraph.SelectCurrentSentence();
+
+	if (this.IsSelectionEmpty())
+	{
+		this.RemoveSelection();
+		return false;
+	}
+
+	return true;
+};
+/**
  * Выделяем все элементы в заданном диапазоне
  * @param {number} nStartPos
  * @param {number} nEndPos

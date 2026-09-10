@@ -10058,6 +10058,18 @@
 		return this.Document.SelectCurrentWord();
 	};
 	/**
+	 * Selects the current sentence if it is possible.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SelectCurrentSentence.js
+	 */
+	ApiDocument.prototype.SelectCurrentSentence = function()
+	{
+		return this.Document.SelectCurrentSentence();
+	};
+	/**
 	 * Adds a comment to the current document selection, or to the current word if no text is selected.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -10869,16 +10881,19 @@
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @see Same as {@link ApiParagraph#SetNumPr}
-	 * @param {ApiNumberingLevel} oNumberingLevel - The numbering level which will be used for assigning the numbers to the paragraph.
+	 * @param {?ApiNumberingLevel} numberingLevel - The numbering level which will be used for assigning the numbers to the paragraph, or <em>undefined</em>/<em>null</em> to remove numbering.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetNumbering.js
 	 */
-	ApiParagraph.prototype.SetNumbering = function(oNumberingLevel)
+	ApiParagraph.prototype.SetNumbering = function(numberingLevel)
 	{
-		if (!(oNumberingLevel instanceof ApiNumberingLevel))
+		if (undefined === numberingLevel || null === numberingLevel)
+			return this.SetNumPr(undefined);
+
+		if (!(numberingLevel instanceof ApiNumberingLevel))
 			return false;
 
-		this.SetNumPr(oNumberingLevel.GetNumbering(), oNumberingLevel.GetLevelIndex());
+		this.SetNumPr(numberingLevel.GetNumbering(), numberingLevel.GetLevelIndex());
 		return true;
 	};
 	/**
@@ -16867,16 +16882,38 @@
 	 * the selected or created style to the text.</note>
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiStyle} oStyle - The style which must be applied to the text character.
+	 * @param {?(ApiStyle | string)} style - The style which must be applied to the text character, or the name of an existing style, or <em>undefined</em>/<em>null</em> to remove the style.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetStyle.js
 	 */
-	ApiTextPr.prototype.SetStyle = function(oStyle)
+	ApiTextPr.prototype.SetStyle = function(style)
 	{
-		if (!(oStyle instanceof ApiStyle))
+		if (undefined === style || null === style)
+		{
+			this.TextPr.RStyle = undefined;
+			this.private_OnChange();
+			return this;
+		}
+
+		let styleId;
+		if ("string" === typeof style)
+		{
+			styleId = private_GetLogicDocument().GetStyles().GetStyleIdByName(style);
+			if (!styleId)
+				throwException(new Error("Style \"" + style + "\" does not exist"));
+		}
+		else if (style && style instanceof ApiStyle)
+		{
+			styleId = style.Style.Get_Id();
+		}
+		else
 			return;
 
-		this.TextPr.RStyle = oStyle.Style.Get_Id();
+		let _style = private_GetLogicDocument().GetStyles().Get(styleId);
+		if (!_style || _style.Get_Type() !== styletype_Character)
+			throwException(new Error("Style \"" + style + "\" is not a character style"));
+
+		this.TextPr.RStyle = styleId;
 		this.private_OnChange();
 		return this;
 	};
@@ -17723,16 +17760,38 @@
 	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.</note>
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiStyle} oStyle - The style of the paragraph to be set.
+	 * @param {?(ApiStyle | string)} style - The style of the paragraph to be set, or the name of an existing style, or <em>undefined</em>/<em>null</em> to remove the style.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetStyle.js
 	 */
-	ApiParaPr.prototype.SetStyle = function(oStyle)
+	ApiParaPr.prototype.SetStyle = function(style)
 	{
-		if (!oStyle || !(oStyle instanceof ApiStyle))
-			return false;
+		if (undefined === style || null === style)
+		{
+			this.ParaPr.PStyle = undefined;
+			this.private_OnChange();
+			return true;
+		}
 
-		this.ParaPr.PStyle = oStyle.Style.Get_Id();
+		let styleId;
+		if ("string" === typeof style)
+		{
+			styleId = private_GetLogicDocument().GetStyles().GetStyleIdByName(style);
+			if (!styleId)
+				throwException(new Error("Style \"" + style + "\" does not exist"));
+		}
+		else if (style && style instanceof ApiStyle)
+		{
+			styleId = style.Style.Get_Id();
+		}
+		else
+			return false;
+		
+		let _style = private_GetLogicDocument().GetStyles().Get(styleId);
+		if (!_style || _style.Get_Type() !== styletype_Paragraph)
+			throwException(new Error("Style \"" + style + "\" is not a paragraph style"));
+
+		this.ParaPr.PStyle = styleId;
 		this.private_OnChange();
 		return true;
 	};
@@ -18501,24 +18560,31 @@
 	 * Specifies that the current paragraph references a numbering definition instance in the current document.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiNumbering} oNumPr - Specifies a numbering definition.
-	 * @param {number} [nLvl=0] - Specifies a numbering level reference. If the current instance of the ApiParaPr class is direct
+	 * @param {?ApiNumbering} numPr - Specifies a numbering definition, or <em>undefined</em>/<em>null</em> to remove numbering.
+	 * @param {number} [lvl=0] - Specifies a numbering level reference. If the current instance of the ApiParaPr class is direct
 	 * formatting of a paragraph, then this parameter MUST BE specified. Otherwise, if the current instance of the ApiParaPr class
 	 * is the part of ApiStyle properties, this parameter will be ignored.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetNumPr.js
 	 */
-	ApiParaPr.prototype.SetNumPr = function(oNumPr, nLvl)
+	ApiParaPr.prototype.SetNumPr = function(numPr, lvl)
 	{
-		if (!(oNumPr instanceof ApiNumbering))
+		if (undefined === numPr || null === numPr)
+		{
+			this.ParaPr.NumPr = undefined;
+			this.private_OnChange();
+			return true;
+		}
+
+		if (!(numPr instanceof ApiNumbering))
 			return false;
 
-		let numId  = oNumPr.Num.GetId();
+		let numId  = numPr.Num.GetId();
 		let numLvl = undefined;
-		
+
 		if (this.Parent instanceof ApiParagraph)
-			numLvl = Math.min(8, Math.max(0, (nLvl ? nLvl : 0)));
-		
+			numLvl = Math.min(8, Math.max(0, (lvl ? lvl : 0)));
+
 		this.ParaPr.NumPr = new AscWord.NumPr(numId, numLvl);
 		this.private_OnChange();
 		return true;
@@ -32161,6 +32227,7 @@
 	ApiDocument.prototype["GetCurrentWord"]                = ApiDocument.prototype.GetCurrentWord;
 	ApiDocument.prototype["ReplaceCurrentWord"]            = ApiDocument.prototype.ReplaceCurrentWord;
 	ApiDocument.prototype["SelectCurrentWord"]             = ApiDocument.prototype.SelectCurrentWord;
+	ApiDocument.prototype["SelectCurrentSentence"]         = ApiDocument.prototype.SelectCurrentSentence;
 	ApiDocument.prototype["AddComment"]                    = ApiDocument.prototype.AddComment;
 	ApiDocument.prototype["GetCurrentSentence"]            = ApiDocument.prototype.GetCurrentSentence;
 	ApiDocument.prototype["ReplaceCurrentSentence"]        = ApiDocument.prototype.ReplaceCurrentSentence;

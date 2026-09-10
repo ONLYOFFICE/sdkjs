@@ -18612,6 +18612,29 @@ Paragraph.prototype.private_GetCurrentWordParaPos = function()
 	};
 };
 /**
+ * Select current sentence where cursor is placed
+ * @returns {boolean}
+ */
+Paragraph.prototype.SelectCurrentSentence = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	
+	if (logicDocument)
+		logicDocument.RemoveSelection();
+	else
+		this.RemoveSelection();
+	
+	let posInfo = this.private_GetCurrentSentenceParaPos();
+	if (!posInfo)
+		return false;
+
+	this.Selection.Use = true;
+	this.Set_SelectionContentPos(posInfo.Start, posInfo.End);
+	this.Document_SetThisElementCurrent();
+
+	return true;
+};
+/**
  * Получаем текущее слово (или часть текущего слова)
  * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
  * @returns {string}
