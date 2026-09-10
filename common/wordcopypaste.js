@@ -13050,6 +13050,22 @@ PasteProcessor.prototype =
 			return true;
 		};
 
+		//br inside a table cell means a line break in the same cell, not a new row
+		let isInsideTableCell = function (node) {
+			let parent = node && node.parentNode;
+			while (parent && Node.ELEMENT_NODE === parent.nodeType) {
+				let sName = parent.nodeName && parent.nodeName.toLowerCase();
+				if ("td" === sName || "th" === sName) {
+					return true;
+				}
+				if ("table" === sName || "body" === sName) {
+					return false;
+				}
+				parent = parent.parentNode;
+			}
+			return false;
+		};
+
 		var parseLineBreak = function () {
 			if (bPresentation) {
 				//Add linebreak if it doesn't separate block elements and there was block element before
@@ -13147,6 +13163,9 @@ PasteProcessor.prototype =
 									let msoDataPlacement = msoBrClass.getAttributeByName("mso-data-placement");
 									bSameCell = msoDataPlacement != null && trimString(msoDataPlacement) === "same-cell";
 								}
+							}
+							if (!bSameCell) {
+								bSameCell = isInsideTableCell(node);
 							}
 							breakLine.Flags.sameCell = bSameCell;
 						}
