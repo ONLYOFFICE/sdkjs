@@ -3409,6 +3409,7 @@
 						oShape.checkExtentsByDocContent();
 						isNeedRecalculate = true;
 					}
+					oThis.setSavedRealContentState(content, selectProps.idx, selectProps.count, selectProps.direction);
 				} else if (!e.ShiftKey) {
 					if (oShape.isGeneralTitle()) {
 						const sourceParagraph = content.GetCurrentParagraph() || content.Content[0];
