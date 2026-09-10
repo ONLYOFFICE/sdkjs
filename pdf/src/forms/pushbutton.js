@@ -2101,7 +2101,7 @@
 	};
 	CPushButtonField.prototype.asc_OnShowSignature = function() {
 		let oDoc = this.GetDocument();
-		if (!this.IsOOSignature() || !this.IsInForm() || !oDoc.GetFormRoles().CanFillField(this)) {
+		if (!this.IsOOSignature() || !this.IsInForm() || !oDoc.GetFormRoles().CanFillField(this) || this.IsReadOnly()) {
 			return;
 		}
 
