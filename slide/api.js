@@ -9715,6 +9715,23 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_notePageOrientation = function (value) {
 		this.sendEvent("asc_onNotePageOrientation", value);
 	};
+	asc_docs_api.prototype.updateSelection = function () {
+		let pres = this.private_GetLogicDocument();
+		if (!pres)
+			return;
+
+		this.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
+		pres.RecalculateCurPos();
+		pres.UpdateSelection();
+	};
+	asc_docs_api.prototype.scrollToTarget = function () {
+		let pres = this.private_GetLogicDocument();
+		if (!pres)
+			return;
+
+		this.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
+		pres.RecalculateCurPos(true, true);
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};

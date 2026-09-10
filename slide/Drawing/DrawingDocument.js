@@ -1101,6 +1101,12 @@ function CDrawingDocument()
 		this.m_dTargetX = x;
 		this.m_dTargetY = y;
 
+		if (this.m_oWordControl.m_oApi.isLockScrollToTarget)
+		{
+			this.CheckTargetDraw(x, y, focusType);
+			return;
+		}
+
 		if (focusType === FOCUS_OBJECT_MAIN)
 		{
 			// focus ton slide

@@ -3133,6 +3133,9 @@ CPresentation.prototype.RecalculateOutlineCurPos = function (bUpdateX, bUpdateY)
 	return false;
 };
 CPresentation.prototype.RecalculateCurPos = function (bUpdateX, bUpdateY) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	if (!this.RecalculateOutlineCurPos(bUpdateX, bUpdateY)) {
 		var oController = this.GetCurrentController();
 		if (oController) {
@@ -4535,6 +4538,9 @@ CPresentation.prototype.Remove = function (Count, bOnlyText, bRemoveOnlySelectio
 
 
 CPresentation.prototype.MoveCursorToStartPos = function (AddToSelect) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	var oController = this.GetCurrentController();
 	oController && oController.cursorMoveToStartPos(AddToSelect);
 	this.private_UpdateCursorXY(true, true);
@@ -4544,6 +4550,9 @@ CPresentation.prototype.MoveCursorToStartPos = function (AddToSelect) {
 };
 
 CPresentation.prototype.MoveCursorToEndPos = function (AddToSelect) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	var oController = this.GetCurrentController();
 	oController && oController.cursorMoveToEndPos(AddToSelect);
 	this.private_UpdateCursorXY(true, true);
@@ -4553,6 +4562,9 @@ CPresentation.prototype.MoveCursorToEndPos = function (AddToSelect) {
 };
 
 CPresentation.prototype.MoveCursorLeft = function (AddToSelect, Word) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	let oController = this.GetCurrentController();
 	if (oController) {
 		let isRtl = false;
@@ -4572,6 +4584,9 @@ CPresentation.prototype.MoveCursorLeft = function (AddToSelect, Word) {
 };
 
 CPresentation.prototype.MoveCursorRight = function (AddToSelect, Word) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	let oController = this.GetCurrentController();
 	if (oController) {
 		let isRtl = false;
@@ -4591,6 +4606,9 @@ CPresentation.prototype.MoveCursorRight = function (AddToSelect, Word) {
 };
 
 CPresentation.prototype.MoveCursorUp = function (AddToSelect, CtrlKey) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	var oController = this.GetCurrentController();
 	oController && oController.cursorMoveUp(AddToSelect, CtrlKey);
 	this.private_UpdateCursorXY(true, true);
@@ -4599,6 +4617,9 @@ CPresentation.prototype.MoveCursorUp = function (AddToSelect, CtrlKey) {
 };
 
 CPresentation.prototype.MoveCursorDown = function (AddToSelect, CtrlKey) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	var oController = this.GetCurrentController();
 	oController && oController.cursorMoveDown(AddToSelect, CtrlKey);
 	this.private_UpdateCursorXY(true, true);
@@ -4607,6 +4628,9 @@ CPresentation.prototype.MoveCursorDown = function (AddToSelect, CtrlKey) {
 };
 
 CPresentation.prototype.MoveCursorToEndOfLine = function (AddToSelect) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	var oController = this.GetCurrentController();
 	oController && oController.cursorMoveEndOfLine(AddToSelect);
 	this.private_UpdateCursorXY(true, true);
@@ -4615,6 +4639,9 @@ CPresentation.prototype.MoveCursorToEndOfLine = function (AddToSelect) {
 };
 
 CPresentation.prototype.MoveCursorToStartOfLine = function (AddToSelect) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	var oController = this.GetCurrentController();
 	oController && oController.cursorMoveStartOfLine(AddToSelect);
 	this.private_UpdateCursorXY(true, true);
@@ -5126,6 +5153,8 @@ CPresentation.prototype.hideSlides = function (isHide, aSlides) {
 
 
 CPresentation.prototype.SelectAll = function () {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
 
 	var oController = this.GetCurrentController();
 	if (oController) {
@@ -6246,6 +6275,8 @@ CPresentation.prototype.CheckEmptyPlaceholderNotes = function () {
 };
 
 CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
 
 	this.CurPage = PageIndex;
 
@@ -6320,6 +6351,9 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 };
 
 CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	e.ctrlKey = e.CtrlKey;
 	e.shiftKey = e.ShiftKey;
 	const nStartPage = this.CurPage;
@@ -6365,6 +6399,8 @@ CPresentation.prototype.IsSlideShow = function() {
 	return this.Api.isSlideShow();
 };
 CPresentation.prototype.OnMouseMove = function (e, X, Y, PageIndex) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
 
 	e.ctrlKey = e.CtrlKey;
 	e.shiftKey = e.ShiftKey;
@@ -6392,6 +6428,9 @@ CPresentation.prototype.OnMouseMove = function (e, X, Y, PageIndex) {
 };
 
 CPresentation.prototype.OnEndTextDrag = function (NearPos, bCopy) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	var oController = this.GetCurrentController();
 	if (!oController) {
 		return;
@@ -6561,6 +6600,9 @@ CPresentation.prototype.ResetFocusOnNotes = function () {
 };
 
 CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	// Reset the current element in search
 	this.CancelEyedropper();
 	this.CancelInkDrawer();
@@ -6621,6 +6663,9 @@ CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
 };
 
 CPresentation.prototype.Notes_OnMouseUp = function (e, X, Y) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	if (!this.IsFocusOnNotes()) {
 		return;
 	}
@@ -6645,6 +6690,9 @@ CPresentation.prototype.Notes_OnMouseUp = function (e, X, Y) {
 };
 
 CPresentation.prototype.Notes_OnMouseMove = function (e, X, Y) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
+
 	// if(!this.FocusOnNotes){
 	//     return;
 	// }
@@ -7154,6 +7202,9 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 	if (this.TurnOffInterfaceEvents) {
 		return;
 	}
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection()) {
+		return;
+	}
 	if (!this.Api) {
 		return;
 	}
@@ -7400,6 +7451,9 @@ CPresentation.prototype.Document_UpdateRulersState = function () {
 	if (this.TurnOffInterfaceEvents) {
 		return;
 	}
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection()) {
+		return;
+	}
 	let oController = this.GetCurrentController();
 	if (oController) {
 		var target_content = oController.getTargetDocContent(undefined, true);
@@ -7415,6 +7469,9 @@ CPresentation.prototype.Document_UpdateRulersState = function () {
 // Update rulers
 CPresentation.prototype.Document_UpdateSelectionState = function () {
 	if (this.TurnOffInterfaceEvents) {
+		return;
+	}
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection()) {
 		return;
 	}
 	if (this.IsFocusOnOutline()) {
