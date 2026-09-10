@@ -652,10 +652,6 @@
         if (this.GetContents() == contents)
             return;
 
-		if (this.IsInTextBox()) {
-			this.Blur(false);
-		}
-
         this.SetRichContents([{
 			"alignment": 0,
 			"bold": false,

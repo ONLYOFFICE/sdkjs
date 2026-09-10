@@ -3915,9 +3915,6 @@ var CPresentation = CPresentation || function(){};
             AscCommentData.asc_putQuoteText("");
         }
 
-        let oCurHistory = AscCommon.History;
-        AscCommon.History = this.History;
-
         let oActiveAnnot = this.mouseDownAnnot;
 
         let res = this.DoAction(function() {
@@ -4098,7 +4095,6 @@ var CPresentation = CPresentation || function(){};
             return oStickyComm;
         }, AscDFH.historydescription_Pdf_AddComment, this, oActiveAnnot ? [oActiveAnnot.GetId()] : undefined);
 
-        AscCommon.History = oCurHistory;
         return res;
     };
     CPDFDoc.prototype.convertPixToMM = function(pix) {
@@ -4299,7 +4295,10 @@ var CPresentation = CPresentation || function(){};
         }
 
 		// first set global history
-		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot) {
+		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot ||
+			nDescription === AscDFH.historydescription_Pdf_AddComment ||
+			nDescription === AscDFH.historydescription_Document_ChangeComment
+		) {
 			let oAcitveObj = this.GetActiveObject();
 			if (oAcitveObj && oAcitveObj.IsAnnot() && oAcitveObj.IsFreeText() && oAcitveObj.IsInTextBox()) {
 				this.SetGlobalHistory();
@@ -4336,7 +4335,10 @@ var CPresentation = CPresentation || function(){};
         }
 
 		// apply current text changes in free text annot
-		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot) {
+		if (nDescription === AscDFH.historydescription_Pdf_ChangeAnnot ||
+			nDescription === AscDFH.historydescription_Pdf_AddComment ||
+			nDescription === AscDFH.historydescription_Document_ChangeComment
+		) {
 			let oAcitveObj = this.GetActiveObject();
 			if (oAcitveObj && oAcitveObj.IsAnnot() && oAcitveObj.IsFreeText() && oAcitveObj.IsInTextBox()) {
 				oAcitveObj.Blur(false);
