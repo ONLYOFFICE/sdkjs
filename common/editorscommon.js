@@ -12500,10 +12500,14 @@
 
 					var _files = [];
 
-					var _options = {isImageCrypt: true, isUrls: true, callback: callback, ext: [], api: _editor};
+					var _options = {isImageCrypt: true, isUrls: true, callback: callback, ext: [], api: _editor, urls: urls, loaded: []};
 
 					for (var elem in files)
 					{
+						// request index of this download (the desktop may rewrite the url key -> positional)
+						var index = urls.indexOf(elem);
+						_options.loaded.push((-1 !== index) ? index : _files.length);
+
 						_files.push(AscCommon.CryptoProvider.getImageBase64(files[elem], true));
 						_options.ext.push(AscCommon.CryptoProvider.getImageFormat(files[elem]));
 						AscCommon.CryptoProvider.removeFile(files[elem]);
@@ -12512,6 +12516,27 @@
 					_this.sendChanges(this, _files, AscCommon.EncryptionMessageType.Encrypt, _options);
 				}
 			});
+		};
+
+		// UploadImageUrls result ([{path, url}] for the uploaded files, or an error code) -> one entry
+		// per requested url in request order; urls that were not downloaded/uploaded carry the
+		// 'error' marker, the same way sendImgUrls reports them for the server path.
+		this.alignImageUrls = function(result, options)
+		{
+			var out = [];
+			for (var i = 0; i < options.urls.length; i++)
+				out.push({ url : "error", path : "error" });
+
+			var count = 0;
+			if (Array.isArray(result))
+			{
+				count = Math.min(result.length, options.loaded.length);
+				for (var k = 0; k < count; k++)
+					out[options.loaded[k]] = result[k];
+			}
+			if (count < out.length)
+				options.api.sendEvent("asc_onError", Asc.c_oAscError.ID.UplImageUrl, Asc.c_oAscError.Level.NoCritical);
+			return out;
 		};
 
         this.onDecodeError = function()
@@ -12661,7 +12686,7 @@
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
-                            obj.options.callback(urls);
+                            obj.options.callback(AscCommon.EncryptionWorker.alignImageUrls(urls, obj.options));
                         });
 					}
 				}
