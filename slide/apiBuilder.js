@@ -9937,7 +9937,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @deprecated since 9.5.0 version.
+	 * @deprecated since 10.0.0 version.
 	 * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
 	 * @returns {boolean}
@@ -9968,7 +9968,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @deprecated since 9.5.0 version.
+	 * @deprecated since 10.0.0 version.
 	 * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
 	 * @returns {boolean}
@@ -9999,7 +9999,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @deprecated since 9.5.0 version.
+	 * @deprecated since 10.0.0 version.
 	 * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
 	 * @returns {boolean}
@@ -10030,7 +10030,7 @@
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * 
-	 * @deprecated since 9.5.0 version.
+	 * @deprecated since 10.0.0 version.
 	 * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
 	 * @returns {boolean}

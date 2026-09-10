@@ -9766,7 +9766,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @deprecated since 9.5.0 version.
+	 * @deprecated since 10.0.0 version.
 	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
 	 * @returns {ApiTableOfContents}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfContents.js
@@ -9791,7 +9791,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @deprecated since 9.5.0 version.
+	 * @deprecated since 10.0.0 version.
 	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
 	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
 	 * @param {boolean} [bReplace=true] - Specifies whether to replace the selected table of figures instead of adding a new one.
