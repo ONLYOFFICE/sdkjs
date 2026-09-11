@@ -733,9 +733,6 @@
      * @returns {canvas}
 	 */
     CAnnotationBase.prototype.GetOriginView = function(nPageW, nPageH) {
-        if (this.GetApIdx() == undefined)
-            return null;
-
         nPageW = Math.round(nPageW);
         nPageH = Math.round(nPageH);
 
@@ -1476,19 +1473,19 @@
         
         this._apIdx = nIdx;
     };
-    CAnnotationBase.prototype.GetApIdx = function() {
-        if (undefined !== this._apIdx) {
-            return this._apIdx;
-        }
-        else {
-            let nPos = Object.keys(AscCommon.g_oTableId.m_aPairs).indexOf(this.GetId());
-            if (-1 !== nPos) {
-                return Asc.editor.getPDFDoc().GetCurMaxApIdx() + nPos;
-            }
-            
-            return undefined;
-        }
-    };
+	CAnnotationBase.prototype.GetApIdx = function() {
+		if (undefined !== this._apIdx) {
+			return this._apIdx;
+		}
+		else {
+			let nApIdx = Asc.editor.getPDFDoc().GetCurMaxApIdx() + Number(this.GetId().replace("_", ""));
+			if (!isNaN(nApIdx)) {
+				nApIdx;
+			}
+			
+			return undefined;
+		}
+	};
     CAnnotationBase.prototype.IsFromOO = function() {
         return this._apIdx == undefined;
     };
