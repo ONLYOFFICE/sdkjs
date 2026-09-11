@@ -8558,12 +8558,9 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 		this.SetLocalTrackRevisions(false);
 	}
 
-	var bNeedTurnOffTableId = g_oTableId.IsOn() && true !== bUseHistory;
 	if (!bUseHistory)
-		History.TurnOff();
-
-	if (bNeedTurnOffTableId)
 	{
+		History.TurnOff();
 		g_oTableId.TurnOff();
 	}
 
@@ -8580,13 +8577,11 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 	oSelectedContent.EndCollect(this);
 
 	if (!bUseHistory)
-		History.TurnOn();
-
-	if (bNeedTurnOffTableId)
 	{
+		History.TurnOn();
 		g_oTableId.TurnOn();
 	}
-
+	
 	if (false !== isLocalTrack)
 		this.SetLocalTrackRevisions(isLocalTrack);
 

@@ -2322,24 +2322,17 @@ ParaMath.prototype.SetRecalcCtrPrp = function(Class)
 };
 ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx, _heightPx, raster_koef)
 {
-    var bTurnOnId = false;
-    if (g_oTableId.IsOn())
-    {
-        g_oTableId.TurnOff();
-        bTurnOnId = true;
-    }
-
+	g_oTableId.TurnOff();
 	History.TurnOff();
 
     var oldDefTabStop = AscCommonWord.Default_Tab_Stop;
 	AscCommonWord.Default_Tab_Stop = 1;
 
     var oApi = Asc['editor'] || editor;
-    if(!oApi || !oApi.textArtPreviewManager){
-
+    if (!oApi || !oApi.textArtPreviewManager)
+	{
         History.TurnOn();
-        if (true === bTurnOnId)
-            g_oTableId.TurnOn();
+        g_oTableId.TurnOn();
         return null;
     }
     var oShape = oApi.textArtPreviewManager.getShape();
@@ -2384,9 +2377,7 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
 
 	AscCommonWord.Default_Tab_Stop = oldDefTabStop;
 
-    if (true === bTurnOnId)
-        g_oTableId.TurnOn();
-
+    g_oTableId.TurnOn();
     History.TurnOn();
 
     AscCommon.IsShapeToImageConverter = true;
