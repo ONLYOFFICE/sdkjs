@@ -71,9 +71,7 @@
     };
     History.prototype.EndNoHistoryMode = function() {
         this.TurnOn();
-        if (this.IsOn()) {
-            AscCommon.g_oTableId.TurnOn();
-        }
+        AscCommon.g_oTableId.TurnOn();
     };
 	History.prototype.Add = function(_Class, Data) {
 		AscCommon.CHistory.prototype.Add.call(this, _Class, Data);

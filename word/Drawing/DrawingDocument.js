@@ -7149,7 +7149,7 @@ function CDrawingDocument()
     this.GenerateSelectionPrint = function ()
     {
         History.TurnOff();
-        g_oTableId.m_bTurnOff = true;
+        g_oTableId.TurnOff();
 
         this.printedDocument = null;
         try {
@@ -7271,7 +7271,7 @@ function CDrawingDocument()
         {
         }
 
-        g_oTableId.m_bTurnOff = false;
+        g_oTableId.TurnOn();
         History.TurnOn();
     };
 }

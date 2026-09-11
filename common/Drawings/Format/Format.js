@@ -1582,15 +1582,15 @@
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
 			var b_table_id = false;
-			if (!notOffTableId && g_oTableId && !g_oTableId.m_bTurnOff) {
-				g_oTableId.m_bTurnOff = true;
+			if (!notOffTableId && g_oTableId && g_oTableId.IsOn()) {
+				g_oTableId.TurnOff();
 				b_table_id = true;
 			}
 
 			var ret = f.apply(oThis, args);
 			AscCommon.History.TurnOn && AscCommon.History.TurnOn();
 			if (b_table_id) {
-				g_oTableId.m_bTurnOff = false;
+				g_oTableId.TurnOn();
 			}
 			return ret;
 		}

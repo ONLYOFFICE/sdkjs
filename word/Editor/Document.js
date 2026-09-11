@@ -8558,13 +8558,13 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 		this.SetLocalTrackRevisions(false);
 	}
 
-	var bNeedTurnOffTableId = g_oTableId.m_bTurnOff === false && true !== bUseHistory;
+	var bNeedTurnOffTableId = g_oTableId.IsOn() && true !== bUseHistory;
 	if (!bUseHistory)
 		History.TurnOff();
 
 	if (bNeedTurnOffTableId)
 	{
-		g_oTableId.m_bTurnOff = true;
+		g_oTableId.TurnOff();
 	}
 
 	var oSelectedContent = new AscCommonWord.CSelectedContent();
@@ -8584,7 +8584,7 @@ CDocument.prototype.GetSelectedContent = function(bUseHistory, oPr)
 
 	if (bNeedTurnOffTableId)
 	{
-		g_oTableId.m_bTurnOff = false;
+		g_oTableId.TurnOn();
 	}
 
 	if (false !== isLocalTrack)

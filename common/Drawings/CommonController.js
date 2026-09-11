@@ -10840,8 +10840,8 @@
 			this.Generate2 = function () {
 				// GENERATE IMAGES & JSON
 				var bTurnOnId = false;
-				if (false === g_oTableId.m_bTurnOff) {
-					g_oTableId.m_bTurnOff = true;
+				if (g_oTableId.IsOn()) {
+					g_oTableId.TurnOff();
 					bTurnOnId = true;
 				}
 
@@ -10957,7 +10957,7 @@
 				_canvas = null;
 
 				if (true === bTurnOnId)
-					g_oTableId.m_bTurnOff = false;
+					g_oTableId.TurnOn();
 
 				History.TurnOn();
 

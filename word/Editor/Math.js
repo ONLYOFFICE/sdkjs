@@ -2323,9 +2323,9 @@ ParaMath.prototype.SetRecalcCtrPrp = function(Class)
 ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx, _heightPx, raster_koef)
 {
     var bTurnOnId = false;
-    if (false === g_oTableId.m_bTurnOff)
+    if (g_oTableId.IsOn())
     {
-        g_oTableId.m_bTurnOff = true;
+        g_oTableId.TurnOff();
         bTurnOnId = true;
     }
 
@@ -2339,7 +2339,7 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
 
         History.TurnOn();
         if (true === bTurnOnId)
-            g_oTableId.m_bTurnOff = false;
+            g_oTableId.TurnOn();
         return null;
     }
     var oShape = oApi.textArtPreviewManager.getShape();
@@ -2385,7 +2385,7 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
 	AscCommonWord.Default_Tab_Stop = oldDefTabStop;
 
     if (true === bTurnOnId)
-        g_oTableId.m_bTurnOff = false;
+        g_oTableId.TurnOn();
 
     History.TurnOn();
 
