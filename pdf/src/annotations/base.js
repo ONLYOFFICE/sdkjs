@@ -1325,7 +1325,7 @@
                 continue;
 
             oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
-                return item.SetUserData(oReply.GetId()); 
+                return item.GetUserData() == oReply.GetId(); 
             });
 
             if (oReplyCommentData) {
@@ -1344,7 +1344,7 @@
         for (let i = 0; i < oCommentData.m_aReplies.length; i++) {
             oReplyCommentData = oCommentData.m_aReplies[i];
             if (!this._replies.find(function(reply) {
-                return oReplyCommentData.SetUserData(reply.GetId());
+                return oReplyCommentData.GetUserData() == reply.GetId();
             })) {
                this.AddReplyByCommentData(oReplyCommentData, i);
             }
