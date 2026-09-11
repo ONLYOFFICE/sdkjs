@@ -1375,7 +1375,7 @@
 
 		this.SetWasChanged(true, false);
         
-        Asc.editor.sync_ChangeCommentData(this.GetId(), oCommentData);
+        this.private_onChangeComment();
     };
     CAnnotationBase.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataPDF(null);

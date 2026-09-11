@@ -4502,7 +4502,6 @@ var CPresentation = CPresentation || function(){};
         });
 
         oAnnotToEdit.EditCommentData(CommentData);
-        editor.sync_ChangeCommentData(Id, CommentData);
     };
     CPDFDoc.prototype.CheckComment = function(oAnnot) {
         if (this.Viewer.IsOpenAnnotsInProgress) {
