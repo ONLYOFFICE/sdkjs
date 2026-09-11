@@ -1443,6 +1443,90 @@ Paragraph.prototype.GetFlatPos = function(contentPos)
 
 	return rangePos;
 };
+
+/**
+ * Get the text this paragraph contributes to the character offsets of a text range
+ * @returns {string}
+ */
+Paragraph.prototype.GetCharModelText = function()
+{
+	return this.GetText({
+		ParaSeparator    : "",
+		Numbering        : false,
+		Math             : false,
+		TabSymbol        : " ",
+		NewLineSeparator : "\r"
+	});
+};
+/**
+ * Get the length of the run item in the text returned by GetCharModelText()
+ * @param {AscWord.CRunElementBase} item
+ * @returns {number}
+ */
+Paragraph.prototype.private_GetItemTextLength = function(item)
+{
+	if (item.IsText() || item.IsSpace())
+		return item.ToString().length;
+
+	if (para_Tab === item.Type || para_NewLine === item.Type)
+		return 1;
+
+	return 0;
+};
+/**
+ * Get the content position of the character at the given offset in the text returned by GetCharModelText()
+ * @param {number} charOffset
+ * @returns {AscWord.CParagraphContentPos}
+ */
+Paragraph.prototype.GetContentPosByCharOffset = function(charOffset)
+{
+	let self   = this;
+	let result = null;
+	let count  = 0;
+	this.CheckRunContent(function(run, startPos, endPos)
+	{
+		if (run.IsMathRun())
+			return false;
+
+		for (let pos = startPos; pos < endPos; ++pos)
+		{
+			let length = self.private_GetItemTextLength(run.GetElement(pos));
+			if (charOffset < count + length)
+			{
+				result = run.GetParagraphContentPosFromObject(pos);
+				return true;
+			}
+
+			count += length;
+		}
+
+		return false;
+	});
+
+	return result ? result : this.Get_EndPos(true);
+};
+/**
+ * Get the offset of the given content position in the text returned by GetCharModelText()
+ * @param {AscWord.CParagraphContentPos} contentPos
+ * @returns {number}
+ */
+Paragraph.prototype.GetCharOffsetByContentPos = function(contentPos)
+{
+	let self  = this;
+	let count = 0;
+	this.CheckRunContent(function(run, startPos, endPos)
+	{
+		if (run.IsMathRun())
+			return false;
+
+		for (let pos = startPos; pos < endPos; ++pos)
+			count += self.private_GetItemTextLength(run.GetElement(pos));
+
+		return false;
+	}, null, contentPos);
+
+	return count;
+};
 Paragraph.prototype.Check_Range_OnlyMath = function(CurRange, CurLine)
 {
 	var StartPos = this.Lines[CurLine].Ranges[CurRange].StartPos;

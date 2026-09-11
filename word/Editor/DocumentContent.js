@@ -9578,39 +9578,6 @@ CDocumentContent.prototype.CorrectEnterText = function(oldValue, newValue, check
 	return true;
 };
 
-function private_GetParaContentPosForChar(oPara, nCharOffset)
-{
-	var nCount = 0;
-	for (var i = 0; i < oPara.Content.length; i++)
-	{
-		var oRun = oPara.Content[i];
-
-		if (!oRun || !oRun.Content)
-			continue;
-
-		for (var j = 0; j < oRun.Content.length; j++)
-		{
-			var nType = oRun.Content[j].Type;
-
-			if (nType === para_End)
-				break;
-
-			if (nType === para_Text || nType === para_Space || nType === para_Tab)
-			{
-				if (nCount === nCharOffset)
-				{
-					var oResult = new AscWord.CParagraphContentPos();
-					oResult.Update(i, 0);
-					oResult.Update(j, 1);
-					return oResult;
-				}
-				nCount++;
-			}
-		}
-	}
-	return oPara.Get_EndPos(true);
-}
-
 CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMoveCursor)
 {
 	if (bMoveCursor === undefined)
@@ -9638,9 +9605,7 @@ CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMov
 			continue;
 		}
 
-		var nParaLen	= oPara.GetText
-			? oPara.GetText({ParaSeparator: "", Numbering: false, Math: false}).length 
-			: 0;
+		var nParaLen	= oPara.GetCharModelText().length;
 		var nParaStart	= nPos;
 		var nParaEnd	= nPos + nParaLen;
 
@@ -9662,38 +9627,23 @@ CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMov
 
 		nEndParaIdx = i;
 
-		if (nParaStart >= nStartChar && nParaEnd <= nEndChar)
-		{
-			if (bMoveCursor)
-			{
-				oPara.SelectAll();
-			}
-			else
-			{
-				oPara.Selection.Use = true;
-				oPara.Set_SelectionContentPos(oPara.Get_StartPos(), oPara.Get_EndPos(true));
-			}
-		} 
-		else
-		{
-			var nLocalStart = Math.max(0, nStartChar - nParaStart);
-			var nLocalEnd   = Math.min(nParaLen, nEndChar - nParaStart);
+		var nLocalStart = Math.max(0, nStartChar - nParaStart);
+		var nLocalEnd   = Math.min(nParaLen, nEndChar - nParaStart);
 
-			var oStartPos   = nLocalStart === 0
-				? oPara.Get_StartPos()
-				: private_GetParaContentPosForChar(oPara, nLocalStart);
+		var oStartPos   = nLocalStart === 0
+			? oPara.Get_StartPos()
+			: oPara.GetContentPosByCharOffset(nLocalStart);
 
-			var oEndPos     = nLocalEnd >= nParaLen
-				? oPara.Get_EndPos(true)
-				: private_GetParaContentPosForChar(oPara, nLocalEnd);
-			
-			oPara.Selection.Use = true;
+		var oEndPos     = nLocalEnd >= nParaLen
+			? oPara.Get_EndPos(nEndChar > nParaEnd)
+			: oPara.GetContentPosByCharOffset(nLocalEnd);
 
-			if (bMoveCursor)
-				oPara.Set_ParaContentPos(oEndPos.Copy(), true, -1, -1);
-			
-			oPara.Set_SelectionContentPos(oStartPos, oEndPos);
-		}
+		oPara.Selection.Use = true;
+
+		if (bMoveCursor)
+			oPara.Set_ParaContentPos(oEndPos.Copy(), true, -1, -1);
+
+		oPara.Set_SelectionContentPos(oStartPos, oEndPos);
 	}
 
 	if (!bSelectionStarted)

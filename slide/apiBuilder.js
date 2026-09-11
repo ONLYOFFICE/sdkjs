@@ -2524,7 +2524,7 @@
 	 * Searches for the specified text in the presentation and returns all found occurrences as text ranges.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
-	 * @param {string} text - The text to search for.
+	 * @param {string | RegExp} text - The text to search for, or a regular expression to match. When a RegExp is passed, isMatchCase and isWholeWords are ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
@@ -2553,9 +2553,11 @@
 	{
 		properties = properties || {};
 
-		let searchString  = AscBuilder.GetStringParameter(properties["searchString"], '', true);
+		let searchString = properties["searchString"];
+		if (!(searchString instanceof RegExp))
+			searchString = AscBuilder.GetStringParameter(searchString, '', true);
 		let replaceString = AscBuilder.GetStringParameter(properties["replaceString"], '');
-		if (searchString.length === 0)
+		if (!searchString)
 			return false;
 
 		let searchSettings = new AscCommon.CSearchSettings();
@@ -2580,12 +2582,13 @@
 
 	function private_SearchInSlideObjects(aSlideObjects, text, isMatchCase, isWholeWords)
 	{
-		text         = AscBuilder.GetStringParameter(text, '', true);
+		if (!(text instanceof RegExp))
+			text = AscBuilder.GetStringParameter(text, '', true);
 		isMatchCase  = AscBuilder.GetBoolParameter(isMatchCase, false);
 		isWholeWords = AscBuilder.GetBoolParameter(isWholeWords, false);
 
 		let results = [];
-		if (text.length === 0)
+		if (!text)
 			return results;
 
 		let searchSettings = new AscCommon.CSearchSettings();
@@ -2598,25 +2601,38 @@
 		for (let i = 0; i < aSlideObjects.length; ++i)
 			aSlideObjects[i].Search(searchEngine);
 
-		let docContents = [];
+		let charMap = null;
+		let mappedDocContent = null;
 		for (let id in searchEngine.Elements)
 		{
-			let paragraph  = searchEngine.Elements[id];
-			let docContent = paragraph.GetParent ? paragraph.GetParent() : paragraph.Parent;
-			if (docContent && docContents.indexOf(docContent) === -1)
-				docContents.push(docContent);
-		}
+			let paragraph    = searchEngine.Elements[id];
+			let searchResult = paragraph.SearchResults[id];
+			if (!searchResult)
+				continue;
 
-		for (let i = 0; i < docContents.length; ++i)
-		{
-			let range  = new ApiTextRange(docContents[i], 0, -1);
-			let nAfter = 1;
-			let found;
-			while ((found = range.Find(text, nAfter, isMatchCase, isWholeWords)) !== null)
+			let docContent = paragraph.GetParent();
+			if (docContent !== mappedDocContent)
 			{
-				results.push(found);
-				nAfter = found.EndPos + 1;
+				mappedDocContent = docContent;
+				charMap = new ApiTextRange(docContent, 0, -1).private_BuildCharMap();
 			}
+
+			let paraStart = -1;
+			for (let i = 0; i < charMap.length; ++i)
+			{
+				if (charMap[i].para === paragraph)
+				{
+					paraStart = charMap[i].charStart;
+					break;
+				}
+			}
+			if (paraStart < 0)
+				continue;
+
+			let start = paraStart + paragraph.GetCharOffsetByContentPos(searchResult.StartPos);
+			let end   = paraStart + paragraph.GetCharOffsetByContentPos(searchResult.EndPos);
+			if (start < end)
+				results.push(new ApiTextRange(docContent, start, end));
 		}
 
 		return results;
@@ -2626,7 +2642,7 @@
 	 * Searches for the specified text within the current slide and returns all found occurrences as text ranges.
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
-	 * @param {string} text - The text to search for.
+	 * @param {string | RegExp} text - The text to search for, or a regular expression to match. When a RegExp is passed, isMatchCase and isWholeWords are ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
@@ -2642,7 +2658,7 @@
 	 * Searches for the specified text within the current slide master and returns all found occurrences as text ranges.
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
-	 * @param {string} text - The text to search for.
+	 * @param {string | RegExp} text - The text to search for, or a regular expression to match. When a RegExp is passed, isMatchCase and isWholeWords are ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
@@ -2658,7 +2674,7 @@
 	 * Searches for the specified text within the current slide layout and returns all found occurrences as text ranges.
 	 * @memberof ApiLayout
 	 * @typeofeditors ["CPE"]
-	 * @param {string} text - The text to search for.
+	 * @param {string | RegExp} text - The text to search for, or a regular expression to match. When a RegExp is passed, isMatchCase and isWholeWords are ignored (control case sensitivity with the "i" flag instead).
 	 * @param {boolean} [isMatchCase=false] - Case sensitive or not.
 	 * @param {boolean} [isWholeWords=false] - Whether to search for whole words only.
 	 * @returns {ApiTextRange[]}
@@ -10644,9 +10660,7 @@
 
 	// Returns the text of a single paragraph using the SAME measure as CDocumentContent.SelectCharRange
 	ApiTextRange.prototype.private_GetParaText = function(oPara) {
-		return (oPara && typeof oPara.GetText === 'function')
-			? oPara.GetText({ParaSeparator: "", Numbering: false, Math: false})
-			: "";
+		return oPara.IsParagraph() ? oPara.GetCharModelText() : "";
 	};
 
 	ApiTextRange.prototype.private_GetAllText = function() {
@@ -10656,37 +10670,6 @@
 			aTexts.push(this.private_GetParaText(this.DocContent.Content[i]));
 		}
 		return aTexts.join("\r");
-	};
-
-	// Returns the paragraph content position for the given 0-based character offset within the paragraph.
-	// Mirrors CDocumentContent.private_GetParaContentPosForChar
-	ApiTextRange.prototype.private_GetParaContentPosForChar = function(oPara, nCharOffset) {
-		let nCount = 0;
-		for (let i = 0; i < oPara.Content.length; i++)
-		{
-			let oRun = oPara.Content[i];
-			if (!oRun || !oRun.Content)
-				continue;
-
-			for (let j = 0; j < oRun.Content.length; j++)
-			{
-				let nType = oRun.Content[j].Type;
-				if (nType === 0x0004)
-					break;
-				if (nType === 0x0001 || nType === 0x0002 || nType === 0x0015)
-				{
-					if (nCount === nCharOffset)
-					{
-						let oResult = new AscWord.CParagraphContentPos();
-						oResult.Update(i, 0);
-						oResult.Update(j, 1);
-						return oResult;
-					}
-					nCount++;
-				}
-			}
-		}
-		return oPara.Get_EndPos(true);
 	};
 
 	ApiTextRange.prototype.private_GetTotalLength = function() {
@@ -10835,7 +10818,7 @@
 			return false;
 
 		let oPara		= entry.para;
-		let oContentPos	= this.private_GetParaContentPosForChar(oPara, nInsertPos - entry.charStart);
+		let oContentPos	= oPara.GetContentPosByCharOffset(nInsertPos - entry.charStart);
 		let oRun		= oPara.GetClassByPos(oContentPos);
 		let nInRunPos	= oContentPos.Get(oContentPos.GetDepth());
 
@@ -11181,7 +11164,7 @@
 				}
 				else
 				{
-					oPos = this.private_GetParaContentPosForChar(oPara, nLocalOffset);
+					oPos = oPara.GetContentPosByCharOffset(nLocalOffset);
 				}
 
 				oDocContent.RemoveSelection();
