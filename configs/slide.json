@@ -435,6 +435,7 @@
 			"slide/apiCommon.js",
 			
 			"word/Editor/document-visitor.js",
+			"slide/Editor/presentation-visitor.js",
 			
 			"word/apiBuilder.js",
 			"slide/apiBuilder.js",
