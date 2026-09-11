@@ -12702,6 +12702,12 @@
 	AscBuilder.Slide["ApiOleObject"]     = AscBuilder.Slide.ApiOleObject     = ApiOleObject;
 	AscBuilder.Slide["ApiTable"]         = AscBuilder.Slide.ApiTable         = ApiTable;
 	AscBuilder.Slide["ApiChart"]         = AscBuilder.Slide.ApiChart         = ApiChart;
+	AscBuilder.Slide["ApiSlide"]         = AscBuilder.Slide.ApiSlide         = ApiSlide;
+	AscBuilder.Slide["ApiMaster"]        = AscBuilder.Slide.ApiMaster        = ApiMaster;
+	AscBuilder.Slide["ApiLayout"]        = AscBuilder.Slide.ApiLayout        = ApiLayout;
+	AscBuilder.Slide["ApiNotesPage"]     = AscBuilder.Slide.ApiNotesPage     = ApiNotesPage;
+	AscBuilder.Slide["ApiTableRow"]      = AscBuilder.Slide.ApiTableRow      = ApiTableRow;
+	AscBuilder.Slide["ApiTableCell"]     = AscBuilder.Slide.ApiTableCell     = ApiTableCell;
 	AscBuilder.Slide["CreateNumbering"]  = AscBuilder.Slide.CreateNumbering  = Api.CreateNumbering;
 
 	AscBuilder.Slide.init = function()

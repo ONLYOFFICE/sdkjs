@@ -301,7 +301,7 @@
 	};
 	AscFormat.CGraphicFrame.prototype.visitContent = function(visitor)
 	{
-		if (this.graphicObject)
+		if (this.graphicObject instanceof AscWord.CTable)
 			this.graphicObject.visit(visitor);
 	};
 	AscFormat.CChartSpace.prototype.visitContent = function(visitor)
