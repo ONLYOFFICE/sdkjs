@@ -1018,10 +1018,10 @@
 		};
 
 		CGroupShape.prototype.Search = function (SearchEngine, Type) {
-			var Len = this.arrGraphicObjects.length;
+			var Len = this.spTree.length;
 			for (var i = 0; i < Len; ++i) {
-				if (this.arrGraphicObjects[i].Search) {
-					this.arrGraphicObjects[i].Search(SearchEngine, Type);
+				if (this.spTree[i].Search) {
+					this.spTree[i].Search(SearchEngine, Type);
 				}
 			}
 		};

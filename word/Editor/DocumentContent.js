@@ -9611,7 +9611,8 @@ CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMov
 
 		nPos += nParaLen + (i < this.Content.length - 1 ? 1 : 0);
 
-		if (nParaEnd <= nStartChar || nParaStart >= nEndChar)
+		var hasBoundary = i < this.Content.length - 1 && nStartChar <= nParaEnd && nEndChar > nParaEnd;
+		if (nParaStart >= nEndChar || (nParaEnd <= nStartChar && !hasBoundary))
 		{
 			if (oPara.RemoveSelection)
 				oPara.RemoveSelection();
@@ -9630,8 +9631,8 @@ CDocumentContent.prototype.SelectCharRange = function(nStartChar, nEndChar, bMov
 		var nLocalStart = Math.max(0, nStartChar - nParaStart);
 		var nLocalEnd   = Math.min(nParaLen, nEndChar - nParaStart);
 
-		var oStartPos   = nLocalStart === 0
-			? oPara.Get_StartPos()
+		var oStartPos   = nLocalStart >= nParaLen
+			? oPara.Get_EndPos(false)
 			: oPara.GetContentPosByCharOffset(nLocalStart);
 
 		var oEndPos     = nLocalEnd >= nParaLen

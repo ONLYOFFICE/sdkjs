@@ -313,9 +313,21 @@
 	 * @param {number} [nEnd=-1]     - End character position (0-based, exclusive). If omitted or -1, the range always ends at the end of the content.
 	 */
 	function ApiTextRange(oDocContent, nStart, nEnd) {
-		this.DocContent = oDocContent;
-		this.StartPos   = typeof nStart === 'number' ? nStart : 0;
-		this.EndPos     = typeof nEnd   === 'number' ? nEnd : -1;
+		this.DocContent  = oDocContent;
+		this.StartPos    = typeof nStart === 'number' ? nStart : 0;
+		this.EndPos      = typeof nEnd   === 'number' ? nEnd : -1;
+		this.StartDocPos = null;
+		this.EndDocPos   = null;
+		if (!oDocContent)
+			return;
+
+		private_RegisterTextRange(this);
+		this.private_Anchor(oDocContent.IsUseInDocument() ? private_BuildCharMap(oDocContent) : null);
+		let collaborativeEditing = Asc.editor.getLogicDocument().CollaborativeEditing;
+		if (this.StartDocPos)
+			collaborativeEditing.Add_DocumentPosition(this.StartDocPos, !private_IsWholeBodyRange(this));
+		if (this.EndDocPos)
+			collaborativeEditing.Add_DocumentPosition(this.EndDocPos, false);
 	}
 	ApiTextRange.prototype.constructor = ApiTextRange;
 
@@ -2551,34 +2563,23 @@
 	 */
 	ApiPresentation.prototype.SearchAndReplace = function(properties)
 	{
-		properties = properties || {};
-
-		let searchString = properties["searchString"];
-		if (!(searchString instanceof RegExp))
-			searchString = AscBuilder.GetStringParameter(searchString, '', true);
-		let replaceString = AscBuilder.GetStringParameter(properties["replaceString"], '');
-		if (!searchString)
-			return false;
-
-		let searchSettings = new AscCommon.CSearchSettings();
-		searchSettings.SetText(searchString);
-		searchSettings.SetMatchCase(AscBuilder.GetBoolParameter(properties["matchCase"], false));
-		searchSettings.SetWholeWords(AscBuilder.GetBoolParameter(properties["wholeWords"], false));
-
-		let searchEngine = this.Presentation.Search(searchSettings);
-		if (!searchEngine)
-			return false;
-
-		replaceString = replaceString
-			.replaceAll('\t', "^t")
-			.replaceAll('\v', "^l")
-			.replaceAll('\f', "^m")
-			.replaceAll('\x0e', "^n")
-			.replaceAll('\x1e', "^~");
-
-		this.Presentation.ReplaceSearchElement(replaceString, true, null, false);
-		return true;
+		return private_ReplaceInSlideObjects(this.Presentation.Slides, properties);
 	};
+
+	function private_SearchSlideObjects(aSlideObjects, text, isMatchCase, isWholeWords)
+	{
+		let searchSettings = new AscCommon.CSearchSettings();
+		searchSettings.SetText(text);
+		searchSettings.SetMatchCase(isMatchCase);
+		searchSettings.SetWholeWords(isWholeWords);
+
+		let searchEngine = new AscWord.DocumentSearch(Asc.editor.getLogicDocument());
+		searchEngine.Set(searchSettings);
+		for (let i = 0; i < aSlideObjects.length; ++i)
+			aSlideObjects[i].Search(searchEngine);
+
+		return searchEngine;
+	}
 
 	function private_SearchInSlideObjects(aSlideObjects, text, isMatchCase, isWholeWords)
 	{
@@ -2591,15 +2592,7 @@
 		if (!text)
 			return results;
 
-		let searchSettings = new AscCommon.CSearchSettings();
-		searchSettings.SetText(text);
-		searchSettings.SetMatchCase(isMatchCase);
-		searchSettings.SetWholeWords(isWholeWords);
-
-		let searchEngine = new AscWord.DocumentSearch(Asc.editor.getLogicDocument());
-		searchEngine.Set(searchSettings);
-		for (let i = 0; i < aSlideObjects.length; ++i)
-			aSlideObjects[i].Search(searchEngine);
+		let searchEngine = private_SearchSlideObjects(aSlideObjects, text, isMatchCase, isWholeWords);
 
 		let charMap = null;
 		let mappedDocContent = null;
@@ -2610,22 +2603,16 @@
 			if (!searchResult)
 				continue;
 
+			paragraph.RemoveSearchResult(id);
+
 			let docContent = paragraph.GetParent();
 			if (docContent !== mappedDocContent)
 			{
 				mappedDocContent = docContent;
-				charMap = new ApiTextRange(docContent, 0, -1).private_BuildCharMap();
+				charMap = private_BuildCharMap(docContent);
 			}
 
-			let paraStart = -1;
-			for (let i = 0; i < charMap.length; ++i)
-			{
-				if (charMap[i].para === paragraph)
-				{
-					paraStart = charMap[i].charStart;
-					break;
-				}
-			}
+			let paraStart = private_GetParaCharStart(charMap, paragraph);
 			if (paraStart < 0)
 				continue;
 
@@ -2636,6 +2623,76 @@
 		}
 
 		return results;
+	}
+
+	function private_GetParaCharStart(charMap, paragraph)
+	{
+		for (let i = 0; i < charMap.length; ++i)
+		{
+			if (charMap[i].para === paragraph)
+				return charMap[i].charStart;
+		}
+		return -1;
+	}
+
+	function private_EscapeReplaceControls(text)
+	{
+		return text
+			.replaceAll('\t', "^t")
+			.replaceAll('\v', "^l")
+			.replaceAll('\f', "^m")
+			.replaceAll('\x0e', "^n")
+			.replaceAll('\x1e', "^~");
+	}
+
+	function private_ReplaceInSlideObjects(aSlideObjects, properties)
+	{
+		properties = properties || {};
+
+		let searchString = properties["searchString"];
+		if (!(searchString instanceof RegExp))
+			searchString = AscBuilder.GetStringParameter(searchString, '', true);
+		let replaceString = AscBuilder.GetStringParameter(properties["replaceString"], '');
+		if (!searchString)
+			return false;
+
+		let searchEngine = private_SearchSlideObjects(aSlideObjects, searchString,
+			AscBuilder.GetBoolParameter(properties["matchCase"], false),
+			AscBuilder.GetBoolParameter(properties["wholeWords"], false));
+
+		replaceString = private_EscapeReplaceControls(replaceString);
+
+		let touched = [];
+		for (let id = searchEngine.Id - 1; id >= 0; --id)
+		{
+			let paragraph    = searchEngine.Elements[id];
+			let searchResult = paragraph ? paragraph.SearchResults[id] : null;
+			if (!searchResult)
+				continue;
+
+			let docContent = paragraph.GetParent();
+			if (touched.indexOf(docContent) === -1)
+			{
+				touched.push(docContent);
+				private_RefreshTextRanges(docContent);
+			}
+			let charMap    = private_BuildCharMap(docContent);
+			let paraStart  = private_GetParaCharStart(charMap, paragraph);
+			let start      = paraStart + paragraph.GetCharOffsetByContentPos(searchResult.StartPos);
+			let end        = paraStart + paragraph.GetCharOffsetByContentPos(searchResult.EndPos);
+			let nBefore    = private_GetModelLength(charMap);
+			if (!searchEngine.Replace(replaceString, id, true))
+			{
+				paragraph.RemoveSearchResult(id);
+				continue;
+			}
+
+			private_ShiftTextRanges(docContent, start, end - start, private_GetModelLength(private_BuildCharMap(docContent)) - nBefore + end - start, null);
+		}
+		Asc.editor.getLogicDocument().Recalculate();
+		for (let i = 0; i < touched.length; i++)
+			private_TrackTextRanges(touched[i]);
+		return true;
 	}
 
 	/**
@@ -2654,6 +2711,7 @@
 		return private_SearchInSlideObjects([this.Slide], text, isMatchCase, isWholeWords);
 	};
 
+
 	/**
 	 * Searches for the specified text within the current slide master and returns all found occurrences as text ranges.
 	 * @memberof ApiMaster
@@ -2670,6 +2728,7 @@
 		return private_SearchInSlideObjects([this.Master], text, isMatchCase, isWholeWords);
 	};
 
+
 	/**
 	 * Searches for the specified text within the current slide layout and returns all found occurrences as text ranges.
 	 * @memberof ApiLayout
@@ -2685,6 +2744,7 @@
 	{
 		return private_SearchInSlideObjects([this.Layout], text, isMatchCase, isWholeWords);
 	};
+
 
 	//------------------------------------------------------------------------------------------------------------------
     //
@@ -10658,6 +10718,266 @@
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
+	let arrTextRanges = [];
+
+	function private_BuildCharMap(oDocContent)
+	{
+		let map    = [];
+		let nPos   = 0;
+		let nCount = oDocContent.Content.length;
+		for (let i = 0; i < nCount; i++)
+		{
+			let oPara = oDocContent.Content[i];
+			let nLen  = oPara.IsParagraph() ? oPara.GetCharModelText().length : 0;
+			map.push({para: oPara, paraIdx: i, charStart: nPos, charEnd: nPos + nLen});
+			nPos += nLen;
+			if (i < nCount - 1)
+				nPos++;
+		}
+		return map;
+	}
+
+	function private_GetModelLength(charMap)
+	{
+		return charMap.length ? charMap[charMap.length - 1].charEnd : 0;
+	}
+
+	function private_GetTextRangeDocPos(charMap, nPos)
+	{
+		if (charMap.length && nPos > private_GetModelLength(charMap))
+			nPos = private_GetModelLength(charMap);
+		for (let i = 0; i < charMap.length; i++)
+		{
+			if (nPos < charMap[i].charStart || nPos > charMap[i].charEnd || !charMap[i].para.IsParagraph())
+				continue;
+
+			let oPara       = charMap[i].para;
+			let oContentPos = oPara.GetContentPosByCharOffset(nPos - charMap[i].charStart);
+			let oRun        = oPara.GetClassByPos(oContentPos);
+			if (!(oRun instanceof AscWord.Run))
+				return null;
+
+			let docPos = oRun.GetDocumentPositionFromObject();
+			docPos.push({Class : oRun, Position : oContentPos.Get(oContentPos.GetDepth())});
+			return docPos;
+		}
+		return null;
+	}
+
+	function private_GetTextRangeOffset(oDocContent, charMap, docPos)
+	{
+		if (!docPos || !docPos.length)
+			return -1;
+
+		let last = docPos[docPos.length - 1];
+		let oRun = last.Class;
+		if (!(oRun instanceof AscWord.Run))
+			return -1;
+
+		let oPara = oRun.GetParagraph();
+		if (!oPara || oPara.GetParent() !== oDocContent || !AscCommonWord.CanUpdatePosition(oPara, oRun))
+			return -1;
+
+		let paraStart = private_GetParaCharStart(charMap, oPara);
+		if (paraStart < 0)
+			return -1;
+
+		return paraStart + oPara.GetCharOffsetByContentPos(oRun.GetParagraphContentPosFromObject(last.Position));
+	}
+
+	const MAX_TRACKED_TEXT_RANGES = 2000;
+
+	function private_IsWholeBodyRange(range)
+	{
+		return 0 === range.StartPos && -1 === range.EndPos;
+	}
+
+	function private_RegisterTextRange(range)
+	{
+		if (private_IsWholeBodyRange(range))
+		{
+			for (let i = arrTextRanges.length - 1; i >= 0; i--)
+			{
+				let other = arrTextRanges[i];
+				if (other.DocContent === range.DocContent && private_IsWholeBodyRange(other))
+					arrTextRanges.splice(i, 1);
+			}
+		}
+		arrTextRanges.push(range);
+		while (arrTextRanges.length > MAX_TRACKED_TEXT_RANGES)
+		{
+			let dropped = arrTextRanges.shift();
+			dropped.StartDocPos = null;
+			dropped.EndDocPos   = null;
+		}
+	}
+
+	function private_RefreshTextRanges(oDocContent)
+	{
+		let logicDocument = Asc.editor.getLogicDocument();
+		let charMap       = private_BuildCharMap(oDocContent);
+		for (let i = 0; i < arrTextRanges.length; i++)
+		{
+			if (arrTextRanges[i].DocContent === oDocContent)
+				arrTextRanges[i].private_Refresh(logicDocument, charMap);
+		}
+	}
+
+	function private_TrackTextRanges(oDocContent)
+	{
+		let logicDocument        = Asc.editor.getLogicDocument();
+		let collaborativeEditing = logicDocument.CollaborativeEditing;
+		let charMap              = private_BuildCharMap(oDocContent);
+		let inDocument           = {};
+		collaborativeEditing.Clear_DocumentPositions();
+		for (let i = arrTextRanges.length - 1; i >= 0; i--)
+		{
+			let range = arrTextRanges[i];
+			let shape = range.DocContent.Is_DrawingShape(true);
+			if (shape && shape.IsUseInDocument && !shape.IsUseInDocument())
+			{
+				arrTextRanges.splice(i, 1);
+				continue;
+			}
+
+			if (range.DocContent === oDocContent)
+			{
+				let id = range.DocContent.GetId();
+				if (undefined === inDocument[id])
+					inDocument[id] = range.DocContent.IsUseInDocument();
+				range.private_Anchor(inDocument[id] ? charMap : null);
+			}
+			if (range.StartDocPos)
+				collaborativeEditing.Add_DocumentPosition(range.StartDocPos, !private_IsWholeBodyRange(range));
+			if (range.EndDocPos)
+				collaborativeEditing.Add_DocumentPosition(range.EndDocPos, false);
+		}
+	}
+
+	function private_ShiftOnInsert(nValue, nPos, nCount, isFixedAtPos)
+	{
+		if (nValue < nPos || (nValue === nPos && isFixedAtPos))
+			return nValue;
+		return nValue + nCount;
+	}
+
+	function private_ShiftOnRemove(nValue, nPos, nCount)
+	{
+		if (nValue <= nPos)
+			return nValue;
+		return nValue >= nPos + nCount ? nValue - nCount : nPos;
+	}
+
+	function private_ShiftTextRanges(oDocContent, nPos, nRemoved, nInserted, self)
+	{
+		for (let i = 0; i < arrTextRanges.length; i++)
+		{
+			let range = arrTextRanges[i];
+			if (range === self || range.DocContent !== oDocContent)
+				continue;
+
+			let isWholeBody = private_IsWholeBodyRange(range);
+			if (nInserted)
+			{
+				if (!isWholeBody)
+					range.StartPos = private_ShiftOnInsert(range.StartPos, nPos, nInserted, nRemoved > 0);
+				if (range.EndPos !== -1)
+					range.EndPos = private_ShiftOnInsert(range.EndPos, nPos, nInserted, true);
+			}
+			if (nRemoved)
+			{
+				range.StartPos = private_ShiftOnRemove(range.StartPos, nPos + nInserted, nRemoved);
+				if (range.EndPos !== -1)
+					range.EndPos = private_ShiftOnRemove(range.EndPos, nPos + nInserted, nRemoved);
+			}
+			if (range.EndPos !== -1 && range.EndPos < range.StartPos)
+				range.EndPos = range.StartPos;
+		}
+	}
+
+	function private_InsertText(oDocContent, nInsertPos, text)
+	{
+		let map   = private_BuildCharMap(oDocContent);
+		let entry = null;
+		for (let i = 0; i < map.length; i++)
+		{
+			if (nInsertPos >= map[i].charStart && nInsertPos <= map[i].charEnd)
+			{
+				entry = map[i];
+				break;
+			}
+		}
+
+		if (!entry && map.length > 0)
+			entry = map[map.length - 1];
+		if (!entry)
+			return false;
+
+		let oPara       = entry.para;
+		let oContentPos = oPara.GetContentPosByCharOffset(nInsertPos - entry.charStart);
+		let oRun        = oPara.GetClassByPos(oContentPos);
+		let nInRunPos   = oContentPos.Get(oContentPos.GetDepth());
+
+		if (!(oRun instanceof AscWord.Run) || nInRunPos < 0)
+			return false;
+
+		for (let i = 0; i < oRun.Content.length; i++)
+		{
+			if (oRun.Content[i].Type === para_End)
+			{
+				nInRunPos = Math.min(nInRunPos, i);
+				break;
+			}
+		}
+
+		let oState = oDocContent.GetSelectionState();
+		oRun.SetCursorPosition(nInRunPos);
+		let oNewRun = oRun.CheckRunBeforeAdd();
+		if (oNewRun)
+		{
+			oRun      = oNewRun;
+			nInRunPos = 0;
+		}
+		oRun.SetCursorPosition(oRun.AddText(text, nInRunPos));
+		oDocContent.SetSelectionState(oState);
+		return true;
+	}
+
+	ApiTextRange.prototype.private_Anchor = function(charMap) {
+		this.StartDocPos = null;
+		this.EndDocPos   = null;
+		if (!this.DocContent || !charMap || !AscCommon.History.Is_On())
+			return;
+
+		this.StartDocPos = private_GetTextRangeDocPos(charMap, this.StartPos);
+		this.EndDocPos   = this.EndPos === -1 ? null : private_GetTextRangeDocPos(charMap, this.EndPos);
+	};
+
+	ApiTextRange.prototype.private_Refresh = function(logicDocument, charMap) {
+		if (!this.DocContent)
+			return;
+
+		if (!charMap)
+			charMap = private_BuildCharMap(this.DocContent);
+
+		if (this.StartDocPos)
+		{
+			logicDocument.RefreshDocumentPositions([this.StartDocPos]);
+			let nPos = private_GetTextRangeOffset(this.DocContent, charMap, this.StartDocPos);
+			if (nPos >= 0)
+				this.StartPos = nPos;
+		}
+		if (this.EndDocPos)
+		{
+			logicDocument.RefreshDocumentPositions([this.EndDocPos]);
+			let nPos = private_GetTextRangeOffset(this.DocContent, charMap, this.EndDocPos);
+			if (nPos >= 0)
+				this.EndPos = nPos;
+		}
+		if (this.EndPos !== -1 && this.EndPos < this.StartPos)
+			this.EndPos = this.StartPos;
+	};
+
 	// Returns the text of a single paragraph using the SAME measure as CDocumentContent.SelectCharRange
 	ApiTextRange.prototype.private_GetParaText = function(oPara) {
 		return oPara.IsParagraph() ? oPara.GetCharModelText() : "";
@@ -10677,10 +10997,12 @@
 	};
 
 	ApiTextRange.prototype.private_GetEffectiveStart = function() {
+		this.private_Refresh(Asc.editor.getLogicDocument(), null);
 		return this.StartPos;
 	};
 
 	ApiTextRange.prototype.private_GetEffectiveEnd = function() {
+		this.private_Refresh(Asc.editor.getLogicDocument(), null);
 		return this.EndPos === -1 ? this.private_GetTotalLength() : this.EndPos;
 	};
 
@@ -10689,24 +11011,7 @@
 	 * to its character range in the full text (with "\r" separators between paragraphs).
 	 */
 	ApiTextRange.prototype.private_BuildCharMap = function() {
-		let map    = [];
-		let nPos   = 0;
-		let nCount = this.DocContent.Content.length;
-
-		for (let i = 0; i < nCount; i++)
-		{
-			let oPara = this.DocContent.Content[i];
-
-			if (oPara && typeof oPara.GetText === 'function')
-			{
-				let nLen = this.private_GetParaText(oPara).length;
-				map.push({para: oPara, paraIdx: i, charStart: nPos, charEnd: nPos + nLen});
-				nPos += nLen;
-				if (i < nCount - 1)
-					nPos++; // account for "\r" paragraph separator
-			}
-		}
-		return map;
+		return private_BuildCharMap(this.DocContent);
 	};
 
 	/**
@@ -10789,7 +11094,7 @@
 		text = AscBuilder.GetStringParameter(text, null, false);
 		if (null === text)
 			AscBuilder.throwException(new Error('Invalid type of parameter "text".'));
-		
+
 		position = undefined === position ? "after" : AscBuilder.GetStringParameter(position, null);
 		if ("after" !== position && "before" !== position)
 			AscBuilder.throwException(new Error('Invalid value of parameter "position".'));
@@ -10797,63 +11102,21 @@
 		if (text.length === 0)
 			return true;
 
-		let nInsertPos = "after" === position
-			? this.private_GetEffectiveEnd()
-			: this.private_GetEffectiveStart();
+		let nStart     = this.private_GetEffectiveStart();
+		let nEnd       = this.private_GetEffectiveEnd();
+		let nInsertPos = "after" === position ? nEnd : nStart;
 
-		let map		= this.private_BuildCharMap();
-		let entry	= null;
-		for (let i = 0; i < map.length; i++)
-		{
-			if (nInsertPos >= map[i].charStart && nInsertPos <= map[i].charEnd)
-			{
-				entry = map[i];
-				break;
-			}
-		}
-
-		if (!entry && map.length > 0)
-			entry = map[map.length - 1];
-		if (!entry)
-			return false;
-
-		let oPara		= entry.para;
-		let oContentPos	= oPara.GetContentPosByCharOffset(nInsertPos - entry.charStart);
-		let oRun		= oPara.GetClassByPos(oContentPos);
-		let nInRunPos	= oContentPos.Get(oContentPos.GetDepth());
-
-		if (!(oRun instanceof AscWord.Run) || nInRunPos < 0)
-			return false;
-
-		for (let i = 0; i < oRun.Content.length; i++)
-		{
-			if (oRun.Content[i].Type === 0x0004)
-			{
-				nInRunPos = Math.min(nInRunPos, i);
-				break;
-			}
-		}
-
+		private_RefreshTextRanges(this.DocContent);
 		let nTotalBefore = this.private_GetTotalLength();
-		// TODO: the restored state does not follow the inserted text, position tracking is needed here
-		let oState = this.DocContent.GetSelectionState();
-
-		oRun.SetCursorPosition(nInRunPos);
-		let oNewRun = oRun.CheckRunBeforeAdd();
-		if (oNewRun)
-		{
-			oRun      = oNewRun;
-			nInRunPos = 0;
-		}
-
-		oRun.SetCursorPosition(oRun.AddText(text, nInRunPos));
-
-		this.DocContent.SetSelectionState(oState);
+		if (!private_InsertText(this.DocContent, nInsertPos, text))
+			return false;
 
 		let nDelta = this.private_GetTotalLength() - nTotalBefore;
-		if (nDelta > 0 && this.EndPos !== -1)
-			this.EndPos += nDelta;
-
+		private_ShiftTextRanges(this.DocContent, nInsertPos, 0, nDelta, this);
+		this.StartPos = nStart;
+		if (this.EndPos !== -1)
+			this.EndPos = nEnd + nDelta;
+		private_TrackTextRanges(this.DocContent);
 		return true;
 	};
 
@@ -10960,28 +11223,58 @@
 	ApiTextRange.prototype.SetText = function(sText) {
 		sText = AscBuilder.GetStringParameter(sText, '');
 
-		let nStart   = this.private_GetEffectiveStart();
-		let nEnd     = this.private_GetEffectiveEnd();
-		let sAll     = this.private_GetAllText();
-		let sNewFull = sAll.slice(0, nStart) + sText + sAll.slice(nEnd);
+		let oDocContent = this.DocContent;
+		let nStart      = this.private_GetEffectiveStart();
+		let nEnd        = this.private_GetEffectiveEnd();
+		let oState      = oDocContent.Get_SelectionState2();
 
-		let oApiDocContent = Api.private_CreateApiDocContent(this.DocContent);
-		oApiDocContent.RemoveAllElements();
-		let aLines = sNewFull.split("\r");
-		let oPara = oApiDocContent.GetElement(0);
-		if (!oPara) {
-			oPara = oApiDocContent.AddParagraph();
+		private_RefreshTextRanges(this.DocContent);
+		let aLines = sText.replace(/\r\n/g, "\r").split("\r");
+		let nPos   = nStart;
+		for (let i = 0; i < aLines.length; i++)
+		{
+			if (i > 0)
+			{
+				let nBefore = this.private_GetTotalLength();
+				this.private_SplitParagraph(nPos);
+				nPos += this.private_GetTotalLength() - nBefore;
+			}
+			if (aLines[i].length)
+			{
+				let nBefore = this.private_GetTotalLength();
+				private_InsertText(oDocContent, nPos, aLines[i]);
+				nPos += this.private_GetTotalLength() - nBefore;
+			}
 		}
-		oPara.RemoveAllElements();
-		oPara.AddText(aLines[0]);
-		for (let i = 1; i < aLines.length; i++) {
-			let oNewPara = Api.CreateParagraph();
-			oNewPara.AddText(aLines[i]);
-			oApiDocContent.Push(oNewPara);
+
+		if (nEnd > nStart)
+		{
+			oDocContent.SelectCharRange(nPos, nEnd + nPos - nStart, false);
+			oDocContent.Remove(1, true, false, false, false);
 		}
+
+		private_ShiftTextRanges(oDocContent, nStart, nEnd - nStart, nPos - nStart, this);
+		oDocContent.Recalculate();
+		oDocContent.Set_SelectionState2(oState);
 		this.StartPos = nStart;
-		this.EndPos   = nStart + sText.length;
+		this.EndPos   = nPos;
+		private_TrackTextRanges(this.DocContent);
 		return this;
+	};
+
+	ApiTextRange.prototype.private_SplitParagraph = function(nPos) {
+		let map = this.private_BuildCharMap();
+		for (let i = 0; i < map.length; i++)
+		{
+			if (nPos < map[i].charStart || nPos > map[i].charEnd)
+				continue;
+
+			let oPara        = map[i].para;
+			let newParagraph = new AscWord.Paragraph(this.DocContent, this.DocContent.bPresentation === true);
+			oPara.Split(newParagraph, oPara.GetContentPosByCharOffset(nPos - map[i].charStart));
+			this.DocContent.AddToContent(map[i].paraIdx + 1, newParagraph);
+			return;
+		}
 	};
 
 	/**
@@ -11032,7 +11325,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetStartPos.js
 	 */
 	ApiTextRange.prototype.GetStartPos = function() {
-		return this.StartPos;
+		return this.private_GetEffectiveStart();
 	};
 
 	/**
@@ -11060,7 +11353,9 @@
 		nPos = AscBuilder.GetNumberParameter(nPos, -1);
 		if (nPos < 0)
 			return false;
+		private_RefreshTextRanges(this.DocContent);
 		this.StartPos = nPos;
+		private_TrackTextRanges(this.DocContent);
 		return true;
 	};
 
@@ -11077,7 +11372,9 @@
 		nPos = AscBuilder.GetNumberParameter(nPos, -1);
 		if (nPos < 0)
 			return false;
+		private_RefreshTextRanges(this.DocContent);
 		this.EndPos = nPos;
+		private_TrackTextRanges(this.DocContent);
 		return true;
 	};
 
@@ -11198,13 +11495,16 @@
 			return false;
 
 		let oState = oDocContent.Get_SelectionState2();
+		private_RefreshTextRanges(this.DocContent);
 		oDocContent.SelectCharRange(nStart, nEnd, false);
 		oDocContent.Remove(1, true, false, false, false);
 		oDocContent.Recalculate();
 		oDocContent.Set_SelectionState2(oState);
+		private_ShiftTextRanges(oDocContent, nStart, nEnd - nStart, 0, this);
 
 		this.StartPos = nStart;
 		this.EndPos   = nStart;
+		private_TrackTextRanges(this.DocContent);
 
 		return true;
 	};
@@ -11286,27 +11586,52 @@
 		bWholeWords  = AscBuilder.GetBoolParameter(bWholeWords, false);
 
 		if (sFindWhat.length === 0) return this;
-		let sText     = this.GetText();
-		let sHaystack = bMatchCase ? sText     : sText.toLowerCase();
-		let sFind     = bMatchCase ? sFindWhat : sFindWhat.toLowerCase();
-		let result    = '';
-		let nStart    = 0;
-		while (true) {
-			let nIdx = sHaystack.indexOf(sFind, nStart);
-			if (nIdx === -1) { result += sText.slice(nStart); break; }
-			if (!bWholeWords || isWordBoundary(sHaystack, nIdx, sFind.length)) {
-				result += sText.slice(nStart, nIdx) + sReplaceWith;
-				nStart = nIdx + sFind.length;
-			} else {
-				result += sText.slice(nStart, nIdx + 1);
-				nStart = nIdx + 1;
+
+		let oDocContent = this.DocContent;
+		let nStart      = this.private_GetEffectiveStart();
+		let nEnd        = this.private_GetEffectiveEnd();
+		let oState      = oDocContent.Get_SelectionState2();
+
+		private_RefreshTextRanges(this.DocContent);
+		let searchEngine  = private_SearchSlideObjects([oDocContent], sFindWhat, bMatchCase, bWholeWords);
+		let replaceString = private_EscapeReplaceControls(sReplaceWith.replaceAll('^', "^^"));
+		let charMap       = this.private_BuildCharMap();
+		let nDelta        = 0;
+		for (let id = searchEngine.Id - 1; id >= 0; --id)
+		{
+			let paragraph    = searchEngine.Elements[id];
+			let searchResult = paragraph.SearchResults[id];
+			if (!searchResult)
+				continue;
+
+			let paraStart = private_GetParaCharStart(charMap, paragraph);
+			let start     = paraStart + paragraph.GetCharOffsetByContentPos(searchResult.StartPos);
+			let end       = paraStart + paragraph.GetCharOffsetByContentPos(searchResult.EndPos);
+			if (paraStart < 0 || start < nStart || end > nEnd)
+			{
+				paragraph.RemoveSearchResult(id);
+				continue;
 			}
+
+			let nBefore = this.private_GetTotalLength();
+			if (!searchEngine.Replace(replaceString, id, true))
+			{
+				paragraph.RemoveSearchResult(id);
+				continue;
+			}
+
+			let nInserted = this.private_GetTotalLength() - nBefore + end - start;
+			nDelta += nInserted - (end - start);
+			private_ShiftTextRanges(oDocContent, start, end - start, nInserted, this);
 		}
-		// GetText returns \r\n as paragraph separator; normalize to \r for SetText
-		result = result.split("\r\n").join("\r");
-		if (result.charAt(result.length - 1) === "\r")
-			result = result.slice(0, -1);
-		return this.SetText(result);
+
+		oDocContent.Recalculate();
+		oDocContent.Set_SelectionState2(oState);
+		this.StartPos = nStart;
+		if (this.EndPos !== -1)
+			this.EndPos = nEnd + nDelta;
+		private_TrackTextRanges(this.DocContent);
+		return this;
 	};
 
 	ApiTextRange.prototype.private_ApplyTextPr = function(props) {
@@ -11318,10 +11643,12 @@
 		let end		= this.private_GetEffectiveEnd();
 		let state	= oDocContent.GetSelectionState();
 
+		private_RefreshTextRanges(this.DocContent);
 		oDocContent.SelectCharRange(start, end, false);
 		oDocContent.AddToParagraph(new AscCommonWord.ParaTextPr(props), false);
 		oDocContent.SetSelectionState(state);
 		oDocContent.Recalculate();
+		private_TrackTextRanges(this.DocContent);
 		return this;
 	};
 

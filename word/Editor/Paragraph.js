@@ -1451,11 +1451,13 @@ Paragraph.prototype.GetFlatPos = function(contentPos)
 Paragraph.prototype.GetCharModelText = function()
 {
 	return this.GetText({
-		ParaSeparator    : "",
-		Numbering        : false,
-		Math             : false,
-		TabSymbol        : " ",
-		NewLineSeparator : "\r"
+		ParaSeparator      : "",
+		Numbering          : false,
+		Math               : false,
+		TabSymbol          : " ",
+		NewLineSeparator   : "\r",
+		TableCellSeparator : "",
+		TableRowSeparator  : ""
 	});
 };
 /**
@@ -1490,7 +1492,11 @@ Paragraph.prototype.GetContentPosByCharOffset = function(charOffset)
 
 		for (let pos = startPos; pos < endPos; ++pos)
 		{
-			let length = self.private_GetItemTextLength(run.GetElement(pos));
+			let item = run.GetElement(pos);
+			if (!item)
+				break;
+
+			let length = self.private_GetItemTextLength(item);
 			if (charOffset < count + length)
 			{
 				result = run.GetParagraphContentPosFromObject(pos);
@@ -1520,7 +1526,13 @@ Paragraph.prototype.GetCharOffsetByContentPos = function(contentPos)
 			return false;
 
 		for (let pos = startPos; pos < endPos; ++pos)
-			count += self.private_GetItemTextLength(run.GetElement(pos));
+		{
+			let item = run.GetElement(pos);
+			if (!item)
+				break;
+
+			count += self.private_GetItemTextLength(item);
+		}
 
 		return false;
 	}, null, contentPos);
