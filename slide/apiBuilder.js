@@ -7206,33 +7206,11 @@
 	 */
     ApiDrawing.prototype.GetPlaceholder = function()
     {
-        var oPh = null;
+        let nvPr = this.Drawing ? this.Drawing.getNvProps() : null;
+        let ph   = nvPr ? nvPr.ph : null;
 
-        if (this.Drawing)
-        {
-			this.Drawing.checkDrawingUniNvPr();
-            switch (this.Drawing.getObjectType())
-            {
-                case AscDFH.historyitem_type_ChartSpace:
-                case AscDFH.historyitem_type_GraphicFrame:
-                    oPh = this.Drawing.nvGraphicFramePr.nvPr.ph;
-                    break;
-                case AscDFH.historyitem_type_GroupShape:
-                    oPh = this.Drawing.nvGrpSpPr.ph;
-                    break;
-                case AscDFH.historyitem_type_ImageShape:
-                case AscDFH.historyitem_type_OleObject:
-                    oPh = this.Drawing.nvPicPr.nvPr.ph;
-                    break;
-                case AscDFH.historyitem_type_Shape:
-                case AscDFH.historyitem_type_Cnx:
-                    oPh = this.Drawing.nvSpPr.nvPr.ph;
-                    break;
-            }
-        }
-
-        if (oPh)
-            return new ApiPlaceholder(oPh);
+        if (ph)
+            return new ApiPlaceholder(ph);
 
         return null;
     };
