@@ -813,7 +813,7 @@
 	 *
 	 * @param {(ApiUniColor[] | ApiRGBColor[] | ApiColor[] | string[])} arrColors - Set of colors which are referred to as a color scheme.
 	 * The color scheme is responsible for defining a list of twelve colors.
-	 * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
+	 * The array must hold exactly twelve colors in this order: accent1, accent2, accent3, accent4, accent5, accent6, dk1, dk2, folHlink, hlink, lt1, lt2.
 	 * A color may also be given as a HEX string ("#1a2b3c" or "#abc", with or without the leading "#").
 	 * @param {string} sName - Theme color scheme name.
 	 * @returns {?ApiThemeColorScheme} - returns null if the array does not hold exactly twelve colors this method can read.
