@@ -10058,6 +10058,19 @@
 	};
 
 	/**
+	 * Returns a number of columns in the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["PDFE"]
+	 * @returns {number}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetColumnsCount.js
+	 */
+	ApiTable.prototype.GetColumnsCount = function() {
+		return this.Table.GetColsCount();
+	};
+	ApiTable.prototype.GetColsCount = ApiTable.prototype.GetColumnsCount;
+
+	/**
 	 * Returns a cell by its position.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
@@ -12688,6 +12701,8 @@
 	ApiTable.prototype["GetColumnWidth"]					= ApiTable.prototype.GetColumnWidth;
 	ApiTable.prototype["SetHeight"]							= ApiTable.prototype.SetHeight;
 	ApiTable.prototype["GetRowsCount"]						= ApiTable.prototype.GetRowsCount;
+	ApiTable.prototype["GetColumnsCount"]					= ApiTable.prototype.GetColumnsCount;
+	ApiTable.prototype["GetColsCount"]						= ApiTable.prototype.GetColsCount;
 	ApiTable.prototype["GetCell"]							= ApiTable.prototype.GetCell;
 	ApiTable.prototype["SelectRange"]						= ApiTable.prototype.SelectRange;
 	ApiTable.prototype["GetSelectedCells"]					= ApiTable.prototype.GetSelectedCells;

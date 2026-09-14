@@ -10317,6 +10317,7 @@
 			return this.GetColumnsCount();
 		}
 	});
+	ApiRange.prototype.GetColsCount = ApiRange.prototype.GetColumnsCount;
 
 	/**
 	 * Returns a number of rows in the current range.
@@ -30531,6 +30532,7 @@
 	ApiRange.prototype["GetCellsCount"] = ApiRange.prototype.GetCellsCount;
 	ApiRange.prototype["GetRowsCount"] = ApiRange.prototype.GetRowsCount;
 	ApiRange.prototype["GetColumnsCount"] = ApiRange.prototype.GetColumnsCount;
+	ApiRange.prototype["GetColsCount"] = ApiRange.prototype.GetColsCount;
 	ApiRange.prototype["Clear"] = ApiRange.prototype.Clear;
     ApiRange.prototype["ClearFormats"] = ApiRange.prototype.ClearFormats;
     ApiRange.prototype["ClearContents"] = ApiRange.prototype.ClearContents;

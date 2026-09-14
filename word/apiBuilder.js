@@ -14340,6 +14340,19 @@
 		return this.Table.Content.length;
 	};
 	/**
+	 * Returns a number of columns in the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetColumnsCount.js
+	 */
+	ApiTable.prototype.GetColumnsCount = function()
+	{
+		return this.Table.GetColsCount();
+	};
+	ApiTable.prototype.GetColsCount = ApiTable.prototype.GetColumnsCount;
+	/**
 	 * Returns a table row by its position in the table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
@@ -32433,6 +32446,8 @@
 	ApiTable.prototype["GetInternalId"]              = ApiTable.prototype.GetInternalId;
 	ApiTable.prototype["SetJc"]                      = ApiTable.prototype.SetJc;
 	ApiTable.prototype["GetRowsCount"]               = ApiTable.prototype.GetRowsCount;
+	ApiTable.prototype["GetColumnsCount"]            = ApiTable.prototype.GetColumnsCount;
+	ApiTable.prototype["GetColsCount"]               = ApiTable.prototype.GetColsCount;
 	ApiTable.prototype["GetRow"]                     = ApiTable.prototype.GetRow;
 	ApiTable.prototype["MergeCells"]                 = ApiTable.prototype.MergeCells;
 	ApiTable.prototype["SetStyle"]                   = ApiTable.prototype.SetStyle;
