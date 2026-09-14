@@ -52,6 +52,8 @@
 
 			this.isNaturalDownload = false;
 			this.errorDirect = null;
+			//background conversion: no progress mask, no error alert - the caller reports the failure itself
+			this.isSilent = false;
 			this.oDocumentMailMerge = null;
 			this.oMailMergeSendData = null;
 			this.callback = null;

@@ -1861,10 +1861,12 @@
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("getEditorPermissions", performance.now()), this);
 		this._coAuthoringInit();
 	};
-	baseEditorsApi.prototype.getConvertedXLSXFileFromUrl  = function (oDocument, nOutputFormat, fCallback) {
+	baseEditorsApi.prototype.getConvertedXLSXFileFromUrl  = function (oDocument, nOutputFormat, fCallback, bSilent) {
 		if (this.canEdit()) {
+			let bConvertHandled = false;
 			this.insertDocumentUrlsData = {
 				imageMap: null, documents: [oDocument], convertCallback: function (_api, url) {
+					bConvertHandled = true;
 					_api.insertDocumentUrlsData.imageMap = url;
 					let sFileUrlAfterConvert = url['output.xlsx'] || url['output.xlst'];
 					if (sFileUrlAfterConvert) {
@@ -1880,13 +1882,17 @@
 					}
 					_api.endInsertDocumentUrls();
 				}, endCallback: function (_api) {
+					if (bSilent && !bConvertHandled) {
+						fCallback(null);
+					}
 				}
 			};
 
 			const oOptions = new Asc.asc_CDownloadOptions(nOutputFormat);
 			oOptions.isNaturalDownload = true;
 			oOptions.isGetTextFromUrl = true;
-			this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, oOptions);
+			oOptions.isSilent = !!bSilent;
+			this.downloadAs(bSilent ? null : Asc.c_oAscAsyncAction.DownloadAs, oOptions);
 		}
 	};
 	baseEditorsApi.prototype.getConvertedBinFileFromRtf  = function (document, nOutputFormat, fCallback) {
@@ -2682,7 +2688,10 @@
 				if (c_oAscError.ID.No !== error)
 				{
 					t.endInsertDocumentUrls();
-					t.sendEvent('asc_onError', options.errorDirect || error, c_oAscError.Level.NoCritical);
+					if (!options.isSilent)
+					{
+						t.sendEvent('asc_onError', options.errorDirect || error, c_oAscError.Level.NoCritical);
+					}
 				}
 				if (actionType)
 				{
