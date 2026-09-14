@@ -2117,6 +2117,9 @@
 
 
 						let diff = 0;
+						//recalculation is locked: the pasted fragment keeps only the copied cells, so any formula
+						//referring outside of it would be recalculated to a wrong value and overwrite the cached one
+						tempWorkbook.dependencyFormulas.lockRecal();
 						for (let i = 1; i < _ranges.length; i++) {
 							if (byCol) {
 								if (_ranges[i - 1].r2 + 1 !== _ranges[i].r1) {
@@ -2130,6 +2133,7 @@
 								}
 							}
 						}
+						tempWorkbook.dependencyFormulas.unlockRecal(true);
 
 						if (diff !== 0) {
 							AscCommonExcel.executeInR1C1Mode(false, function () {
