@@ -3079,6 +3079,7 @@
 								_src = srcLocal;
 						}
 
+						registerCryptoPdfImage(_src);
 						nFlag |= (1 << 22);
 						this.Memory.WriteString(_src);
 					}
