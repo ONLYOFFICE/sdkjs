@@ -212,7 +212,7 @@
 		else {
 			let nApIdx = Asc.editor.getPDFDoc().GetCurMaxApIdx() + Number(this.GetId().replace("_", ""));
 			if (!isNaN(nApIdx)) {
-				nApIdx;
+				return nApIdx;
 			}
 			
 			return undefined;
