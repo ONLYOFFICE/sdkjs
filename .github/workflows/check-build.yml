@@ -44,7 +44,12 @@ jobs:
           ref: master
       
       - name: execute check styles
+        env:
+          TESTS_BRANCH: ${{ github.head_ref }}
         run: |
+          if [ -n "$TESTS_BRANCH" ] && git -C sdkjs-tests fetch --depth=1 origin "refs/heads/$TESTS_BRANCH"; then
+            git -C sdkjs-tests checkout --detach FETCH_HEAD
+          fi
           cd sdkjs
           python ../sdkjs-tests/code-style/check.py
 
@@ -144,7 +149,14 @@ jobs:
 
       - name: Run unit tests
         shell: bash
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
         run: |
+          for repo in sdkjs-tests sdkjs-ext sdkjs-ooxml; do
+            if [ -n "$PR_BRANCH" ] && git -C "$repo" fetch --depth=1 origin "refs/heads/$PR_BRANCH"; then
+              git -C "$repo" checkout --detach FETCH_HEAD
+            fi
+          done
           set -o pipefail
           cd sdkjs
           python build/build.py --develop --addon ../sdkjs-ext --addon ../sdkjs-forms --addon ../sdkjs-ooxml
