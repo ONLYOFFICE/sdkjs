@@ -1341,8 +1341,14 @@
 		SelectionRange.prototype.excludeRange = function (range) {
 			var newRanges = [];
 			for (var i = 0; i < this.ranges.length; ++i) {
+				// difference splits by full-width/height bands, so an untouched range must be kept as is
+				if (!range.isIntersect(this.ranges[i])) {
+					newRanges.push(this.ranges[i]);
+					continue;
+				}
+				// difference gives top/left/right/bottom, MS orders the parts bottom/right/left/top
 				var diff = range.difference(this.ranges[i]);
-				for (var j = 0; j < diff.length; ++j) {
+				for (var j = diff.length - 1; j >= 0; --j) {
 					newRanges.push(diff[j]);
 				}
 			}

@@ -515,6 +515,8 @@ function isAllowPasteLink(pastedWb) {
 		this.dragAndDropRange = null;
 		// Range fillHandle
 		this.activeFillHandle = null;
+		// ctrl+drag deselect: {start: asc_Range, range: asc_Range}
+		this.ctrlDeselectInfo = null;
 		this.resizeTableIndex = null;
 		// Horizontal (0) or vertical (1) autofill direction
 		this.fillHandleDirection = -1;
@@ -5128,7 +5130,7 @@ function isAllowPasteLink(pastedWb) {
 
     WorksheetView.prototype._drawActiveHeaders = function () {
         var vr = this.visibleRange;
-        var selectionRange = this.model.getSelection();
+        var selectionRange = this._getSelectionForDraw();
         var range, c1, c2, r1, r2;
         this._activateOverlayCtx();
         for (var i = 0; i < selectionRange.ranges.length; ++i) {
@@ -9208,7 +9210,7 @@ function isAllowPasteLink(pastedWb) {
 	};
 
     WorksheetView.prototype._drawSelectionRange = function () {
-        var type, selection = this.model.getSelection(), ranges = selection.ranges;
+        var type, selection = this._getSelectionForDraw(), ranges = selection.ranges;
         var range, selectionLineType;
         var isMultiSelectNoFrame = AscCommonExcel.bDrawMultiSelectUnion && selection.isMultiSelect();
         if (isMultiSelectNoFrame && null === this.activeMoveRange) {
@@ -9273,20 +9275,9 @@ function isAllowPasteLink(pastedWb) {
         var unionBorderColor = new CColor(166, 166, 166);
         var fillType = AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.NotStroke;
 
-        var disjoint = [];
         for (var i = 0; i < ranges.length; ++i) {
-            var pieces = [this._clampSelectionRangeForDraw(ranges[i].clone())];
-            for (var j = 0; j < disjoint.length; ++j) {
-                var rest = [];
-                for (var k = 0; k < pieces.length; ++k) {
-                    rest = rest.concat(disjoint[j].difference(pieces[k]));
-                }
-                pieces = rest;
-            }
-            disjoint = disjoint.concat(pieces);
-        }
-        for (var d = 0; d < disjoint.length; ++d) {
-            this._drawElements(this._drawSelectionElement, disjoint[d], fillType, unionFillColor);
+            this._drawElements(this._drawSelectionElement, this._clampSelectionRangeForDraw(ranges[i].clone()),
+                fillType, unionFillColor);
         }
 
         for (var b = 0; b < ranges.length; ++b) {
@@ -13602,21 +13593,50 @@ function isAllowPasteLink(pastedWb) {
 		this._fixSelectionOfMergedCells(null, valid);
 	};
 
+	// ctrl+click/ctrl+drag deselect: starts only inside the selection, the rectangle is applied on mouseup
 	WorksheetView.prototype.ctrlDeselectRange = function (x, y) {
 		if (this.getCellEditMode() || this.getSelectionDialogMode()) {
 			return false;
 		}
-		var clickedRange = this._getRangeByXY(x, y);
-		if (!this.model.selectionRange.containsRange(clickedRange)) {
+		var range = this._getRangeByXY(x, y);
+		this._fixSelectionOfMergedCells(range, true);
+		if (!this.model.selectionRange.containsRange(range)) {
 			return false;
 		}
+		this.ctrlDeselectInfo = {start: range.clone(), range: range.clone()};
 		this.cleanSelection();
-		if (this.model.selectionRange.excludeRange(clickedRange)) {
-			this._fixActiveCellAfterDeselect();
-		}
-		this.updateSelectionWithSparklines();
-		this._updateSelectionNameAndInfo();
+		this._drawSelection();
 		return true;
+	};
+
+	WorksheetView.prototype.ctrlDeselectEndPoint = function (x, y) {
+		var info = this.ctrlDeselectInfo;
+		var cur = this._getRangeByXY(x, y);
+		var range = new asc_Range(Math.min(info.start.c1, cur.c1), Math.min(info.start.r1, cur.r1),
+			Math.max(info.start.c2, cur.c2), Math.max(info.start.r2, cur.r2));
+		this._fixSelectionOfMergedCells(range, true);
+		if (!range.isEqual(info.range)) {
+			info.range = range;
+			this.cleanSelection();
+			this._drawSelection();
+		}
+		// autoscroll offset is calculated by the rectangle being deselected
+		var selection = this.model.getSelection().clone();
+		selection.getLast().assign2(range);
+		return this._calcActiveRangeOffsetIsCoord(x, y, selection);
+	};
+
+	// Selection as it will look after the ctrl+drag deselect in progress
+	WorksheetView.prototype._getSelectionForDraw = function () {
+		var info = this.ctrlDeselectInfo;
+		if (!info) {
+			return this.model.getSelection();
+		}
+		var preview = this.model.getSelection().clone();
+		if (!preview.excludeRange(info.range)) {
+			preview.assign2(new asc_Range(info.start.c1, info.start.r1, info.start.c1, info.start.r1));
+		}
+		return preview;
 	};
 
     WorksheetView.prototype._moveActiveCellToOffset = function (activeCell, dc, dr, customSelection) {
@@ -15149,6 +15169,9 @@ function isAllowPasteLink(pastedWb) {
      * @returns {*}
      */
     WorksheetView.prototype.changeSelectionEndPoint = function (x, y, isCoord, keepType) {
+		if (isCoord && this.ctrlDeselectInfo) {
+			return this.ctrlDeselectEndPoint(x, y);
+		}
         var isChangeSelectionShape = isCoord ? this._endSelectionShape() : false;
         var ar = this._getSelection().getLast();
 
@@ -15195,6 +15218,20 @@ function isAllowPasteLink(pastedWb) {
 
     // End of selection
     WorksheetView.prototype.changeSelectionDone = function () {
+		var deselect = this.ctrlDeselectInfo;
+		if (deselect) {
+			this.ctrlDeselectInfo = null;
+			this.cleanSelection();
+			if (this.model.selectionRange.excludeRange(deselect.range)) {
+				this._fixActiveCellAfterDeselect();
+				this.updateSelectionWithSparklines();
+				this._updateSelectionNameAndInfo();
+			} else {
+				// MS: deselecting everything leaves just the cell the gesture started from
+				this.setSelection(new asc_Range(deselect.start.c1, deselect.start.r1, deselect.start.c1, deselect.start.r1));
+			}
+			return;
+		}
         if (this.workbook.Api.getFormatPainterState()) {
             this.applyFormatPainter();
 		} else {
@@ -16800,8 +16837,9 @@ function isAllowPasteLink(pastedWb) {
     /* Function for applying range movement */
     WorksheetView.prototype.applyMoveRangeHandle = function (ctrlKey) {
         if (null === this.activeMoveRange) {
-            if (ctrlKey && this.startCellMoveRange && undefined !== this.startCellMoveRange.downX) {
-                this.ctrlDeselectRange(this.startCellMoveRange.downX, this.startCellMoveRange.downY);
+            if (ctrlKey && this.startCellMoveRange && undefined !== this.startCellMoveRange.downX &&
+                this.ctrlDeselectRange(this.startCellMoveRange.downX, this.startCellMoveRange.downY)) {
+                this.changeSelectionDone();
             }
             // Reset parameters
             this.startCellMoveRange = null;

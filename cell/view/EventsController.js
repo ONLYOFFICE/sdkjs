@@ -1879,10 +1879,12 @@
 						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
 						t.handlers.trigger("updateWorksheet", coord.x, coord.y);
 						//t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
-					} else if (!(ctrlKey && this.handlers.trigger("ctrlDeselect", coord.x, coord.y))) {
+					} else {
 						this.isSelectMode = true;
-						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
-							ctrlKey);
+						if (!(ctrlKey && this.handlers.trigger("ctrlDeselect", coord.x, coord.y))) {
+							this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
+								ctrlKey);
+						}
 					}
 				}
 			}
