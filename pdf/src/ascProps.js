@@ -965,7 +965,12 @@ function (window, undefined) {
 		}
 		let Api = Asc.editor;
 
-		Api._addImageUrl([sUrl], this.getParentFields());
+		let oField = this.getParentFields();
+		AscCommon.sendImgUrls(Api, [sUrl], function(data) {
+			if (data && data[0] && data[0].url !== "error") {
+				Api._addImageUrl([data[0].url], oField);
+			}
+		});
 	};
 	asc_CButtonFieldProperty.prototype.showFileDialog = function (nState) {
 		if (!this.DivId){
