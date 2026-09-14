@@ -111,7 +111,25 @@
 		this.initEvents();
 		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
 
+		this.recordInitialState();
+
 		this.editor.sendEvent("asc_onMacroRecordingStart");
+	};
+	MacroRecorder.prototype.recordInitialState = function()
+	{
+		if (this.editor.editorId === AscCommon.c_oEditorId.Word)
+			this.recordInitialStateForWord();
+	};
+	MacroRecorder.prototype.recordInitialStateForWord = function()
+	{
+		let doc = this.editor.getLogicDocument();
+		if (!doc)
+			return;
+
+		if (doc.isHeaderEditing())
+			this.addStepData('GoToHeader', true);
+		else if (doc.isFooterEditing())
+			this.addStepData('GoToFooter', true);
 	};
 	MacroRecorder.prototype.initEvents = function()
 	{
@@ -429,6 +447,33 @@
 			curType: "SetDrawingRotation",
 			check: function(type, additional) {
 				return this.prevData === additional || (Array.isArray(this.prevData) && this.prevData[this.prevData.length - 1] === additional)
+			},
+			action: ACTION.EXIT
+		},
+		{
+			prevType: "GoToHeader",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "GoToHeader",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.EXIT
+		},
+		{
+			prevType: "GoToFooter",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "GoToFooter",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.EXIT
+		},
+		{
+			prevType: "GoToDocContent",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "GoToDocContent",
+			check: function(type, additional) {
+				return true;
 			},
 			action: ACTION.EXIT
 		},
@@ -1030,8 +1075,12 @@
 			let textStr = "";
 			for (let i = 0; i < textArr.length; ++i)
 			{
-				textStr += String.fromCodePoint(textArr[i]);
+				if (textArr[i])
+					textStr += String.fromCodePoint(textArr[i]);
 			}
+
+			if ("" === textStr)
+				return "";
 
 			return "\tdoc.EnterText(\"" + textStr + "\");\n"
 		},
@@ -1973,7 +2022,9 @@
 				str += "\n\t\t.GetFooter(\"default\", true)"
 			}
 
-			str += "\n\t\t.GetElement(0);\n\n\tp.RemoveAllElements();\n\tp.AddPageNumber();\n\tp.SetJc(\"" + align + "\");\n"
+			let runVar = varRegistry.inc('run');
+			str += "\n\t\t.GetElement(0);\n\n\tp.RemoveAllElements();\n\tlet " + runVar + " = p.AddPageNumber();\n\tp.SetJc(\"" + align + "\");\n"
+				+ "\t" + runVar + ".MoveCursorToPos(" + runVar + ".GetText().length + 1);\n"
 
 			return str;
 		},
