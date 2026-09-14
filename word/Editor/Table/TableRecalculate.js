@@ -525,7 +525,7 @@ CTable.prototype.private_RecalculateGrid = function(pageFields)
 			oPageFields.X      = 0;
 			oPageFields.XLimit = oFramePr.GetW();
 		}
-		else if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.IsInline())
+		else if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.IsInline() && this.Parent)
 		{
 			var _X      = oPageFields.X;
 			var _XLimit = oPageFields.XLimit;
