@@ -1122,7 +1122,8 @@
 		// 	//paragraph.SetIndFirstLine(1440);
 		// },
 		setParagraphNumbering	: function(num){
-			return "\tlet " + varRegistry.inc('numbering') + " = doc.CreateNumbering(\"" + num.Type + "\");\n" +
+			let numberingType = (num.Type === Asc.c_oAscJSONNumberingType.Number) ? "numbered" : "bullet";
+			return "\tlet " + varRegistry.inc('numbering') + " = doc.CreateNumbering(\"" + numberingType + "\");\n" +
 				"\tdoc.GetRangeBySelect().GetAllParagraphs().forEach(function(para) {\n" +
 				"\t\tpara.SetNumbering(" + varRegistry.get('numbering') + ".GetLevel(0));\n" +
 				"\t\tpara.SetContextualSpacing(true);\n" +
