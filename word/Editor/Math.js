@@ -2111,6 +2111,7 @@ ParaMath.prototype.Set_Inline = function(value)
     if(value !== this.ParaMathRPI.bInline)
     {
         this.ParaMathRPI.bChangeInline = true;
+        this.ParaMathRPI.bRecalcCtrPrp = true;
         this.ParaMathRPI.bInline = value;
         this.bFastRecalculate = false;          // после смены инлайновости, требуется полностью пересчитать формулу
     }
