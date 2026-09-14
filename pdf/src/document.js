@@ -3616,7 +3616,7 @@ var CPresentation = CPresentation || function(){};
                     oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
             }
             else {
-                if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]])
+                if (oAnnotInfo["type"] == AscPDF.ANNOTATIONS_TYPES.Text && oAnnotsMap[oAnnotInfo["RefTo"]])
                     AscPDF.ReadAnnotReplyJSON(oAnnotsMap[oAnnotInfo["RefTo"]], oAnnotInfo);
             }
         }
@@ -10113,6 +10113,8 @@ var CPresentation = CPresentation || function(){};
         oReply.SetUserId(replyJson["OUserID"]);
         oReply.SetApIdx(replyJson["AP"]["i"]);
         oReply.SetContents(replyJson["Contents"]);
+		oReply.SetState(replyJson["State"]);
+		oReply.SetStateModel(replyJson["StateModel"]);
         
         oParentAnnot.AddReply(oReply);
     }

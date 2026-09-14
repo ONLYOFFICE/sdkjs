@@ -6018,6 +6018,7 @@
 		Asc.asc_CCommentDataWord.call(this, obj);
 		
 		this.m_nAnnotType = obj && obj.m_nAnnotType;
+		this.m_bShowStatus = obj && obj.m_bShowStatus;
 	};
 
 	asc_CCommentDataPDF.prototype = Object.create(Asc.asc_CCommentDataWord.prototype);
@@ -6029,9 +6030,17 @@
 	asc_CCommentDataPDF.prototype.asc_putAnnotType = function(v) {
 		this.m_nAnnotType = v;
 	};
+	asc_CCommentDataPDF.prototype.asc_getShowStatus = function() {
+		return this.m_bShowStatus;
+	};
+	asc_CCommentDataPDF.prototype.asc_putShowStatus = function(v) {
+		this.m_bShowStatus = v;
+	};
 	
 	asc_CCommentDataPDF.prototype["asc_getAnnotType"] = asc_CCommentDataPDF.prototype.asc_getAnnotType;
 	asc_CCommentDataPDF.prototype["asc_putAnnotType"] = asc_CCommentDataPDF.prototype.asc_putAnnotType;
+	asc_CCommentDataPDF.prototype["asc_getShowStatus"] = asc_CCommentDataPDF.prototype.asc_getShowStatus;
+	asc_CCommentDataPDF.prototype["asc_putShowStatus"] = asc_CCommentDataPDF.prototype.asc_putShowStatus;
 	window["Asc"]["asc_CCommentDataPDF"] = window["Asc"].asc_CCommentDataPDF = asc_CCommentDataPDF;
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export

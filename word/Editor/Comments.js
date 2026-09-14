@@ -159,6 +159,7 @@ function CCommentData()
 
 		if (Asc.editor.isPdfEditor() && AscCommentData.asc_getAnnotType) {
 			this.m_nAnnotType = AscCommentData.asc_getAnnotType();
+			this.m_bShowStatus = AscCommentData.asc_getShowStatus();
 		}
 
         var RepliesCount  = AscCommentData.asc_getRepliesCount();

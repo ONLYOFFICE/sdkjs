@@ -298,14 +298,32 @@
         return aRectDiff ? aRectDiff.slice() : aRectDiff;
     };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
+        if (this._noRotate === bValue) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotNoRotate(this, this._noRotate, bValue));
         this._noRotate = bValue;
+        this.SetWasChanged(true);
     };
+	CAnnotationBase.prototype.IsNoRotate = function() {
+		return this._noRotate;
+	};
     CAnnotationBase.prototype.SetToggleNoView = function(value) {
         this._toggleNoView = value;
     };
     CAnnotationBase.prototype.SetNoZoom = function(bValue) {
+        if (this._noZoom === bValue) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotNoZoom(this, this._noZoom, bValue));
         this._noZoom = bValue;
+        this.SetWasChanged(true);
     };
+	CAnnotationBase.prototype.IsNoZoom = function() {
+		return this._noZoom;
+	};
     CAnnotationBase.prototype.SetDashPattern = function(aDash) {
         AscCommon.History.Add(new CChangesPDFAnnotBorderDash(this, this._dash, aDash));
         this._dash = aDash;
@@ -1324,8 +1342,12 @@
             if (oFirstCommToEdit == oReply)
                 continue;
 
+			if (oReply.GetStateModel() == AscPDF.TEXT_ANNOT_STATE_MODEL.Review) {
+				continue;
+			}
+
             oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
-                return item.GetUserData() == oReply.GetId(); 
+                return item.GetUserData() == oReply.GetId();
             });
 
             if (oReplyCommentData) {
@@ -1351,56 +1373,75 @@
         }
         AscCommon.History.EndNoHistoryMode();
 
-        if (this.IsText()) {
-            if (oCommentData.m_bSolved) {
-                this.SetState(AscPDF.TEXT_ANNOT_STATE.Accepted);
-            }
-            else {
-                this.SetState(AscPDF.TEXT_ANNOT_STATE.Unknown);
-            }
-        }
+		if (AscCommon.History.CanAddChanges()) {
+			let isSolved = oCommentData.GetSolved();
+			if (oCurAscCommData.asc_getSolved() !== isSolved) {
+				let sAuthor = AscCommon.UserInfoParser.getCurrentName();
+				let sContents = sAuthor + " " + (isSolved ? AscCommon.translateManager.getValue('marked as resolved') : AscCommon.translateManager.getValue('marked as unresolved'));
 
-        for (let i = 0; i < this._replies.length; i++) {
-            if (oCommentData.m_bSolved) {
-                this._replies[i].SetState(AscPDF.TEXT_ANNOT_STATE.Accepted);
-            }
-            else {
-                this._replies[i].SetState(AscPDF.TEXT_ANNOT_STATE.Unknown);
-            }
-        }
+				let oReply = new AscPDF.CAnnotationText(AscCommon.CreateGUID(), [], oDoc);
+				oReply.SetCreationDate(new Date().getTime());
+				oReply.SetModDate(new Date().getTime());
+				oReply.SetAuthor(sAuthor);
+				oReply.SetUserId(Asc.editor.documentUserId);
+				oReply.SetContents(sContents);
+				oReply.SetState(isSolved ? AscPDF.TEXT_ANNOT_STATE.Completed : AscPDF.TEXT_ANNOT_STATE.None);
+				oReply.SetStateModel(AscPDF.TEXT_ANNOT_STATE_MODEL.Review);
+				oReply.SetDisplay(AscPDF.Api.Types.display["hidden"]);
+				oReply.SetNoZoom(true);
+				oReply.SetNoRotate(true);
+				oReply.SetRect(this.GetRect());
 
+				this.AddReply(oReply);
+			}
+		}
+		
         aRepliesToBeChanged.forEach(function(reply) {
             reply.SetWasChanged(true, false);
         });
 
 		this.SetWasChanged(true, false);
-        
-        this.private_onChangeComment();
+
+		this.private_onChangeComment();
     };
-    CAnnotationBase.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc.asc_CCommentDataPDF(null);
-        oAscCommData.asc_putText(this.GetContents() || "");
+	CAnnotationBase.prototype.GetAscCommentData = function() {
+		let oAscCommData = new Asc.asc_CCommentDataPDF(null);
+		oAscCommData.asc_putText(this.GetContents() || "");
 
-        let sCreationDate = this.GetCreationDate();
-        if (sCreationDate)
-            oAscCommData.asc_putOnlyOfficeTime(sCreationDate.toString());
-        oAscCommData.asc_putUserId(this.GetUserId());
-        oAscCommData.asc_putUserName(this.GetAuthor());
-
-        oAscCommData.asc_putSolved(false);
-        oAscCommData.asc_putQuoteText("");
-        oAscCommData.asc_putUserData(this.GetId());
+		let sCreationDate = this.GetCreationDate();
+		if (sCreationDate)
+			oAscCommData.asc_putOnlyOfficeTime(sCreationDate.toString());
+		oAscCommData.asc_putUserId(this.GetUserId());
+		oAscCommData.asc_putUserName(this.GetAuthor());
+		oAscCommData.asc_putQuoteText("");
+		oAscCommData.asc_putUserData(this.GetId());
 		oAscCommData.asc_putAnnotType(this.GetType());
 
-        this._replies.forEach(function(reply) {
-            let oReplyAscCommData = reply.GetAscCommentData();
-            if (oReplyAscCommData) {
-                oAscCommData.m_aReplies.push(oReplyAscCommData);
-            }
-        });
+		let isSolved = false;
+		this._replies.forEach(function(reply) {
+			let nStateModel = reply.GetStateModel();
 
-        return oAscCommData;
-    };
+			if (nStateModel !== AscPDF.TEXT_ANNOT_STATE_MODEL.Review && nStateModel !== AscPDF.TEXT_ANNOT_STATE_MODEL.Marked) {
+				let oReplyAscCommData = reply.GetAscCommentData();
+				if (oReplyAscCommData) {
+					oAscCommData.m_aReplies.push(oReplyAscCommData);
+				}
+			}
+
+			if (nStateModel == AscPDF.TEXT_ANNOT_STATE_MODEL.Review) {
+				let nState = reply.GetState();
+				if (nState == AscPDF.TEXT_ANNOT_STATE.Accepted || nState == AscPDF.TEXT_ANNOT_STATE.Completed) {
+					isSolved = true;
+				}
+				else {
+					isSolved = false;
+				}
+			}
+		});
+
+		oAscCommData.asc_putSolved(isSolved);
+		return oAscCommData;
+	};
     CAnnotationBase.prototype.GetContents = function() {
         return this._contents;
     };
@@ -1608,8 +1649,8 @@
         let ToggleNoView = false;
         let locked       = false;
         let lockedC      = false;
-        let noZoom       = false;
-        let noRotate     = false;
+        let noZoom       = this.IsNoZoom();
+        let noRotate     = this.IsNoRotate();
 
         let nDisplayType = this.GetDisplay();
         if (nDisplayType == 1) {

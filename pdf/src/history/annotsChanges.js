@@ -74,6 +74,8 @@ AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_Reply]		= CChangesPDFAnn
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Ap_Idx]			= CChangesPDFAnnotApIdx;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Actions]			= CChangesPDFAnnotActions;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_In_Reply_To]		= CChangesPDFAnnotInReplyTo;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_NoRotate]		= CChangesPDFAnnotNoRotate;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_NoZoom]			= CChangesPDFAnnotNoZoom;
 
 // text annot
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Annot_Icon]		= CChangesPDFTextAnnotIcon;
@@ -944,23 +946,53 @@ CChangesPDFAnnotActions.prototype.ReadFromBinary = function(Reader)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseObjectProperty}
+ * @extends {AscDFH.CChangesBaseStringProperty}
  */
-function CChangesPDFAnnotInReplyTo(Class, oOldPage, oNewPage)
+function CChangesPDFAnnotInReplyTo(Class, Old, New)
 {
-	AscDFH.CChangesBaseObjectProperty.call(this, Class, oOldPage, oNewPage);
+	let oldId = Old && Old.Get_Id ? Old.Get_Id() : undefined;
+	let newId = New && New.Get_Id ? New.Get_Id() : undefined;
+	AscDFH.CChangesBaseStringProperty.call(this, Class, oldId, newId);
 }
-CChangesPDFAnnotInReplyTo.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesPDFAnnotInReplyTo.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
 CChangesPDFAnnotInReplyTo.prototype.constructor = CChangesPDFAnnotInReplyTo;
 CChangesPDFAnnotInReplyTo.prototype.Type = AscDFH.historyitem_Pdf_Annot_In_Reply_To;
-CChangesPDFAnnotInReplyTo.prototype.CreateReverseChange = function() {
-	return new this.constructor(this.Class, this.New, this.Old);
+CChangesPDFAnnotInReplyTo.prototype.private_SetValue = function(value)
+{
+	let oAnnot = AscCommon.g_oTableId.Get_ById(value);
+	this.Class._inReplyTo = oAnnot;
 };
 
-CChangesPDFAnnotInReplyTo.prototype.private_SetValue = function(Value)
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFAnnotNoRotate(Class, Old, New, Color)
 {
-	let oAnnot = this.Class;
-	oAnnot._inReplyTo = Value;
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotNoRotate.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFAnnotNoRotate.prototype.constructor = CChangesPDFAnnotNoRotate;
+CChangesPDFAnnotNoRotate.prototype.Type = AscDFH.historyitem_Pdf_Annot_NoRotate;
+CChangesPDFAnnotNoRotate.prototype.private_SetValue = function(Value)
+{
+	this.Class._noZoom = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFAnnotNoZoom(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotNoZoom.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFAnnotNoZoom.prototype.constructor = CChangesPDFAnnotNoZoom;
+CChangesPDFAnnotNoZoom.prototype.Type = AscDFH.historyitem_Pdf_Annot_NoZoom;
+CChangesPDFAnnotNoZoom.prototype.private_SetValue = function(Value)
+{
+	this.Class._noRotate = Value;
 };
 
 // text annot

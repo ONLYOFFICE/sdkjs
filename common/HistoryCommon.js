@@ -4269,6 +4269,9 @@
 	AscDFH.historyitem_type_Pdf_Annot_Reply			= AscDFH.historyitem_type_Pdf_Annot | 33;
 	AscDFH.historyitem_Pdf_Annot_Ap_Idx				= AscDFH.historyitem_type_Pdf_Annot | 34;
 	AscDFH.historyitem_Pdf_Annot_Actions			= AscDFH.historyitem_type_Pdf_Annot | 35;
+	AscDFH.historyitem_Pdf_Annot_In_Reply_To		= AscDFH.historyitem_type_Pdf_Annot | 36;
+	AscDFH.historyitem_Pdf_Annot_NoRotate			= AscDFH.historyitem_type_Pdf_Annot | 37;
+	AscDFH.historyitem_Pdf_Annot_NoZoom				= AscDFH.historyitem_type_Pdf_Annot | 38;
 
 	// Sticky
 	AscDFH.historyitem_Pdf_Text_Annot_Icon			= AscDFH.historyitem_type_Pdf_Comment | 1;
