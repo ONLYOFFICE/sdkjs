@@ -16926,8 +16926,10 @@
 			return this;
 
 		let _style = private_GetLogicDocument().GetStyles().Get(styleId);
-		if (!_style || _style.Get_Type() !== styletype_Character)
-			throwException(new Error("Style \"" + style + "\" is not a character style"));
+		if (!_style)
+			throwException(new Error("Style does not exist"));
+		if (_style.Get_Type() !== styletype_Character)
+			throwException(new Error("Style \"" + _style.Get_Name() + "\" is not a character style"));
 
 		this.TextPr.RStyle = styleId;
 		this.private_OnChange();
