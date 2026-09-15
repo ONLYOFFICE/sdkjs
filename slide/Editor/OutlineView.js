@@ -2211,6 +2211,7 @@
 		if (!slideNumbers.length) {
 			return;
 		}
+		let savedMinSlideIndex = null;
 		if (isOnAddText) {
 			let minSlideNumber = slideNumbers[0];
 			for (let i = 1; i < slideNumbers.length; i += 1) {
@@ -2218,6 +2219,7 @@
 					minSlideNumber = slideNumbers[i];
 				}
 			}
+			savedMinSlideIndex = minSlideNumber;
 			slideNumbers = slideNumbers.filter(function (num) {
 				return num !== minSlideNumber;
 			});
@@ -2233,7 +2235,7 @@
 			return;
 		}
 		const presentation = this.getPresentation();
-		let minSlideIndex = presentation.GetSlidesCount() - 1;
+		let minSlideIndex = savedMinSlideIndex === null ? presentation.GetSlidesCount() - 1 : savedMinSlideIndex;
 		for (let i = 0; i < slides.length; i++) {
 			const index = presentation.GetSlideIndex(slides[i]);
 			if (minSlideIndex > index) {
