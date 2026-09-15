@@ -14426,7 +14426,7 @@ function parseStringToCElement (val, cultureInfo) {
 	}
 
 	// The compiled mask is only an optimization over getMatchingFunction, so fall back to it if it was
-	// refused. Since a criterion is capped at 255 characters (checkCriteriaLength).
+	// refused. A criterion is capped at 255 characters, see checkCriteriaLength.
 	function _wildcardMatchingFunction(type, op, isWildcard, searchValue) {
 		var re = _buildWildcardRegex(searchValue);
 		if (!re) {
@@ -14437,13 +14437,8 @@ function parseStringToCElement (val, cultureInfo) {
 		};
 	}
 
-	/**
-	 * Excel rejects a criterion longer than 255 characters with #VALUE!.
-	 *
-	 * @param {cElement} criteria - the raw criterion
-	 * @returns {cError|null} #VALUE! when the criterion is too long, null otherwise
-	 */
 	const MAX_CRITERIA_LENGTH = 255;
+	//Excel rejects a criterion longer than 255 characters with #VALUE!
 	function checkCriteriaLength(criteria) {
 		if (criteria && cElementType.string === criteria.type && criteria.getValue().length > MAX_CRITERIA_LENGTH) {
 			return new cError(cErrorType.wrong_value_type);

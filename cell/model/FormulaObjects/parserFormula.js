@@ -1014,6 +1014,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cError.prototype = Object.create(cBaseType.prototype);
 	cError.prototype.constructor = cError;
 	cError.prototype.type = cElementType.error;
+	//set on the errors that answer for a whole call, see cArray.collapsedError
+	cError.prototype.collapsesResult = false;
 	cError.prototype.tocNumber = cError.prototype.tocString = cError.prototype.tocBool = function () {
 		return this;
 	};
@@ -3044,12 +3046,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//used when the tail is not a constant (e.g. ROW()/COLUMN() over a clamped full-column/row reference).
 		//takes priority over missedValue. signature: (row, col) -> cElement
 		this.missedValueFn = null;
-		//the error of the first element that failed an ARGUMENT check rather than carrying a value error.
-		//Excel keeps the elements but makes the whole result that error for anything that asks about the
-		//shape or a position (ROWS/COLUMNS/INDEX), while an error that came from the data stays in its own
-		//element. Set while the array is assembled from per-element results; nothing else copies it, so a
-		//rebuilt array (crop, matrix rebuild) legitimately loses it.
-		this.argumentError = null;
+		//the error that answers for the whole call this array came out of, rather than being one element's
+		//value. Excel keeps the elements but reports this one for anything that asks about the shape or a
+		//position (ROWS/COLUMNS/INDEX). Set by the function that produced it, and carried over when another
+		//function rebuilds the array from it.
+		this.collapsedError = null;
 	}
 
 	cArray.prototype = Object.create(cBaseType.prototype);
@@ -4153,6 +4154,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.excludeErrorsVal = false;
 	cBaseFunction.prototype.excludeNestedStAg = false;
 	cBaseFunction.prototype.bArrayFormula = null;
+	//opt-in: an element error that answers for the whole call (cArray.collapsedError) is carried onto the
+	//assembled array. Off by default - a function that only passes one through keeps its own shape.
+	cBaseFunction.prototype.elementErrorCollapsesArray = false;
 	//necessary for array formulas
 	//arrayIndexes - map, where key is the argument that is passed to the function as array,area,area3d (i.e. unchanged)
 	//and value is either boolean or object
@@ -4164,6 +4168,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.inheritFormat = null;
 	cBaseFunction.prototype.name = null;
 	cBaseFunction.prototype.argumentsType = null;
+	//Calculate(arg, opt_bbox, opt_defName, ws, bIsSpecialFunction, opt_row, opt_col, opt_argInfo) -
+	//the last four are filled in only by the array-broadcast loop. opt_argInfo[i].mode is non-zero for
+	//every argument that loop is feeding element by element.
 	cBaseFunction.prototype.Calculate = function () {
 		return new cError(cErrorType.wrong_name);
 	};
@@ -4915,16 +4922,17 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					if (_needBboxPerElem) {
 						temp_opt_bbox = new Asc.Range(c + parserFormula.ref.c1, r + parserFormula.ref.r1, c + parserFormula.ref.c1, r + parserFormula.ref.r1);
 					}
-					let _elem = t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row ? _row : r, _col ? _col : c);
+					let _elem = t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row ? _row : r, _col ? _col : c, _argInfo);
 					if (_elem.type === cElementType.array) {
 						_elem = _elem.getElementRowCol(0, 0);
 					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
 						_elem = _elem.getValueByRowCol(0, 0, true);
 					}
-					//carry the first argument-check failure to the array: the element keeps its own error and
-					//shape/positional wrappers report this one instead of measuring the result
-					if (!array.argumentError && _elem.type === cElementType.error && _elem.isArgumentError) {
-						array.argumentError = _elem;
+					//only the producer may promote: a function that merely spread this error over its own
+					//elements still answers about its own shape
+					if (t.elementErrorCollapsesArray && !array.collapsedError &&
+						_elem.type === cElementType.error && _elem.collapsesResult) {
+						array.collapsedError = _elem;
 					}
 					array.addElement(_elem);
 				};
@@ -4967,7 +4975,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					if (_needBboxPerElem) {
 						_tbbox = new Asc.Range(col + parserFormula.ref.c1, row + parserFormula.ref.r1, col + parserFormula.ref.c1, row + parserFormula.ref.r1);
 					}
-					var _elem = t.Calculate(newArgs, _tbbox, opt_defName, parserFormula.ws, null, row, col);
+					var _elem = t.Calculate(newArgs, _tbbox, opt_defName, parserFormula.ws, null, row, col, _argInfo);
 					if (_elem.type === cElementType.array) {
 						_elem = _elem.getElementRowCol(0, 0);
 					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
@@ -5675,12 +5683,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				return _arg1;
 			}
 			var res = _arg0.toString().concat(_arg1.toString());
-			// A string is capped at the cell limit and the beginning is what survives: "&" of two
-			// 32767-character strings is 32767 characters long and nothing is readable past the limit
-			// (measured in Excel). The cap belongs here, at the point the string is produced, so every
-			// function that reads the result already sees the capped string.
-			if (res.length > Asc.c_oAscMaxCellOrCommentLength) {
-				res = res.substring(0, Asc.c_oAscMaxCellOrCommentLength);
+			// Excel caps a string at the cell limit and keeps the beginning. Capping here, where the string
+			// is produced, means every function reading the result already sees the capped one.
+			var maxLen = Asc.c_oAscMaxCellOrCommentLength;
+			if (res.length > maxLen) {
+				res = res.substring(0, maxLen);
 			}
 			return new cString(res);
 		};
@@ -10700,6 +10707,11 @@ function parserFormula( formula, parent, _ws ) {
 							elemArr.pop();
 						}
 						let _elem = elemArr.pop();
+						//a call that collapsed reaches the next function as its error, not as an array:
+						//IFERROR over one answers its own second argument, ROWS over one answers the error
+						if (_elem && cElementType.array === _elem.type && _elem.collapsedError) {
+							_elem = _elem.collapsedError;
+						}
 						arg[_argCount - 1 - ind] = _elem;
 						if (fIsPromise(_elem)) {
 							_isPromise = true;

@@ -300,19 +300,17 @@ function (window, undefined) {
 		return arg.getMatrix ? arg.getMatrix() : arg.toArray();
 	}
 
-	//An index_num that does not address the table is a failed ARGUMENT check, not a value: when the index
-	//is an array, Excel keeps the per-element results but answers this error for anything that asks about
-	//the shape or a position (ROWS/COLUMNS/INDEX). An error read from the table itself carries no mark and
-	//stays in its own element. The mark is copied onto the assembled array by the array-broadcast loop.
-	function argumentError(type) {
+	//An error that answers for the WHOLE call, not one element's value: a bad index_num or a key that was
+	//not found. With an array index_num ROWS/COLUMNS/INDEX report this instead of the shape. An error read
+	//from the table is a value and carries no mark. See cArray.collapsedError for how it gets there.
+	function collapsingError(type) {
 		let err = new cError(type);
-		err.isArgumentError = true;
+		err.collapsesResult = true;
 		return err;
 	}
 
-	//a bare value: the result of a lookup that found a single cell, a literal, a computed scalar.
-	//ROWS/COLUMNS/INDEX treat it as a 1x1 array, the way Excel does. An omitted argument is not a
-	//value and is deliberately left out - it keeps #VALUE! there.
+	//ROWS/COLUMNS/INDEX treat a bare value as a 1x1 array, the way Excel does. An omitted argument is
+	//not a value and is deliberately left out - it keeps #VALUE! there.
 	function isScalarElement(elem) {
 		let t = elem && elem.type;
 		return cElementType.number === t || cElementType.string === t || cElementType.bool === t;
@@ -1074,15 +1072,10 @@ function (window, undefined) {
 	cCOLUMNS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
-		//an error propagates unchanged, and a scalar counts as a 1x1 array (Excel)
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
 		if (cElementType.array === arg0.type) {
-			//see cROWS: an argument-check failure poisons the result instead of being measured
-			if (arg0.argumentError) {
-				return arg0.argumentError;
-			}
 			return new cNumber(arg0.getCountElementInRow());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
@@ -1515,11 +1508,18 @@ function (window, undefined) {
 	cHLOOKUP.prototype.arrayIndexes = {1: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
+	//a failed index_num check or a miss is promoted from the element onto the assembled array
+	cHLOOKUP.prototype.elementErrorCollapsesArray = true;
 	cHLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
+		//opt_argInfo (see cBaseFunction.prototype.Calculate): a non-zero mode means the engine feeds this
+		//argument element by element, and an index_num element is read like a reference
+		let _idxInfo = arguments[7] && arguments[7][2];
+		let indexIsElement = !!(_idxInfo && _idxInfo.mode);
 		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
+				indexIsElement = true;
 			}
 			let dimension = arg[0].getDimensions(true);
 			let ctx = {};
@@ -1530,7 +1530,7 @@ function (window, undefined) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					callArgs[0] = arg[0].getValue2(r, c);
-					retArr.addElement(g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx));
+					retArr.addElement(g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx, indexIsElement));
 				}
 			}
 
@@ -1546,7 +1546,7 @@ function (window, undefined) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					callArgs[2] = arg[2].getValue2(r, c);
-					let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx);
+					let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx, true);
 					if (res.type === cElementType.error) {
 						// the whole result collapses to one error anyway - stop calculating and
 						// building rows for the discarded array right here
@@ -1558,7 +1558,7 @@ function (window, undefined) {
 			return retArr;
 		}
 
-		return g_oHLOOKUPCache.calculate(arg, arguments[1]);
+		return g_oHLOOKUPCache.calculate(arg, arguments[1], null, indexIsElement);
 	};
 
 	/**
@@ -1649,13 +1649,7 @@ function (window, undefined) {
 			return arg0;
 		}
 
-		if (cElementType.array === arg0.type && arg0.argumentError) {
-			//see cROWS: an element that failed an argument check poisons the whole result, so there
-			//is nothing left to index into
-			return arg0.argumentError;
-		}
-
-		let argError;
+ 		let argError;
 		if (argError = this._checkErrorArg([arg0, arg1, arg2, arg3])) {
 			return argError;
 		}
@@ -2183,16 +2177,10 @@ function (window, undefined) {
 	cROWS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
-		//an error propagates unchanged, and a scalar counts as a 1x1 array (Excel)
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
 		if (cElementType.array === arg0.type) {
-			//an element that failed an argument check makes the whole result that error - the shape is
-			//not measured at all (Excel); an error that came from the data leaves the shape alone
-			if (arg0.argumentError) {
-				return arg0.argumentError;
-			}
 			//getRealSize=true: honor the logical size of clamped/realSize arrays (e.g. ROW over a full column);
 			//falls back to the physical row count when realSize is not set
 			return new cNumber(arg0.getRowCount());
@@ -3416,7 +3404,7 @@ function (window, undefined) {
 		this.sortedCache = new TypedMapCache();
 	}
 
-	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx) {
+	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx, opt_indexIsElement) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
 		// cBool.tocBool() returns `this` (same .value read), cNumber.tocBool() is new cBool(value !== 0)
@@ -3440,6 +3428,9 @@ function (window, undefined) {
 		let t = this, number, r, c, res = -1, count;
 
 		if (!opt_xlookup) {
+			//kept for the text case below, where what index_num came from decides the answer
+			let arg2Type = arg2.type;
+
 			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
 				arg2 = arg2.getValue();
 			} else if (cElementType.array === arg2.type) {
@@ -3452,27 +3443,31 @@ function (window, undefined) {
 				return arg2;
 			}
 
-			// index_num converts in kind: a logical reads as 1 / 0 and a numeric string as its number,
-			// while text that is not a number makes the whole call #VALUE! before the lookup even runs.
+			// index_num converts in kind: a logical reads as 1 / 0 and a numeric string as its number.
 			let indexNum = arg2.tocNumber();
 			if (cElementType.number !== indexNum.type) {
-				return argumentError(cErrorType.wrong_value_type);
+				// Text standing in the slot itself is refused outright, while text READ from a reference, an
+				// array element or a range behaves like an index past the table - answered after the lookup,
+				// so a miss outranks it (measured). A substituted element no longer looks like a reference
+				// here, hence opt_indexIsElement.
+				let byReference = opt_indexIsElement ||
+					cElementType.cell === arg2Type || cElementType.cell3D === arg2Type ||
+					cElementType.cellsRange === arg2Type || cElementType.cellsRange3D === arg2Type ||
+					cElementType.array === arg2Type;
+				if (!byReference) {
+					return collapsingError(cErrorType.wrong_value_type);
+				}
+				// unusable: the check below the lookup answers it
+				number = NaN;
+			} else {
+				let indexVal = indexNum.getValue();
+				// Excel truncates toward zero - 2.7 and 2.999 both address row 2 - unless the value is near
+				// enough to an integer, and that distance is ABSOLUTE: 2.9999998 and 999.9999998 both round
+				// up, 2.99999976 and 999.9999997 truncate (measured). 2^-22 sits inside that window.
+				number = (Math.abs(indexVal - Math.round(indexVal)) < 2.384185791015625e-7 ?
+					Math.round(indexVal) : Math.trunc(indexVal)) - 1;
 			}
-			let indexVal = indexNum.getValue();
-			// Excel truncates a fractional index_num toward zero - 2.7 and 2.999 both address row 2,
-			// 3.99 addresses row 3 - but a value near enough to an integer counts as that integer, and
-			// the distance that still counts is absolute: 2.9999998 and 999.9999998 both round up, while
-			// 2.99999976 and 999.9999997 truncate (measured), so the tolerance sits just under 2.4e-7.
-			// 2^-22 is the value inside that window.
-			number = (Math.abs(indexVal - Math.round(indexVal)) < 2.384185791015625e-7 ?
-				Math.round(indexVal) : Math.trunc(indexVal)) - 1;
-
-			if (isNaN(number)) {
-				return new cError(cErrorType.bad_reference);
-			}
-			// an index_num of 0 or less is invalid, but the check waits until after the lookup: a miss
-			// outranks it just as it outranks an index past the table (measured in Excel - a miss with
-			// index_num 0 answers #N/A, not #VALUE!)
+			// every check on the index waits until after the lookup, because a miss outranks it
 		}
 
 		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
@@ -3544,16 +3539,22 @@ function (window, undefined) {
 			}
 
 			if (-1 === res) {
-				return new cError(cErrorType.not_available);
+				//finding the key does not depend on index_num, so a miss answers for the whole call: with
+				//an array index_num Excel collapses the result to #N/A instead of a per-element shape
+				return collapsingError(cErrorType.not_available);
 			}
 
+			if (isNaN(number)) {
+				//text from a reference: answered like an index past the table
+				return collapsingError(cErrorType.bad_reference);
+			}
 			if (number < 0) {
-				return argumentError(cErrorType.wrong_value_type);
+				return collapsingError(cErrorType.wrong_value_type);
 			}
 			let _ldim = arg1.getDimensions();
 			count = this.bHor ? _ldim.row : _ldim.col;
 			if (number > count - 1) {
-				return argumentError(cErrorType.bad_reference);
+				return collapsingError(cErrorType.bad_reference);
 			}
 
 			r = this.bHor ? number : res;
@@ -3612,18 +3613,19 @@ function (window, undefined) {
 			return res;
 		}
 
-		// A miss outranks an out-of-range index_num: #REF! is right only when the key was actually
-		// found, otherwise the miss wins (also for an approximate match below the first key). The
-		// array-table branch above already validates the index after the lookup - keep both in step,
-		// so the index check must stay BELOW the -1 test.
+		// #REF! is right only when the key was found, so every index check stays BELOW the -1 test -
+		// in step with the array-table branch above.
 		if (-1 === res) {
-			return new cError(cErrorType.not_available);
+			return collapsingError(cErrorType.not_available);
+		}
+		if (isNaN(number)) {
+			return collapsingError(cErrorType.bad_reference);
 		}
 		if (number < 0) {
-			return argumentError(cErrorType.wrong_value_type);
+			return collapsingError(cErrorType.wrong_value_type);
 		}
 		if (number > count) {
-			return argumentError(cErrorType.bad_reference);
+			return collapsingError(cErrorType.bad_reference);
 		}
 
 		r = this.bHor ? bb.r1 + number : res;
@@ -4966,12 +4968,19 @@ function (window, undefined) {
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cVLOOKUP.prototype.enabledToSingle = {"1": true};
+	//a failed index_num check or a miss is promoted from the element onto the assembled array
+	cVLOOKUP.prototype.elementErrorCollapsesArray = true;
 	cVLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
+		//opt_argInfo (see cBaseFunction.prototype.Calculate): a non-zero mode means the engine feeds this
+		//argument element by element, and an index_num element is read like a reference
+		let _idxInfo = arguments[7] && arguments[7][2];
+		let indexIsElement = !!(_idxInfo && _idxInfo.mode);
 
 		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
 				arg[2] = arg[2].getValue2(0,0);
+				indexIsElement = true;
 			}
 			let dimension = arg[0].getDimensions(true);
 			let ctx = {};
@@ -4982,7 +4991,7 @@ function (window, undefined) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					callArgs[0] = arg[0].getValue2(r, c);
-					retArr.addElement(g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx));
+					retArr.addElement(g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx, indexIsElement));
 				}
 			}
 
@@ -4998,7 +5007,7 @@ function (window, undefined) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					callArgs[2] = arg[2].getValue2(r, c);
-					let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx);
+					let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx, true);
 					if (res.type === cElementType.error) {
 						// the whole result collapses to one error anyway - stop calculating and
 						// building rows for the discarded array right here
@@ -5010,7 +5019,7 @@ function (window, undefined) {
 			return retArr;
 		}
 
-		return g_oVLOOKUPCache.calculate(arg, arguments[1]);
+		return g_oVLOOKUPCache.calculate(arg, arguments[1], null, indexIsElement);
 	};
 
 	/**

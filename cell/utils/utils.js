@@ -328,16 +328,10 @@
 			if (options.isWholeWord)
 				value = '\\b' + value + '\\b';
 
-			// The pattern is built from user text of unbounded length, and every '*' in it becomes a
-			// '(.*)' group, so a mask of a few thousand asterisks grows past what the regex engine will
-			// run. The constructor below still accepts it - compilation is lazy - and the failure surfaces
-			// on the first exec/test, that is inside the search loop:
-			//     SyntaxError: Invalid regular expression: /(.*)(.*)(.*).../i
-			// Deliberately not guarded here. The wildcard mode is only reachable through the JS API
-			// (ApiRange.Find with Wildcards, apiBuilder.js) - the Find panel never sets it - so the caller
-			// is a macro, which sees the exception. On the formula side such a mask cannot arrive at all:
-			// a criterion is capped at 255 characters, which bounds the pattern at about 510.
-			// The threshold depends on the browser: about 3000 asterisks in Chromium.
+			// Every '*' becomes a '(.*)' group, so a mask of a few thousand asterisks (about 3000 in
+			// Chromium) throws on the first exec/test, not here - compilation is lazy. Deliberately not
+			// guarded: wildcards are reachable only from ApiRange.Find, so a macro sees the exception,
+			// while a formula criterion is capped at 255 characters.
 			return new RegExp(value, findFlags);
 		}
 

@@ -47,10 +47,10 @@ function (window, undefined) {
 	var oNumFormatCache = AscCommon.oNumFormatCache;
 	var CellFormat = AscCommon.CellFormat;
 	var cErrorType = AscCommonExcel.cErrorType;
-	//TEXT is limited to this many characters of RESULT. This is neither the cell limit
-	//(Asc.c_oAscMaxCellOrCommentLength) nor the widest column (Asc.c_oAscMaxColumnWidth, which happens
-	//to be 255 too) - TEXT must not follow either of them if they ever change, so the number lives here.
+	//TEXT is limited to this many characters of RESULT - its own limit, deliberately not the cell limit
+	//nor the widest column (which happens to be 255 too)
 	var MAX_FORMAT_TEXT = 255;
+	var MAX_CELL_TEXT = Asc.c_oAscMaxCellOrCommentLength;
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
 	var cBool = AscCommonExcel.cBool;
@@ -653,8 +653,8 @@ function (window, undefined) {
 			if (argI instanceof cError) {
 				return argI;
 			} else if (argI instanceof cArray) {
-				//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
-				//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+				//reduceLogical folds head + constant tail; the tail string is repeated n times. The repeat
+				//count is clamped to the cell limit so a full column cannot expand into a huge string.
 				sResult = argI.reduceLogical(function (acc, elem, n) {
 					if (errElem) {
 						return acc;
@@ -664,9 +664,8 @@ function (window, undefined) {
 						return acc;
 					}
 					var s = elem.toLocaleString();
-					//stop at the cap instead of failing: a full column must not expand into a huge string
-					if (s.length > 0 && n > 1 && acc.length + s.length * n > Asc.c_oAscMaxCellOrCommentLength) {
-						n = Math.max(1, Math.ceil((Asc.c_oAscMaxCellOrCommentLength - acc.length) / s.length));
+					if (s.length > 0 && n > 1 && acc.length + s.length * n > MAX_CELL_TEXT) {
+						n = Math.max(1, Math.ceil((MAX_CELL_TEXT - acc.length) / s.length));
 					}
 					return acc + (n === 1 ? s : s.repeat(n));
 				}, sResult);
@@ -677,9 +676,9 @@ function (window, undefined) {
 				sResult += argI.toLocaleString();
 			}
 		}
-		//CONCATENATE truncates at the cell limit like the "&" operator, it does not fail (measured)
-		if (sResult.length > Asc.c_oAscMaxCellOrCommentLength) {
-			sResult = sResult.substring(0, Asc.c_oAscMaxCellOrCommentLength);
+		//CONCATENATE truncates like "&", it does not fail (measured)
+		if (sResult.length > MAX_CELL_TEXT) {
+			sResult = sResult.substring(0, MAX_CELL_TEXT);
 		}
 		return new cString(sResult);
 	};
@@ -703,9 +702,8 @@ function (window, undefined) {
 	cCONCAT.prototype.enabledToSingle = {"*": true};
 	cCONCAT.prototype.Calculate = function (arg) {
 		// Accumulate into a primitive string and box once, removing the per-element cString creation.
-		//Excel answers #CALC! when CONCAT would pass the cell limit, unlike "&" and CONCATENATE,
-		//which truncate at it (measured)
-		let maxStringLength = Asc.c_oAscMaxCellOrCommentLength, sResult = "", argI, errRes = null;
+		//past the cell limit CONCAT answers #CALC!, unlike "&" and CONCATENATE which truncate (measured)
+		let maxStringLength = MAX_CELL_TEXT, sResult = "", argI, errRes = null;
 
 		for (let i = 0; i < arg.length; i++) {
 			argI = arg[i];
@@ -728,8 +726,8 @@ function (window, undefined) {
 				if (cElementType.error === argI.type) {
 					return argI;
 				} else if (cElementType.array === argI.type) {
-					//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
-					//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+					//reduceLogical folds head + constant tail; the tail string is repeated n times. Past the
+					//cell limit CONCAT answers #CALC!.
 					sResult = argI.reduceLogical(function (acc, elem, n) {
 						if (errRes) {
 							return acc;
@@ -3327,8 +3325,7 @@ function (window, undefined) {
 		let a = g_oFormatParser.parse(arg0.toLocaleString(true) + ""), aText;
 		aText = oFormat.format(a ? a.value : arg0.toLocaleString(),
 			(arg0.type === cElementType.number || a) ? CellValueType.Number : CellValueType.String,
-			//opt_noWidthLimit: the column-width cap belongs to display, not to a formula result -
-			//without it a long result comes back as a single "#"
+			//opt_noWidthLimit: the column-width cap is for display; without it a long result becomes "#"
 			AscCommon.gc_nMaxDigCountView, undefined, undefined, undefined, undefined, true);
 		let text = "";
 
@@ -3437,7 +3434,7 @@ function (window, undefined) {
 			let type = argI.type;
 			if (cElementType.array === type) {
 				//reduceLogical folds head + constant tail; concatString is applied n times for the tail (the
-				//delimiter cycles naturally). A finite lazy range stays small; a full column trips the 32767 cap.
+				//delimiter cycles naturally). Past the cell limit TEXTJOIN answers #CALC!.
 				let errRes = null;
 				acc = argI.reduceLogical(function (a, elem, cnt) {
 					if (errRes) {
@@ -3453,7 +3450,7 @@ function (window, undefined) {
 					}
 					for (let n = 0; n < cnt; n++) {
 						a = concatString(a, s);
-						if (a.length > Asc.c_oAscMaxCellOrCommentLength) {
+						if (a.length > MAX_CELL_TEXT) {
 							errRes = new cError(cErrorType.array_not_calc);
 							return a;
 						}
@@ -3494,7 +3491,7 @@ function (window, undefined) {
 			}
 		}
 
-		if (acc.length > Asc.c_oAscMaxCellOrCommentLength) {
+		if (acc.length > MAX_CELL_TEXT) {
 			return new cError(cErrorType.array_not_calc);
 		}
 		return new cString(acc);

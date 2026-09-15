@@ -3116,8 +3116,7 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0];
-		//an error propagates unchanged, and a single value is a 1x1 matrix whose determinant is itself -
-		//a lone number, or one cell holding a number. Anything else that is not a matrix is #VALUE!.
+		//a single number is a 1x1 matrix whose determinant is itself; any other non-matrix is #VALUE!
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
@@ -3304,7 +3303,6 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0];
-		//an error propagates unchanged instead of collapsing into #VALUE!
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
@@ -3441,7 +3439,6 @@ function (window, undefined) {
 		}
 
 		let arg0 = arg[0], arg1 = arg[1];
-		//an error in either matrix propagates unchanged instead of collapsing into #VALUE!
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
