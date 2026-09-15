@@ -1104,6 +1104,13 @@
             this.dragStartY = AscCommon.global_mouseEvent.Y;
             this.dragPageIndex = dp.num;  // which page to drag
         }
+		else if (e.button === 2) { // Right mouse button
+			if (!this.selectedPages.includes(dp.num)) {
+				this.resetSelection();
+				this.selectedPages.push(dp.num);
+				this.repaint();
+			}
+		}
     
         AscCommon.stopEvent(e);
         

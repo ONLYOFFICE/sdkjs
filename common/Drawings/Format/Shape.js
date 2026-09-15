@@ -2212,8 +2212,8 @@
 				const bForceSlideTransform = oSmartArt.bForceSlideTransform;
 				var diffX = 0;
 				var diffY = 0;
-				if (oSmartArt.group) {
-					if (bForceSlideTransform || (AscFormat.isSlideLikeObject(this.parent) || this.worksheet) || Asc.editor.isPdfEditor()) {
+				if (oSmartArt.group && !Asc.editor.isPdfEditor()) {
+					if (bForceSlideTransform || (AscFormat.isSlideLikeObject(this.parent) || this.worksheet)) {
 						const oMainGroupRelativePosition = oSmartArt.group.getRelativePosition();
 						diffX = oMainGroupRelativePosition.x;
 						diffY = oMainGroupRelativePosition.y;
@@ -2268,6 +2268,17 @@
 				oRectShape.spPr.xfrm.setOffY((yc - extY) / dScale);
 				oRectShape.spPr.xfrm.setExtX(this.txXfrm.extX);
 				oRectShape.spPr.xfrm.setExtY(this.txXfrm.extY);
+				if (Asc.editor.isPdfEditor()) {
+					// The text rectangle belongs to the drawing group. Undo its transform
+					// before assigning coordinates, so its rotation is applied only once.
+					let oInverse = global_MatrixTransformer.Invert(this.group.getLocalTransform());
+					let nCenterX = deltaShape.localTransform.TransformPointX(oRect.l + extX, oRect.t + extY);
+					let nCenterY = deltaShape.localTransform.TransformPointY(oRect.l + extX, oRect.t + extY);
+					let oScale = this.group.getResultScaleCoefficients();
+					let oGroupXfrm = this.group.spPr.xfrm;
+					oRectShape.spPr.xfrm.setOffX(oInverse.TransformPointX(nCenterX, nCenterY) / oScale.cx + oGroupXfrm.chOffX - this.txXfrm.extX / 2);
+					oRectShape.spPr.xfrm.setOffY(oInverse.TransformPointY(nCenterX, nCenterY) / oScale.cy + oGroupXfrm.chOffY - this.txXfrm.extY / 2);
+				}
 				// oRectShape.changeFlipH(this.spPr.xfrm.flipH); TODO: repair this
 				// oRectShape.changeFlipV(this.spPr.xfrm.flipV);
 				oRectShape.spPr.xfrm.setRot(AscFormat.normalizeRotate(this.txXfrm.rot + this.spPr.xfrm.rot));

@@ -15705,6 +15705,13 @@
 		return value < min ? min : value > max ? max : value;
 	}
 
+	function IsNativeBuilder() {
+		return window["NATIVE_EDITOR_ENJINE"] && !window["IS_NATIVE_EDITOR"];
+	}
+	function IsNativeEngine() {
+		return window["NATIVE_EDITOR_ENJINE"];
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].consoleLog = consoleLog;
@@ -15956,6 +15963,8 @@
 	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
 	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
 	window["AscCommon"].rx_error = rx_error;
+	window["AscCommon"].IsNativeBuilder = IsNativeBuilder;
+	window["AscCommon"].IsNativeEngine = IsNativeEngine;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_data)
