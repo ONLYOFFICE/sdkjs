@@ -16920,13 +16920,16 @@
 		} else if (aOutStack && aOutStack.length && sFunctionName) {
 			for (let nIndex in oSheetListeners.areaMap) {
 				const oAreaMap = oSheetListeners.areaMap[nIndex];
+				if (!oAreaMap.bbox.contains(this.nCol, this.nRow)) {
+					continue;
+				}
 				let bInvalidListener = false;
 				if (oAreaMap.count === 1) {
 					const sListenerId = Object.getOwnPropertyNames(oAreaMap.listeners)[0];
 					const oListener = oAreaMap.listeners[sListenerId];
 					bInvalidListener = oListener.isTable === 1;
 				}
-				if (oAreaMap.bbox.contains(this.nCol, this.nRow) && !bInvalidListener) {
+				if (!bInvalidListener) {
 					return _areaMapIsExcludeFormula(aOutStack, oAreaMap) ? null : oAreaMap;
 				}
 			}
