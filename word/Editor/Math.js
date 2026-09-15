@@ -711,24 +711,28 @@ ParaMath.prototype.Add = function(Item)
 {
 	let logicDocument = this.GetLogicDocument();
 
-	let Type = Item.Type;
-	let oSelectedContent = this.GetSelectContent();
+	var Type = Item.Type;
+	var oSelectedContent = this.GetSelectContent();
 
-	let oContent = oSelectedContent.Content;
+	var oContent = oSelectedContent.Content;
 
-	let StartPos = oSelectedContent.Start;
-	let Run = oContent.Content[StartPos];
+	var StartPos = oSelectedContent.Start;
+	var Run = oContent.Content[StartPos];
+
+	// Мы вставляем только в Run
 	if (para_Math_Run !== Run.Type)
 		return;
 
-	let NewElement = null;
+	var NewElement = null;
 	if (para_Text === Type)
 	{
+		// заглушка для текстовых настроек плейсхолдера
+
 		if(oContent.bRoot == false && Run.IsPlaceholder())
 		{
 			AscCommon.executeNoRevisions(function()
 			{
-				let CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
+				var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
 				Run.Apply_TextPr(CtrRunPr, undefined, true);
 			}, logicDocument, this);
 		}
@@ -770,25 +774,29 @@ ParaMath.prototype.Add = function(Item)
 		
 		oContent.Internal_Content_Add(pos, rightRun, false);
 		oContent.CurPos = pos;
+		oContent.RemoveSelection();
 		rightRun.MoveCursorToStartPos();
 		
 		oContent.Correct_ContentCurPos();
 	}
 	else if (para_Math === Type)
 	{
-		let ContentPos = new AscWord.CParagraphContentPos();
+		var ContentPos = new AscWord.CParagraphContentPos();
 
 		if(this.bSelectionUse == true)
 			this.Get_ParaContentPos(true, true, ContentPos);
 		else
 			this.Get_ParaContentPos(false, false, ContentPos);
 		
-		let TextPr = this.Root.GetMathTextPrForMenu(ContentPos, 0);
+		var TextPr = this.Root.GetMathTextPrForMenu(ContentPos, 0);
 		if (Item.TextPr)
 			TextPr.Merge(Item.TextPr);
 		
-		let RightRun = Run.Split2(Run.State.ContentPos);
+		// Нам нужно разделить данный Run на 2 части
+		var RightRun = Run.Split2(Run.State.ContentPos);
+
 		oContent.Internal_Content_Add(StartPos + 1, RightRun, false);
+		// Выставляем позицию в начало этого рана
 		oContent.CurPos = StartPos + 1;
 		oContent.RemoveSelection();
 		RightRun.MoveCursorToStartPos();
@@ -800,6 +808,7 @@ ParaMath.prototype.Add = function(Item)
 	if ((para_Text === Type || para_Space === Type) && null !== NewElement)
 		this.ProcessAutoCorrect(oContent, NewElement);
 
+	// Корректируем данный контент
 	oContent.Correct_Content(true);
 };
 ParaMath.prototype.ProcessAutoCorrect = function(content, triggerElement)
