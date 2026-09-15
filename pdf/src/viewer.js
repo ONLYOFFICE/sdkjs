@@ -177,11 +177,10 @@
 	// pages on screen have priority.
 	function CPageInfo()
 	{
-		this.Id = null;
-		if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
-			this.Id = AscCommon.g_oIdCounter.Get_NewId();
-			AscCommon.g_oTableId.Add(this, this.Id);
-		}
+		this.Id = AscCommon.g_oIdCounter.Get_NewId();
+        if (AscCommon.g_oTableId.IsOn()) {
+            AscCommon.g_oTableId.Add(this, this.Id);
+        }
 		
 		this.annotsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
 		this.fieldsContentChanges = new AscCommon.CContentChanges(); // list of changes (add/remove elements)
