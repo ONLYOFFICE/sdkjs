@@ -3225,28 +3225,55 @@ PasteProcessor.prototype =
 		var _self = this;
 		var _spHelper = window['AscCommon'].g_specialPasteHelper;
 		var _bRestartList = !!(_spHelper && _spHelper.specialPasteStart && _spHelper.specialPasteProps === Asc.c_oSpecialPasteProps.doNotUniteList);
+		var _bUniteList = !!(_spHelper && _spHelper.specialPasteStart && _spHelper.specialPasteProps === Asc.c_oSpecialPasteProps.uniteList);
 		if (paragraph && paragraph.GetNumPr && this.oLogicDocument && this.oLogicDocument.GetNumbering) {
 			var _destNumPr = paragraph.GetNumPr();
 			var _destNumId = _destNumPr ? _destNumPr.NumId : null;
 			var _numbering = this.oLogicDocument.GetNumbering();
 			var _destNum = (null != _destNumId && _numbering) ? _numbering.GetNum(_destNumId) : null;
+			var _destLvl = (_destNumPr && null != _destNumPr.Lvl) ? _destNumPr.Lvl : 0;
 			if (_destNum) {
 				var _equalCache = {};
+				var _restartCache = {};
 				var _uniteListNum = function (elem) {
 					if (!elem || !elem.IsParagraph || !elem.IsParagraph())
 						return;
 					var _np = elem.Pr ? elem.Pr.NumPr : null;
 					if (!_np || null == _np.NumId || _np.NumId === _destNumId)
 						return;
-					var _key = "" + _np.NumId;
-					if (undefined === _equalCache[_key]) {
+					var _lvl = (null != _np.Lvl) ? _np.Lvl : 0;
+					var _key = _np.NumId + "_" + _lvl;
+					var _state = _equalCache[_key];
+					if (undefined === _state) {
 						var _pastedNum = _numbering.GetNum(_np.NumId);
-						_equalCache[_key] = !!(_pastedNum && _destNum.IsEqual(_pastedNum));
+						//ms offers continue/new list for any two numbered lists, not only for identical ones(state 1),
+						//but until "continue list" is chosen, only identical ones(state 2) are merged
+						_state = 0;
+						if (_pastedNum) {
+							if (_destNum.IsEqual(_pastedNum))
+								_state = 2;
+							else if (_destNum.GetLvl(_destLvl).IsNumbered() && _pastedNum.GetLvl(_lvl).IsNumbered())
+								_state = 1;
+						}
+						_equalCache[_key] = _state;
 					}
-					if (_equalCache[_key]) {
+					if (_state) {
 						_self.pasteListCanUnite = true;
-						if (!_bRestartList)
-							elem.SetNumPr(_destNumId, _np.Lvl);
+						if (_bRestartList) {
+							//the pasted list shares the abstract numbering with the destination one, so by itself
+							//it continues its numbering - for "new list" we need a separate abstract numbering
+							var _newNumId = _restartCache[_np.NumId];
+							if (undefined === _newNumId) {
+								var _srcNum = _numbering.GetNum(_np.NumId);
+								var _copyNum = _srcNum ? _srcNum.Copy() : null;
+								_newNumId = _copyNum ? _copyNum.GetId() : null;
+								_restartCache[_np.NumId] = _newNumId;
+							}
+							if (_newNumId)
+								elem.SetNumPr(_newNumId, _lvl);
+						} else if (2 === _state || _bUniteList) {
+							elem.SetNumPr(_destNumId, _lvl);
+						}
 					}
 				};
 				for (var _ci = 0; _ci < aNewContent.length; ++_ci)
