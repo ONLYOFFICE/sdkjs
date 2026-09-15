@@ -9392,11 +9392,14 @@ PasteProcessor.prototype =
 			var margin_left = this._getStyle(node, computedStyle, "margin-left");
 
 			//TODO re-verify fix with pageColumn
-			var curContent = this.oLogicDocument.Content[this.oLogicDocument.CurPos.ContentPos];
-			var curIndexColumn = curContent && curContent.Get_CurrentColumn ? curContent.Get_CurrentColumn(this.oLogicDocument.CurPage) : null;
-			var curPage = this.oLogicDocument.Pages[this.oLogicDocument.CurPage];
-			var pageColumn = null !== curIndexColumn && curPage && curPage.Sections && curPage.Sections[0] && curPage.Sections[0].Columns ?
-				curPage.Sections[0].Columns[curIndexColumn] : null;
+			var pageColumn = null;
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				var curContent = this.oLogicDocument.Content[this.oLogicDocument.CurPos.ContentPos];
+				var curIndexColumn = curContent && curContent.Get_CurrentColumn ? curContent.Get_CurrentColumn(this.oLogicDocument.CurPage) : null;
+				var curPage = this.oLogicDocument.Pages[this.oLogicDocument.CurPage];
+				pageColumn = null !== curIndexColumn && curPage && curPage.Sections && curPage.Sections[0] && curPage.Sections[0].Columns ?
+					curPage.Sections[0].Columns[curIndexColumn] : null;
+			}
 			if (margin_left && null != (margin_left = AscCommon.valueToMm(margin_left))) {
 				if (!pageColumn || (pageColumn && pageColumn.X + margin_left < pageColumn.XLimit)) {
 					Ind.Left = margin_left;
@@ -9415,7 +9418,7 @@ PasteProcessor.prototype =
 			// if(null != pPr.Ind.Right && true == this.bUseScaleKoef)
 			// pPr.Ind.Right = pPr.Ind.Right * this.dScaleKoef;
 			//Check that right margin doesn't go past left or get closer than on ruler
-			if (null != Ind.Left && null != Ind.Right) {
+			if (PasteElementsId.g_bIsDocumentCopyPaste && null != Ind.Left && null != Ind.Right) {
 				//30 limit same as on ruler
 				var dif = Page_Width - X_Left_Margin - X_Right_Margin - Ind.Left - Ind.Right;
 				if (dif < 30) {
@@ -12687,6 +12690,11 @@ PasteProcessor.prototype =
                         oShapeContent.Internal_Content_Add(oShapeContent.Content.length, oParagraph);
                         oParagraph.CorrectContent();
                         oParagraph.CheckParaEnd();
+					}
+
+					let paragraph = oShapeContent.GetLastParagraph();
+					if (paragraph && (bAddParagraph || paragraph.IsEmpty())) {
+						oThis._set_pPr(node.parentNode, paragraph, pPr);
 					}
 
 					if (!oThis.bIsPlainText) {
