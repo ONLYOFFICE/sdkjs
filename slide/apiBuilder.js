@@ -11125,7 +11125,7 @@
 	 */
 	ApiTextRange.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
 	{
-		let hyperlinkPr = AscBuilder.private_BuildHyperlinkProperty(link, screenTipText, bookmarkName);
+		let hyperlinkPr = AscBuilder.private_GetHyperlinkProps(link, screenTipText, bookmarkName);
 		if (!hyperlinkPr)
 			return null;
 

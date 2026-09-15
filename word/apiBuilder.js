@@ -1722,7 +1722,7 @@
 	 */
 	ApiRange.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
 	{
-		var hyperlinkPr = private_BuildHyperlinkProperty(link, screenTipText, bookmarkName);
+		var hyperlinkPr = private_GetHyperlinkProps(link, screenTipText, bookmarkName);
 		if (!hyperlinkPr)
 			return null;
 
@@ -11190,7 +11190,7 @@
 	 */
 	ApiParagraph.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
 	{
-		var hyperlinkPr = private_BuildHyperlinkProperty(link, screenTipText, bookmarkName);
+		var hyperlinkPr = private_GetHyperlinkProps(link, screenTipText, bookmarkName);
 		if (!hyperlinkPr)
 			return null;
 
@@ -13209,15 +13209,15 @@
 	 * Adds a hyperlink to the current run. 
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLink - The link address.
-	 * @param {string} sScreenTipText - The screen tip text.
-	 * @param {string} sBookmarkName - name of a bookmark
+	 * @param {string} link - The link address.
+	 * @param {string} screenTipText - The screen tip text.
+	 * @param {string} bookmarkName - name of a bookmark
 	 * @return {?ApiHyperlink } - returns false if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddHyperlink.js
 	 */
-	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
+	ApiRun.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
 	{
-		var hyperlinkPr = private_BuildHyperlinkProperty(sLink, sScreenTipText, sBookmarkName);
+		var hyperlinkPr = private_GetHyperlinkProps(link, screenTipText, bookmarkName);
 		if (!hyperlinkPr)
 			return null;
 
@@ -33463,7 +33463,7 @@
 	 * @param {string} bookmarkName
 	 * @returns {?Asc.CHyperlinkProperty} - null if the params are invalid.
 	 */
-	function private_BuildHyperlinkProperty(link, screenTipText, bookmarkName)
+	function private_GetHyperlinkProps(link, screenTipText, bookmarkName)
 	{
 		link			= GetStringParameter(link, "");
 		screenTipText	= GetStringParameter(screenTipText, "");
@@ -33502,7 +33502,7 @@
 	window['AscBuilder'].GetApiDrawing          = GetApiDrawing;
 	
 	window['AscBuilder'].private_CheckForm               = private_CheckForm;
-	window['AscBuilder'].private_BuildHyperlinkProperty  = private_BuildHyperlinkProperty;
+	window['AscBuilder'].private_GetHyperlinkProps       = private_GetHyperlinkProps;
 	window['AscBuilder'].private_GetSupportedParaElement = private_GetSupportedParaElement;
 	window['AscBuilder'].private_GetLogicDocument        = private_GetLogicDocument;
 	window['AscBuilder'].GetLogicDocument                = private_GetLogicDocument;
