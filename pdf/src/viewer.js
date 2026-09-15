@@ -1112,6 +1112,10 @@
 
 		this.checkLoadCMap = function()
 		{
+			if (AscCommon.IsNativeEngine()) {
+				return;
+			}
+
 			if (false === this.isCMapLoading)
 			{
 				if (!this.file.isNeedCMap())
@@ -1569,7 +1573,7 @@
 		this.navigateToPage = function(pageNum, yOffset, xOffset)
 		{
 			var drawingPage = this.drawingPages[pageNum];
-			if (!drawingPage)
+			if (!drawingPage || AscCommon.IsNativeEngine())
 				return;
 
 			var posY = drawingPage.Y;

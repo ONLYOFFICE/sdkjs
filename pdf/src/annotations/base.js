@@ -679,7 +679,7 @@
     CAnnotationBase.prototype.SetWasChanged = function(isChanged, viewSync) {
         let oDoc        	= Asc.editor.getPDFDoc();
         let oViewer     	= Asc.editor.getDocumentRenderer();
-		let isNativeBuilder	= window["NATIVE_EDITOR_ENJINE"] && !window["IS_NATIVE_EDITOR"];
+		let isNativeBuilder	= AscCommon.IsNativeBuilder();
         let canChange   	= !oViewer.IsOpenAnnotsInProgress && oDoc.LocalHistory !== AscCommon.History && (AscCommon.History.CanAddChanges() || isNativeBuilder);
 
         let prev    = this._wasChanged;
