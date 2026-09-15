@@ -41,7 +41,8 @@ var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 CTable.prototype.ReDraw = function()
 {
-    this.Parent.OnContentReDraw( this.GetAbsoluteStartPage(), this.GetAbsoluteStartPage() + this.Pages.length - 1 );
+	if (this.Parent)
+		this.Parent.OnContentReDraw( this.GetAbsoluteStartPage(), this.GetAbsoluteStartPage() + this.Pages.length - 1 );
 };
 CTable.prototype.Draw = function(CurPage, pGraphics, isDrawContent)
 {

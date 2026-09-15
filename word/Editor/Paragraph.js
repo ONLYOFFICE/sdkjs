@@ -3964,7 +3964,8 @@ Paragraph.prototype.Is_NeedDrawBorders = function()
 };
 Paragraph.prototype.ReDraw = function()
 {
-	this.Parent.OnContentReDraw(this.GetAbsolutePage(0), this.GetAbsolutePage(this.Pages.length - 1));
+	if (this.Parent)
+		this.Parent.OnContentReDraw(this.GetAbsolutePage(0), this.GetAbsolutePage(this.Pages.length - 1));
 };
 Paragraph.prototype.Shift = function(CurPage, Dx, Dy)
 {

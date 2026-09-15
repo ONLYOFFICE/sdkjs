@@ -1486,7 +1486,8 @@ CDocumentContent.prototype.ReDraw = function(StartPage, EndPage)
 };
 CDocumentContent.prototype.OnContentReDraw = function(StartPage, EndPage)
 {
-	this.Parent.OnContentReDraw(StartPage, EndPage);
+	if (this.Parent)
+		this.Parent.OnContentReDraw(StartPage, EndPage);
 };
 CDocumentContent.prototype.Draw                           = function(nPageIndex, pGraphics)
 {

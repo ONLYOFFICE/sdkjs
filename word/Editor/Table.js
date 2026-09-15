@@ -6452,7 +6452,7 @@ CTable.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 				this.Internal_Recalculate_1();
 			}
 		}
-		else
+		else if (this.Parent)
 		{
 			this.Parent.OnContentReDraw(this.GetAbsolutePage(0), this.GetAbsolutePage(this.Pages.length - 1));
 		}

@@ -1336,7 +1336,8 @@ CBlockLevelSdt.prototype.IsThisElementCurrent = function(oElement)
 };
 CBlockLevelSdt.prototype.OnContentReDraw = function(StartPageAbs, EndPageAbs)
 {
-	this.Parent.OnContentReDraw(StartPageAbs, EndPageAbs);
+	if (this.Parent)
+		this.Parent.OnContentReDraw(StartPageAbs, EndPageAbs);
 };
 CBlockLevelSdt.prototype.Document_CreateFontMap = function(FontMap)
 {
