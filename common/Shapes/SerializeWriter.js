@@ -1932,14 +1932,14 @@ function CBinaryFileWriter()
                     case Asc.linerule_Auto:
                         oThis.StartRecord(0);
                         oThis.WriteUChar(g_nodeAttributeStart);
-                        oThis._WriteInt1(0, (spacing.Line * 100000) >> 0);
+                        oThis._WriteInt1(0, (spacing.Line * 100000 + 0.5) >> 0);
                         oThis.WriteUChar(g_nodeAttributeEnd);
                         oThis.EndRecord();
                         break;
                     case Asc.linerule_Exact:
                         oThis.StartRecord(0);
                         oThis.WriteUChar(g_nodeAttributeStart);
-                        _value = ((spacing.Line / 0.00352777778) >> 0);
+                        _value = ((spacing.Line / 0.00352777778 + 0.5) >> 0);
                         if(_value < 0){
                             _value = 0;
                         }
@@ -1958,7 +1958,7 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(1);
                     oThis.WriteUChar(g_nodeAttributeStart);
-                    _value = ((spacing.After / 0.00352777778) >> 0);
+                    _value = ((spacing.After / 0.00352777778 + 0.5) >> 0);
                     if(_value < 0){
                         _value = 0;
                     }
@@ -1974,7 +1974,7 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(2);
                     oThis.WriteUChar(g_nodeAttributeStart);
-                    _value = ((spacing.Before / 0.00352777778) >> 0);
+                    _value = ((spacing.Before / 0.00352777778 + 0.5) >> 0);
                     if(_value < 0){
                         _value = 0;
                     }

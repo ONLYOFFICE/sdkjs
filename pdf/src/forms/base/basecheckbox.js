@@ -709,6 +709,11 @@
         let oParent     = this.GetParent(true);
         let aOptions    = this.GetOptions();
 
+        // a widget without a parent stores the committed value itself, so reading the file has to initialize it
+        if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress && !oParent) {
+            this.SetLogicValue(value);
+        }
+
         let sExportValue;
         if (aOptions && aOptions[value]) {
             sExportValue = aOptions[value];
