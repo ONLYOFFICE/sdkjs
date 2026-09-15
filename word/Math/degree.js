@@ -854,7 +854,10 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         var DivBaseline = 3.034*PlH;
         var ascIters, dgrHeight;
 
-        if(DivBaseline > minGap + iterDown.ascent + (iterUp.height - iterUp.ascent))
+        var bUpEmpty   = this.iters.iterUp.Is_Empty() || this.iters.iterUp.IsPlaceholder() || iterUp.height <= 0;
+        var bDownEmpty = this.iters.iterDn.Is_Empty() || this.iters.iterDn.IsPlaceholder() || iterDown.height <= 0;
+
+        if(!bUpEmpty && !bDownEmpty && DivBaseline > minGap + iterDown.ascent + (iterUp.height - iterUp.ascent))
         {
             dH = DivBaseline - iterDown.ascent - (iterUp.height - iterUp.ascent);
         }
@@ -866,7 +869,11 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         var GapDown = PlH;
 
         ascIters = iterUp.height + dH + GapDown;
-        dgrHeight = iterDown.height + iterUp.height + dH;
+
+        if(dH + iterDown.height < ascIters - iterUp.height)
+            dH = ascIters - iterUp.height - iterDown.height;
+
+        dgrHeight = iterUp.height + dH + iterDown.height;
 
         ascent = ascIters > baseAsc ? ascIters : baseAsc;
 
@@ -1172,6 +1179,7 @@ CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)
         }
 
         var PosIters = new CMathPosition();
+        var degAscent = this.Get_LineBound(Line, Range).Asc;
         if(this.Pr.type == DEGREE_SubSup)
         {
             this.baseContent.setPosition(pos, PosInfo);
@@ -1179,7 +1187,7 @@ CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)
             if(this.baseContent.Math_Is_End(Line, Range))
             {
                 PosIters.x = pos.x;
-                PosIters.y = pos.y - this.iters.size.ascent;
+                PosIters.y = pos.y - degAscent;
 
                 this.iters.setPosition(PosIters, PosInfo);
 
@@ -1191,7 +1199,7 @@ CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)
             if(CurLine == 0 && CurRange == 0)
             {
                 PosIters.x = pos.x;
-                PosIters.y = pos.y - this.iters.size.ascent;
+                PosIters.y = pos.y - degAscent;
 
                 this.iters.setPosition(PosIters, PosInfo);
 
