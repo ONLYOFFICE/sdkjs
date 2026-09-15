@@ -943,6 +943,12 @@
 			}
 		}
 	}
+	RemoveOutlineParagraphsManager.prototype.saveMockParagraphSlidePos = function (outlineParagraph) {
+		const info = this.outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
+		if (info) {
+			this.saveManager.saveSlideStartPos(info.slide);
+		}
+	};
 	RemoveOutlineParagraphsManager.prototype.processSelectedContent = function (isOnAddText) {
 		const savedContentsOnUpdate = {};
 		const outlineView = this.outlineView;
@@ -953,6 +959,9 @@
 			oThis.saveFirstOutlineParagraph(edgeContents, selectProps);
 			if (selectProps.outlineParagraph) {
 				const outlineParagraph = selectProps.outlineParagraph;
+				if (isOnAddText && selectProps.count === 1) {
+					oThis.saveMockParagraphSlidePos(outlineParagraph);
+				}
 				oThis.processNullableContent(outlineParagraph);
 			} else {
 				const content = selectProps.content;
@@ -1028,6 +1037,9 @@
 		if (sourceParagraph) {
 			this.saveEndPosSourceParagraph(sourceParagraph);
 		}
+	};
+	SavePosManager.prototype.saveSlideStartPos = function (slide) {
+		this.outlineView.setSavedPosition(new SavedPosition(new SlidePosition(slide, true)));
 	};
 	SavePosManager.prototype.saveContentPosSourceParagraph = function (sourceContent) {
 		const content = sourceContent;
@@ -3348,6 +3360,7 @@
 		const presentation = this.getPresentation();
 		const newSlide = presentation.addNextSlideAction();
 		if (!sourceParagraph && shapesWithContent.length === 0) {
+			new SavePosManager(this).saveSlideStartPos(newSlide);
 			return newSlide;
 		}
 
