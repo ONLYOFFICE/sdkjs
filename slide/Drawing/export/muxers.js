@@ -512,6 +512,21 @@
 		}
 		return units;
 	}
+	function findAvccUnits(data) {
+		const units = [];
+		let offset = 0;
+		while (offset + NAL_LENGTH_SIZE <= data.length) {
+			const length = (data[offset] << 24 | data[offset + 1] << 16 |
+				data[offset + 2] << 8 | data[offset + 3]) >>> 0;
+			offset += NAL_LENGTH_SIZE;
+			if (0 === length || offset + length > data.length) {
+				return null;
+			}
+			units.push(data.subarray(offset, offset + length));
+			offset += length;
+		}
+		return offset === data.length ? units : null;
+	}
 	function buildAvcDecoderConfig(sps, pps) {
 		if (!sps || !pps || sps.length < 4) {
 			return null;
@@ -554,33 +569,49 @@
 	CMp4Muxer.prototype.hasDescription = function () {
 		return !!this.description;
 	};
+	CMp4Muxer.prototype.setParameterSets = function (units) {
+		if (this.sps || !units) {
+			return;
+		}
+		let sps = null;
+		let pps = null;
+		for (let index = 0; index < units.length; ++index) {
+			const type = units[index][0] & NAL_TYPE_MASK;
+			if (NAL_TYPE_SPS === type) {
+				sps = sps || units[index];
+			}
+			else if (NAL_TYPE_PPS === type) {
+				pps = pps || units[index];
+			}
+		}
+		const record = buildAvcDecoderConfig(sps, pps);
+		if (!record) {
+			return;
+		}
+		this.sps = sps;
+		this.pps = pps;
+		this.description = record;
+	};
 	CMp4Muxer.prototype.addSample = function (data, durationMs, isKeyFrame) {
+		if (isKeyFrame && !this.sps) {
+			this.setParameterSets(findAvccUnits(data));
+		}
 		this.samples.push({data: data, duration: Math.max(1, Math.round(durationMs)), isKeyFrame: !!isKeyFrame});
 		this.durationMs += Math.max(1, Math.round(durationMs));
 	};
 	CMp4Muxer.prototype.addAnnexBSample = function (data, durationMs, isKeyFrame) {
 		const units = findAnnexBUnits(data);
+		this.setParameterSets(units);
 		const payload = [];
 		let size = 0;
 		for (let index = 0; index < units.length; ++index) {
 			const unit = units[index];
 			const type = unit[0] & NAL_TYPE_MASK;
-			if (NAL_TYPE_SPS === type) {
-				this.sps = this.sps || unit;
-				continue;
-			}
-			if (NAL_TYPE_PPS === type) {
-				this.pps = this.pps || unit;
-				continue;
-			}
-			if (NAL_TYPE_AUD === type) {
+			if (NAL_TYPE_SPS === type || NAL_TYPE_PPS === type || NAL_TYPE_AUD === type) {
 				continue;
 			}
 			payload.push(unit);
 			size += NAL_LENGTH_SIZE + unit.length;
-		}
-		if (!this.description) {
-			this.setDescription(buildAvcDecoderConfig(this.sps, this.pps));
 		}
 		const sample = new Uint8Array(size);
 		let offset = 0;
