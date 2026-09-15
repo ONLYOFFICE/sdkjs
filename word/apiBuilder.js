@@ -14609,9 +14609,9 @@
 	 * Adds a new row to the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCell} [oCell] - The cell after which a new row will be added. If not specified, a new row will
+	 * @param {ApiTableCell} [oCell] - The cell before or after which a new row will be added. If not specified, a new row will
 	 * be added at the end of the table.
-	 * @param {boolean} [isBefore=false] - Adds a new row before (false) or after (true) the specified cell. If no cell is specified, then
+	 * @param {boolean} [isBefore=false] - Adds a new row before (true) or after (false) the specified cell. If no cell is specified, then
 	 * this parameter will be ignored.
 	 * @returns {ApiTableRow}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddRow.js
@@ -14645,10 +14645,10 @@
 	 * Adds the new rows to the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCell} [oCell] - The cell after which the new rows will be added. If not specified, the new rows will
+	 * @param {ApiTableCell} [oCell] - The cell before or after which the new rows will be added. If not specified, the new rows will
 	 * be added at the end of the table.
 	 * @param {Number} nCount - Count of rows to be added.
-	 * @param {boolean} [isBefore=false] - Adds the new rows before (false) or after (true) the specified cell. If no cell is specified, then
+	 * @param {boolean} [isBefore=false] - Adds the new rows before (true) or after (false) the specified cell. If no cell is specified, then
 	 * this parameter will be ignored.
 	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddRows.js
@@ -14666,8 +14666,8 @@
 	 * Adds a new column to the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCell} [oCell] - The cell after which a new column will be added. If not specified, a new column will be added at the end of the table.
-	 * @param {boolean} [isBefore=false] - Adds a new column before (false) or after (true) the specified cell. If no cell is specified,
+	 * @param {ApiTableCell} [oCell] - The cell before or after which a new column will be added. If not specified, a new column will be added at the end of the table.
+	 * @param {boolean} [isBefore=false] - Adds a new column before (true) or after (false) the specified cell. If no cell is specified,
 	 * then this parameter will be ignored.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddColumn.js
@@ -14699,9 +14699,9 @@
 	 * Adds the new columns to the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCell} [oCell] - The cell after which the new columns will be added. If not specified, the new columns will be added at the end of the table.
+	 * @param {ApiTableCell} [oCell] - The cell before or after which the new columns will be added. If not specified, the new columns will be added at the end of the table.
 	 * @param {Number} nCount - Count of columns to be added.
-	 * @param {boolean} [isBefore=false] - Adds the new columns before (false) or after (true) the specified cell. If no cell is specified,
+	 * @param {boolean} [isBefore=false] - Adds the new columns before (true) or after (false) the specified cell. If no cell is specified,
 	 * then this parameter will be ignored.
 	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddColumns.js
@@ -17804,8 +17804,10 @@
 			return this;
 		
 		let _style = private_GetLogicDocument().GetStyles().Get(styleId);
-		if (!_style || _style.Get_Type() !== styletype_Paragraph)
-			throwException(new Error("Style \"" + style + "\" is not a paragraph style"));
+		if (!_style)
+			throwException(new Error("Style does not exist"));
+		if (_style.Get_Type() !== styletype_Paragraph)
+			throwException(new Error("Style \"" + _style.Get_Name() + "\" is not a paragraph style"));
 
 		this.ParaPr.PStyle = styleId;
 		this.private_OnChange();
