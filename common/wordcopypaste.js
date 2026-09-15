@@ -2861,6 +2861,60 @@ function Editor_Paste_Html_Lite_Exec(api, sHtml, callback, rejectCallback) {
 	return true;
 }
 
+let pasteParagraphHtmlRtlPr = new WeakMap();
+
+function resolvePasteHtmlAlign(align, direction) {
+	if (align === "start" || align === "end")
+		return (align === "start") === (direction === "rtl") ? "right" : "left";
+	return align;
+}
+
+function readPasteHtmlParagraphRtlPr(node, computedStyle) {
+	let direction;
+	for (let element = node; element && element.nodeType === 1; element = element.parentNode) {
+		let elementDirection = (element.style && element.style.direction) || element.getAttribute("dir");
+		if (!elementDirection)
+			continue;
+		elementDirection = elementDirection.toLowerCase();
+		if (elementDirection === "auto")
+			break;
+		if (elementDirection === "ltr" || elementDirection === "rtl") {
+			direction = computedStyle ? computedStyle.direction : elementDirection;
+			break;
+		}
+	}
+	return {
+		align: computedStyle ? resolvePasteHtmlAlign(computedStyle.textAlign, computedStyle.direction) : undefined,
+		direction: direction
+	};
+}
+
+function setPasteContentDirection(content) {
+	let paragraphs = [];
+	for (let i = 0; i < content.length; ++i) {
+		if (content[i].GetAllParagraphs)
+			content[i].GetAllParagraphs({All: true}, paragraphs);
+	}
+	
+	for (let i = 0; i < paragraphs.length; ++i) {
+		let paragraph = paragraphs[i];
+		let htmlPr = pasteParagraphHtmlRtlPr.get(paragraph);
+		let direction = htmlPr && htmlPr.direction;
+
+		let rtl = direction === "rtl" || (direction !== "ltr" && AscCommon.getFirstStrongDirection(paragraph.GetText({Numbering: false})) === AscBidi.DIRECTION_FLAG.RTL);
+		if (!rtl && direction !== "ltr")
+			continue;
+		if (!htmlPr && paragraph.GetParagraphBidi())
+			continue;
+
+		let align = htmlPr ? cssTextAlignToJc(htmlPr.align || "") : paragraph.Pr.Jc;
+
+		paragraph.SetParagraphBidi(rtl);
+		if (null != align)
+			paragraph.SetParagraphAlign(align);
+	}
+}
+
 function trimString( str ){
     return str.replace(/^\s+|\s+$/g, '') ;
 }
@@ -7643,6 +7697,7 @@ PasteProcessor.prototype =
 			oThis.aContent = shape.txBody.content.Content;
 			
 			textToPresentationContent(text, shape.txBody.content);
+			setPasteContentDirection(oThis.aContent);
 			
 			var oTextPr = presentation.GetCalculatedTextPr();
 			shape.txBody.content.SetApplyToAll(true);
@@ -7679,6 +7734,7 @@ PasteProcessor.prototype =
 
 			AscCommon.ExecuteNoHistory(function() {
 				textToPDFContent(text);
+				setPasteContentDirection(oThis.aContent);
 				let oParaTextPr = new AscCommonWord.ParaTextPr(oDoc.GetCalculatedTextPr());
 				oThis.aContent.forEach(function(para) {
 					para.Add(oParaTextPr);
@@ -7906,6 +7962,7 @@ PasteProcessor.prototype =
 			newParagraph.Internal_Content_Add(newParagraph.Content.length - 1, newParaRun, false);
 			this.aContent.push(newParagraph);
 		}
+		setPasteContentDirection(this.aContent);
 	},
 
 	_getTextFromContent: function (aContent, oPr) {
@@ -9306,6 +9363,7 @@ PasteProcessor.prototype =
 		};
 
 		var computedStyle = this._getComputedStyle(node);
+		pasteParagraphHtmlRtlPr.set(Para, readPasteHtmlParagraphRtlPr(node, computedStyle));
 		if ("td" === sNodeName || "th" === sNodeName) {
 			_applyTextAlign();
 
@@ -12801,7 +12859,6 @@ PasteProcessor.prototype =
 							}
 						}
 					}
-
 				}
 			}
 		};
@@ -13926,6 +13983,22 @@ PasteProcessor.prototype =
 			pPr.nLvl = savedNLvl;
 		}
 		
+		if (bRoot) {
+			setPasteContentDirection(this.aContent);
+			if (arrShapes) {
+				for (var i = 0; i < arrShapes.length; ++i) {
+					if (arrShapes[i].txBody && arrShapes[i].txBody.content)
+						setPasteContentDirection(arrShapes[i].txBody.content.Content);
+				}
+			}
+			if (arrTables) {
+				for (var i = 0; i < arrTables.length; ++i) {
+					if (arrTables[i].graphicObject)
+						setPasteContentDirection([arrTables[i].graphicObject]);
+				}
+			}
+		}
+
 		return bAddParagraph;
 	},
 
@@ -14339,7 +14412,10 @@ function cssTextAlignToJc(sValue)
 {
 	if (!sValue)
 		return null;
+
 	//Can receive -webkit-right
+	if (-1 !== sValue.indexOf('left'))
+		return align_Left;
 	if (-1 !== sValue.indexOf('center'))
 		return align_Center;
 	if (-1 !== sValue.indexOf('right'))
@@ -15531,6 +15607,19 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		return value ? cssTextAlignToJc(("" + value).toLowerCase()) : null;
 	}
 
+	function liteSetParagraphHtmlRtlPr(para, chain) {
+		let pr = {};
+		for (let i = 0; i < chain.length; ++i) {
+			let node = chain[i];
+			let align = (node.style && node.style["text-align"]) || (node.getAttr && node.getAttr("align")) || (node.name === "center" ? "center" : null);
+			let direction = (node.style && node.style.direction) || (node.getAttr && node.getAttr("dir"));
+			if (align && align !== "inherit") pr.align = align.toLowerCase();
+			if (direction && direction !== "inherit") pr.direction = direction.toLowerCase();
+		}
+		pr.align = resolvePasteHtmlAlign(pr.align, pr.direction);
+		pasteParagraphHtmlRtlPr.set(para, pr);
+	}
+
 	function liteCollapseSpaces(text) {
 		if (!text) {
 			return "";
@@ -15574,6 +15663,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		this._processChildren(root, this.oTarget, [], function (el) {
 			aContent.push(el);
 		});
+		setPasteContentDirection(this.aContent);
 		return this.aContent;
 	};
 
@@ -15654,6 +15744,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		var getPara = function () {
 			if (!para) {
 				para = t._newParagraph(parent);
+				liteSetParagraphHtmlRtlPr(para, chain.concat(node));
 				if (heading >= 0) {
 					t._applyHeadingStyle(para, heading);
 				}
@@ -15758,6 +15849,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		var getPara = function () {
 			if (!para) {
 				para = t._newParagraph(parent);
+				liteSetParagraphHtmlRtlPr(para, chain.concat(node));
 				if (numId && para.SetNumPr) {
 					para.SetNumPr(numId, level);
 					t._applyListStyle(para);
