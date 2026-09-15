@@ -11112,11 +11112,46 @@
 		return true;
 	};
 
-	// //now we dont have ability to set thow ui hyperlink to text in shape
-	// ApiTextRange.prototype.AddHyperlink = function()
-	// {
-	
-	// }
+	/**
+	 * Adds a hyperlink to the current text range.
+	 * @memberof ApiTextRange
+	 * @typeofeditors ["CPE"]
+	 * @param {string} link - The link address.
+	 * @param {string} screenTipText - The screen tip text.
+	 * @param {string} bookmarkName - Name of a bookmark
+	 * @return {?ApiHyperlink} - returns null if the range spans more than one paragraph or params are invalid.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/AddHyperlink.js
+	 */
+	ApiTextRange.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
+	{
+		let hyperlinkPr = AscBuilder.private_BuildHyperlinkProperty(link, screenTipText, bookmarkName);
+		if (!hyperlinkPr)
+			return null;
+
+		let oDocContent = this.DocContent;
+		if (!oDocContent)
+			return null;
+
+		let aParagraphs = this.GetAllParagraphs();
+		if (aParagraphs.length !== 1)
+			return null;
+
+		let nStart = this.private_GetEffectiveStart();
+		let nEnd   = this.private_GetEffectiveEnd();
+		let oState = oDocContent.GetSelectionState();
+
+		private_RefreshTextRanges(this.DocContent);
+		oDocContent.SelectCharRange(nStart, nEnd, false);
+
+		let oHyperlink = new AscBuilder.ApiHyperlink(aParagraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
+
+		oDocContent.SetSelectionState(oState);
+		oDocContent.Recalculate();
+		private_TrackTextRanges(this.DocContent);
+
+		return oHyperlink;
+	};
 
 	/**
 	 * Returns the text content of the range. Paragraph breaks are represented as "\r".
@@ -12495,6 +12530,7 @@
 	ApiTextRange.prototype["GetText"]            = ApiTextRange.prototype.GetText;
 	ApiTextRange.prototype["SetText"]            = ApiTextRange.prototype.SetText;
 	ApiTextRange.prototype["AddText"]            = ApiTextRange.prototype.AddText;
+	ApiTextRange.prototype["AddHyperlink"]       = ApiTextRange.prototype.AddHyperlink;
 	ApiTextRange.prototype["GetStartPos"]        = ApiTextRange.prototype.GetStartPos;
 	ApiTextRange.prototype["GetEndPos"]          = ApiTextRange.prototype.GetEndPos;
 	ApiTextRange.prototype["SetStartPos"]        = ApiTextRange.prototype.SetStartPos;

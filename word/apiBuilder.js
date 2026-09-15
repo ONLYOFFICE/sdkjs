@@ -1714,23 +1714,16 @@
 	 * Adds a hyperlink to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLink - The link address.
-	 * @param {string} sScreenTipText - The screen tip text.
-	 * @param {string} sBookmarkName - name of a bookmark
+	 * @param {string} link - The link address.
+	 * @param {string} screenTipText - The screen tip text.
+	 * @param {string} bookmarkName - name of a bookmark
 	 * @return {?ApiHyperlink }  - returns null if range contains more than one paragraph or sLink is invalid. 
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddHyperlink.js
 	 */
-	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
+	ApiRange.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
 	{
-		sLink = GetStringParameter(sLink, "");
-		sScreenTipText = GetStringParameter(sScreenTipText, "");
-		sBookmarkName = GetStringParameter(sBookmarkName, null);
-
-		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
-			return null;
-		}
-
-		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+		var hyperlinkPr = private_BuildHyperlinkProperty(link, screenTipText, bookmarkName);
+		if (!hyperlinkPr)
 			return null;
 
 		this.GetAllParagraphs();
@@ -1738,16 +1731,6 @@
 			return null;
 
 		var Document	= editor.private_GetLogicDocument();
-		var hyperlinkPr	= new Asc.CHyperlinkProperty();
-		var urlType		= AscCommon.getUrlType(sLink);
-
-		if (!AscCommon.rx_allowedProtocols.test(sLink))
-			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-
-		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
-		hyperlinkPr.put_Value(sLink);
-		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(sBookmarkName);
 
 		this.Select();
 		var oHyperlink = new ApiHyperlink(this.Paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
@@ -11199,38 +11182,21 @@
 	 * Adds a hyperlink to a paragraph. 
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLink - The link address.
-	 * @param {string} sScreenTipText - The screen tip text.
-	 * @param {string} sBookmarkName - name of a bookmark
+	 * @param {string} link - The link address.
+	 * @param {string} screenTipText - The screen tip text.
+	 * @param {string} bookmarkName - name of a bookmark
 	 * @return {?ApiHyperlink } - returns null if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddHyperlink.js
 	 */
-	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
+	ApiParagraph.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
 	{
-		sLink = GetStringParameter(sLink, "");
-		sScreenTipText = GetStringParameter(sScreenTipText, "");
-		sBookmarkName = GetStringParameter(sBookmarkName, null);
-
-		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
+		var hyperlinkPr = private_BuildHyperlinkProperty(link, screenTipText, bookmarkName);
+		if (!hyperlinkPr)
 			return null;
-		}
 
-		if (sLink.length > Asc.c_nMaxHyperlinkLength)
-			return null;
-		
-		var hyperlinkPr	= new Asc.CHyperlinkProperty();
-		var urlType		= AscCommon.getUrlType(sLink);
 		var oHyperlink;
 
 		this.Paragraph.SelectAll(1);
-		if (!AscCommon.rx_allowedProtocols.test(sLink))
-			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-
-		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
-		hyperlinkPr.put_Value(sLink);
-		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(sBookmarkName);
-		
 		oHyperlink = new ApiHyperlink(this.Paragraph.AddHyperlink(hyperlinkPr));
 		this.Paragraph.RemoveSelection();
 
@@ -13251,15 +13217,8 @@
 	 */
 	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		sLink = GetStringParameter(sLink, "");
-		sScreenTipText = GetStringParameter(sScreenTipText, "");
-		sBookmarkName = GetStringParameter(sBookmarkName, null);
-
-		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
-			return null;
-		}
-
-		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+		var hyperlinkPr = private_BuildHyperlinkProperty(sLink, sScreenTipText, sBookmarkName);
+		if (!hyperlinkPr)
 			return null;
 
 		var parentPara	= this.Run.GetParagraph();
@@ -13286,17 +13245,7 @@
 		var parentParaDepth = find_parentParaDepth(StartPos);
 		StartPos[parentParaDepth].Class.SetContentSelection(StartPos, EndPos, parentParaDepth, 0, 0);
 
-		var oHyperlink;
-		var hyperlinkPr	= new Asc.CHyperlinkProperty();
-		var urlType		= AscCommon.getUrlType(sLink);
-		if (!AscCommon.rx_allowedProtocols.test(sLink))
-			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
-		hyperlinkPr.put_Value(sLink);
-		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(sBookmarkName);
-
-		oHyperlink = new ApiHyperlink(parentPara.AddHyperlink(hyperlinkPr));
+		var oHyperlink = new ApiHyperlink(parentPara.AddHyperlink(hyperlinkPr));
 		StartPos[parentParaDepth].Class.RemoveSelection();
 
 		return oHyperlink;
@@ -33507,7 +33456,39 @@
 		AscCommon.History.skipFormFillingLockCheck(false);
 		return result;
 	}
-	
+	/**
+	 * Validates AddHyperlink parameters and builds a hyperlink property object.
+	 * @param {string} link
+	 * @param {string} screenTipText
+	 * @param {string} bookmarkName
+	 * @returns {?Asc.CHyperlinkProperty} - null if the params are invalid.
+	 */
+	function private_BuildHyperlinkProperty(link, screenTipText, bookmarkName)
+	{
+		link			= GetStringParameter(link, "");
+		screenTipText	= GetStringParameter(screenTipText, "");
+		bookmarkName	= GetStringParameter(bookmarkName, null);
+
+		if ((!link && !bookmarkName) || (link && bookmarkName))
+			return null;
+
+		if (link.length > Asc.c_nMaxHyperlinkLength)
+			return null;
+
+		let hyperlinkPr	= new Asc.CHyperlinkProperty();
+		let urlType		= AscCommon.getUrlType(link);
+
+		if (!AscCommon.rx_allowedProtocols.test(link))
+			link = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + link);
+
+		link = link && link.replace(new RegExp("%20",'g')," ");
+		hyperlinkPr.put_Value(link);
+		hyperlinkPr.put_ToolTip(screenTipText);
+		hyperlinkPr.put_Bookmark(bookmarkName);
+
+		return hyperlinkPr;
+	}
+
 	window['AscBuilder'].GetStringParameter     = GetStringParameter;
 	window['AscBuilder'].GetBoolParameter       = GetBoolParameter;
 	window['AscBuilder'].GetNumberParameter     = GetNumberParameter;
@@ -33521,6 +33502,7 @@
 	window['AscBuilder'].GetApiDrawing          = GetApiDrawing;
 	
 	window['AscBuilder'].private_CheckForm               = private_CheckForm;
+	window['AscBuilder'].private_BuildHyperlinkProperty  = private_BuildHyperlinkProperty;
 	window['AscBuilder'].private_GetSupportedParaElement = private_GetSupportedParaElement;
 	window['AscBuilder'].private_GetLogicDocument        = private_GetLogicDocument;
 	window['AscBuilder'].GetLogicDocument                = private_GetLogicDocument;
