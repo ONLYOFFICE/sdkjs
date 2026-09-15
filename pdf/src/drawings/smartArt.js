@@ -54,6 +54,10 @@
         return true;
     };
 
+    CPdfSmartArt.prototype.canRotate = function() {
+        return true;
+    };
+
     CPdfSmartArt.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) { 
         AscPDF.CPdfDrawingPrototype.prototype.SetNeedRecalc.call(this, bRecalc, bSkipAddToRedraw);
 
