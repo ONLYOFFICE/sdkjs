@@ -16910,24 +16910,33 @@
 			this.private_OnChange();
 			return this;
 		}
+		
+		let styles = private_GetLogicDocument().GetStyles();
 
 		let styleId;
-		if ("string" === typeof style)
+		if (styles && "string" === typeof style)
 		{
-			styleId = private_GetLogicDocument().GetStyles().GetStyleIdByName(style);
+			styleId = styles.GetStyleIdByName(style);
 			if (!styleId)
 				throwException(new Error("Style \"" + style + "\" does not exist"));
 		}
-		else if (style && style instanceof ApiStyle)
+		else if (styles && style && style instanceof ApiStyle)
 		{
 			styleId = style.Style.Get_Id();
 		}
 		else
 			return this;
 
-		let _style = private_GetLogicDocument().GetStyles().Get(styleId);
+		let _style = styles.Get(styleId);
+		if (_style && _style.Get_Type() === styletype_Paragraph && _style.GetLink())
+		{
+			styleId = _style.GetLink();
+			_style = styles.Get(styleId);
+		}
+		
 		if (!_style)
 			throwException(new Error("Style does not exist"));
+		
 		if (_style.Get_Type() !== styletype_Character)
 			throwException(new Error("Style \"" + _style.Get_Name() + "\" is not a character style"));
 
