@@ -17214,7 +17214,7 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 
 			for (var nIndex = nStartPos; nIndex <= nEndPos; ++nIndex)
 			{
-				if (para_Run !== this.Content[nIndex].Type)
+				if (para_Run !== this.Content[nIndex].Type && para_InlineLevelSdt !== this.Content[nIndex].Type)
 				{
 					// TODO: Вывести сообщение, что в данном месте нельзя добавить Plain text content control
 					return null;
@@ -17241,14 +17241,23 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 			}
 			else
 			{
-				var oNewRun = this.Content[nEndPos].Split_Run(Math.max(this.Content[nEndPos].Selection.StartPos, this.Content[nEndPos].Selection.EndPos));
-				this.Add_ToContent(nEndPos + 1, oNewRun);
+				var oNewRun;
+				if (para_Run === this.Content[nEndPos].Type)
+				{
+					oNewRun = this.Content[nEndPos].Split_Run(Math.max(this.Content[nEndPos].Selection.StartPos, this.Content[nEndPos].Selection.EndPos));
+					this.Add_ToContent(nEndPos + 1, oNewRun);
+				}
 
-				oNewRun = this.Content[nStartPos].Split_Run(Math.min(this.Content[nStartPos].Selection.StartPos, this.Content[nStartPos].Selection.EndPos));
-				this.Add_ToContent(nStartPos + 1, oNewRun);
+				var nShift = 0;
+				if (para_Run === this.Content[nStartPos].Type)
+				{
+					oNewRun = this.Content[nStartPos].Split_Run(Math.min(this.Content[nStartPos].Selection.StartPos, this.Content[nStartPos].Selection.EndPos));
+					this.Add_ToContent(nStartPos + 1, oNewRun);
+					nShift = 1;
+				}
 
 				oContentControl.ReplacePlaceHolderWithContent();
-				for (var nIndex = nEndPos + 1; nIndex >= nStartPos + 1; --nIndex)
+				for (var nIndex = nEndPos + nShift; nIndex >= nStartPos + nShift; --nIndex)
 				{
 					oContentControl.Add_ToContent(0, this.Content[nIndex]);
 					this.Remove_FromContent(nIndex, 1);
@@ -17257,9 +17266,9 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 				if (oContentControl.IsEmpty())
 					oContentControl.ReplaceContentWithPlaceHolder();
 
-				this.Add_ToContent(nStartPos + 1, oContentControl);
-				this.Selection.StartPos = nStartPos + 1;
-				this.Selection.EndPos   = nStartPos + 1;
+				this.Add_ToContent(nStartPos + nShift, oContentControl);
+				this.Selection.StartPos = nStartPos + nShift;
+				this.Selection.EndPos   = nStartPos + nShift;
 			}
 
 			oContentControl.MoveCursorToStartPos();
