@@ -1332,6 +1332,44 @@
 		addContentControlPicture: function(){
 			return "\tdoc.AddPictureContentControl(180 * 10000, 180 * 10000);\n";
 		},
+		changeContentControlProperties	: function(oPr){
+			let getCCText  = "\tdoc.GetCurrentContentControl()";
+			let text  = "";
+
+			if (undefined !== oPr.Tag)
+				text += getCCText + ".SetTag(\"" + oPr.Tag + "\");\n";
+
+			if (undefined !== oPr.Alias)
+				text += getCCText + ".SetAlias(\"" + oPr.Alias + "\");\n";
+
+			if (undefined !== oPr.Lock)
+			{
+				let sLock = "unlocked";
+
+				if (Asc.c_oAscSdtLockType.ContentLocked === oPr.Lock)
+					sLock = "contentLocked";
+				else if (Asc.c_oAscSdtLockType.SdtContentLocked === oPr.Lock)
+					sLock = "sdtContentLocked";
+				else if (Asc.c_oAscSdtLockType.SdtLocked === oPr.Lock)
+					sLock = "sdtLocked";
+
+				text += getCCText + ".SetLock(\"" + sLock + "\");\n";
+			}
+
+			if (undefined !== oPr.Appearance)
+				text += getCCText + ".SetAppearance(\"" + (Asc.c_oAscSdtAppearance.Hidden === oPr.Appearance ? "hidden" : "boundingBox") + "\");\n";
+
+			if (oPr.Color)
+				text += getCCText + ".SetColor(Api.RGBA(" + oPr.Color.r + ", " + oPr.Color.g + ", " + oPr.Color.b + "));\n";
+
+			if (oPr.BorderColor)
+				text += getCCText + ".SetBorderColor(" + oPr.BorderColor.r + ", " + oPr.BorderColor.g + ", " + oPr.BorderColor.b + ", " + oPr.BorderColor.a + ");\n";
+
+			if (oPr.ShdColor)
+				text += getCCText + ".SetBackgroundColor(" + oPr.ShdColor.r + ", " + oPr.ShdColor.g + ", " + oPr.ShdColor.b + ", " + oPr.ShdColor.a + ");\n";
+
+			return text;
+		},
 		moveCursorLeft			: function(arrData){
 			let data = groupDataForCursor(arrData);
 			let text = "";
@@ -2156,6 +2194,7 @@
 	DEActionMap[AscDFH.historydescription_Document_AddContentControlCheckBox]	= wordActions.addContentControlCheckBox;
 	DEActionMap[AscDFH.historydescription_Document_AddContentControlDatePicker]= wordActions.addContentControlDatePicker;
 	DEActionMap[AscDFH.historydescription_Document_AddContentControlPicture]	= wordActions.addContentControlPicture;
+	DEActionMap[AscDFH.historydescription_Document_ChangeContentControlProperties]= wordActions.changeContentControlProperties;
 	DEActionMap['SetDrawingTitle']												= wordActions.setDrawingTitle;
 	DEActionMap['SetDrawingDescription']										= wordActions.setDrawingDescription;
 	DEActionMap['SetDrawingAspectRatio']										= wordActions.setDrawingAspectRatio;

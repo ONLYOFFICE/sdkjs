@@ -10810,6 +10810,7 @@ background-repeat: no-repeat;\
 			{
 				preSetup();
 				oContentControl.SetContentControlPr(oContentControlPr);
+				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_ChangeContentControlProperties, oContentControl.GetContentControlPr());
 				postSetup();
 			}
 		}
