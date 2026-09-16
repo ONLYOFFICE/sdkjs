@@ -7821,6 +7821,18 @@
 	ApiRichContent.prototype.RemoveElement = AscBuilder.ApiDocumentContent.prototype.RemoveElement;
 
 	/**
+	 * Returns an ApiTextRange object that represents the part of the text contained in the current rich content.
+	 * @memberof ApiRichContent
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} [start=0] - Start character position (0-based, inclusive).
+	 * @param {number} [end] - End character position (0-based, exclusive).
+	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRichContent/Methods/GetTextRange.js
+	 */
+	ApiRichContent.prototype.GetTextRange = AscBuilder.ApiDocumentContent.prototype.GetTextRange;
+
+	/**
 	 * Returns an array of rich paragraphs from the current rich content object.
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
@@ -8026,6 +8038,18 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/GetElementsCount.js
 	 */
 	ApiRichParagraph.prototype.GetElementsCount = AscBuilder.ApiParagraph.prototype.GetElementsCount;
+
+	/**
+	 * Returns an ApiTextRange object that represents the part of the text contained in the current rich paragraph.
+	 * @memberof ApiRichParagraph
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} [start=0] - Start character position (0-based, inclusive).
+	 * @param {number} [end] - End character position (0-based, exclusive).
+	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/GetTextRange.js
+	 */
+	ApiRichParagraph.prototype.GetTextRange = AscBuilder.ApiParagraph.prototype.GetTextRange;
 
 	/**
 	 * Adds an element to the current paragraph.
@@ -8538,6 +8562,18 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRichRun/Methods/GetText.js
 	 */
 	ApiRichRun.prototype.GetText = AscBuilder.ApiRun.prototype.GetText;
+
+	/**
+	 * Returns an ApiTextRange object that represents the part of the text contained in the current rich run.
+	 * @memberof ApiRichRun
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} [start=0] - Start character position (0-based, inclusive).
+	 * @param {number} [end] - End character position (0-based, exclusive).
+	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRichRun/Methods/GetTextRange.js
+	 */
+	ApiRichRun.prototype.GetTextRange = AscBuilder.ApiRun.prototype.GetTextRange;
 
 	/**
 	 * Returns a parent paragraph of the current run.
@@ -9299,6 +9335,59 @@
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
 	 */
 	ApiDrawing.prototype.SetOutLine = ApiDrawing.prototype.SetLine;
+
+	/**
+	 * Returns a text range that covers the whole text of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiTextRange | null} - returns null if the drawing has no text body.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTextRange.js
+	 */
+	ApiDrawing.prototype.GetTextRange = function() {
+		if (this.Drawing.isTable())
+			return null;
+
+		let docContent = this.Drawing.getDocContent();
+
+		if (!docContent)
+			return null;
+
+		return new AscBuilder.ApiTextRange(docContent, 0, -1);
+	};
+
+	/**
+	 * Checks whether the current drawing has a text body.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextRange.js
+	 */
+	ApiDrawing.prototype.HasTextRange = function() {
+		if (this.Drawing.isTable())
+			return false;
+
+		return !!this.Drawing.getDocContent();
+	};
+
+	/**
+	 * Creates a text body for the drawing if it does not already exist and returns its full text range.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiTextRange | null} - returns null if the drawing cannot have a text body.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/CreateTextRange.js
+	 */
+	ApiDrawing.prototype.CreateTextRange = function() {
+		if (this.Drawing.isTable())
+			return null;
+
+		if (!this.Drawing.getDocContent())
+			this.Drawing.createTextBodyOnEdit();
+
+		return new AscBuilder.ApiTextRange(this.Drawing.getDocContent(), 0, -1);
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -12741,6 +12830,9 @@
 	ApiDrawing.prototype["GetFill"]							= ApiDrawing.prototype.GetFill;
 	ApiDrawing.prototype["SetLine"]							= ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["SetOutLine"]						= ApiDrawing.prototype.SetOutLine;
+	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
+	ApiDrawing.prototype["HasTextRange"]						= ApiDrawing.prototype.HasTextRange;
+	ApiDrawing.prototype["CreateTextRange"]					= ApiDrawing.prototype.CreateTextRange;
 	ApiDrawing.prototype["GetLine"]							= ApiDrawing.prototype.GetLine;
 	ApiDrawing.prototype["SetShadow"]						= ApiDrawing.prototype.SetShadow;
 	ApiDrawing.prototype["GetShadow"]						= ApiDrawing.prototype.GetShadow;

@@ -3658,6 +3658,48 @@
 		return oRange;
 	};
 	/**
+	 * Returns an ApiTextRange object that represents the part of the text contained in the current hyperlink.
+	 * @memberof ApiHyperlink
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
+	 * @param {number} [start=0] - Start character position (0-based, inclusive) relative to the hyperlink.
+	 * @param {number} [end] - End character position (0-based, exclusive). Defaults to the end of the hyperlink.
+	 * @returns {ApiTextRange | null} - returns null if the hyperlink is not attached to the document or the specified range is empty.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetTextRange.js
+	 */
+	ApiHyperlink.prototype.GetTextRange = function(start, end)
+	{
+		let hyperlink = this.ParaHyperlink;
+		let paragraph = hyperlink.GetParagraph();
+		if (!paragraph)
+			return null;
+
+		if (!private_IsDrawingParagraph(paragraph))
+			throwException("The hyperlink does not belong to a drawing text body. Use GetRange instead of GetTextRange.");
+
+		let anchor = private_GetParagraphRangeAnchor(paragraph);
+		if (!anchor)
+			return null;
+
+		let firstRun = null;
+		let lastRun  = null;
+		hyperlink.CheckRunContent(function(run) {
+			if (!firstRun)
+				firstRun = run;
+			lastRun = run;
+			return false;
+		});
+		if (!firstRun)
+			return null;
+
+		let hyperlinkStart = private_GetContentPosCharOffset(paragraph, firstRun.GetParagraphContentPosFromObject(0));
+		let hyperlinkEnd   = private_GetContentPosCharOffset(paragraph, lastRun.GetParagraphContentPosFromObject(lastRun.Content.length));
+		if (hyperlinkStart < 0 || hyperlinkEnd < hyperlinkStart)
+			return null;
+
+		return private_CreateTextRangeIn(anchor.docContent, anchor.base + hyperlinkStart, hyperlinkEnd - hyperlinkStart, start, end);
+	};
+	/**
 	 * Converts the ApiHyperlink object into the JSON object.
 	 * @memberof ApiHyperlink
 	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
@@ -6520,6 +6562,23 @@
 		}
 
 		return oRange;
+	};
+	/**
+	 * Returns an ApiTextRange object that represents the part of the text contained in the current document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
+	 * @param {number} [start=0] - Start character position (0-based, inclusive).
+	 * @param {number} [end] - End character position (0-based, exclusive). Defaults to the end of the content.
+	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetTextRange.js
+	 */
+	ApiDocumentContent.prototype.GetTextRange = function(start, end)
+	{
+		if (!private_IsDrawingDocContent(this.Document))
+			throwException("The document content " + this.Document.GetId() + " is not a drawing text body. Use GetRange instead of GetTextRange.");
+
+		return private_CreateTextRangeIn(this.Document, 0, private_GetModelLength(private_BuildCharMap(this.Document)), start, end);
 	};
 	/**
 	 * Converts the ApiDocumentContent object into the JSON object.
@@ -11216,13 +11275,35 @@
 	{
 		if (!this.Paragraph.IsUseInDocument())
 			throwException("Paragraph must be attached to document before getting its range");
-		
+
 		let oRange = new ApiRange(this.Paragraph, Start, End);
 		if (oRange.isEmpty) {
 			return null;
 		}
 
 		return oRange;
+	};
+	/**
+	 * Returns an ApiTextRange object that represents the part of the text contained in the current paragraph.
+	 * The paragraph must be attached to the document before calling this method.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
+	 * @param {number} [start=0] - Start character position (0-based, inclusive) relative to the paragraph.
+	 * @param {number} [end] - End character position (0-based, exclusive). Defaults to the end of the paragraph.
+	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetTextRange.js
+	 */
+	ApiParagraph.prototype.GetTextRange = function(start, end)
+	{
+		if (!private_IsDrawingParagraph(this.Paragraph))
+			throwException("The paragraph " + this.Paragraph.GetId() + " does not belong to a drawing text body. Use GetRange instead of GetTextRange.");
+
+		let anchor = private_GetParagraphRangeAnchor(this.Paragraph);
+		if (!anchor)
+			return null;
+
+		return private_CreateTextRangeIn(anchor.docContent, anchor.base, this.Paragraph.GetCharModelText().length, start, end);
 	};
 	/**
 	 * Adds an element to the current paragraph.
@@ -13282,13 +13363,44 @@
 	{
 		if (!this.Run.IsUseInDocument())
 			throwException("Run must be attached to document before getting its range");
-		
+
 		let oRange = new ApiRange(this.Run, Start, End);
 		if (oRange.isEmpty) {
 			return null;
 		}
 
 		return oRange;
+	};
+	/**
+	 * Returns an ApiTextRange object that represents the part of the text contained in the current run.
+	 * The run must be attached to the document before calling this method.
+	 * @memberof ApiRun
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
+	 * @param {number} [start=0] - Start character position (0-based, inclusive) relative to the run.
+	 * @param {number} [end] - End character position (0-based, exclusive). Defaults to the end of the run.
+	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetTextRange.js
+	 */
+	ApiRun.prototype.GetTextRange = function(start, end)
+	{
+		let paragraph = this.Run.GetParagraph();
+		if (!paragraph)
+			return null;
+
+		if (!private_IsDrawingParagraph(paragraph))
+			throwException("The run " + this.Run.GetId() + " does not belong to a drawing text body. Use GetRange instead of GetTextRange.");
+
+		let anchor = private_GetParagraphRangeAnchor(paragraph);
+		if (!anchor)
+			return null;
+
+		let runStart = private_GetContentPosCharOffset(paragraph, this.Run.GetParagraphContentPosFromObject(0));
+		let runEnd   = private_GetContentPosCharOffset(paragraph, this.Run.GetParagraphContentPosFromObject(this.Run.Content.length));
+		if (runStart < 0 || runEnd < runStart)
+			return null;
+
+		return private_CreateTextRangeIn(anchor.docContent, anchor.base + runStart, runEnd - runStart, start, end);
 	};
 
 	/**
@@ -31970,7 +32082,7 @@
 
 		private_RegisterTextRange(this);
 		this.private_Anchor(docContent.IsUseInDocument() ? private_BuildCharMap(docContent) : null);
-		let collaborativeEditing = Asc.editor.getLogicDocument().CollaborativeEditing;
+		let collaborativeEditing = AscCommon.CollaborativeEditing;
 		if (this.StartDocPos)
 			collaborativeEditing.Add_DocumentPosition(this.StartDocPos, !private_IsWholeBodyRange(this));
 		if (this.EndDocPos)
@@ -32081,22 +32193,21 @@
 
 	function private_RefreshTextRanges(docContent)
 	{
-		let logicDocument = Asc.editor.getLogicDocument();
-		let charMap       = private_BuildCharMap(docContent);
+		let charMap = private_BuildCharMap(docContent);
 		for (let i = 0; i < arrTextRanges.length; i++)
 		{
 			if (arrTextRanges[i].DocContent === docContent)
-				arrTextRanges[i].private_Refresh(logicDocument, charMap);
+				arrTextRanges[i].private_Refresh(charMap);
 		}
 	}
 
 	function private_TrackTextRanges(docContent)
 	{
-		let logicDocument        = Asc.editor.getLogicDocument();
-		let collaborativeEditing = logicDocument.CollaborativeEditing;
+		let collaborativeEditing = AscCommon.CollaborativeEditing;
 		let charMap              = private_BuildCharMap(docContent);
 		let inDocument           = {};
-		collaborativeEditing.Clear_DocumentPositions();
+		if (collaborativeEditing)
+			collaborativeEditing.Clear_DocumentPositions();
 		for (let i = arrTextRanges.length - 1; i >= 0; i--)
 		{
 			let range = arrTextRanges[i];
@@ -32220,7 +32331,7 @@
 		this.EndDocPos   = this.EndPos === -1 ? null : private_GetTextRangeDocPos(charMap, this.EndPos);
 	};
 
-	ApiTextRange.prototype.private_Refresh = function(logicDocument, charMap) {
+	ApiTextRange.prototype.private_Refresh = function(charMap) {
 		if (!this.DocContent)
 			return;
 
@@ -32229,14 +32340,14 @@
 
 		if (this.StartDocPos)
 		{
-			logicDocument.RefreshDocumentPositions([this.StartDocPos]);
+			AscCommon.CollaborativeEditing.Update_DocumentPosition(this.StartDocPos);
 			let pos = private_GetTextRangeOffset(this.DocContent, charMap, this.StartDocPos);
 			if (pos >= 0)
 				this.StartPos = pos;
 		}
 		if (this.EndDocPos)
 		{
-			logicDocument.RefreshDocumentPositions([this.EndDocPos]);
+			AscCommon.CollaborativeEditing.Update_DocumentPosition(this.EndDocPos);
 			let pos = private_GetTextRangeOffset(this.DocContent, charMap, this.EndDocPos);
 			if (pos >= 0)
 				this.EndPos = pos;
@@ -32264,12 +32375,12 @@
 	};
 
 	ApiTextRange.prototype.private_GetEffectiveStart = function() {
-		this.private_Refresh(Asc.editor.getLogicDocument(), null);
+		this.private_Refresh(null);
 		return this.StartPos;
 	};
 
 	ApiTextRange.prototype.private_GetEffectiveEnd = function() {
-		this.private_Refresh(Asc.editor.getLogicDocument(), null);
+		this.private_Refresh(null);
 		return this.EndPos === -1 ? this.private_GetTotalLength() : this.EndPos;
 	};
 
@@ -32588,12 +32699,12 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Select.js
 	 */
 	ApiTextRange.prototype.Select = function() {
-		let docContent    = this.DocContent;
-		let drawingShape  = docContent && docContent.Is_DrawingShape && docContent.Is_DrawingShape(true);
-		if (!drawingShape)
+		let docContent   = this.DocContent;
+		let drawingShape = docContent.Is_DrawingShape(true);
+		if (!(drawingShape instanceof AscFormat.CShape))
 			return false;
 
-		let controller = drawingShape.getDrawingObjectsController && drawingShape.getDrawingObjectsController();
+		let controller = drawingShape.getDrawingObjectsController();
 		if (!controller)
 			return false;
 
@@ -32601,10 +32712,7 @@
 		if (logicDocument)
 			logicDocument.RemoveSelection();
 
-		controller.resetSelection();
-		drawingShape.Set_CurrentElement(true, 0, true, true);
-		controller.resetInternalSelection();
-		controller.selection.textSelection = drawingShape;
+		drawingShape.Set_CurrentElement(true, undefined, false);
 
 		let start = this.private_GetEffectiveStart();
 		let end   = this.private_GetEffectiveEnd();
@@ -33286,6 +33394,57 @@
 		this.SetTextPr(apiTextPr);
 	};
 
+	function private_IsDrawingDocContent(docContent)
+	{
+		return true === docContent.bPresentation;
+	}
+
+	function private_IsDrawingParagraph(paragraph)
+	{
+		return false === paragraph.bFromDocument;
+	}
+
+	function private_CreateTextRangeIn(docContent, base, length, start, end)
+	{
+		if (!docContent || base < 0)
+			return null;
+
+		start = Math.max(0, GetNumberParameter(start, 0));
+		end   = (undefined === end || null === end) ? length : GetNumberParameter(end, length);
+		if (end > length)
+			end = length;
+
+		if (start > end)
+		{
+			let temp = start;
+			start    = end;
+			end      = temp;
+		}
+
+		if (start >= end)
+			return null;
+
+		return new ApiTextRange(docContent, base + start, base + end);
+	}
+
+	function private_GetParagraphRangeAnchor(paragraph)
+	{
+		let docContent = paragraph.GetParent();
+		if (!docContent)
+			return null;
+
+		let base = private_GetParaCharStart(private_BuildCharMap(docContent), paragraph);
+		if (base < 0)
+			return null;
+
+		return {docContent : docContent, base : base};
+	}
+
+	function private_GetContentPosCharOffset(paragraph, contentPos)
+	{
+		return contentPos ? paragraph.GetCharOffsetByContentPos(contentPos) : -1;
+	}
+
 	function private_SearchDocContents(slideObjects, text, isMatchCase, isWholeWords)
 	{
 		let searchSettings = new AscCommon.CSearchSettings();
@@ -33426,6 +33585,7 @@
 	ApiDocumentContent.prototype["RemoveAllElements"]         = ApiDocumentContent.prototype.RemoveAllElements;
 	ApiDocumentContent.prototype["RemoveElement"]             = ApiDocumentContent.prototype.RemoveElement;
 	ApiDocumentContent.prototype["GetRange"]                  = ApiDocumentContent.prototype.GetRange;
+	ApiDocumentContent.prototype["GetTextRange"]              = ApiDocumentContent.prototype.GetTextRange;
 	ApiDocumentContent.prototype["ToJSON"]                    = ApiDocumentContent.prototype.ToJSON;
 	ApiDocumentContent.prototype["GetContent"]                = ApiDocumentContent.prototype.GetContent;
 	ApiDocumentContent.prototype["GetAllDrawingObjects"]      = ApiDocumentContent.prototype.GetAllDrawingObjects;
@@ -33638,6 +33798,7 @@
 	ApiParagraph.prototype["AddComment"]             = ApiParagraph.prototype.AddComment;
 	ApiParagraph.prototype["AddHyperlink"]           = ApiParagraph.prototype.AddHyperlink;
 	ApiParagraph.prototype["GetRange"]               = ApiParagraph.prototype.GetRange;
+	ApiParagraph.prototype["GetTextRange"]           = ApiParagraph.prototype.GetTextRange;
 	ApiParagraph.prototype["Push"]                   = ApiParagraph.prototype.Push;
 	ApiParagraph.prototype["GetLastRunWithText"]     = ApiParagraph.prototype.GetLastRunWithText;
 	ApiParagraph.prototype["SetBold"]                = ApiParagraph.prototype.SetBold;
@@ -33714,6 +33875,7 @@
 	ApiRun.prototype["RemoveAllElements"]            = ApiRun.prototype.RemoveAllElements;
 	ApiRun.prototype["Delete"]                       = ApiRun.prototype.Delete;
 	ApiRun.prototype["GetRange"]                     = ApiRun.prototype.GetRange;
+	ApiRun.prototype["GetTextRange"]                 = ApiRun.prototype.GetTextRange;
 	ApiRun.prototype["GetParentContentControl"]      = ApiRun.prototype.GetParentContentControl;
 	ApiRun.prototype["GetParentTable"]               = ApiRun.prototype.GetParentTable;
 	ApiRun.prototype["GetParentTableCell"]           = ApiRun.prototype.GetParentTableCell;
@@ -33742,6 +33904,7 @@
 	ApiHyperlink.prototype["GetElementsCount"]       = ApiHyperlink.prototype.GetElementsCount;
 	ApiHyperlink.prototype["SetDefaultStyle"]        = ApiHyperlink.prototype.SetDefaultStyle;
 	ApiHyperlink.prototype["GetRange"]               = ApiHyperlink.prototype.GetRange;
+	ApiHyperlink.prototype["GetTextRange"]           = ApiHyperlink.prototype.GetTextRange;
 	ApiHyperlink.prototype["ToJSON"]                 = ApiHyperlink.prototype.ToJSON;
 
 	ApiSection.prototype["GetClassType"]             = ApiSection.prototype.GetClassType;

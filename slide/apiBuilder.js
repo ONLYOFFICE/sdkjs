@@ -7975,9 +7975,9 @@
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/IsTextRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextRange.js
 	 */
-	ApiDrawing.prototype.IsTextRange = function() {
+	ApiDrawing.prototype.HasTextRange = function() {
 		if (this.Drawing.isTable())
 			return false;
 
@@ -10972,7 +10972,7 @@
     ApiDrawing.prototype["GetShadow"]                     = ApiDrawing.prototype.GetShadow;
 
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
-	ApiDrawing.prototype["IsTextRange"]						= ApiDrawing.prototype.IsTextRange;
+	ApiDrawing.prototype["HasTextRange"]						= ApiDrawing.prototype.HasTextRange;
 	ApiDrawing.prototype["CreateTextRange"]					= ApiDrawing.prototype.CreateTextRange;
 
 

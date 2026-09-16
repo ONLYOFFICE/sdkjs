@@ -14166,6 +14166,59 @@
 		return null;
 	};
 
+	/**
+	 * Returns a text range that covers the whole text of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiTextRange | null} - returns null if the drawing has no text body.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTextRange.js
+	 */
+	ApiDrawing.prototype.GetTextRange = function() {
+		if (this.Drawing.isTable())
+			return null;
+
+		let docContent = this.Drawing.getDocContent();
+
+		if (!docContent)
+			return null;
+
+		return new AscBuilder.ApiTextRange(docContent, 0, -1);
+	};
+
+	/**
+	 * Checks whether the current drawing has a text body.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextRange.js
+	 */
+	ApiDrawing.prototype.HasTextRange = function() {
+		if (this.Drawing.isTable())
+			return false;
+
+		return !!this.Drawing.getDocContent();
+	};
+
+	/**
+	 * Creates a text body for the drawing if it does not already exist and returns its full text range.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiTextRange | null} - returns null if the drawing cannot have a text body.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/CreateTextRange.js
+	 */
+	ApiDrawing.prototype.CreateTextRange = function() {
+		if (this.Drawing.isTable())
+			return null;
+
+		if (!this.Drawing.getDocContent())
+			this.Drawing.createTextBodyOnEdit();
+
+		return new AscBuilder.ApiTextRange(this.Drawing.getDocContent(), 0, -1);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -30638,6 +30691,9 @@
 	ApiDrawing.prototype["GetTitle"]                   =  ApiDrawing.prototype.GetTitle;
 	ApiDrawing.prototype["SetDescription"]             =  ApiDrawing.prototype.SetDescription;
 	ApiDrawing.prototype["GetDescription"]             =  ApiDrawing.prototype.GetDescription;
+	ApiDrawing.prototype["GetTextRange"]               =  ApiDrawing.prototype.GetTextRange;
+	ApiDrawing.prototype["HasTextRange"]                =  ApiDrawing.prototype.HasTextRange;
+	ApiDrawing.prototype["CreateTextRange"]            =  ApiDrawing.prototype.CreateTextRange;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetFill"]                    =  ApiDrawing.prototype.SetFill;
 	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
