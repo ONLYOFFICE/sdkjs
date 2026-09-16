@@ -32395,7 +32395,7 @@
 	/**
 	 * Returns the class type identifier.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @returns {"textRange"}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetClassType.js
@@ -32408,7 +32408,7 @@
 	 * Returns the paragraph at the given index within this range.
 	 * Returns null if the index is out of bounds.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {number} index
 	 * @returns {ApiParagraph|null}
 	 * @since 10.0.0
@@ -32438,7 +32438,7 @@
 	/**
 	 * Returns all Paragraph objects within this range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @returns {ApiParagraph[]}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetAllParagraphs.js
@@ -32460,7 +32460,7 @@
 	/**
 	 * Adds a text to the specified position. The current range is expanded to include the added text.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {String} text - The text that will be added.
 	 * @param {"after" | "before"} [position = "after"] - The position where the text will be added ("before" or "after" the range specified).
 	 * @return {boolean} - returns true if the text was successfully added.
@@ -32501,7 +32501,7 @@
 	/**
 	 * Adds a hyperlink to the current text range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {string} link - The link address.
 	 * @param {string} screenTipText - The screen tip text.
 	 * @param {string} bookmarkName - Name of a bookmark
@@ -32549,7 +32549,7 @@
 	 * @param {string} [options.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
 	 * @param {string} [options.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
 	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @returns {string}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetText.js
@@ -32585,7 +32585,7 @@
 	/**
 	 * Returns a new range that spans both this range and the given range. The current range is not changed.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {ApiTextRange} range
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -32606,7 +32606,7 @@
 	/**
 	 * Returns a new range that is the intersection of this range and the given range. The current range is not changed.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {ApiTextRange} range
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -32627,7 +32627,7 @@
 	/**
 	 * Replaces all text content with the given string. Use "\r" to separate paragraphs.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {string} text - New text value.
 	 * @returns {ApiTextRange} this
 	 * @since 10.0.0
@@ -32693,7 +32693,7 @@
 	/**
 	 * Selects the text range in the editor.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @returns {boolean}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Select.js
@@ -32729,7 +32729,7 @@
 	/**
 	 * Returns the start position of the current range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @returns {number}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetStartPos.js
@@ -32741,7 +32741,7 @@
 	/**
 	 * Returns the end position of the current range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @returns {number}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetEndPos.js
@@ -32753,7 +32753,7 @@
 	/**
 	 * Sets the start position of the current range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {number} pos - Start position.
 	 * @returns {boolean}
 	 * @since 10.0.0
@@ -32772,7 +32772,7 @@
 	/**
 	 * Sets the end position of the current range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {number} pos - End position.
 	 * @returns {boolean}
 	 * @since 10.0.0
@@ -32791,7 +32791,7 @@
 	/**
 	 * Returns a new ApiTextRange that represents a sub-range of the current range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {number} [start=0] - Start offset (0-based) relative to the beginning of this range.
 	 * @param {number} [rangeEnd=-1]  - End offset relative to the beginning of this range. -1 means the end of this range.
 	 * @returns {ApiTextRange | null}
@@ -32830,7 +32830,7 @@
 	/**
 	 * Moves a cursor to the specified position within the current range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {number} [pos=0] - The desired cursor position.
 	 * @returns {boolean}
 	 * @since 10.0.0
@@ -32889,7 +32889,7 @@
 	/**
 	 * Deletes the contents of the current text range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @returns {boolean} - returns false if the range is empty.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/Delete.js
@@ -32934,7 +32934,7 @@
 	 * Finds the first occurrence of the given text within this range and returns it as a new ApiTextRange.
 	 * Returns null if the text is not found.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {string}  findWhat         - Text to search for.
 	 * @param {number}  [after=1]        - 1-based position within this range to start searching from.
 	 * @param {boolean} [matchCase=false] - Case-sensitive search.
@@ -32980,7 +32980,7 @@
 	/**
 	 * Replaces all occurrences of the specified text within this range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {string}  findWhat          - Text to search for.
 	 * @param {string}  replaceWith        - Replacement text.
 	 * @param {boolean} [matchCase=false]  - Case-sensitive search.
@@ -33080,7 +33080,7 @@
 	/**
 	 * Sets bold formatting for the contents of the current text range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {boolean} isBold
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33094,7 +33094,7 @@
 	/**
 	 * Specifies that any lowercase characters in the current text Range are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {boolean} isCaps - Specifies if the Range contents are displayed capitalized or not.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33109,7 +33109,7 @@
 	/**
 	 * Sets the text color of the current range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {ApiColor} color
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33155,7 +33155,7 @@
 	/**
 	 * Specifies that the contents of the current Range are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {boolean} isDoubleStrikeout
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33169,7 +33169,7 @@
 	/**
 	 * Specifies a highlighting color which is applied as a background to the contents of the current Range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {highlightColor} colorName
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -33191,7 +33191,7 @@
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {boolean} isItalic
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33205,7 +33205,7 @@
 	/**
 	 * Specifies that the contents of the current Range are displayed with a single horizontal line through the range center.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {boolean} isStrikeout
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33220,7 +33220,7 @@
 	 * Specifies that all the lowercase letter characters in the current text Range are formatted for display only as their capital
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current Range are displayed capitalized two points smaller or not.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33234,7 +33234,7 @@
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {twips} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -33251,7 +33251,7 @@
 	 * Specifies that the contents of the current Range are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {boolean} isUnderline - Specifies if the contents of the current Range are displayed underlined or not.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
@@ -33268,7 +33268,7 @@
 	 * <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
 	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {("baseline" | "subscript" | "superscript")} type - The vertical alignment type applied to the text contents.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -33309,7 +33309,7 @@
 	/**
 	 * Sets the font size of the characters in the current text Range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -33330,7 +33330,7 @@
 	/**
 	 * Sets the font family for the current TextRange.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {string} fontFamily - The font family or families used for the current text Range.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -33363,7 +33363,7 @@
 	/**
 	 * Sets the text properties to the current text range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {ApiTextPr} textPr - The text properties that will be applied to the current range.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
@@ -33379,7 +33379,7 @@
 	/**
 	 * Returns the merged text properties of the entire range.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @return {ApiTextPr}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/GetTextPr.js
