@@ -538,7 +538,10 @@
                 sExpValue = aOpt[sLogicValue];
             }
 
-            this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
+			let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
+			if (!isOnOpen) {
+				this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
+			}
         }
 
 		let aAllWidgets = this.GetAllWidgets();
@@ -721,6 +724,10 @@
         else {
             sExportValue = value;
         }
+
+		let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
+		if (isOnOpen == true && !oParent)
+			this.SetLogicValue(value);
 
 		if (this.GetExportValue() == sExportValue) {
 			this.SetChecked(true);

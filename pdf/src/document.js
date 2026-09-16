@@ -314,7 +314,7 @@ var CPresentation = CPresentation || function(){};
 			annot.GetAllFonts(fontMap);
 		});
 		
-        if (bForceCalc || this.checkFonts(Object.keys(fontMap), this._RecalculateAll.bind(this))) {
+        if (this.checkFonts(Object.keys(fontMap), this._RecalculateAll.bind(this)) || bForceCalc) {
             this._RecalculateAll();
         }
 	};
@@ -9701,16 +9701,17 @@ var CPresentation = CPresentation || function(){};
 		AscFonts.initEmbeddedFonts(embeddedFontsToInit, true);
 
 		let _t = this;
+		let isLoaded = false;
 		this.fontLoader.LoadFonts(fontMap,
-			function()
-			{
+			function() {
+				isLoaded = true;
 				_t.loadedFonts = _t.loadedFonts.concat(fontsToLoad);
 				if (callback)
 					callback();
 			}
 		);
 		
-		return false;
+		return isLoaded;
 	};
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
