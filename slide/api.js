@@ -8748,14 +8748,14 @@ background-repeat: no-repeat;\
 		let logicDocument = this.getLogicDocument();
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
-		logicDocument.FinalizeAction(true, true);
+		let result = logicDocument.FinalizeAction(true, true);
 		logicDocument.UpdateUndoRedo();
 
 		if (callback)
-			callback(true)
+			callback(result);
 
 		this.executeGroupActionsEnd();
-		return true;
+		return result;
 	};
 
 	asc_docs_api.prototype.asc_SetAutomaticBulletedLists = function(isAuto)

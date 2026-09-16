@@ -80,6 +80,17 @@
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
 
+	/**
+	 * The current editing restrictions:
+	 * <b>none</b> - no editing restrictions,
+	 * <b>readOnly</b> - does not allow editing,
+	 * <b>comments</b> - allows editing comments and regions delimited by range permissions,
+	 * <b>forms</b> - allows editing form fields,
+	 * <b>signatures</b> - the document is signed and cannot be changed.
+	 * @typedef {("none" | "readOnly" | "comments" | "forms" | "signatures")} EditorRestrictions
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/EditorRestrictions.js
+	 */
+
     /**
      * Plugin event ("onDocumentContentReady", "onTargetPositionChanged", onClick", "onInputHelperClear", "onInputHelperInput", etc.).
      * @typedef {string} EventType
@@ -203,6 +214,29 @@
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetVersion.js
 	 */
     Api.prototype["pluginMethod_GetVersion"] = function() { return this.GetVersion(); };
+
+	/**
+	 * Returns the restrictions the editor currently applies to the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE", "CSE", "CPE", "PDFE"]
+	 * @alias GetRestrictions
+	 * @returns {EditorRestrictions} - The current restrictions.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetRestrictions.js
+	 */
+	Api.prototype["pluginMethod_GetRestrictions"] = function()
+	{
+		let restrictions = this.restrictions;
+		if (restrictions & Asc.c_oAscRestrictionType.OnlySignatures)
+			return "signatures";
+		if (restrictions & Asc.c_oAscRestrictionType.View)
+			return "readOnly";
+		if (restrictions & Asc.c_oAscRestrictionType.OnlyComments)
+			return "comments";
+		if (restrictions & Asc.c_oAscRestrictionType.OnlyForms)
+			return "forms";
+		return "none";
+	};
 
     /**
      * Adds an OLE object to the current document position.

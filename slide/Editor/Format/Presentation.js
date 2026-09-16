@@ -10683,14 +10683,17 @@ CPresentation.prototype.StartAction = function (nDescription, additional) {
 CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLockedAction, additional, nDescription) {
 	this.Recalculate();
 	this.Api.checkChangesSize();
+	let result = true;
 	if (false !== isCheckEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
 		AscCommon.History.RemoveLastPoint();
 	} else if (isCheckLockedAction && !this.CanEdit()) {
 		const arrChanges = AscCommon.History.Undo();
 		this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
+		result = false;
 	}
 	this.Api.sendEvent("asc_onUserActionEnd");
 	this.Api.getMacroRecorder().addStepData(nDescription || null, additional, false);
+	return result;
 };
 CPresentation.prototype.AddMacroData = function(nDescription, additional)
 {
