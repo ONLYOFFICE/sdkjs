@@ -9460,7 +9460,7 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the chart measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the chart will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the chart measured in English measure units.
-	 * @returns {ApiChart | null}
+	 * @returns {ApiChart | null} - returns null if the chart type is not supported.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddChart.js
 	 */
 	ApiWorksheet.prototype.AddChart =
@@ -9476,6 +9476,9 @@
 			settings.putRange(sDataRange);
 			settings.forcedWorksheet = this.worksheet;
 			const oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
+			if (!oChart) {
+				return null;
+			}
 			if (arguments.length === 8) {//support old variant
 				oChart.setBDeleted(false);
 				oChart.setWorksheet(this.worksheet);

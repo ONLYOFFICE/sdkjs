@@ -1041,12 +1041,16 @@
      * @param {number} nStyleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
      * @param {NumFormat[] | String[]} aNumFormats - Numeric formats which will be applied to the series (can be custom formats).
      * The default numeric format is "General".
-     * @returns {ApiChart}
+     * @returns {ApiChart | null} - returns null if the chart type is not supported.
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
 	 */
     Api.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats)
     {
         var oChartSpace = AscFormat.builder_CreateChart(nWidth/36000, nHeight/36000, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats);
+        if (!oChartSpace)
+        {
+            return null;
+        }
         oChartSpace.setParent(private_GetCurrentSlide());
         return new ApiChart(oChartSpace);
     };

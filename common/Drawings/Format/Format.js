@@ -17611,7 +17611,10 @@
 
 		function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats) {
 			let settings = new Asc.asc_ChartSettings();
-			settings.type = ChartBuilderTypeToInternal(sType);
+			settings.type = ChartBuilderTypeToInternal(sType || "bar");
+			if (settings.type === null) {
+				return null;
+			}
 			let aAscSeries = [];
 			let aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 			let oCat, i;

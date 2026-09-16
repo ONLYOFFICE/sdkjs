@@ -5083,7 +5083,7 @@
 	 * @param {number} styleIndex - The chart color style index (can be 1 - 48, as described in OOXML specification).
 	 * @param {NumFormat[] | String[]} numFormats - Numeric formats which will be applied to the series (can be custom formats).
      * The default numeric format is "General".
-	 * @returns {ApiChart}
+	 * @returns {ApiChart | null} - returns null if the chart type is not supported.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
 	 */
 	Api.CreateChart = function(chartType, series, seriesNames, catNames, width, height, styleIndex, numFormats)
