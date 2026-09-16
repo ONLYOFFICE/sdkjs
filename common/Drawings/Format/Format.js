@@ -18235,7 +18235,28 @@
 			dLbl.setShowBubbleSize(false);
 		}
 
-		function builder_SetShowDataLabels(chartSpace, bShowSerName, bShowCatName, bShowVal, bShowPercent) {
+		function builder_ApplyDLblsShowFlags(dLbls, isCircleChart, showSerName, showCatName, showVal, showPercent) {
+			dLbls.setShowSerName(true === showSerName);
+			dLbls.setShowCatName(true === showCatName);
+			dLbls.setShowVal(true === showVal);
+			dLbls.setShowLegendKey(false);
+			if (isCircleChart) {
+				dLbls.setShowPercent(true === showPercent);
+			}
+			dLbls.setShowBubbleSize(false);
+
+			const labelArray = dLbls.dLbl;
+			if (!Array.isArray(labelArray)) {
+				return;
+			}
+			for (let i = 0; i < labelArray.length; ++i) {
+				if (labelArray[i]) {
+					builder_ApplyDLblsShowFlags(labelArray[i], isCircleChart, showSerName, showCatName, showVal, showPercent);
+				}
+			}
+		}
+
+		function builder_SetShowDataLabels(chartSpace, showSerName, showCatName, showVal, showPercent) {
 			const chart = (
 				chartSpace &&
 				chartSpace.chart &&
@@ -18253,10 +18274,10 @@
 			);
 
 			const clearDataLabels = (
-				bShowSerName === false &&
-				bShowCatName === false &&
-				bShowVal === false &&
-				(!isCircleChart || bShowPercent === false)
+				showSerName === false &&
+				showCatName === false &&
+				showVal === false &&
+				(!isCircleChart || showPercent === false)
 			);
 			if (clearDataLabels) {
 				if (chart.dLbls) {
@@ -18270,36 +18291,22 @@
 				return;
 			}
 
-			let bNewChartDLbls = false;
+			let newChartDLbls = false;
 			if (!chart.dLbls) {
 				chart.setDLbls(new AscFormat.CDLbls());
-				bNewChartDLbls = true;
+				newChartDLbls = true;
 			}
 
 			chart.dLbls.setSeparator(',');
-			chart.dLbls.setShowSerName(true === bShowSerName);
-			chart.dLbls.setShowCatName(true === bShowCatName);
-			chart.dLbls.setShowVal(true === bShowVal);
-			chart.dLbls.setShowLegendKey(false);
-			if (isCircleChart) {
-				chart.dLbls.setShowPercent(true === bShowPercent);
-			}
-			chart.dLbls.setShowBubbleSize(false);
-			if (bNewChartDLbls) {
+			builder_ApplyDLblsShowFlags(chart.dLbls, isCircleChart, showSerName, showCatName, showVal, showPercent);
+			if (newChartDLbls) {
 				builder_ApplyChartStyleToElement(chartSpace, chart.dLbls);
 			}
 
 			for (let i = 0; i < chart.series.length; ++i) {
 				const ser = chart.series[i];
 				if (ser.dLbls) {
-					ser.dLbls.setShowSerName(true === bShowSerName);
-					ser.dLbls.setShowCatName(true === bShowCatName);
-					ser.dLbls.setShowVal(true === bShowVal);
-					ser.dLbls.setShowLegendKey(false);
-					if (isCircleChart) {
-						ser.dLbls.setShowPercent(true === bShowPercent);
-					}
-					ser.dLbls.setShowBubbleSize(false);
+					builder_ApplyDLblsShowFlags(ser.dLbls, isCircleChart, showSerName, showCatName, showVal, showPercent);
 				}
 			}
 		}
