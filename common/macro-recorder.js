@@ -1397,7 +1397,7 @@
 			if (isApplyToAll)
 			{
 				text =
-					"\tdoc.GetAllContentControls(true).forEach(function(oCC){\n" +
+					"\tdoc.GetAllContentControls().forEach(function(oCC){\n" +
 					text +
 					"\t});\n";
 			}
