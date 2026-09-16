@@ -717,6 +717,10 @@
             sExportValue = value;
         }
 
+		let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
+		if (isOnOpen == true && !oParent)
+			this.SetLogicValue(value);
+
 		if (this.GetExportValue() == sExportValue) {
 			this.SetChecked(true);
 		}
