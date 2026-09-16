@@ -48,7 +48,8 @@
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
 			"common/api/restrictionSettings.js",
-			
+			"common/api/searchSettings.js",
+
 			"common/collaboration/deleted-text-recovery.js",
 			
 			"common/custom-xml/serialize-custom-xml.js",
@@ -367,6 +368,10 @@
 			"word/Editor/StructuredDocumentTags/Custom/TextFormFormat.js",
 			"word/Editor/StructuredDocumentTags/Custom/TextFormMask.js",
 			"word/Editor/Serialize2.js",
+			"word/Editor/Search/DocumentSearch.js",
+			"word/Editor/Search/ParagraphSearch.js",
+			"word/Editor/Search/SearchItem.js",
+			"word/Editor/Search/Pattern.js",
 			"word/Editor/SpellChecker/DocumentSpellChecker.js",
 			"word/Editor/SpellChecker/ParagraphCollector.js",
 			"word/Editor/SpellChecker/ParagraphSpellChecker.js",
