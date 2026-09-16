@@ -1947,6 +1947,9 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		
 		this.Points.length = startIndex + 1;
 		this.Index = startIndex;
+
+		if (this.Is_LastPointEmpty())
+			this.RemoveLastPoint();
 	};
 	CHistory.prototype.getGroupChanges = function()
 	{

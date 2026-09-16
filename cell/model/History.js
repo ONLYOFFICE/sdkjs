@@ -1817,6 +1817,9 @@ CHistory.prototype.GetSerializeArray = function()
 
 		this.Points.length = startIndex + 1;
 		this.Index = startIndex;
+		
+		if (this.Is_LastPointEmpty())
+			this.RemoveLastPoint();
 	};
 	CHistory.prototype.updateDrawingsByRegions = function(oUpdateRegions, oRedoObjectParam) {
 		const aRanges = [];
