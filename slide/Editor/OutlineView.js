@@ -3425,7 +3425,7 @@
 						oShape.checkExtentsByDocContent();
 						isNeedRecalculate = true;
 					}
-					oThis.setSavedRealContentState(content, selectProps.idx, selectProps.count, selectProps.direction);
+					oThis.setSavedRealContentState(content, selectProps.index, selectProps.count, selectProps.direction);
 				} else if (!e.ShiftKey) {
 					if (oShape.isGeneralTitle()) {
 						const sourceParagraph = content.GetCurrentParagraph() || content.Content[0];
@@ -3434,7 +3434,7 @@
 					} else {
 
 						content.AddNewParagraph();
-						oThis.setSavedRealContentState(content, selectProps.idx, selectProps.count, selectProps.direction);
+						oThis.setSavedRealContentState(content, selectProps.index, selectProps.count, selectProps.direction);
 					}
 				}
 			} else {
