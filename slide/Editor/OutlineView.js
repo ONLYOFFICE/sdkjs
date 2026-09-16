@@ -1189,8 +1189,9 @@
 		this.checkRemoveSlides(firstSlide.num + 1, lastSlide.num);
 	};
 
-	function ParagraphAddManager(outlineView) {
+	function ParagraphAddManager(outlineView, isRecalculate) {
 		this.outlineView = outlineView;
+		this.isRecalculate = isRecalculate;
 	}
 	ParagraphAddManager.prototype.forEachSelectedContent = function (callback) {
 		return this.outlineView.forEachSelectedContent(callback);
@@ -1205,7 +1206,7 @@
 		}
 	};
 	ParagraphAddManager.prototype.processSourceContentAdd = function (content, idx, contentCount, direction, paraItem) {
-		content.AddToParagraph(paraItem);
+		content.AddToParagraph(paraItem, this.isRecalculate);
 		this.setSavedRealContentState(content, idx, contentCount, direction);
 	};
 	ParagraphAddManager.prototype.processParagraphAdd = function (paraItem) {
@@ -2327,8 +2328,8 @@
 	OutlineView.prototype.resetMapToCheckSlides = function () {
 		this.mapToCheckSlides = {};
 	};
-	OutlineView.prototype.paragraphAdd = function (paraItem) {
-		const manager = new ParagraphAddManager(this);
+	OutlineView.prototype.paragraphAdd = function (paraItem, isRecalculate) {
+		const manager = new ParagraphAddManager(this, isRecalculate);
 		manager.paragraphAdd(paraItem);
 		this.update();
 		this.applySavedPositionToOutline();
