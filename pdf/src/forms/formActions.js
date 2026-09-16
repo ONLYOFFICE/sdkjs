@@ -501,7 +501,7 @@
 	CActionNamed.prototype.constructor = CActionNamed;
 
     CActionNamed.prototype.Copy = function() {
-        return new CActionNamed(this.Getname());
+        return new CActionNamed(this.GetName());
     };
     CActionNamed.prototype.GetName = function() {
         return this.name;
