@@ -538,7 +538,10 @@
                 sExpValue = aOpt[sLogicValue];
             }
 
-            this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
+			let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
+			if (!isOnOpen) {
+				this.SetLogicValue(String(aOpt.indexOf(sExpValue)));
+			}
         }
 
 		let aAllWidgets = this.GetAllWidgets();
