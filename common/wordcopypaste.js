@@ -12648,6 +12648,29 @@ PasteProcessor.prototype =
 			}
 		}
 
+		//browsers remove a single segment break right before the end of a block (css white-space processing),
+		//so a trailing newline in pre/pre-wrap text must not produce an extra paragraph
+		let isLastInBlock = function (curNode) {
+			while (curNode && curNode.parentNode) {
+				let sibling = curNode.nextSibling;
+				while (sibling) {
+					if (Node.TEXT_NODE === sibling.nodeType) {
+						if (sibling.nodeValue && "" !== trimString(sibling.nodeValue)) {
+							return false;
+						}
+					} else if (Node.ELEMENT_NODE === sibling.nodeType) {
+						return oThis._IsBlockElem(sibling.nodeName.toLowerCase());
+					}
+					sibling = sibling.nextSibling;
+				}
+				curNode = curNode.parentNode;
+				if (Node.ELEMENT_NODE !== curNode.nodeType || oThis._IsBlockElem(curNode.nodeName.toLowerCase())) {
+					return true;
+				}
+			}
+			return true;
+		};
+
 		var parseTextNode = function () {
 			var value = node.nodeValue;
 			if (!value) {
@@ -12677,6 +12700,9 @@ PasteProcessor.prototype =
 				value = value.replace(/(\r|\t|\n)/g, ' ');
 			}
 
+			if (whiteSpacing && 0x0a === value.charCodeAt(value.length - 1) && isLastInBlock(node)) {
+				value = value.substring(0, value.length - 1);
+			}
 
 			var checkPreviousNotSpaceText = function (_node) {
 				if (!_node || oThis._IsBlockElem(_node.nodeName.toLowerCase())) {
