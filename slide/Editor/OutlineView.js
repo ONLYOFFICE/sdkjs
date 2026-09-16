@@ -2688,10 +2688,10 @@
 	OutlineView.prototype.getApi = function () {
 		return this.api;
 	};
-	OutlineView.prototype.selectAll = function () {
+	OutlineView.prototype.selectAll = function (direction) {
 		const content = this.getDocContent();
 		if (content) {
-			content.SelectAll();
+			content.SelectAll(direction);
 			this.updateInterfaceState();
 			this.updateSelectionState();
 		}
