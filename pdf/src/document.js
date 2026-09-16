@@ -741,10 +741,6 @@ var CPresentation = CPresentation || function(){};
             oCheckboxField.SetMEOptions(1);
         }
 
-        oCheckboxField.SetBorderColor([0]);
-        oCheckboxField.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
-        oCheckboxField.SetBorderWidth(1);
-    
         return oCheckboxField;
     };
     CPDFDoc.prototype.CreateRadiobuttonField = function(bLastUsedName) {
@@ -758,10 +754,6 @@ var CPresentation = CPresentation || function(){};
             oRadiobuttonField.SetMEOptions(1);
         }
 
-        oRadiobuttonField.SetBorderColor([0]);
-        oRadiobuttonField.SetBorderStyle(AscPDF.BORDER_TYPES.inset);
-        oRadiobuttonField.SetBorderWidth(1);
-    
         return oRadiobuttonField;
     };
     CPDFDoc.prototype.CreateComboboxField = function(bLastUsedName) {
@@ -3749,6 +3741,8 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetLogicCurIdxs(aParentsInfo[i]["curIdxs"]);
             if (aParentsInfo[i]["opt"])
                 oParent.SetOptions(aParentsInfo[i]["opt"]);
+            if (aParentsInfo[i]["tooltip"] != null)
+                oParent.SetTooltip(aParentsInfo[i]["tooltip"]);
             if (aParentsInfo[i]["MEOptions"] != null)
                 oParent.SetMEOptions(aParentsInfo[i]["MEOptions"]);
 
@@ -10145,19 +10139,10 @@ var CPresentation = CPresentation || function(){};
         }
 
         // appearance
-        if (formJson["border"] != null) {
-            oForm.SetBorderStyle(formJson["border"]);
-        }
-
-        if (formJson["borderWidth"] != null) {
-            oForm.SetBorderWidth(formJson["borderWidth"]);
-        }
-        if (formJson["BC"] != null) {
-            oForm.SetBorderColor(formJson["BC"]);
-        }
-        if (formJson["BG"] != null) {
-            oForm.SetBackgroundColor(formJson["BG"]);
-        }
+		oForm.SetBorderStyle(formJson["border"]);
+		oForm.SetBorderWidth(formJson["borderWidth"]);
+		oForm.SetBorderColor(formJson["BC"]);
+		oForm.SetBackgroundColor(formJson["BG"]);
 
         // text form
         if (formJson["multiline"] != null) {

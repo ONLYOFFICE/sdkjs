@@ -47,7 +47,9 @@
 
         this._noToggleToOff = false;
         this._chStyle       = AscPDF.CHECKBOX_STYLES.check;
-        this._caption       = undefined;
+		this._borderColor	= [0];
+		this._borderStyle	= AscPDF.BORDER_TYPES.solid;
+		this._borderWidth	= 1;
     }
     CCheckBoxField.prototype.constructor = CCheckBoxField;
     AscFormat.InitClass(CCheckBoxField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Checkbox_Field);

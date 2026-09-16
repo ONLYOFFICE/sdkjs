@@ -1623,6 +1623,8 @@
             oFieldToInherit.SetReadOnly(false);
             oFieldToInherit.SetNoExport(false);
             oFieldToInherit.SetRequired(false);
+            oFieldToInherit.SetTooltip(undefined);
+            oFieldToInherit.SetMEOptions(undefined);
         }
 
         let _t = this;
@@ -3363,10 +3365,10 @@
             memory.widgetFlags |= (1 << 2);
         }
 
-        let oParent = this.GetParent(true);
+        let oLogicParent = this.GetParent(true);
         let nFieldType = this.GetType();
 
-        if (!oParent) {
+        if (!oLogicParent) {
             switch (nFieldType) {
                 case AscPDF.FIELD_TYPES.radiobutton: {
                     memory.widgetFlags |= (1 << 15);
@@ -3444,6 +3446,7 @@
         }
 
         // parent
+		let oParent = this.GetParent();
         if (oParent != null) {
             memory.fieldDataFlags |= (1 << 17);
             memory.WriteLong(oParent.GetApIdx());

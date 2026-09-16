@@ -2780,10 +2780,11 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} pageIndex - page index to add widget
 	 * @param {Rect} rect - field rect
+	 * @param {boolean} [isCopy=true] - whether the new widget have the same visual and actions settings as the original
 	 * @returns {?ApiWidget}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/AddWidget.js
 	 */
-	ApiBaseField.prototype.AddWidget = function(pageIndex, rect) {
+	ApiBaseField.prototype.AddWidget = function(pageIndex, rect, isCopy) {
 		let oDoc		= private_GetLogicDocument();
 		let oPage		= oDoc.GetPageInfo(pageIndex);
 		let nFieldType	= this.Field.GetType();
@@ -2791,23 +2792,27 @@
 		if (!oPage) {
 			AscBuilder.throwException("The pageIndex parameter must be a valid index");
 		}
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
 		if (!this.Field.IsUseInDocument()) {
 			AscBuilder.throwException("The field is not in document");
 		}
 
+		isCopy = AscBuilder.GetBoolParameter(isCopy, true);
+
 		let oWidget;
-		if (this instanceof ApiSignatureField) {
+		if (isCopy) {
 			let aCurWidgets = this.Field.GetAllWidgets();
 			if (aCurWidgets[0]) {
 				oWidget = aCurWidgets[0].Copy();
 				oWidget.SetRect(rect);
 			}
 		}
-		
 		if (!oWidget) {
 			oWidget = oDoc.CreateField(this.Field.GetFullName(), nFieldType, rect);
 		}
-
+		
 		oDoc.AddField(oWidget, pageIndex);
 
 		this.Field = oWidget.GetParent();
@@ -4493,7 +4498,7 @@
 	 * Sets image for all button field widgets
 	 * @memberof ApiButtonField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} imageUrl - The URL of the image to set for the button.
+	 * @param {string} [imageUrl=""] - The URL of the image to set for the button (currently only internet URL or Base64 encoded images are supported)
 	 * @returns {boolean}
 	 * @since 9.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiButtonField/Methods/SetValue.js
@@ -4811,7 +4816,7 @@
 	 * Sets image to button widget field.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} [imageUrl=""] - The image URL.
+	 * @param {string} [imageUrl=""] - The URL of the image to set for the button widget (currently only internet URL or Base64 encoded images are supported)
 	 * @param {ButtonAppearance} [appearance="normal"] - The appearance state.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetImage.js
