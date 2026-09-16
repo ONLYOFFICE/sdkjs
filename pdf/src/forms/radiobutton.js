@@ -50,6 +50,9 @@
         this._noToggleToOff = true;
 
         this._chStyle       = AscPDF.CHECKBOX_STYLES.circle;
+		this._borderColor	= [0];
+		this._borderStyle	= AscPDF.BORDER_TYPES.inset;
+		this._borderWidth	= 1;
     }
 	CRadioButtonField.prototype.constructor = CRadioButtonField;
     AscFormat.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
