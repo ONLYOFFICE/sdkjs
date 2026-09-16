@@ -671,7 +671,7 @@
 		if (contentInfo.content) {
 			return this.processSingleSelectedNotNullableContent(contentInfo, callback);
 		}
-		return this.processNullableContent({outlineParagraph: contentInfo.outlineParagraph, index: 0, count: 1}, callback);
+		return this.processNullableContent({outlineParagraph: contentInfo.outlineParagraph, index: 0, count: 1, direction: contentInfo.direction}, callback);
 
 	};
 	ForEachSelectManager.prototype.processSingleSelectedNotNullableContent = function (contentInfo, callback) {
