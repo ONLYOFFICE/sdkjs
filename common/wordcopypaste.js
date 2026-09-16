@@ -2889,30 +2889,24 @@ function readPasteHtmlParagraphRtlPr(node, computedStyle) {
 	};
 }
 
-function setPasteContentDirection(content) {
-	let paragraphs = [];
-	for (let i = 0; i < content.length; ++i) {
-		if (content[i].GetAllParagraphs)
-			content[i].GetAllParagraphs({All: true}, paragraphs);
-	}
-	
-	for (let i = 0; i < paragraphs.length; ++i) {
-		let paragraph = paragraphs[i];
-		let htmlPr = pasteParagraphHtmlRtlPr.get(paragraph);
-		let direction = htmlPr && htmlPr.direction;
+function setPasteParagraphDirection(paragraph) {
+	if (!paragraph || !paragraph.GetParagraphBidi || !paragraph.SetParagraphBidi)
+		return;
 
-		let rtl = direction === "rtl" || (direction !== "ltr" && AscCommon.getFirstStrongDirection(paragraph.GetText({Numbering: false})) === AscBidi.DIRECTION_FLAG.RTL);
-		if (!rtl && direction !== "ltr")
-			continue;
-		if (!htmlPr && paragraph.GetParagraphBidi())
-			continue;
+	let htmlPr = pasteParagraphHtmlRtlPr.get(paragraph);
+	let direction = htmlPr && htmlPr.direction;
 
-		let align = htmlPr ? cssTextAlignToJc(htmlPr.align || "") : paragraph.Pr.Jc;
+	let rtl = direction === "rtl" || (direction !== "ltr" && AscCommon.getFirstStrongDirection(paragraph.GetText({Numbering: false})) === AscBidi.DIRECTION_FLAG.RTL);
+	if (!rtl && direction !== "ltr")
+		return;
+	if (!htmlPr && paragraph.GetParagraphBidi())
+		return;
 
-		paragraph.SetParagraphBidi(rtl);
-		if (null != align)
-			paragraph.SetParagraphAlign(align);
-	}
+	let align = htmlPr ? cssTextAlignToJc(htmlPr.align || "") : paragraph.Pr.Jc;
+
+	paragraph.SetParagraphBidi(rtl);
+	if (null != align)
+		paragraph.SetParagraphAlign(align);
 }
 
 function trimString( str ){
@@ -7625,6 +7619,7 @@ PasteProcessor.prototype =
 			
 			for (let oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 				if (addParagraph) {
+					setPasteParagraphDirection(paragraph);
 					paragraph = new AscWord.Paragraph(null, true);
 					oThis.aContent.push(paragraph);
 					run = new AscWord.Run();
@@ -7642,6 +7637,7 @@ PasteProcessor.prototype =
 				else
 					run.AddToContent(inRunPos++, AscWord.codePointToRunElement(codePoint), true);
 			}
+			setPasteParagraphDirection(paragraph);
 		}
 		
 		let textToPresentationContent = function(text, docContent) {
@@ -7660,6 +7656,7 @@ PasteProcessor.prototype =
 			
 			for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 				if (addParagraph) {
+					setPasteParagraphDirection(paragraph);
 					paragraph = new AscWord.Paragraph(null, docContent.bPresentation === true);
 					docContent.PushToContent(paragraph);
 					run = new AscWord.Run();
@@ -7677,6 +7674,7 @@ PasteProcessor.prototype =
 				else
 					run.AddToContent(inRunPos++, AscWord.codePointToRunElement(codePoint), true);
 			}
+			setPasteParagraphDirection(paragraph);
 		}
 
 		var fPasteTextPresentationCallback = function () {
@@ -7697,7 +7695,6 @@ PasteProcessor.prototype =
 			oThis.aContent = shape.txBody.content.Content;
 			
 			textToPresentationContent(text, shape.txBody.content);
-			setPasteContentDirection(oThis.aContent);
 			
 			var oTextPr = presentation.GetCalculatedTextPr();
 			shape.txBody.content.SetApplyToAll(true);
@@ -7734,7 +7731,6 @@ PasteProcessor.prototype =
 
 			AscCommon.ExecuteNoHistory(function() {
 				textToPDFContent(text);
-				setPasteContentDirection(oThis.aContent);
 				let oParaTextPr = new AscCommonWord.ParaTextPr(oDoc.GetCalculatedTextPr());
 				oThis.aContent.forEach(function(para) {
 					para.Add(oParaTextPr);
@@ -7939,6 +7935,7 @@ PasteProcessor.prototype =
 				}
 
 				newParagraph.Internal_Content_Add(newParagraph.Content.length - 1, newParaRun, false);
+				setPasteParagraphDirection(newParagraph);
 				this.aContent.push(newParagraph);
 
 				newParagraph = getNewParagraph();
@@ -7960,9 +7957,9 @@ PasteProcessor.prototype =
 
 		if (partTextCount) {
 			newParagraph.Internal_Content_Add(newParagraph.Content.length - 1, newParaRun, false);
+			setPasteParagraphDirection(newParagraph);
 			this.aContent.push(newParagraph);
 		}
-		setPasteContentDirection(this.aContent);
 	},
 
 	_getTextFromContent: function (aContent, oPr) {
@@ -10966,6 +10963,7 @@ PasteProcessor.prototype =
 		}
 	},
 	_Add_NewParagraph: function () {
+		setPasteParagraphDirection(this.oCurPar);
 		this.oCurPar = new AscWord.Paragraph(this.oDocument, this.oDocument.bPresentation === true);
 		this.oCurParContentPos = this.oCurPar.CurPos.ContentPos;
 		this.oCurRun = new ParaRun(this.oCurPar);
@@ -12744,6 +12742,7 @@ PasteProcessor.prototype =
 				if (bPresentation) {
 					oThis.oDocument = shape.txBody.content;
 					if (bAddParagraph) {
+                        setPasteParagraphDirection(oShapeContent.GetLastParagraph());
                         let oParagraph = new AscWord.Paragraph(oShapeContent, oShapeContent.bPresentation === true);
                         oShapeContent.Internal_Content_Add(oShapeContent.Content.length, oParagraph);
                         oParagraph.CorrectContent();
@@ -13326,10 +13325,12 @@ PasteProcessor.prototype =
 				if (bAddNewParagraph !== false || !oThis.oCurPar || bPresentation) {
 					let addedPar = oPar.Copy();
 					if (bPresentation) {
+						setPasteParagraphDirection(oShapeContent.GetLastParagraph());
 						oShapeContent.Internal_Content_Add(oShapeContent.Content.length, addedPar);
 						addedPar.CorrectContent();
 						addedPar.CheckParaEnd();
 					} else {
+						setPasteParagraphDirection(addedPar);
 						oThis.aContent.push(addedPar);
 					}
 				} else {
@@ -13984,17 +13985,11 @@ PasteProcessor.prototype =
 		}
 		
 		if (bRoot) {
-			setPasteContentDirection(this.aContent);
+			setPasteParagraphDirection(this.oCurPar);
 			if (arrShapes) {
 				for (var i = 0; i < arrShapes.length; ++i) {
 					if (arrShapes[i].txBody && arrShapes[i].txBody.content)
-						setPasteContentDirection(arrShapes[i].txBody.content.Content);
-				}
-			}
-			if (arrTables) {
-				for (var i = 0; i < arrTables.length; ++i) {
-					if (arrTables[i].graphicObject)
-						setPasteContentDirection([arrTables[i].graphicObject]);
+						setPasteParagraphDirection(arrShapes[i].txBody.content.GetLastParagraph());
 				}
 			}
 		}
@@ -15663,7 +15658,6 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		this._processChildren(root, this.oTarget, [], function (el) {
 			aContent.push(el);
 		});
-		setPasteContentDirection(this.aContent);
 		return this.aContent;
 	};
 
@@ -15756,6 +15750,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		};
 		var flush = function () {
 			if (para) {
+				setPasteParagraphDirection(para);
 				emit(para);
 				para = null;
 			}
@@ -15864,6 +15859,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		};
 		var flush = function () {
 			if (para) {
+				setPasteParagraphDirection(para);
 				emitChild(para);
 				para = null;
 			}
