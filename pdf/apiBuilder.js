@@ -4490,7 +4490,7 @@
 	 * Sets image for all button field widgets
 	 * @memberof ApiButtonField
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} imageUrl - The URL of the image to set for the button.
+	 * @param {string} [imageUrl=""] - The URL of the image to set for the button (currently only internet URL or Base64 encoded images are supported)
 	 * @returns {boolean}
 	 * @since 9.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiButtonField/Methods/SetValue.js
@@ -4808,7 +4808,7 @@
 	 * Sets image to button widget field.
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {string} [imageUrl=""] - The image URL.
+	 * @param {string} [imageUrl=""] - The URL of the image to set for the button widget (currently only internet URL or Base64 encoded images are supported)
 	 * @param {ButtonAppearance} [appearance="normal"] - The appearance state.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiButtonWidget/Methods/SetImage.js
