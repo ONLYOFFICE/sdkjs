@@ -744,6 +744,42 @@
 	};
 
 	/**
+	 * Creates a link annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {ApiBaseAction} [action] - action executed when the link is clicked.
+	 * @returns {ApiLinkAnnotation}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateLinkAnnot.js
+	 */
+	Api.CreateLinkAnnot = function(rect, action) {
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+		if (action != null && !(action instanceof ApiBaseAction)) {
+			AscBuilder.throwException("The action parameter must be an ApiBaseAction or null/undefined");
+		}
+
+		let oProps = {
+			rect:           rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Link,
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
+			hidden:         false
+		};
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, private_GetLogicDocument());
+		oAnnot.SetBorderWidth(0);
+		oAnnot.private_UpdateRect(rect);
+
+		let oApiAnnot = new ApiLinkAnnotation(oAnnot);
+		if (action != null) {
+			oApiAnnot.SetAction(action);
+		}
+		return oApiAnnot;
+	};
+
+	/**
 	 * Creates text annotation.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
@@ -3189,67 +3225,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetActions.js
 	 */
 	ApiBaseWidget.prototype.GetActions = function() {
-		let oField = this.Field;
-
-		function getTriggetApiAction(nTriggerType) {
-			let oTrigger = oField.GetTrigger(nTriggerType);
-			let oHeadAction = null;
-
-			if (oTrigger) {
-				oTrigger.Actions.forEach(function(action) {
-					let oApiAction;
-					switch (action.GetType()) {
-						case AscPDF.ACTIONS_TYPES.JavaScript:
-							oApiAction = new ApiJsAction(action);
-							break;
-						case AscPDF.ACTIONS_TYPES.ResetForm:
-							oApiAction = new ApiResetFormsAction(action);
-							break;
-						case AscPDF.ACTIONS_TYPES.URI:
-							oApiAction = new ApiUriAction(action);
-							break;
-						case AscPDF.ACTIONS_TYPES.HideShow:
-							oApiAction = new ApiHideShowFormsAction(action);
-							break;
-						case AscPDF.ACTIONS_TYPES.GoTo:
-							oApiAction = new ApiGoToAction(action);
-							break;
-						case AscPDF.ACTIONS_TYPES.Named:
-							oApiAction = new ApiNamedAction(action);
-							break;
-						default:
-							break;
-					}
-
-					if (oApiAction) {
-						if (!oHeadAction) {
-							oHeadAction = oApiAction;
-						}
-						else if (oHeadAction) {
-							oHeadAction.SetNext(oApiAction);
-						}
-					}
-				});
-			}
-
-			return oHeadAction;
-		}
-
-		let oCollection = {
-			MouseUp:    getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseUp),
-			MouseDown:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseDown),
-			MouseEnter: getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter),
-			MouseExit:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseExit),
-			OnFocus:    getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.onFocus),
-			OnBlur:     getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.onBlur),
-			Keystroke:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.keystroke),
-			Validate:   getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.validate),
-			Calculate:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.calculate),
-			Format:     getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.format)
-		}
-
-		this.ApiActionCollection.private_UpdateCollection(oCollection);
-		return this.ApiActionCollection;
+		return private_GetActions(this.Field, this.ApiActionCollection);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -5300,6 +5276,9 @@
 	ApiBaseAction.prototype.private_SetParentCollection = function(apiCollection, triggerName) {
 		this.ParentCollection = apiCollection;
 		this.TriggerName = triggerName;
+		if (this.Next) {
+			this.Next.private_SetParentCollection(apiCollection, triggerName);
+		}
 	};
 
 	ApiBaseAction.prototype.private_OnChange = function() {
@@ -5329,6 +5308,9 @@
 	 */
 	ApiBaseAction.prototype.SetNext = function(action) {
 		this.Next = action;
+		if (action && this.ParentCollection) {
+			action.private_SetParentCollection(this.ParentCollection, this.TriggerName);
+		}
 
 		this.private_OnChange();
 		return action;
@@ -7683,6 +7665,7 @@
 	 */
 	function ApiLinkAnnotation(oAnnot) {
 		ApiBaseMarkupAnnotation.call(this, oAnnot);
+		this.ApiActionCollection = new ApiActionCollection({}, oAnnot);
 	}
 
 	ApiLinkAnnotation.prototype = Object.create(ApiBaseMarkupAnnotation.prototype);
@@ -7697,6 +7680,32 @@
 	 */
 	ApiLinkAnnotation.prototype.GetClassType = function() {
 		return "linkAnnot";
+	};
+
+	/**
+	 * Gets the action executed when the link is clicked. Changes to the returned action update the link.
+	 * @memberof ApiLinkAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?ApiBaseAction}
+	 * @see office-js-api/Examples/{Editor}/ApiLinkAnnotation/Methods/GetAction.js
+	 */
+	ApiLinkAnnotation.prototype.GetAction = function() {
+		return private_GetActions(this.Annot, this.ApiActionCollection).GetMouseUp();
+	};
+
+	/**
+	 * Sets the action executed when the link is clicked.
+	 * @memberof ApiLinkAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {?ApiBaseAction} action - GoTo, URI, or another PDF action; null removes the action.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiLinkAnnotation/Methods/SetAction.js
+	 */
+	ApiLinkAnnotation.prototype.SetAction = function(action) {
+		if (action != null && !(action instanceof ApiBaseAction)) {
+			AscBuilder.throwException("The action parameter must be an ApiBaseAction or null/undefined");
+		}
+		return this.ApiActionCollection.SetMouseUp(action);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -12143,6 +12152,73 @@
 		}
 	}
 
+	function private_GetActions(oField, oApiCollection) {
+
+		function getTriggetApiAction(nTriggerType) {
+			let oTrigger = oField.GetTrigger(nTriggerType);
+			let oHeadAction = null;
+			let oLastAction = null;
+
+			if (oTrigger) {
+				oTrigger.Actions.forEach(function(action) {
+					action = action.Copy();
+					
+					let oApiAction;
+					switch (action.GetType()) {
+						case AscPDF.ACTIONS_TYPES.JavaScript:
+							oApiAction = new ApiJsAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.ResetForm:
+							oApiAction = new ApiResetFormsAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.URI:
+							oApiAction = new ApiUriAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.HideShow:
+							oApiAction = new ApiHideShowFormsAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.GoTo:
+							oApiAction = new ApiGoToAction(action);
+							break;
+						case AscPDF.ACTIONS_TYPES.Named:
+							oApiAction = new ApiNamedAction(action);
+							break;
+						default:
+							break;
+					}
+
+					if (oApiAction) {
+						if (!oHeadAction) {
+							oHeadAction = oApiAction;
+						}
+						else {
+							oLastAction.SetNext(oApiAction);
+						}
+						oLastAction = oApiAction;
+					}
+				});
+			}
+
+			return oHeadAction;
+		}
+
+		let oCollection = {
+			MouseUp:    getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseUp),
+			MouseDown:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseDown),
+			MouseEnter: getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter),
+			MouseExit:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.mouseExit),
+			OnFocus:    getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.onFocus),
+			OnBlur:     getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.onBlur),
+			Keystroke:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.keystroke),
+			Validate:   getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.validate),
+			Calculate:  getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.calculate),
+			Format:     getTriggetApiAction(AscPDF.PDF_TRIGGERS_TYPES.format)
+		}
+
+		oApiCollection.private_UpdateCollection(oCollection);
+		return oApiCollection;
+	}
+
 	// Api
 	Api["GetDocument"]				= Api.GetDocument;
 	Api["CreateTextField"]			= Api.CreateTextField;
@@ -12161,6 +12237,7 @@
 	Api["CreateResetFormsAction"]	= Api.CreateResetFormsAction;
 	Api["CreateJsAction"]			= Api.CreateJsAction;
 	Api["CreateTextAnnot"]			= Api.CreateTextAnnot;
+	Api["CreateLinkAnnot"]			= Api.CreateLinkAnnot;
 	Api["CreateCircleAnnot"]		= Api.CreateCircleAnnot;
 	Api["CreateSquareAnnot"]		= Api.CreateSquareAnnot;
 	Api["CreateFreeTextAnnot"]		= Api.CreateFreeTextAnnot;
@@ -12563,6 +12640,8 @@
 	
 	// ApiLinkAnnotation
 	ApiLinkAnnotation.prototype["GetClassType"]				= ApiLinkAnnotation.prototype.GetClassType;
+	ApiLinkAnnotation.prototype["GetAction"]				= ApiLinkAnnotation.prototype.GetAction;
+	ApiLinkAnnotation.prototype["SetAction"]				= ApiLinkAnnotation.prototype.SetAction;
 
 	// ApiRichContent
 	ApiRichContent.prototype["GetClassType"]				= ApiRichContent.prototype.GetClassType;

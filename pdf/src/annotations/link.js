@@ -503,6 +503,7 @@
                 break;
         }
 
+        this.SetWasChanged(true, false);
         return aActions;
     };
     CAnnotationLink.prototype.GetActions = function(nTriggerType) {
