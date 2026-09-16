@@ -1024,6 +1024,13 @@
 		return object;
 	}
 
+	function escapeMacroString(value)
+	{
+		return value
+			.replace(/\\/g, '\\\\')
+			.replace(/"/g, '\\"');
+	}
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -1332,17 +1339,17 @@
 		addContentControlPicture: function(){
 			return "\tdoc.AddPictureContentControl(180 * 10000, 180 * 10000);\n";
 		},
-		changeContentControlProperties	: function(oData){
+		changeContentControlProperties	: function(oData)
+		{
 			let isApplyToAll = (oData && true === oData.isApplyToAll);
-			let oPr          = isApplyToAll ? oData.Pr : oData;
-			let getCCText    = isApplyToAll ? "\t\toCC" : "\tdoc.GetCurrentContentControl()";
-			let text  = "";
+			let oPr = isApplyToAll ? oData.Pr : oData;
+			let text = "";
 
 			if (undefined !== oPr.Tag)
-				text += getCCText + ".SetTag(\"" + oPr.Tag.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\");\n";
+				text += '\t\toCC.SetTag("' + escapeMacroString(oPr.Tag) + '");\n';
 
 			if (undefined !== oPr.Alias)
-				text += getCCText + ".SetAlias(\"" + oPr.Alias.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\");\n";
+				text += '\t\toCC.SetAlias("' + escapeMacroString(oPr.Alias) + '");\n';
 
 			if (undefined !== oPr.Lock)
 			{
@@ -1355,23 +1362,51 @@
 				else if (Asc.c_oAscSdtLockType.SdtLocked === oPr.Lock)
 					sLock = "sdtLocked";
 
-				text += getCCText + ".SetLock(\"" + sLock + "\");\n";
+				text += '\t\toCC.SetLock("' + sLock + '");\n';
 			}
 
 			if (undefined !== oPr.Appearance)
-				text += getCCText + ".SetAppearance(\"" + (Asc.c_oAscSdtAppearance.Hidden === oPr.Appearance ? "hidden" : "boundingBox") + "\");\n";
+			{
+				let sAppearance = Asc.c_oAscSdtAppearance.Hidden === oPr.Appearance
+					? "hidden"
+					: "boundingBox";
+
+				text += '\t\toCC.SetAppearance("' + sAppearance + '");\n';
+			}
 
 			if (oPr.Color)
-				text += getCCText + ".SetColor(Api.RGBA(" + oPr.Color.r + ", " + oPr.Color.g + ", " + oPr.Color.b + "));\n";
+				text += "\t\toCC.SetColor(Api.RGBA(" +
+					oPr.Color.r + ", " +
+					oPr.Color.g + ", " +
+					oPr.Color.b + "));\n";
 
 			if (oPr.BorderColor)
-				text += getCCText + ".SetBorderColor(" + oPr.BorderColor.r + ", " + oPr.BorderColor.g + ", " + oPr.BorderColor.b + ", " + oPr.BorderColor.a + ");\n";
+				text += "\t\toCC.SetBorderColor(" +
+					oPr.BorderColor.r + ", " +
+					oPr.BorderColor.g + ", " +
+					oPr.BorderColor.b + ", " +
+					oPr.BorderColor.a + ");\n";
 
 			if (oPr.ShdColor)
-				text += getCCText + ".SetBackgroundColor(" + oPr.ShdColor.r + ", " + oPr.ShdColor.g + ", " + oPr.ShdColor.b + ", " + oPr.ShdColor.a + ");\n";
+				text += "\t\toCC.SetBackgroundColor(" +
+					oPr.ShdColor.r + ", " +
+					oPr.ShdColor.g + ", " +
+					oPr.ShdColor.b + ", " +
+					oPr.ShdColor.a + ");\n";
 
 			if (isApplyToAll)
-				text = "\tdoc.GetAllContentControls().forEach(function(oCC){\n" + text + "\t});\n";
+			{
+				text =
+					"\tdoc.GetAllContentControls(true).forEach(function(oCC){\n" +
+					text +
+					"\t});\n";
+			}
+			else
+			{
+				text =
+					"\tvar oCC = doc.GetCurrentContentControl();\n" +
+					text;
+			}
 
 			return text;
 		},
