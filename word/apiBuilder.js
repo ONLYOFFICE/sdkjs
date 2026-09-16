@@ -24193,16 +24193,27 @@
 			: 0x000000FF;
 	};
 
-	ApiColor.prototype.private_resolveThemeColor = function () {
-		if (this.type !== 'theme')
-			return null;
-
+	ApiColor.prototype.private_getThemeSource = function () {
 		const logicDocument = private_GetLogicDocument();
 		if (!logicDocument)
 			return null;
 
-		const theme = logicDocument.Get_Theme && logicDocument.Get_Theme();
-		const colorMap = logicDocument.Get_ColorMap && logicDocument.Get_ColorMap();
+		return {
+			theme: logicDocument.Get_Theme && logicDocument.Get_Theme(),
+			colorMap: logicDocument.Get_ColorMap && logicDocument.Get_ColorMap()
+		};
+	};
+
+	ApiColor.prototype.private_resolveThemeColor = function () {
+		if (this.type !== 'theme')
+			return null;
+
+		const source = this.private_getThemeSource();
+		if (!source)
+			return null;
+
+		const theme = source.theme;
+		const colorMap = source.colorMap;
 		const canResolveThemeColors = colorMap && colorMap.color_map &&
 			theme && theme.themeElements && theme.themeElements.clrScheme;
 		if (!canResolveThemeColors)

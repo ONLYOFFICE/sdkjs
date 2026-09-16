@@ -2331,14 +2331,14 @@
 		},
 		setCellTextColor		: function(clr){
 			let color = clr === null
-				? "Api.CreateColorFromRGB( 255, 255, 255)"
-				: "Api.CreateColorFromRGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
+				? "Api.RGB(255, 255, 255)"
+				: "Api.RGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
 			return "\tApi.GetSelection().SetFontColor(" + color + ");\n"
 		},
 		setCellBackgroundColor	: function(clr){
 			let color = clr === null
-				? "Api.CreateColorFromRGB( 255, 255, 255)"
-				: "Api.CreateColorFromRGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
+				? "Api.RGB(255, 255, 255)"
+				: "Api.RGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
 			return "\tApi.GetSelection().SetBackgroundColor(" + color + ");\n"
 		},
 		setCellWrap				: function(wrap){return "\tApi.GetSelection().SetWrap(" + wrap + ");\n"},
@@ -2418,7 +2418,7 @@
 						default: continue;
 					}
 
-					let colorStr = "Api.CreateColorFromRGB(0, 0, 0)";
+					let colorStr = "Api.RGB(0, 0, 0)";
 					if (border.color) {
 						if (typeof border.color === 'string') {
 							let hex = border.color.replace('#', '');
@@ -2428,9 +2428,9 @@
 							let r = parseInt(hex.substr(0, 2), 16) || 0;
 							let g = parseInt(hex.substr(2, 2), 16) || 0;
 							let b = parseInt(hex.substr(4, 2), 16) || 0;
-							colorStr = "Api.CreateColorFromRGB(" + r + ", " + g + ", " + b + ")";
+							colorStr = "Api.RGB(" + r + ", " + g + ", " + b + ")";
 						} else if (typeof border.color === 'object') {
-							colorStr = "Api.CreateColorFromRGB(" + (border.color.r || 0) + ", " + (border.color.g || 0) + ", " + (border.color.b || 0) + ")";
+							colorStr = "Api.RGB(" + (border.color.r || 0) + ", " + (border.color.g || 0) + ", " + (border.color.b || 0) + ")";
 						}
 					}
 
