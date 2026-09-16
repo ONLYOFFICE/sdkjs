@@ -3741,6 +3741,8 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetLogicCurIdxs(aParentsInfo[i]["curIdxs"]);
             if (aParentsInfo[i]["opt"])
                 oParent.SetOptions(aParentsInfo[i]["opt"]);
+            if (aParentsInfo[i]["tooltip"] != null)
+                oParent.SetTooltip(aParentsInfo[i]["tooltip"]);
             if (aParentsInfo[i]["MEOptions"] != null)
                 oParent.SetMEOptions(aParentsInfo[i]["MEOptions"]);
 

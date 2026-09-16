@@ -1623,6 +1623,8 @@
             oFieldToInherit.SetReadOnly(false);
             oFieldToInherit.SetNoExport(false);
             oFieldToInherit.SetRequired(false);
+            oFieldToInherit.SetTooltip(undefined);
+            oFieldToInherit.SetMEOptions(undefined);
         }
 
         let _t = this;
