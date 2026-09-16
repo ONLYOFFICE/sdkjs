@@ -17835,39 +17835,46 @@
 			return oLn;
 		}
 
-		function builder_CreateChartTitle(sTitle, nFontSize, bIsBold, oDrawingDocument) {
+		function builder_CreateChartTitle(sTitle, oDrawingDocument) {
 			if (typeof sTitle === "string" && sTitle.length > 0) {
 				var oTitle = new AscFormat.CTitle();
 				oTitle.setOverlay(false);
 				oTitle.setTx(new AscFormat.CChartText());
-				var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, oDrawingDocument, oTitle.tx);
-				if (AscFormat.isRealNumber(nFontSize)) {
-					oTextBody.content.SetApplyToAll(true);
-					oTextBody.content.AddToParagraph(new ParaTextPr({FontSize: nFontSize, Bold: bIsBold}));
-					oTextBody.content.SetApplyToAll(false);
-				}
-				oTitle.tx.setRich(oTextBody);
+				oTitle.tx.setRich(AscFormat.CreateTextBodyFromString(sTitle, oDrawingDocument, oTitle.tx));
 				return oTitle;
 			}
 			return null;
 		}
 
 
-		function builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace) {
+		function builder_CreateTitle(sTitle, oChartSpace) {
 			if (typeof sTitle === "string" && sTitle.length > 0) {
 				var oTitle = new AscFormat.CTitle();
 				oTitle.setOverlay(false);
 				oTitle.setTx(new AscFormat.CChartText());
-				var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, oChartSpace.getDrawingDocument(), oTitle.tx);
-				if (AscFormat.isRealNumber(nFontSize)) {
-					oTextBody.content.SetApplyToAll(true);
-					oTextBody.content.AddToParagraph(new ParaTextPr({FontSize: nFontSize, Bold: bIsBold}));
-					oTextBody.content.SetApplyToAll(false);
-				}
-				oTitle.tx.setRich(oTextBody);
+				oTitle.tx.setRich(AscFormat.CreateTextBodyFromString(sTitle, oChartSpace.getDrawingDocument(), oTitle.tx));
 				return oTitle;
 			}
 			return null;
+		}
+
+		function builder_SetTitleTextPr(oTitle, nFontSize, bIsBold) {
+			const hasFontSize = AscFormat.isRealNumber(nFontSize);
+			const hasBold = AscFormat.isRealBool(bIsBold);
+			if (!oTitle || !hasFontSize && !hasBold) {
+				return;
+			}
+			const textPr = {};
+			if (hasFontSize) {
+				textPr.FontSize = nFontSize;
+			}
+			if (hasBold) {
+				textPr.Bold = bIsBold;
+			}
+			const content = oTitle.tx.rich.content;
+			content.SetApplyToAll(true);
+			content.AddToParagraph(new ParaTextPr(textPr));
+			content.SetApplyToAll(false);
 		}
 
 		function builder_ApplyChartStyleToElement(oChartSpace, oElement) {
@@ -17880,8 +17887,9 @@
 
 		function builder_SetChartTitle(oChartSpace, sTitle, nFontSize, bIsBold) {
 			if (oChartSpace) {
-				oChartSpace.chart.setTitle(builder_CreateChartTitle(sTitle, nFontSize, bIsBold, oChartSpace.getDrawingDocument()));
+				oChartSpace.chart.setTitle(builder_CreateChartTitle(sTitle, oChartSpace.getDrawingDocument()));
 				builder_ApplyChartStyleToElement(oChartSpace, oChartSpace.chart.title);
+				builder_SetTitleTextPr(oChartSpace.chart.title, nFontSize, bIsBold);
 			}
 		}
 
@@ -17900,8 +17908,9 @@
 			if (oChartSpace) {
 				var horAxis = oChartSpace.chart.plotArea.getHorizontalAxis();
 				if (horAxis) {
-					horAxis.setTitle(builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace));
+					horAxis.setTitle(builder_CreateTitle(sTitle, oChartSpace));
 					builder_ApplyChartStyleToElement(oChartSpace, horAxis.title);
+					builder_SetTitleTextPr(horAxis.title, nFontSize, bIsBold);
 				}
 			}
 		}
@@ -17911,7 +17920,7 @@
 				var verAxis = oChartSpace.chart.plotArea.getVerticalAxis();
 				if (verAxis) {
 					if (typeof sTitle === "string" && sTitle.length > 0) {
-						verAxis.setTitle(builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace));
+						verAxis.setTitle(builder_CreateTitle(sTitle, oChartSpace));
 						if (verAxis.title) {
 							var _body_pr = new AscFormat.CBodyPr();
 							_body_pr.reset();
@@ -17922,6 +17931,7 @@
 							_text_body.setBodyPr(_body_pr);
 							verAxis.title.setOverlay(false);
 							builder_ApplyChartStyleToElement(oChartSpace, verAxis.title);
+							builder_SetTitleTextPr(verAxis.title, nFontSize, bIsBold);
 						}
 					} else {
 						verAxis.setTitle(null);
