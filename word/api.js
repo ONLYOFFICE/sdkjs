@@ -10762,6 +10762,8 @@ background-repeat: no-repeat;\
 					arrContentControls[nIndex].SetContentControlPr(oContentControlPr);
 				}
 
+				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_ChangeContentControlProperties, {Pr : oContentControlPr, isApplyToAll : true});
+
 				postSetup();
 			}
 		}

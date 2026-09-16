@@ -1332,15 +1332,17 @@
 		addContentControlPicture: function(){
 			return "\tdoc.AddPictureContentControl(180 * 10000, 180 * 10000);\n";
 		},
-		changeContentControlProperties	: function(oPr){
-			let getCCText  = "\tdoc.GetCurrentContentControl()";
+		changeContentControlProperties	: function(oData){
+			let isApplyToAll = (oData && true === oData.isApplyToAll);
+			let oPr          = isApplyToAll ? oData.Pr : oData;
+			let getCCText    = isApplyToAll ? "\t\toCC" : "\tdoc.GetCurrentContentControl()";
 			let text  = "";
 
 			if (undefined !== oPr.Tag)
-				text += getCCText + ".SetTag(\"" + oPr.Tag + "\");\n";
+				text += getCCText + ".SetTag(\"" + oPr.Tag.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\");\n";
 
 			if (undefined !== oPr.Alias)
-				text += getCCText + ".SetAlias(\"" + oPr.Alias + "\");\n";
+				text += getCCText + ".SetAlias(\"" + oPr.Alias.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\");\n";
 
 			if (undefined !== oPr.Lock)
 			{
@@ -1367,6 +1369,9 @@
 
 			if (oPr.ShdColor)
 				text += getCCText + ".SetBackgroundColor(" + oPr.ShdColor.r + ", " + oPr.ShdColor.g + ", " + oPr.ShdColor.b + ", " + oPr.ShdColor.a + ");\n";
+
+			if (isApplyToAll)
+				text = "\tdoc.GetAllContentControls().forEach(function(oCC){\n" + text + "\t});\n";
 
 			return text;
 		},
