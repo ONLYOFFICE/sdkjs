@@ -118,6 +118,26 @@ function (window, undefined) {
 			return parserHelp.get3DRef(externalPath + sheet, range);
 		}
 	}
+
+	const DBL_MIN_NORMAL = 2.2250738585072014e-308;
+	const XL_MAX         = 9.99999999999999e307;
+	const LIMIT_MIN_NUM  = 1e-310; // manual input lowest positive limit recognized as number 
+	function checkNumberLimits(num) {
+		if (!isFinite(num)) {
+			return null; 
+		}
+		let absNum = Math.abs(num);
+		if (absNum === 0) {
+			return 0;
+		}
+		if (absNum < DBL_MIN_NORMAL && absNum > LIMIT_MIN_NUM) {
+			return 0;
+		}
+		if (absNum > XL_MAX || (absNum > 0 && absNum <= LIMIT_MIN_NUM)) {
+			return null;
+		}
+		return num;
+	}
 	
 	function ParsedThing(value, type, subtype, pos, length) {
 		this.value = value;
@@ -8529,13 +8549,13 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		};
 
-		var parseArray = function () {
+		const parseArray = function () {
 			if (!_checkReferenceCount(2)) {
 				return false;
 			}
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
-			var arr = new cArray(), operator = {isOperator: false, operatorName: ""};
+			let arr = new cArray(), operator = {isOperator: false, operatorName: ""};
 			while (ph.pCurrPos < t.Formula.length && !parserHelp.isRightBrace.call(ph, t.Formula, ph.pCurrPos)) {
 				if (parserHelp.isArraySeparator.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {
 					if (ph.operand_str === (digitDelim ? FormulaSeparators.arrayRowSeparator : FormulaSeparators.arrayRowSeparatorDef)) {
@@ -8557,13 +8577,27 @@ function parserFormula( formula, parent, _ws ) {
 							return false;
 						}
 					}
-					// arr.addElement(new cNumber(parseFloat(ph.operand_str)));
-
+					// operator = {isOperator: false, operatorName: ""};
 					let _numberNormalized = normalizeNumericInput(ph.operand_str);
 					let _number = parseFloat(_numberNormalized);
-					arr.addElement(new cNumber(_numberNormalized));
+					let numRes = checkNumberLimits(_number);
 
-					operator = {isOperator: false, operatorName: ""};
+					if (local && numRes === null) {
+						// when we do manual input, then we check the limits and call a parsing error, otherwise we simply leave the #NULL error
+						parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
+						t.outStack = [];
+						return false;
+					} else if (numRes === null) {
+						arr.addElement(new cError(cErrorType.null_value));
+						parseResult.needAssemble = true;
+						// todo when the document is opening, the formula should be removed and the values read from the cell
+						t.outStack = [];
+						return false;
+					} else {
+						_number = numRes;
+						arr.addElement(new cNumber(_number));
+						operator = {isOperator: false, operatorName: ""};
+					}
 				} else if (parserHelp.isOperator.call(ph, t.Formula, ph.pCurrPos)) {
 					operator.isOperator = true;
 					operator.operatorName = ph.operand_str;
@@ -9084,20 +9118,43 @@ function parserFormula( formula, parent, _ws ) {
 
 			/* Numbers*/ else if (parserHelp.isNumber.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {
 				if (ph.operand_str !== "." && parseResult.checkNumberOperator(elemArr)) {
-					// var _number = parseFloat(ph.operand_str);
 					let _numberNormalized = normalizeNumericInput(ph.operand_str);
 					let _number = parseFloat(_numberNormalized);
 					//TODO need to do check for negative numbers
-					if (!_checkReferenceCount((_number >= 65536 || !Number.isInteger(_number)) ? 1.25 : 0.5)) {
+					let numRes = checkNumberLimits(_number);
+					if (local && numRes === null) {
+						// when manual input, then we check the limits and call a parsing error, otherwise we simply leave the #NULL error
+						parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
+						if (!ignoreErrors) {
+							t.outStack = [];
+						}
+						return false;
+					} else if (numRes === null) {
+						found_operand = new cError(cErrorType.null_value);
+						parseResult.needAssemble = true;
+						// todo when opening the document, the formula is deleted and the values ​​are read from the cell
+						if (!ignoreErrors) {
+							t.outStack = [];
+						}
 						return false;
 					}
-					found_operand = new cNumber(_number);
-					if (local) {
-						let lastElem = elemArr[elemArr.length-1];
-						if (lastElem && lastElem.name && lastElem.name === "un_plus") {
-							removeUnarOperator = true;
+
+					_number = numRes;
+					if (!found_operand) {
+						let isInteger = Number.isInteger(_number);
+						if (!_checkReferenceCount((_number >= 65536 || !isInteger) ? 1.25 : 0.5)) {
+							return false;
+						}
+
+						found_operand = new cNumber(_number);
+						if (local) {
+							let lastElem = elemArr[elemArr.length-1];
+							if (lastElem && lastElem.name && lastElem.name === "un_plus") {
+								removeUnarOperator = true;
+							}
 						}
 					}
+
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
 					if (!ignoreErrors) {

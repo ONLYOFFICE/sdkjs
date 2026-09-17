@@ -53,6 +53,9 @@
 		var kLeftLim1 = .999999999999999;
 		var MAX_EXCEL_INT = 1e308;
 		var MIN_EXCEL_INT = -MAX_EXCEL_INT;
+		const XL_MAX = 9.99999999999999e307;
+		const DBL_MIN_NORMAL = 2.2250738585072014e-308; // MIN Excel positive val used as number - underflow
+		const LIMIT_MIN_NUM = 1e-310; // limit for entering numbers that are treated as numbers
 		var c_sPerDay = 86400;
 		var c_msPerDay = c_sPerDay * 1000;
 
@@ -2246,7 +2249,37 @@
 		function isNumberInfinity(val) {
 			var valTrim = trim(val);
 			var valInt = valTrim - 0;
-			return valInt == valTrim && valTrim.length > 0 && MIN_EXCEL_INT < valInt && valInt < MAX_EXCEL_INT;//
+			return valInt == valTrim && valTrim.length > 0 && MIN_EXCEL_INT < valInt && valInt < MAX_EXCEL_INT;
+		}
+
+		function checkExcelNumberLimits(val) {
+			let valTrim = val.trim();
+			if (valTrim === "") {
+				return false;
+			}
+
+			let num = Number(valTrim);
+			if (!isFinite(num)) {
+				return false;
+			}
+
+			if (num === 0 && valTrim.toLowerCase().indexOf("e") !== -1) {
+				// underflow special case
+				return false;
+			}
+
+			let absNum = Math.abs(num);
+			if (absNum < DBL_MIN_NORMAL && absNum > LIMIT_MIN_NUM) {
+				// special case, number lower than printed limit, but still can be written and treatead as zero number
+				return true;
+			}
+
+			if (absNum > XL_MAX || (num !== 0 && absNum <= LIMIT_MIN_NUM)) {
+				// underflow: non-zero but module less than the smallest normal -> Excel writes 0.
+				return false;
+			}
+
+			return true;
 		}
 
 		function arrayToLowerCase(array) {
@@ -4256,6 +4289,7 @@
 		window["AscCommonExcel"].getFullHyperlinkLength = getFullHyperlinkLength;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
+		window["Asc"].checkExcelNumberLimits = checkExcelNumberLimits;
 		window["Asc"].trim = trim;
 		window["Asc"].arrayToLowerCase = arrayToLowerCase;
 		window["Asc"].isFixedWidthCell = isFixedWidthCell;

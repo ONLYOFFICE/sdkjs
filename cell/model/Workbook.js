@@ -18177,6 +18177,9 @@
 							val = val.substring(1);
 						}
 						this.setValueTextInternal(val);
+						if (AscCommonExcel.parseNum(val) && /E/i.test(val)) {
+							this.setNumFormat('0.00E+00');
+						}
 					}
 				}
 			}

@@ -179,7 +179,7 @@ function NumberParts()
     this.sign = SignType.Null;
 }
 // Writes mantissa/exponent/sign for x into opt_out (a reused NumberParts on hot paths) or a fresh one.
-function getNumberParts(x, opt_out)
+function getNumberPartsFast(x, opt_out)
 {
     var out = opt_out || new NumberParts();
     var sig = SignType.Null;
@@ -211,6 +211,69 @@ function getNumberParts(x, opt_out)
     out.exponent = exp;
     out.sign = sig;
     return out;
+}
+
+
+// value === mantissa * 10^exponent, where mantissa is a 15-digit integer (significant digits).
+// For 0.123: mantissa = 123000000000000, exponent = -gc_nMaxDigCount (=> nRealExp == 0).
+// Writes the result to the passed opt_out (reused by NumberParts on hot paths,
+// e.g. compareNumbers) or creates a new one - the contract and object form are saved.
+function getNumberPartsScientific(x, opt_out)
+{
+	// Smallest positive NORMALIZED double
+    // 1e-308, 2.2e-308, 5e-324, outside Excel's normalized range and treated
+    // as 0 - matches MS Excel (1e-308 -> 0) and excludes the garbage mantissa
+    // which was given by the old bit extraction
+    var DBL_MIN_NORMAL = 2.2250738585072014e-308;
+
+    var out = opt_out || new NumberParts();
+    var sig = SignType.Null;
+
+    if (!isFinite(x))          // NaN / +-Infinity -> 0
+        x = 0;
+    if (x > 0)
+        sig = SignType.Positive;
+    else if (x < 0) {
+        sig = SignType.Negative;
+        x = -x;
+    }
+
+    var exp = -gc_nMaxDigCount;
+    var man = 0;
+
+    if (SignType.Null !== sig && x < DBL_MIN_NORMAL)
+        sig = SignType.Null;    // subnormal / underflow -> 0
+
+    if (SignType.Null !== sig) {
+        // toExponential(14) gives exactly 15 significant digits: "d.ddddddddddddde±NN".
+        // Direct reading of digits and decimal exponent exactly for
+        // normalized double and does not require tables pow10, log10 and pass-correction.
+        var s      = x.toExponential(gc_nMaxDigCount - 1); // 14 digits after dot
+        var ePos   = s.indexOf("e");
+        var decExp = parseInt(s.slice(ePos + 1), 10);
+        var digits = s.slice(0, ePos).replace(".", "");
+        man = parseInt(digits, 10);
+        exp = decExp - (gc_nMaxDigCount - 1);
+    }
+
+    out.mantissa = man;
+    out.exponent = exp;
+    out.sign     = sig;
+    return out;
+}
+
+function getNumberParts(x, opt_out)
+{
+	// SCI_FLOOR = log10(2) * binaryExp = 1.26e-293
+	// The reliability limit of the old method for obtaining parts of a number
+	// After exceeding the limits, it is necessary to implement a new function that correctly calculates the mantissa and exponent of a subnormal number.
+	const SCI_FLOOR = 1e-292;
+	const ax = x < 0 ? -x : x;
+	if (ax !== 0 && ax < SCI_FLOOR) {
+		return getNumberPartsScientific(x, opt_out);
+	}
+
+	return getNumberPartsFast(x, opt_out);
 }
 
 	// Reused targets so the hot compareNumbers path allocates no result object per comparison.
@@ -3400,6 +3463,11 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
         return "0";//can return any numeric format, it won't be considered anyway when nDigitsCount < 1
 	var bContinue = true;
 	var parts = getNumberParts(number);
+	if (SignType.Null === parts.sign) {
+		// Subnormal number (below 2.23e-308) treated as 0, matches Excel
+		// so SignType.Null === sign is equivalent to mantissa === 0
+		return "0";
+	}
 	while(bContinue)
 	{
 		bContinue = false;
@@ -3480,18 +3548,25 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
 					nRoundDigCount = dec_num_digits;
 			}
 		}
-		if(nRoundDigCount > 0)
+		if (nRoundDigCount > 0)
 		{
 			var nTemp = Math.pow(10, gc_nMaxDigCount - nRoundDigCount);
-			number = Math.round(parts.mantissa / nTemp) * nTemp * Math.pow(10, parts.exponent);
-			
-			var oNewParts = getNumberParts(number);
-			//if the number of digits changed as a result of rounding, need to start over
-			if(oNewParts.exponent != parts.exponent)
+			var roundedMan = Math.round(parts.mantissa / nTemp) * nTemp;
+			var newExp = parts.exponent;
+
+			if (roundedMan >= gc_nMaxMantissa) {   // number shift from 999 -> 1000
+				roundedMan = Math.floor(roundedMan / 10);   // because we shifted, move rounded Man again to 15
+				newExp++;
+			}
+
+			if (newExp !== parts.exponent) {
 				bContinue = true;
-			else
+			} else {
 				bContinue = false;
-			parts = oNewParts;
+			}
+
+			parts.mantissa = roundedMan;
+			parts.exponent = newExp;
 		}
 	}
 	
@@ -3541,90 +3616,84 @@ GeneralEditFormatCache.prototype =
 	cleanCache : function(){
 		this.oCache = {};
 	},
-    format: function (number, cultureInfo)
-    {
-        if (null == cultureInfo)
-            cultureInfo = g_oDefaultCultureInfo;
-        //convert the number so that the string contains only 15 significant digits.
-        var value = this.oCache[number];
-        if(null == value)
-        {
-			if(0 == number)
+	format: function (number, cultureInfo)
+	{
+		if (null == cultureInfo)
+			cultureInfo = g_oDefaultCultureInfo;
+		//convert the number so that the string contains only 15 significant digits.
+		let value = this.oCache[number];
+		if (null == value) {
+			if(0 == number) {
 				value = "0";
-			else
-			{
-				var sRes = "";
-				var parts = getNumberParts(number);
-				var nRealExp = gc_nMaxDigCount + parts.exponent;//nRealExp == 0 for 0.123
-				if(parts.exponent >= 0)//nRealExp >= -gc_nMaxDigCount
-				{
-					if(nRealExp <= 21)
-					{
-						sRes = parts.mantissa.toString();
-						for(var i = 0; i < parts.exponent; ++i)
-							sRes += "0";
-					}
-					else
-					{
-					    sRes = this._removeTileZeros(parts.mantissa.toString(), cultureInfo);
-						if(sRes.length > 1)
-						{
-							var temp = sRes.substring(0, 1);
-							temp += cultureInfo.NumberDecimalSeparator;
-							temp += sRes.substring(1);
-							sRes = temp;
-						}
-						sRes += "E+" + (nRealExp - 1);
-					}
-				}
-				else
-				{
-					if(nRealExp > 0)
-					{
-						sRes = parts.mantissa.toString();
-						if(sRes.length > nRealExp)
-						{
-							var temp = sRes.substring(0, nRealExp);
-							temp += cultureInfo.NumberDecimalSeparator;
-							temp += sRes.substring(nRealExp);
-							sRes = temp;
-						}
-						sRes = this._removeTileZeros(sRes, cultureInfo);
-					}
-					else
-					{
-						if(nRealExp >= -18)
-						{
-							sRes = "0";
-							sRes += cultureInfo.NumberDecimalSeparator;
-							for(var i = 0; i < -nRealExp; ++i)
-								sRes += "0";
-							var sTemp = parts.mantissa.toString();
-							sTemp = sTemp.substring(0, 19 + nRealExp);
-							sRes += this._removeTileZeros(sTemp, cultureInfo);
-						}
-						else
-						{
+			} else {
+				let sRes = "";
+				let parts = getNumberParts(number);
+				if (SignType.Null === parts.sign) {
+					// Subnormal number (below 2.23e-308) treated as 0, matches Excel
+					// so SignType.Null === sign is equivalent to mantissa === 0
+					value = "0";
+				} else {
+					let nRealExp = gc_nMaxDigCount + parts.exponent; //nRealExp == 0 for 0.123
+					if (parts.exponent >= 0) { //nRealExp >= -gc_nMaxDigCount
+						if (nRealExp <= 21) {
 							sRes = parts.mantissa.toString();
-							if(sRes.length > 1)
+							for (let i = 0; i < parts.exponent; ++i)
+								sRes += "0";
+						} else {
+							sRes = this._removeTileZeros(parts.mantissa.toString(), cultureInfo);
+							if (sRes.length > 1)
 							{
-								var temp = sRes.substring(0, 1);
+								let temp = sRes.substring(0, 1);
 								temp += cultureInfo.NumberDecimalSeparator;
 								temp += sRes.substring(1);
-								temp = this._removeTileZeros(temp, cultureInfo);
 								sRes = temp;
 							}
-							sRes += "E-" + (1 - nRealExp);
+							sRes += "E+" + (nRealExp - 1);
+						}
+					} else {
+						if (nRealExp > 0) {
+							sRes = parts.mantissa.toString();
+							if (sRes.length > nRealExp) {
+								let temp = sRes.substring(0, nRealExp);
+								temp += cultureInfo.NumberDecimalSeparator;
+								temp += sRes.substring(nRealExp);
+								sRes = temp;
+							}
+							sRes = this._removeTileZeros(sRes, cultureInfo);
+						} else {
+							if (nRealExp >= -18) {
+								sRes = "0";
+								sRes += cultureInfo.NumberDecimalSeparator;
+								for(let i = 0; i < -nRealExp; ++i)
+									sRes += "0";
+								let sTemp = parts.mantissa.toString();
+								sTemp = sTemp.substring(0, 19 + nRealExp);
+								sRes += this._removeTileZeros(sTemp, cultureInfo);
+							} else {
+								sRes = parts.mantissa.toString();
+								if (sRes.length > 1) {
+									let temp = sRes.substring(0, 1);
+									temp += cultureInfo.NumberDecimalSeparator;
+									temp += sRes.substring(1);
+									temp = this._removeTileZeros(temp, cultureInfo);
+									sRes = temp;
+								}
+								sRes += "E-" + (1 - nRealExp);
+							}
 						}
 					}
+
+					if( SignType.Negative == parts.sign) {
+						value = "-" + sRes;
+					} else {
+						value = sRes;
+					}
 				}
-				if( SignType.Negative == parts.sign)
-					value = "-" + sRes;
-				else
-					value = sRes;
 			}
+
             this.oCache[number] = value;
         }
+
         return value;
     },
     _removeTileZeros: function (val, cultureInfo)
@@ -3673,7 +3742,7 @@ FormatParser.prototype =
             cultureInfo = g_oDefaultCultureInfo;
         val = this._normalizeDecimalSep(val, cultureInfo);
         //parseNum excludes hex number notation.
-        return AscCommonExcel.parseNum(val) && Asc.isNumberInfinity(val);
+        return AscCommonExcel.parseNum(val) && Asc.isNumberInfinity(val) && Asc.checkExcelNumberLimits(val);
     },
     parseLocaleNumber: function (val, cultureInfo) {
         if (null == cultureInfo)
