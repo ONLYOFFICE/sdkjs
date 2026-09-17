@@ -5449,9 +5449,9 @@
 	};
 
 	/**
-	 * Gets goto destination rect
+	 * Gets zoom for action
 	 * @typeofeditors ["PDFE"]
-	 * @returns {number}
+	 * @returns {?number}
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetRect.js
 	 */
 	ApiGoToAction.prototype.GetZoom = function() {
