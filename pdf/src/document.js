@@ -6409,7 +6409,6 @@ var CPresentation = CPresentation || function(){};
 		let sOldEmbedFontsMap = JSON.stringify(Asc.editor.embeddedFontsMap);
 
         const _this = this;
-        Asc.editor.canSave = false;
         const oDrDoc = this.GetDrawingDocument();
         const oPageInfo = this.GetPageInfo(nPage);
         oPageInfo.SetRecognized(true);

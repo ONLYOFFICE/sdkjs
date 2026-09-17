@@ -836,6 +836,7 @@
             Asc.editor.canSave = true;
         };
 
+		Asc.editor.canSave = false;
 		let result = oDoc.EditPage(oViewer.currentPage);
 		if (!result) {
 			fEndCallback();
