@@ -13569,6 +13569,7 @@ function parseStringToCElement (val, cultureInfo) {
 			const fullRange = ws.getRange3(r1, columnIndex, r2, columnIndex);
 			this.updateDataAfter(fullRange, column, endIndex);
 		}
+		this._applyPendingChanges(column);
 	};
 	CountIfTypedCache.prototype.findLowerIndexInTyped = function(lowerIndex, typedIndexesArray) {
 		let i = 0;
@@ -13599,29 +13600,31 @@ function parseStringToCElement (val, cultureInfo) {
 	CountIfTypedCache.prototype.parseAnyNumber = function(value) {
 		return this._numMemo.parse(value);
 	};
-	/**
-	 * Apply deferred string data/indexes array changes in one O(N+K) pass.
-	 * Replaces repeated individual splice on large arrays (O(N) each) with
-	 * a single filter+merge (O(N+K)).
-	 *
-	 * Pending changes are stored in column._pendingStrChanges (Map: row -> value|null).
-	 *   row -> string value : the row should have this string value in the array
-	 *   row -> null         : the row should be removed from the array
-	 */
-	CountIfTypedCache.prototype._applyPendingStringChanges = function(column) {
-		const pending = column._pendingStrChanges;
-		if (!pending || pending.size === 0) {
-			return;
+
+	CountIfTypedCache.prototype._setPending = function(column, type, row, value) {
+		let pending = column._pending;
+		if (!pending) {
+			pending = column._pending = {};
 		}
+		let byType = pending[type];
+		if (!byType) {
+			byType = pending[type] = new Map();
+		}
+		byType.set(row, value);
+	};
+	// Merge one type's deferred changes into the column's sorted (data, indexes) pair
+	// in a single O(N+K) pass, instead of an O(N) splice per change. Returns the data
+	// positions whose value was replaced without moving any entry, or null when the
+	// merge inserted or removed entries.
+	CountIfTypedCache.prototype._mergePendingType = function(column, type, pending) {
+		const data = column.data[type] || [];
+		const indexes = column.indexes[type] || [];
+		const oldDataLen = data.length;
 
-		const stringData = column.data[cElementType.string] || [];
-		const stringIdx = column.indexes[cElementType.string] || [];
-		const oldDataLen = stringData.length;
-
-		// Fast path: for small batches of in-place value updates, use binary search
-		// instead of walking the entire array. O(K x log N) vs O(N+K).
+		// Fast path: a small batch of in-place updates needs one binary search per row
+		// instead of a walk over the whole array. O(K x log N) vs O(N+K).
 		const changedPositions = [];
-		if (pending.size <= 4 && stringIdx.length > 0) {
+		if (pending.size <= 4 && indexes.length > 0) {
 			let allInPlace = true;
 			pending.forEach(function(val, row) {
 				if (!allInPlace) {
@@ -13631,59 +13634,56 @@ function parseStringToCElement (val, cultureInfo) {
 					allInPlace = false;
 					return;
 				}
-				let lo = 0, hi = stringIdx.length;
+				let lo = 0, hi = indexes.length;
 				while (lo < hi) {
 					const mid = (lo + hi) >>> 1;
-					if (stringIdx[mid] < row) {
+					if (indexes[mid] < row) {
 						lo = mid + 1;
 					} else {
 						hi = mid;
 					}
 				}
-				if (lo < stringIdx.length && stringIdx[lo] === row) {
-					stringData[lo] = val;
+				if (lo < indexes.length && indexes[lo] === row) {
+					data[lo] = val;
 					changedPositions.push(lo);
 				} else {
 					allInPlace = false;
 				}
 			});
 			if (allInPlace) {
-				column._pendingApplyInPlace = true;
-				column._changedDataPositions = changedPositions;
-				column._pendingStrChanges = null;
-				return;
+				return changedPositions;
 			}
-			// Fast path failed - discard partial position list; slow path will rebuild.
+			// Fast path failed - discard partial position list; slow path rebuilds it.
 			changedPositions.length = 0;
 		}
 
-		// Phase 1: Walk current arrays - apply updates/removals in place.
+		// Phase 1: walk the current arrays, applying updates and removals in place.
 		const handledRows = new Set();
 		let writePos = 0;
-		for (let i = 0; i < stringData.length; i++) {
-			const row = stringIdx[i];
+		for (let i = 0; i < data.length; i++) {
+			const row = indexes[i];
 			if (pending.has(row)) {
 				handledRows.add(row);
 				const newVal = pending.get(row);
 				if (newVal !== null) {
 					changedPositions.push(writePos);
-					stringData[writePos] = newVal;
-					stringIdx[writePos] = row;
+					data[writePos] = newVal;
+					indexes[writePos] = row;
 					writePos++;
 				}
 				// else: remove (skip this entry)
 			} else {
 				if (writePos !== i) {
-					stringData[writePos] = stringData[i];
-					stringIdx[writePos] = stringIdx[i];
+					data[writePos] = data[i];
+					indexes[writePos] = indexes[i];
 				}
 				writePos++;
 			}
 		}
-		stringData.length = writePos;
-		stringIdx.length = writePos;
+		data.length = writePos;
+		indexes.length = writePos;
 
-		// Phase 2: Collect new inserts - rows in pending but not in current array.
+		// Phase 2: collect new inserts - rows in pending but not in the current array.
 		const newInserts = [];
 		pending.forEach(function(val, row) {
 			if (!handledRows.has(row) && val !== null) {
@@ -13691,28 +13691,28 @@ function parseStringToCElement (val, cultureInfo) {
 			}
 		});
 
-		// Phase 3: Merge new inserts into the arrays (maintain sorted row order).
+		// Phase 3: merge the new inserts in, keeping the arrays sorted by row.
 		if (newInserts.length > 0) {
 			newInserts.sort(function(a, b) { return a - b; });
-			if (stringData.length === 0) {
+			if (data.length === 0) {
 				const nd = new Array(newInserts.length);
 				const ni = new Array(newInserts.length);
 				for (let k = 0; k < newInserts.length; k++) {
 					nd[k] = pending.get(newInserts[k]);
 					ni[k] = newInserts[k];
 				}
-				column.data[cElementType.string] = nd;
-				column.indexes[cElementType.string] = ni;
+				column.data[type] = nd;
+				column.indexes[type] = ni;
 			} else {
-				const oldLen = stringData.length;
+				const oldLen = data.length;
 				const totalLen = oldLen + newInserts.length;
 				const mergedData = new Array(totalLen);
 				const mergedIdx = new Array(totalLen);
 				let oi = oldLen - 1, nii = newInserts.length - 1, wi = totalLen - 1;
 				while (oi >= 0 && nii >= 0) {
-					if (stringIdx[oi] > newInserts[nii]) {
-						mergedData[wi] = stringData[oi];
-						mergedIdx[wi] = stringIdx[oi];
+					if (indexes[oi] > newInserts[nii]) {
+						mergedData[wi] = data[oi];
+						mergedIdx[wi] = indexes[oi];
 						oi--;
 					} else {
 						mergedData[wi] = pending.get(newInserts[nii]);
@@ -13722,8 +13722,8 @@ function parseStringToCElement (val, cultureInfo) {
 					wi--;
 				}
 				while (oi >= 0) {
-					mergedData[wi] = stringData[oi];
-					mergedIdx[wi] = stringIdx[oi];
+					mergedData[wi] = data[oi];
+					mergedIdx[wi] = indexes[oi];
 					oi--;
 					wi--;
 				}
@@ -13733,17 +13733,26 @@ function parseStringToCElement (val, cultureInfo) {
 					nii--;
 					wi--;
 				}
-				column.data[cElementType.string] = mergedData;
-				column.indexes[cElementType.string] = mergedIdx;
+				column.data[type] = mergedData;
+				column.indexes[type] = mergedIdx;
 			}
 		}
 
-		const inPlaceOnly = (writePos === oldDataLen && newInserts.length === 0);
-		column._pendingApplyInPlace = inPlaceOnly;
-		// Only the in-place-only outcome makes positions meaningful for incremental
-		// FALLBACK; otherwise structural changes invalidated rank positions anyway.
-		column._changedDataPositions = inPlaceOnly ? changedPositions : null;
-		column._pendingStrChanges = null;
+		return (writePos === oldDataLen && newInserts.length === 0) ? changedPositions : null;
+	};
+	CountIfTypedCache.prototype._applyPendingChanges = function(column) {
+		const pending = column._pending;
+		if (!pending) {
+			return;
+		}
+		column._pending = null;
+		for (let type in pending) {
+			const positions = this._mergePendingType(column, type, pending[type]);
+			if (cElementType.string === +type) {
+				column._pendingApplyInPlace = null !== positions;
+				column._changedDataPositions = positions;
+			}
+		}
 	};
 	/**
 	 * Update column._sortedStrings and column._stringCounts for the strings that
@@ -13845,11 +13854,6 @@ function parseStringToCElement (val, cultureInfo) {
 	 *   _stringRankArray - Int32Array: rank[i] = sorted position of stringData[i]
 	 *   _rankLen         - stringData.length at build time
 	 * Three rebuild tiers: full sort, incremental sorted update, cheap rank refresh.
-	 */
-	/**
-	 * Precondition: column._pendingStrChanges must already be flushed by the caller
-	 * (i.e. _applyPendingStringChanges must have been called before this method).
-	 * Use _setupRankRange instead of calling this directly - it handles the flush.
 	 */
 	CountIfTypedCache.prototype._ensureStringRank = function(column) {
 		const stringData = column.data[cElementType.string];
@@ -14028,9 +14032,6 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
-			// Apply deferred string changes before reading data/indexes references.
-			// _applyPendingStringChanges may replace column.data[string]/indexes[string].
-			this._applyPendingStringChanges(column);
 			// Numeric string fallback is only needed for columns that actually
 			// contain a string parsable as a number.
 			if (convertToNumber && !column.hasNumericStrings) {
@@ -14081,7 +14082,6 @@ function parseStringToCElement (val, cultureInfo) {
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
-			this._applyPendingStringChanges(column);
 			for (let type in column.indexes) {
 				const typedIndexes = column.indexes[type];
 				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
@@ -14100,7 +14100,6 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @returns {boolean}
 	 */
 	CountIfTypedCache.prototype.hasDataAtRow = function(column, row, checkEmptyString) {
-		this._applyPendingStringChanges(column);
 		const indexes = column.indexes;
 		const numIdx = indexes[cElementType.number];
 		if (numIdx) {
@@ -14158,10 +14157,6 @@ function parseStringToCElement (val, cultureInfo) {
 	 * @returns {{rankData: Int32Array, lower: number, upper: number}|null}
 	 */
 	CountIfTypedCache.prototype._setupRankRange = function(column, searchValue, op) {
-		// Flush pending string changes before rank computation. Callers must also
-		// flush before reading column.data[string]/indexes[string]; their flush
-		// comes first and the one here is the no-op (never the other way around).
-		this._applyPendingStringChanges(column);
 		this._ensureStringRank(column);
 		const sorted = column._sortedStrings;
 		if (!sorted || !sorted.length) {
@@ -14189,54 +14184,18 @@ function parseStringToCElement (val, cultureInfo) {
 		return {rankData: column._stringRankArray, lower: lower, upper: upper};
 	};
 	CountIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
-		const columnIndex = cell.nCol;
 		const changedIndex = cell.nRow;
-		const data = this.data[wsId];
-		const column = data[columnIndex];
+		const column = this.data[wsId][cell.nCol];
 		if (column && changedIndex >= column.start && changedIndex <= column.end) {
-			// --- Remove old value ---
 			if (oldValue !== null) {
-				if (oldType === cElementType.string) {
-					// Defer string array splice - O(1) Map.set vs O(N) splice on large arrays.
-					if (!column._pendingStrChanges) {
-						column._pendingStrChanges = new Map();
-					}
-					column._pendingStrChanges.set(changedIndex, null);
-				} else {
-					const indexesArray = column.indexes[oldType];
-					const dataArray = column.data[oldType];
-					if (dataArray && indexesArray) {
-						const removeIndex = this.findLowerIndexInTyped(changedIndex, indexesArray);
-						if (removeIndex < indexesArray.length && indexesArray[removeIndex] === changedIndex) {
-							dataArray.splice(removeIndex, 1);
-							indexesArray.splice(removeIndex, 1);
-						}
-					}
-				}
+				this._setPending(column, oldType, changedIndex, null);
 			}
-			// --- Insert new value ---
 			if (newValue !== null && newType !== cElementType.empty) {
-				if (newType === cElementType.string) {
-					// Defer string array splice.
-					if (!column._pendingStrChanges) {
-						column._pendingStrChanges = new Map();
-					}
-					column._pendingStrChanges.set(changedIndex, newValue);
-					// Mirror pushValue on inline edits; the flag is sticky-true by design.
-					if (!column.hasNumericStrings && this.parseAnyNumber(newValue) !== null) {
-						column.hasNumericStrings = true;
-					}
-				} else {
-					const newIndexes = column.indexes[newType];
-					const newData = column.data[newType];
-					if (newData && newIndexes) {
-						const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, newIndexes);
-						newData.splice(insertIndex, 0, newValue);
-						newIndexes.splice(insertIndex, 0, changedIndex);
-					} else {
-						column.data[newType] = [newValue];
-						column.indexes[newType] = [changedIndex];
-					}
+				this._setPending(column, newType, changedIndex, newValue);
+				// Mirror pushValue on inline edits; the flag is sticky-true by design.
+				if (newType === cElementType.string && !column.hasNumericStrings &&
+					this.parseAnyNumber(newValue) !== null) {
+					column.hasNumericStrings = true;
 				}
 			}
 			if (oldType === cElementType.string || newType === cElementType.string) {
@@ -14953,9 +14912,6 @@ function parseStringToCElement (val, cultureInfo) {
 		typedCache.updateColumnData(ws, absCol, bbox.r1, bbox.r2);
 		const column = typedCache.data[wsId][absCol];
 
-		// Flush deferred string changes before reading data/indexes references.
-		typedCache._applyPendingStringChanges(column);
-
 		const op = info.op;
 
 		// Mode 1: '=""' - matching = cells with no non-empty-string data.
@@ -15448,7 +15404,6 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
-			this._applyPendingStringChanges(searchColumn);
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			// 4 advancing pointers, one per type - amortized O(1) per sum entry to check if search row has ANY data
@@ -15535,7 +15490,6 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
-			this._applyPendingStringChanges(searchColumn);
 			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
@@ -15639,9 +15593,6 @@ function parseStringToCElement (val, cultureInfo) {
 
 			const searchColumn = this.data[searchRangeWsId][i];
 			const sumColumn = sumCache.data[sumRangeWsId][sumColumnIndex];
-
-			// Apply deferred string changes before reading data/indexes references.
-			this._applyPendingStringChanges(searchColumn);
 
 			// Skip the string pass for columns with no numeric-looking strings.
 			if (convertToNumber && !searchColumn.hasNumericStrings) {
