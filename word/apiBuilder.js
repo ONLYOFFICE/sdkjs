@@ -5354,6 +5354,10 @@
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Color.js
 	 */
 	Api.Color = function (r, g, b, a) {
+		return private_ParseColor.apply(this, arguments) || Api.RGB(0, 0, 0);
+	};
+
+	function private_ParseColor(r, g, b, a) {
 		if (arguments.length === 4)
 			return Api.RGBA(r, g, b, a);
 		if (arguments.length === 3)
@@ -5378,8 +5382,8 @@
 			if (hex.length === 6 && private_IsHexString(hex))
 				return Api.HexColor(hex);
 		}
-		return Api.RGB(0, 0, 0);
-	};
+		return null;
+	}
 
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
@@ -35074,6 +35078,7 @@
 	window['AscBuilder'].GetNumberParameter     = GetNumberParameter;
 	window['AscBuilder'].GetIntParameter        = GetIntParameter;
 	window['AscBuilder'].GetArrayParameter      = GetArrayParameter;
+	window['AscBuilder'].private_ParseColor     = private_ParseColor;
 	window['AscBuilder'].CMarkdownConverter		= CMarkdownConverter;
 	window['AscBuilder'].executeNoFormLockCheck = executeNoFormLockCheck;
 	window['AscBuilder'].throwException			= throwException;

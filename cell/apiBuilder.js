@@ -12843,6 +12843,9 @@
 			return color.color;
 		}
 		if (!(color instanceof ApiColor)) {
+			color = AscBuilder.private_ParseColor(color);
+		}
+		if (!color) {
 			return null;
 		}
 
@@ -16970,7 +16973,6 @@
 	ApiFont.prototype.SetColor = function (Color) {
 		const coreColor = toCoreColor(Color);
 		if (!coreColor) {
-			throwException(new Error('Invalid type of parametr "Color".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
