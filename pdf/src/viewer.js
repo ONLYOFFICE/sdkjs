@@ -2700,11 +2700,19 @@
 				oDrDoc.AutoShapesTrack.CorrectOverlayBounds();
 			}
 			else if (oAcitveObj) {
-				const nPage = oAcitveObj.GetPage();
+				let pages = new Set();
+				this.DrawingObjects.selectedObjects.forEach(obj => {
+					pages.add(obj.GetPage());
+				});
+
+				let oController = this.DrawingObjects;
 				oDrDoc.SetTextSelectionOutline(true);
 				oDrDoc.private_EndDrawSelection();
-				oDrDoc.AutoShapesTrack.SetCurrentPage(nPage, true);
-				this.DrawingObjects.drawSelect(nPage);
+
+				pages.forEach(function(page) {
+					oDrDoc.AutoShapesTrack.SetCurrentPage(page, true);
+					oController.drawSelect(page);
+				});
 			}
 		};
 		

@@ -4484,6 +4484,10 @@ function CDrawingDocument()
 	};
 	this.private_EndDrawSelection = function ()
 	{
+		if (null == this.Overlay) {
+			return;
+		}
+
 		var ctx = this.Overlay.m_oContext;
 
 		ctx.globalAlpha = 0.2;
