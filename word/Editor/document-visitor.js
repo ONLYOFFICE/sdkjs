@@ -52,7 +52,12 @@
 	DocumentVisitor.prototype.traverseSelectedContent = function(selectedContent)
 	{
 		let content = selectedContent.GetContentArray();
-		this.visitDocContent(content);
+		for (let i = 0, count = content.length; i < count; ++i)
+		{
+			content[i].visit(this);
+			if (this.isStopped())
+				return;
+		}
 	};
 	/**
 	 * @param {AscWord.Document} logicDocument
@@ -60,19 +65,15 @@
 	 */
 	DocumentVisitor.prototype.traverseDocument = function(logicDocument, isSelection)
 	{
-		if (isSelection)
-		{
-			let selectedContent = logicDocument.GetSelectedContent(false);
-			this.traverseSelectedContent(selectedContent)
-		}
-		else
-		{
-			this.visitDocContent(logicDocument.Content);
-		}
+		logicDocument.visit(this, isSelection);
 	};
-	DocumentVisitor.prototype.traverseDocContent = function(docContent)
+	/**
+	 * @param {AscWord.Document | AscWord.DocumentContent} docContent
+	 * @param {boolean} isSelection
+	 */
+	DocumentVisitor.prototype.traverseDocContent = function(docContent, isSelection)
 	{
-		this.visitDocContent(docContent.Content);
+		docContent.visit(this, isSelection);
 	};
 	DocumentVisitor.prototype.traverseParagraph = function(paragraph)
 	{
@@ -86,7 +87,7 @@
 	{
 		return this.stopped;
 	};
-	DocumentVisitor.prototype.paragraph = function(paragraph, isStart)
+	DocumentVisitor.prototype.paragraph = function(paragraph, isStart, start, end)
 	{
 		return false;
 	};
@@ -98,166 +99,336 @@
 	{
 		return false;
 	};
-	DocumentVisitor.prototype.tableCell = function(tableCell, isStart)
+	DocumentVisitor.prototype.tableCell = function(tableCell, isStart, start, end)
 	{
 		return false;
 	};
-	DocumentVisitor.prototype.fldSimple = function(field, isStart)
+	DocumentVisitor.prototype.fldSimple = function(field, isStart, start, end)
 	{
 		return false;
 	};
-	DocumentVisitor.prototype.blockLevelSdt = function(sdt, isStart)
+	DocumentVisitor.prototype.blockLevelSdt = function(sdt, isStart, start, end)
 	{
 		return false;
 	};
-	DocumentVisitor.prototype.inlineLevelSdt = function(sdt, isStart)
+	DocumentVisitor.prototype.inlineLevelSdt = function(sdt, isStart, start, end)
 	{
 		return false;
 	};
-	DocumentVisitor.prototype.oform = function(form, isStart)
+	DocumentVisitor.prototype.oform = function(form, isStart, start, end)
 	{
 		return false;
 	};
-	DocumentVisitor.prototype.run = function(run, isStart)
+	DocumentVisitor.prototype.run = function(run, isStart, start, end)
 	{
 		return false;
 	};
-	DocumentVisitor.prototype.oMath = function(oMath, isStart)
+	DocumentVisitor.prototype.oMath = function(oMath, isStart, start, end)
 	{
 		return false;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	DocumentVisitor.prototype.visitDocContent = function(content)
+	DocumentVisitor.prototype.visitDocContent = function(docContent, isSelection)
 	{
-		for (let i = 0, count = content.length; i < count; ++i)
+		if (isSelection && !docContent.IsSelectionUse())
+			return;
+		
+		let start = isSelection ? Math.min(docContent.Selection.StartPos, docContent.Selection.EndPos) : 0;
+		let end   = isSelection ? Math.max(docContent.Selection.StartPos, docContent.Selection.EndPos) : docContent.Content.length - 1;
+		
+		for (let i = start; i <= end; ++i)
 		{
-			content[i].visit(this);
+			docContent.Content[i].visit(this, isSelection);
+			if (this.isStopped())
+				return;
+		}
+	};
+	DocumentVisitor.prototype.visitDrawings = function(drawingObjects, isSelection)
+	{
+		let docContent = drawingObjects.getTargetDocContent();
+		if (docContent)
+			return docContent.visit(this, isSelection);
+		
+		// TODO: We need to visit the place where the main drawing lies
+	};
+	DocumentVisitor.prototype.visitNotes = function(notesController, isSelection)
+	{
+		if (isSelection && !notesController.IsSelectionUse())
+			return;
+		
+		let notes = notesController.private_GetSelectionArray();
+		for (let i = 0; i < notes.length; ++i)
+		{
+			if (notes[i])
+				notes[i].visit(this, isSelection);
+			
 			if (this.isStopped())
 				return;
 		}
 	};
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	AscWord.Paragraph.prototype.visit = function(visitor)
+	AscWord.Document.prototype.visit = function(visitor, isSelection)
 	{
-		if (visitor.paragraph(this, true))
-			return;
-
-		for (let i = 0; i < this.Content.length; ++i)
+		if (!isSelection)
 		{
-			this.Content[i].visit(visitor);
+			visitor.visitDocContent(this, false);
+			
+			this.SectionsInfo.forEachHdrFtr(function(hdrFtr){
+				hdrFtr.GetContent().visit(visitor, false);
+			});
+		}
+		else
+		{
+			switch (this.GetDocPosType())
+			{
+				case docpostype_Content:
+					visitor.visitDocContent(this, true);
+					break;
+				case docpostype_HdrFtr:
+				{
+					let hdrFtr = this.HdrFtr.GetCurHdrFtr();
+					if (hdrFtr)
+						hdrFtr.GetContent().visit(visitor, true);
+					break;
+				}
+				case docpostype_DrawingObjects:
+					visitor.visitDrawings(this.DrawingObjects, true);
+					break;
+				case docpostype_Footnotes:
+					visitor.visitNotes(this.Footnotes, true);
+					break;
+				case docpostype_Endnotes:
+					visitor.visitNotes(this.Endnotes, true);
+					break;
+			}
+		}
+	};
+	AscWord.Paragraph.prototype.visit = function(visitor, isSelection)
+	{
+		let isPartial = isSelection && !this.IsSelectedAll();
+		if (isPartial && (!this.Selection.Use || this.IsSelectionEmpty(true)))
+			return;
+		
+		let start = isPartial ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : undefined;
+		let end   = isPartial ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : undefined;
+		if (visitor.paragraph(this, true, start, end))
+			return;
+		
+		let from = isPartial ? start : 0;
+		let to   = isPartial ? end : this.Content.length - 1;
+		for (let i = from; i <= to; ++i)
+		{
+			this.Content[i].visit(visitor, isPartial);
 			if (visitor.isStopped())
 				return;
 		}
 		
-		visitor.paragraph(this, false);
+		visitor.paragraph(this, false, start, end);
 	};
-	AscWord.Table.prototype.visit = function(visitor)
+	AscWord.Table.prototype.visit = function(visitor, isSelection)
 	{
+		let isPartial = isSelection && !this.IsSelectedAll();
+		if (isPartial && !this.Selection.Use)
+			return;
+		
+		let cells = isPartial ? this.GetSelectionArray(false) : null;
+		if (cells && !cells.length)
+			return;
+		
 		if (visitor.table(this, true))
 			return;
-
-		for (let i = 0, rowCount = this.GetRowsCount(); i < rowCount; ++i)
+		
+		let startRow = cells ? cells[0].Row : 0;
+		let endRow   = cells ? cells[cells.length - 1].Row : this.GetRowsCount() - 1;
+		for (let i = startRow; i <= endRow; ++i)
 		{
-			this.GetRow(i).visit(visitor);
+			this.GetRow(i).visit(visitor, isPartial);
 			if (visitor.isStopped())
 				return;
 		}
 		
 		visitor.table(this, false);
 	};
-	AscWord.TableRow.prototype.visit = function(visitor)
+	AscWord.TableRow.prototype.visit = function(visitor, isSelection)
 	{
+		let cells = null;
+		if (isSelection)
+		{
+			cells = [];
+			
+			let rowIndex  = this.GetIndex();
+			let selection = this.GetTable().GetSelectionArray(false);
+			for (let i = 0; i < selection.length; ++i)
+			{
+				if (rowIndex === selection[i].Row)
+					cells.push(selection[i].Cell);
+			}
+			
+			if (!cells.length)
+				return;
+		}
+		
 		if (visitor.tableRow(this, true))
 			return;
 		
-		for (let i = 0, cellCount = this.GetCellsCount(); i < cellCount; ++i)
+		let isTextSelection = !!isSelection && !this.GetTable().IsCellSelection();
+		for (let i = 0, count = cells ? cells.length : this.GetCellsCount(); i < count; ++i)
 		{
-			let cell = this.GetCell(i);
-			cell.visit(visitor);
+			this.GetCell(cells ? cells[i] : i).visit(visitor, isTextSelection);
 			if (visitor.isStopped())
 				return;
 		}
 		
 		visitor.tableRow(this, false);
 	};
-	AscWord.TableCell.prototype.visit = function(visitor)
+	AscWord.TableCell.prototype.visit = function(visitor, isSelection)
 	{
-		if (visitor.tableCell(this, true))
+		let content   = this.GetContent();
+		let isPartial = isSelection && !content.IsSelectedAll();
+		if (isPartial && !content.Selection.Use)
 			return;
 		
-		this.GetContent().visit(visitor);
-		
-		visitor.tableCell(this, false);
-	};
-	AscWord.BlockLevelSdt.prototype.visit = function(visitor)
-	{
-		if (visitor.blockLevelSdt(this, true))
+		let start = isPartial ? Math.min(content.Selection.StartPos, content.Selection.EndPos) : undefined;
+		let end   = isPartial ? Math.max(content.Selection.StartPos, content.Selection.EndPos) : undefined;
+		if (visitor.tableCell(this, true, start, end))
 			return;
 		
-		this.Content.visit(visitor);
+		content.visit(visitor, isPartial);
 		
-		visitor.blockLevelSdt(this, false);
+		visitor.tableCell(this, false, start, end);
 	};
-	AscWord.DocumentContent.prototype.visit = function(visitor)
+	AscWord.BlockLevelSdt.prototype.visit = function(visitor, isSelection)
 	{
-		visitor.visitDocContent(this.Content);
+		let content   = this.Content;
+		let isPartial = isSelection && !content.IsSelectedAll() && !this.IsPlaceHolder();
+		if (isPartial && !content.Selection.Use)
+			return;
+		
+		let start = isPartial ? Math.min(content.Selection.StartPos, content.Selection.EndPos) : undefined;
+		let end   = isPartial ? Math.max(content.Selection.StartPos, content.Selection.EndPos) : undefined;
+		if (visitor.blockLevelSdt(this, true, start, end))
+			return;
+		
+		content.visit(visitor, isPartial);
+		
+		visitor.blockLevelSdt(this, false, start, end);
 	};
-	AscWord.ParagraphContentBase.prototype.visit = function(visitor)
+	AscWord.DocumentContent.prototype.visit = function(visitor, isSelection)
+	{
+		if (isSelection && docpostype_DrawingObjects === this.GetDocPosType())
+			visitor.visitDrawings(this.DrawingObjects, true);
+		else
+			visitor.visitDocContent(this, isSelection);
+	};
+	AscWord.ParagraphContentBase.prototype.visit = function(visitor, isSelection)
 	{
 	};
-	AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit = function(visitor)
+	AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit = function(visitor, isSelection)
 	{
-		for (let i = 0; i < this.Content.length; ++i)
+		if (isSelection && !this.Selection.Use)
+			return;
+		
+		let start = isSelection ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0;
+		let end   = isSelection ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length - 1;
+		for (let i = start; i <= end; ++i)
 		{
-			this.Content[i].visit(visitor);
+			this.Content[i].visit(visitor, isSelection);
 			if (visitor.isStopped())
 				return;
 		}
 	};
-	AscWord.InlineLevelSdt.prototype.visit = function(visitor)
+	AscWord.InlineLevelSdt.prototype.visit = function(visitor, isSelection)
 	{
+		if (isSelection && !this.Selection.Use)
+			return;
+		
+		let isPartial = isSelection && !this.IsPlaceHolder() && !this.IsSelectedAll();
+		if (isPartial && this.IsSelectionEmpty(true))
+			return;
+		
+		let start = isPartial ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : undefined;
+		let end   = isPartial ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : undefined;
+		
 		let isForm = this.IsForm();
-		if (isForm && visitor.oform(this, true))
+		if (isForm && visitor.oform(this, true, start, end))
 			return;
 		
-		if (!isForm && visitor.inlineLevelSdt(this, true))
+		if (!isForm && visitor.inlineLevelSdt(this, true, start, end))
 			return;
 		
-		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.apply(this, arguments);
+		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.call(this, visitor, isPartial);
 		
 		if (isForm)
-			visitor.oform(this, false);
+			visitor.oform(this, false, start, end);
 		else
-			visitor.inlineLevelSdt(this, false);
+			visitor.inlineLevelSdt(this, false, start, end);
 	};
-	AscWord.Run.prototype.visit = function(visitor)
+	AscWord.Run.prototype.visit = function(visitor, isSelection)
 	{
-		if (visitor.run(this, true))
+		let start = undefined;
+		let end   = undefined;
+		if (isSelection)
+		{
+			if (!this.Selection.Use)
+				return;
+			
+			start = Math.min(this.Selection.StartPos, this.Selection.EndPos);
+			end   = Math.max(this.Selection.StartPos, this.Selection.EndPos);
+			if (start >= end)
+				return;
+			
+			if (0 === start && this.Content.length === end)
+			{
+				start = undefined;
+				end   = undefined;
+			}
+		}
+		
+		if (visitor.run(this, true, start, end))
 			return;
 		
 		// TODO: inner elements
 		
-		visitor.run(this, false);
+		visitor.run(this, false, start, end);
 	};
-	AscWord.FldSimple.prototype.visit = function(visitor)
+	AscWord.FldSimple.prototype.visit = function(visitor, isSelection)
 	{
-		if (visitor.fldSimple(this, true))
+		if (isSelection && !this.Selection.Use)
 			return;
 		
-		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.apply(this, arguments);
-		
-		visitor.fldSimple(this, false);
-	};
-	AscWord.ParaMath.prototype.visit = function(visitor)
-	{
-		if (visitor.oMath(this, true))
+		let isPartial = isSelection && !this.IsSelectedAll();
+		if (isPartial && this.IsSelectionEmpty(true))
 			return;
 		
-		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.apply(this.Root, arguments);
+		let start = isPartial ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : undefined;
+		let end   = isPartial ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : undefined;
+		if (visitor.fldSimple(this, true, start, end))
+			return;
 		
-		visitor.oMath(this, false);
+		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.call(this, visitor, isPartial);
+		
+		visitor.fldSimple(this, false, start, end);
+	};
+	AscWord.ParaMath.prototype.visit = function(visitor, isSelection)
+	{
+		if (isSelection && !this.IsSelectionUse())
+			return;
+		
+		let root      = this.Root;
+		let isPartial = isSelection && !this.IsSelectedAll();
+		if (isPartial && this.IsSelectionEmpty())
+			return;
+		
+		let start = isPartial ? Math.min(root.Selection.StartPos, root.Selection.EndPos) : undefined;
+		let end   = isPartial ? Math.max(root.Selection.StartPos, root.Selection.EndPos) : undefined;
+		if (visitor.oMath(this, true, start, end))
+			return;
+		
+		root.visit(visitor, isPartial);
+		
+		visitor.oMath(this, false, start, end);
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.DocumentVisitor = DocumentVisitor;
