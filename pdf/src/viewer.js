@@ -2979,7 +2979,7 @@
 			let oActiveObj	= oDoc.GetActiveObject();
 
 			// exit active object if we moved to another page
-			if (oActiveObj && this.pageDetector.pages.map(function(item) {
+			if (!oDoc.CanEdit() && oActiveObj && this.pageDetector.pages.map(function(item) {
 				return item.num;
 			}).includes(oActiveObj.GetPage()) == false) {
 				oDoc.BlurActiveObject();
