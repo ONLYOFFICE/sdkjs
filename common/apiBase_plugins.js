@@ -81,13 +81,13 @@
 	 */
 
 	/**
-	 * The current editing restrictions:
-	 * <b>none</b> - no editing restrictions,
-	 * <b>readOnly</b> - does not allow editing,
-	 * <b>comments</b> - allows editing comments and regions delimited by range permissions,
-	 * <b>forms</b> - allows editing form fields,
-	 * <b>signatures</b> - the document is signed and cannot be changed.
-	 * @typedef {("none" | "readOnly" | "comments" | "forms" | "signatures")} EditorRestrictions
+	 * The current editing restrictions, a combination of the flags:
+	 * <b>0x00</b> - no editing restrictions,
+	 * <b>0x01</b> - allows editing form fields,
+	 * <b>0x02</b> - allows editing comments and regions delimited by range permissions,
+	 * <b>0x04</b> - the document is signed and cannot be changed,
+	 * <b>0x80</b> - does not allow editing.
+	 * @typedef {number} EditorRestrictions
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/EditorRestrictions.js
 	 */
 
@@ -226,16 +226,7 @@
 	 */
 	Api.prototype["pluginMethod_GetRestrictions"] = function()
 	{
-		let restrictions = this.restrictions;
-		if (restrictions & Asc.c_oAscRestrictionType.OnlySignatures)
-			return "signatures";
-		if (restrictions & Asc.c_oAscRestrictionType.View)
-			return "readOnly";
-		if (restrictions & Asc.c_oAscRestrictionType.OnlyComments)
-			return "comments";
-		if (restrictions & Asc.c_oAscRestrictionType.OnlyForms)
-			return "forms";
-		return "none";
+		return this.restrictions;
 	};
 
     /**

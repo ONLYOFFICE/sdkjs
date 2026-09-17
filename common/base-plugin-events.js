@@ -88,7 +88,7 @@
  * @memberof Plugin
  * @alias onChangeRestrictions
  * @description The function called when the restrictions in the editor are changed.
- * @param {number} value - The restrictions value.
+ * @param {EditorRestrictions} value - The restrictions value.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeRestrictions.js
  */
 
