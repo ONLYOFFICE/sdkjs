@@ -32136,6 +32136,38 @@
 		return charMap.length ? charMap[charMap.length - 1].charEnd : 0;
 	}
 
+	function private_GetSelectionCharRange(docContent)
+	{
+		let charMap = private_BuildCharMap(docContent);
+		if (!charMap.length)
+			return null;
+
+		let isSelection = docContent.IsSelectionUse();
+		let startIdx = isSelection ? Math.min(docContent.Selection.StartPos, docContent.Selection.EndPos) : docContent.CurPos.ContentPos;
+		let endIdx   = isSelection ? Math.max(docContent.Selection.StartPos, docContent.Selection.EndPos) : docContent.CurPos.ContentPos;
+
+		let startItem = charMap[startIdx];
+		let endItem   = charMap[endIdx];
+		if (!startItem || !endItem || !startItem.para.IsParagraph() || !endItem.para.IsParagraph())
+			return null;
+
+		let start = startItem.charStart + startItem.para.GetCharOffsetByContentPos(startItem.para.Get_ParaContentPos(isSelection, true, false));
+		let end   = endItem.charStart + endItem.para.GetCharOffsetByContentPos(endItem.para.Get_ParaContentPos(isSelection, false, false));
+
+		return {start : Math.min(start, end), end : Math.max(start, end)};
+	}
+
+	function private_RestoreSelectionCharRange(docContent, selection)
+	{
+		if (!selection)
+			return;
+
+		let length = private_GetModelLength(private_BuildCharMap(docContent));
+		let start  = Math.min(selection.start, length);
+		let end    = Math.min(selection.end, length);
+		docContent.SelectCharRange(start, end, start === end);
+	}
+
 	function private_GetTextRangeDocPos(charMap, pos)
 	{
 		if (charMap.length && pos > private_GetModelLength(charMap))
@@ -32323,7 +32355,7 @@
 			}
 		}
 
-		let state = docContent.GetSelectionState();
+		let selection = private_GetSelectionCharRange(docContent);
 		run.SetCursorPosition(inRunPos);
 		let newRun = run.CheckRunBeforeAdd();
 		if (newRun)
@@ -32332,7 +32364,7 @@
 			inRunPos = 0;
 		}
 		run.SetCursorPosition(run.AddText(text, inRunPos));
-		docContent.SetSelectionState(state);
+		private_RestoreSelectionCharRange(docContent, selection);
 		return true;
 	}
 
@@ -32540,14 +32572,14 @@
 
 		let start = this.private_GetEffectiveStart();
 		let end   = this.private_GetEffectiveEnd();
-		let state = docContent.GetSelectionState();
+		let selection = private_GetSelectionCharRange(docContent);
 
 		private_RefreshTextRanges(this.DocContent);
 		docContent.SelectCharRange(start, end, false);
 
 		let hyperlink = new AscBuilder.ApiHyperlink(paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
 
-		docContent.SetSelectionState(state);
+		private_RestoreSelectionCharRange(docContent, selection);
 		docContent.Recalculate();
 		private_TrackTextRanges(this.DocContent);
 
@@ -33066,12 +33098,12 @@
 
 		let start	= this.private_GetEffectiveStart();
 		let end		= this.private_GetEffectiveEnd();
-		let state	= docContent.GetSelectionState();
+		let selection = private_GetSelectionCharRange(docContent);
 
 		private_RefreshTextRanges(this.DocContent);
 		docContent.SelectCharRange(start, end, false);
 		docContent.AddToParagraph(new AscCommonWord.ParaTextPr(props), false);
-		docContent.SetSelectionState(state);
+		private_RestoreSelectionCharRange(docContent, selection);
 		docContent.Recalculate();
 		private_TrackTextRanges(this.DocContent);
 		return this;
