@@ -14266,7 +14266,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTextRange.js
 	 */
 	ApiDrawing.prototype.GetTextRange = function() {
-		if (this.Drawing.isTable())
+		if (!this.Drawing.isShape())
 			return null;
 
 		if (!this.Drawing.getDocContent()) {
