@@ -1456,7 +1456,8 @@
 		}
 
         object.select(this, pageIndex);
-
+		this.resetInternalSelection();
+		
         if (AscFormat.MoveAnimationDrawObject) {
             if (object instanceof AscFormat.MoveAnimationDrawObject) {
                 for (let i = this.selectedObjects.length - 1; i > -1; --i) {
