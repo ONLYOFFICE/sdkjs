@@ -819,10 +819,7 @@
 			}
 
 			if (color instanceof AscBuilder.ApiColor) {
-				const rgb = color.GetRGB();
-				const safeCopy = Api.RGB(rgb['r'], rgb['g'], rgb['b']);
-				const unifill = safeCopy.private_createUnifill();
-				return { Unicolor: unifill.fill.color };
+				return { Unicolor: private_ApiColorToUniColor(color) };
 			}
 
 			return color;
@@ -3986,20 +3983,29 @@
      * @memberof ApiThemeColorScheme
      * @typeofeditors ["CPE"]
      * @param {number} nPos - Color position in the color scheme which will be changed.
-     * @param {ApiUniColor | ApiRGBColor} oColor - New color of the theme color scheme.
+     * @param {ApiColor | ApiUniColor | ApiRGBColor} oColor - New color of the theme color scheme.
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/ChangeColor.js
 	 */
     ApiThemeColorScheme.prototype.ChangeColor = function(nPos, oColor)
     {
-        if (nPos < 0 || nPos > 12 || (oColor.GetClassType() !== "rgbColor" && oColor.GetClassType() !== "uniColor"))
+        if (nPos < 0 || nPos > 12)
+            return false;
+
+        let unicolor;
+        if (oColor instanceof AscBuilder.ApiColor)
+            unicolor = private_ApiColorToUniColor(oColor);
+        else if (oColor.GetClassType() === "rgbColor" || oColor.GetClassType() === "uniColor")
+            unicolor = oColor.Unicolor;
+
+        if (!unicolor)
             return false;
 
 		this.checkThemeElement(function (colorScheme) {
 			if (nPos <= 5)
-				colorScheme.addColor(nPos, oColor.Unicolor);
+				colorScheme.addColor(nPos, unicolor);
 			else if (nPos > 5)
-				colorScheme.addColor(nPos + 2, oColor.Unicolor)
+				colorScheme.addColor(nPos + 2, unicolor)
 		});
 
         return true;
@@ -11321,6 +11327,11 @@
 			return;
 		
 		api.addBuilderFont(fontName);
+	}
+
+	function private_ApiColorToUniColor(color) {
+		const rgb = color.GetRGB();
+		return Api.RGB(rgb['r'], rgb['g'], rgb['b']).private_createUnifill().fill.color;
 	}
 
     function private_EMU2MM(EMU)

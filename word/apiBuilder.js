@@ -5544,7 +5544,7 @@
 	/**
 	 * Properties used to create a shadow.
 	 * @typedef {Object} ShadowSettings
-	 * @property {ApiUniColor} [color] - The shadow color (black by default).
+	 * @property {ApiColor | ApiUniColor} [color] - The shadow color (black by default).
 	 * @property {number} [transparency=0] - The shadow transparency from 0.0 (opaque) to 1.0 (clear).
 	 * @property {number} [offsetX=0] - The horizontal offset of the shadow measured in points (a positive value offsets to the right).
 	 * @property {number} [offsetY=0] - The vertical offset of the shadow measured in points (a positive value offsets downwards).
