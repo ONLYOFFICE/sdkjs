@@ -8644,6 +8644,10 @@ CPresentation.prototype.Refresh_RecalcData = function (Data) {
 					oSlide.refreshAllContentsFields();
 				}
 			}
+			const view = this.GetOutlineView();
+			if (view) {
+				view.recalcFields();
+			}
 			break;
 		}
 		case AscDFH.historyitem_Presentation_AddSlide:
@@ -8653,6 +8657,10 @@ CPresentation.prototype.Refresh_RecalcData = function (Data) {
 				if (oSlide) {
 					oSlide.refreshAllContentsFields();
 				}
+			}
+			const view = this.GetOutlineView();
+			if (view) {
+				view.recalcFields();
 			}
 			break;
 		}

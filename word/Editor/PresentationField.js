@@ -205,7 +205,20 @@
                     {
                         nFirstSlideNum = oStylesObject.presentation.getFirstSlideNumber();
                     }
-                    if(oStylesObject.slide)
+                    if(oStylesObject.outlineView)
+                    {
+                        const numInfo = oStylesObject.outlineView.getSlideNumPresentationFieldInfo(this.Paragraph);
+                        if(AscFormat.isRealNumber(numInfo.slideIndex) && numInfo.slideIndex > -1)
+                        {
+                            this.SlideNum = numInfo.slideIndex;
+                            sStr = '' + numInfo.slideNum;
+                        }
+                        else
+                        {
+                            sStr = '<#>';
+                        }
+                    }
+                    else if(oStylesObject.slide)
                     {
 											if (oStylesObject.slide.isNote()) {
 												if(oStylesObject.slide.slide)
