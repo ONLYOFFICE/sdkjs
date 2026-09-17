@@ -613,7 +613,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} page
 	 * @param {GoToType} goToType
-	 * @param {number} zoom - 1 = 100% (used only for goToType = "xyz")
+	 * @param {percentage} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
 	 * @param {Rect} rect
 	 * @returns {ApiGoToAction}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGoToAction.js
@@ -626,7 +626,7 @@
 		}
 
 		if (goToType == "xyz") {
-			zoom = AscBuilder.GetNumberParameter(zoom, 100);
+			zoom = AscBuilder.GetNumberParameter(zoom, 1);
 		}
 		else {
 			zoom = null;
@@ -5456,6 +5456,24 @@
 	 */
 	ApiGoToAction.prototype.GetZoom = function() {
 		return this.Action.GetZoom(true);
+	};
+
+	/**
+	 * Sets goto zoom ratio
+	 * @typeofeditors ["PDFE"]
+	 * @param {percentage} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetZoom.js
+	 */
+	ApiGoToAction.prototype.SetZoom = function(zoom) {
+		if ("xyz" == this.GetType()) {
+			this.Action.SetZoom(zoom);
+
+			this.private_OnChange();
+			return true;
+		}
+
+		return false; 
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -12576,6 +12594,7 @@
 	ApiGoToAction.prototype["GetRect"]						= ApiGoToAction.prototype.GetRect;
 	ApiGoToAction.prototype["SetRect"]						= ApiGoToAction.prototype.SetRect;
 	ApiGoToAction.prototype["GetZoom"]						= ApiGoToAction.prototype.GetZoom;
+	ApiGoToAction.prototype["SetZoom"]						= ApiGoToAction.prototype.SetZoom;
 
 	// ApiUriAction
 	ApiUriAction.prototype["GetClassType"]					= ApiUriAction.prototype.GetClassType;
