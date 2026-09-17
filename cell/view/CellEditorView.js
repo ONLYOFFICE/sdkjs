@@ -2124,7 +2124,7 @@ function (window, undefined) {
 		}
 
 		if (opt.fragments && opt.fragments.length > 0) {
-			t.textRender.render(undefined, t._getContentLeft(), dy || 0, t._getContentWidth(), opt.font.getColor());
+			t.textRender.render(undefined, t._getContentLeft(), (dy || 0) + t._getVerticalOffset(), t._getContentWidth(), opt.font.getColor());
 		}
 	};
 
@@ -2156,7 +2156,7 @@ function (window, undefined) {
 		}
 
 		if (begPos !== endPos && !this.isTopLineActive) {
-			top = this.textRender.calcLineOffset(this.topLineIndex);
+			top = this.textRender.calcLineOffset(this.topLineIndex) - this._getVerticalOffset();
 			begInfo = this.textRender.calcCharOffset(Math.min(begPos, endPos));
 			line = this.textRender.getLineInfo(begInfo.lineIndex);
 			topLine = this.textRender.calcLineOffset(begInfo.lineIndex);
@@ -2223,7 +2223,7 @@ function (window, undefined) {
 		var left = 0;
 		var top = 0;
 		if (pos != null && this.textRender) {
-			var _top = this.textRender.calcLineOffset(this.topLineIndex);
+			var _top = this.textRender.calcLineOffset(this.topLineIndex) - this._getVerticalOffset();
 			var _begInfo = this.textRender.calcCharOffset(pos);
 			var _topLine = _begInfo ? this.textRender.calcLineOffset(_begInfo.lineIndex) : null;
 
@@ -2337,6 +2337,9 @@ function (window, undefined) {
 		if (dy !== undefined || redrawText) {
 			this._renderText(y, isExpand);
 		}
+
+		// the text block is shifted by the vertical alignment, the cursor must follow it
+		curTop += asc_round(this._getVerticalOffset() * this.ky);
 
 		curLeft = AscCommon.AscBrowser.convertToRetinaValue(curLeft);
 		curTop = AscCommon.AscBrowser.convertToRetinaValue(curTop);
@@ -2480,11 +2483,11 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._findCursorPosition = function (coord) {
-		return this.textRender.getCharPosByXY(coord.x, coord.y, this.topLineIndex, this.getZoom());
+		return this.textRender.getCharPosByXY(coord.x, coord.y - this._getVerticalOffset(), this.topLineIndex, this.getZoom());
 	};
 
 	CellEditor.prototype._findLineIndex = function (coord) {
-		return this.textRender.getLineByY(coord.y, this.topLineIndex, this.getZoom());
+		return this.textRender.getLineByY(coord.y - this._getVerticalOffset(), this.topLineIndex, this.getZoom());
 	};
 
 	CellEditor.prototype._updateTopLineCurPos = function () {
@@ -2597,6 +2600,31 @@ function (window, undefined) {
 	CellEditor.prototype._getContentHeight = function () {
 		var t = this;
 		return t.bottom - t.top;
+	};
+
+	CellEditor.prototype._getVerticalOffset = function () {
+		if (!this.textFlags || !this.sides || this.textFlags.verticalText || this.getMenuEditorMode()) {
+			return 0;
+		}
+		var linesCount = this.textRender.getLinesCount();
+		if (linesCount <= 0) {
+			return 0;
+		}
+		var free = this.sides.b[this.sides.bi] - this.top - this.textRender.calcLineOffset(linesCount);
+		if (free <= 0) {
+			return 0;
+		}
+		switch (this.textFlags.cellVA) {
+			case Asc.c_oAscVAlign.Top:
+				return 0;
+			case Asc.c_oAscVAlign.Center:
+			case Asc.c_oAscVAlign.Dist:
+			case Asc.c_oAscVAlign.Just:
+				return asc_round(0.5 * free);
+			default:
+				// null is the default vertical alignment in the cell - the same as Bottom
+				return free;
+		}
 	};
 
 	CellEditor.prototype._getContentPosition = function () {

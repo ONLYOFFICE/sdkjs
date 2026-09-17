@@ -359,6 +359,7 @@ function isAllowPasteLink(pastedWb) {
         this.shrinkToFit = false;
         this.merged = null;
         this.textAlign = null;
+        this.cellVA = null;
         this.ctrlKey = null;
         this.shiftKey = null;
         this.readingOrder = null;
@@ -370,6 +371,7 @@ function isAllowPasteLink(pastedWb) {
         oRes.shrinkToFit = this.shrinkToFit;
         oRes.merged = this.merged ? this.merged.clone() : null;
         oRes.textAlign = this.textAlign;
+        oRes.cellVA = this.cellVA;
         oRes.verticalText = this.verticalText;
         oRes.readingOrder = this.readingOrder;
         return oRes;
@@ -10823,6 +10825,7 @@ function isAllowPasteLink(pastedWb) {
             fl.shrinkToFit = fl.wrapText ? false : align.getShrinkToFit();
             fl.merged = c.hasMerged();
             fl.textAlign = c.getAlignHorizontalByValue(align.getAlignHorizontal());
+            fl.cellVA = align.getAlignVertical();
 			fl.readingOrder = align.getReadingOrder();
         }
         return fl;
