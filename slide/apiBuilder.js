@@ -8093,7 +8093,8 @@
 	};
 
 	/**
-	 * Returns an ApiTextRange covering the full text content of the shape, or null if the shape has no text body (use CreateTextRange to create one).
+	 * Returns an ApiTextRange covering the full text content of the shape.
+	 * Creates a text body if the shape does not yet have one.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTextRange|null}
@@ -8103,13 +8104,12 @@
 	ApiDrawing.prototype.GetTextRange = function() {
 		if (this.Drawing.isTable())
 			return null;
-		
-		let docContent = this.Drawing.getDocContent();
-		
-		if (!docContent)
-			return null;
 
-		return new ApiTextRange(docContent, 0, -1);
+		if (!this.Drawing.getDocContent()) {
+			this.Drawing.createTextBodyOnEdit();
+		}
+
+		return new ApiTextRange(this.Drawing.getDocContent(), 0, -1);
 	};
 
 	/**
@@ -8125,28 +8125,6 @@
 			return false;
 
 		return !!this.Drawing.getDocContent();
-	};
-
-	/**
-	 * Creates a text body for the drawing if it does not already exist and returns its full text range.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CPE"]
-	 * @returns {ApiTextRange|null}
-	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/CreateTextRange.js
-	 */
-	ApiDrawing.prototype.CreateTextRange = function() {
-		if (this.Drawing.isTable())
-			return null;
-
-		if (!this.Drawing.getDocContent()) {
-			this.Drawing.createTextBodyOnEdit();
-			if (this.Drawing.style && this.Drawing.style.fontRef) {
-				this.Drawing.style.fontRef.setColor(null);
-			}
-		}
-
-		return new ApiTextRange(this.Drawing.getDocContent(), 0, -1);
 	};
 
     //------------------------------------------------------------------------------------------------------------------
@@ -11123,8 +11101,7 @@
     ApiDrawing.prototype["GetShadow"]                     = ApiDrawing.prototype.GetShadow;
 
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
-	ApiDrawing.prototype["HasTextRange"]						= ApiDrawing.prototype.HasTextRange;
-	ApiDrawing.prototype["CreateTextRange"]					= ApiDrawing.prototype.CreateTextRange;
+	ApiDrawing.prototype["HasTextRange"]					= ApiDrawing.prototype.HasTextRange;
 
 
 	ApiChart.prototype["GetClassType"] = ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
