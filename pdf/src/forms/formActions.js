@@ -298,7 +298,7 @@
         CActionBase.call(this, ACTIONS_TYPES.GoTo);
         this.pageId     = sPageId;
         this.goToType   = nGoToType;
-        this.zoom       = nZoom;
+        this.zoom       = nZoom !== undefined ? nZoom : null;
         this.rect       = aRect; // top right bottom left
     };
     CActionGoTo.prototype = Object.create(CActionBase.prototype);
@@ -367,7 +367,7 @@
         return this.calcedZoom;
     };
 	CActionGoTo.prototype.SetZoom = function(value) {
-		this.zoom = value;
+		this.zoom = value !== undefined ? value : null;
 		this.calcedZoom = null;
 	};
 
