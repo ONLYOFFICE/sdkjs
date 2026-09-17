@@ -690,7 +690,7 @@
                 break;
         }
 
-		this.SetWasChanged(true);
+		this.SetWasChanged(true, false);
         return aActions;
     };
     CBaseField.prototype.GetActions = function(nTriggerType) {
