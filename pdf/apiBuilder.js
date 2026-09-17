@@ -7839,18 +7839,6 @@
 	ApiRichContent.prototype.RemoveElement = AscBuilder.ApiDocumentContent.prototype.RemoveElement;
 
 	/**
-	 * Returns an ApiTextRange object that represents the part of the text contained in the current rich content.
-	 * @memberof ApiRichContent
-	 * @typeofeditors ["PDFE"]
-	 * @param {number} [start=0] - Start character position (0-based, inclusive).
-	 * @param {number} [end] - End character position (0-based, exclusive).
-	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
-	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiRichContent/Methods/GetTextRange.js
-	 */
-	ApiRichContent.prototype.GetTextRange = AscBuilder.ApiDocumentContent.prototype.GetTextRange;
-
-	/**
 	 * Returns an array of rich paragraphs from the current rich content object.
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
@@ -8056,18 +8044,6 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/GetElementsCount.js
 	 */
 	ApiRichParagraph.prototype.GetElementsCount = AscBuilder.ApiParagraph.prototype.GetElementsCount;
-
-	/**
-	 * Returns an ApiTextRange object that represents the part of the text contained in the current rich paragraph.
-	 * @memberof ApiRichParagraph
-	 * @typeofeditors ["PDFE"]
-	 * @param {number} [start=0] - Start character position (0-based, inclusive).
-	 * @param {number} [end] - End character position (0-based, exclusive).
-	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
-	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/GetTextRange.js
-	 */
-	ApiRichParagraph.prototype.GetTextRange = AscBuilder.ApiParagraph.prototype.GetTextRange;
 
 	/**
 	 * Adds an element to the current paragraph.
@@ -8580,18 +8556,6 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRichRun/Methods/GetText.js
 	 */
 	ApiRichRun.prototype.GetText = AscBuilder.ApiRun.prototype.GetText;
-
-	/**
-	 * Returns an ApiTextRange object that represents the part of the text contained in the current rich run.
-	 * @memberof ApiRichRun
-	 * @typeofeditors ["PDFE"]
-	 * @param {number} [start=0] - Start character position (0-based, inclusive).
-	 * @param {number} [end] - End character position (0-based, exclusive).
-	 * @returns {ApiTextRange | null} - returns null if the specified range is empty.
-	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiRichRun/Methods/GetTextRange.js
-	 */
-	ApiRichRun.prototype.GetTextRange = AscBuilder.ApiRun.prototype.GetTextRange;
 
 	/**
 	 * Returns a parent paragraph of the current run.
@@ -12850,7 +12814,7 @@
 	ApiDrawing.prototype["SetLine"]							= ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["SetOutLine"]						= ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
-	ApiDrawing.prototype["HasTextRange"]						= ApiDrawing.prototype.HasTextRange;
+	ApiDrawing.prototype["HasTextRange"]					= ApiDrawing.prototype.HasTextRange;
 	ApiDrawing.prototype["CreateTextRange"]					= ApiDrawing.prototype.CreateTextRange;
 	ApiDrawing.prototype["GetLine"]							= ApiDrawing.prototype.GetLine;
 	ApiDrawing.prototype["SetShadow"]						= ApiDrawing.prototype.SetShadow;
