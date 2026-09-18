@@ -413,12 +413,10 @@
         AscCommon.History.StartNoHistoryMode();
 
         if (isOnOpen == false && typeof(displayValue) == "string" && Asc.editor.isDocumentLoadComplete) {
-            if (!oDoc.checkFieldFont(this, function() {
-                _t.UpdateDisplayValue(displayValue);
-            })) {
-                AscCommon.History.EndNoHistoryMode();
-                return;
-            }
+			oDoc.checkFieldFont(this, function() {
+				_t.private_NeedShapeText();
+				_t.SetNeedRecalc(true);
+			});
 
             if (this.GetType() == AscPDF.FIELD_TYPES.text) {
                 let aChars      = displayValue.codePointsArray();
