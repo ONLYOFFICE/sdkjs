@@ -10593,6 +10593,7 @@
 	 * @param {number} rows - Number of rows. Must be a positive integer.
 	 * @param {number} cols - Number of columns. Must be a positive integer.
 	 * @returns {ApiTable|null}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/InsertTable.js
 	 */
 	ApiDocument.prototype.InsertTable = function(rows, cols)
