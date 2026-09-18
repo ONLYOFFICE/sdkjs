@@ -9694,17 +9694,15 @@ var CPresentation = CPresentation || function(){};
 		AscFonts.initEmbeddedFonts(embeddedFontsToInit, true);
 
 		let _t = this;
-		let isLoaded = false;
 		this.fontLoader.LoadFonts(fontMap,
 			function() {
-				isLoaded = true;
 				_t.loadedFonts = _t.loadedFonts.concat(fontsToLoad);
 				if (callback)
 					callback();
 			}
 		);
-		
-		return isLoaded;
+
+		return false;
 	};
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
