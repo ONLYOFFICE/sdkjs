@@ -190,19 +190,14 @@
 			return;
 		}
 
-		if (AscDFH.historyitem_type_GraphicFrame === textObject.getObjectType() && textObject.graphicObject.IsCellSelection())
+		if (AscDFH.historyitem_type_GraphicFrame === textObject.getObjectType() && textObject.graphicObject.Selection.Use)
 		{
 			if (this.drawing(textObject, true))
 				return;
 
-			let table = textObject.graphicObject;
-			let cells = table.GetSelectionArray();
-			for (let i = 0; i < cells.length; ++i)
-			{
-				table.GetRow(cells[i].Row).GetCell(cells[i].Cell).visit(this);
-				if (this.isStopped())
-					return;
-			}
+			textObject.graphicObject.visit(this, true);
+			if (this.isStopped())
+				return;
 
 			this.drawing(textObject, false);
 			return;
@@ -216,7 +211,7 @@
 		if (isDrawing && this.drawing(textObject, true))
 			return;
 
-		this.visitSelectedParagraphs(docContent);
+		docContent.visit(this, docContent.IsSelectionUse());
 		if (this.isStopped())
 			return;
 
@@ -253,23 +248,6 @@
 		for (let i = 0; i < spTree.length; ++i)
 		{
 			spTree[i].visit(this);
-			if (this.isStopped())
-				return;
-		}
-	};
-	PresentationVisitor.prototype.visitSelectedParagraphs = function(docContent)
-	{
-		if (!docContent.IsSelectionUse())
-		{
-			docContent.visit(this);
-			return;
-		}
-
-		let start = Math.min(docContent.Selection.StartPos, docContent.Selection.EndPos);
-		let end   = Math.max(docContent.Selection.StartPos, docContent.Selection.EndPos);
-		for (let i = start; i <= end; ++i)
-		{
-			docContent.Content[i].visit(this);
 			if (this.isStopped())
 				return;
 		}
