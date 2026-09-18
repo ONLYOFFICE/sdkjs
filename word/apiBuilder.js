@@ -2143,13 +2143,7 @@
 		};
 
 		if (!isAuto && isTheme) {
-			const unifill = new AscFormat.CUniFill();
-			unifill.fill = new AscFormat.CSolidFill();
-			unifill.fill.color = new AscFormat.CUniColor();
-			unifill.fill.color.color = new AscFormat.CSchemeColor();
-			unifill.fill.color.color.id = color.value;
-
-			paraTextPrOptions = { Unifill: unifill };
+			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
 
 		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr(paraTextPrOptions));
@@ -11470,13 +11464,7 @@
 		};
 
 		if (!isAuto && isTheme) {
-			const unifill = new AscFormat.CUniFill();
-			unifill.fill = new AscFormat.CSolidFill();
-			unifill.fill.color = new AscFormat.CUniColor();
-			unifill.fill.color.color = new AscFormat.CSchemeColor();
-			unifill.fill.color.color.id = color.value;
-
-			paraTextPrOptions = { Unifill: unifill };
+			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
 
 		this.Paragraph.SetApplyToAll(true);
@@ -33241,13 +33229,7 @@
 		};
 
 		if (!isAuto && isTheme) {
-			const unifill = new AscFormat.CUniFill();
-			unifill.fill = new AscFormat.CSolidFill();
-			unifill.fill.color = new AscFormat.CUniColor();
-			unifill.fill.color.color = new AscFormat.CSchemeColor();
-			unifill.fill.color.color.id = color.value;
-
-			paraTextPrOptions = { Unifill: unifill };
+			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
 
 		return this.private_ApplyTextPr(paraTextPrOptions);
