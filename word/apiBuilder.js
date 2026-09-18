@@ -900,6 +900,7 @@
 		function GetText(oRun)
 		{
 			var sText = "";
+			var sPlainText = "";
 			var ContentLen = oRun.Content.length;
 
 			for (var CurPos = 0; CurPos < ContentLen; CurPos++)
@@ -916,33 +917,36 @@
 						break;
 					case para_Text :
 					{
-						sText += Item.ToString();
+						sPlainText += Item.ToString();
 						break;
 					}
 					case para_NewLine:
 						if (!this.isHeading)
 						{
 							if (this.Config.convertType === "html")
-								sText += "<br>"
+							{
+								sText += _t.private_EscapeHtml(sPlainText) + "<br>";
+								sPlainText = "";
+							}
 							else
-								sText += " \\\n";
+								sPlainText += " \\\n";
 						}
 						break;
 					case para_Space:
 					{
-						sText += " ";
+						sPlainText += " ";
 						break;
 					}
 					case para_Tab:
 					{
-						sText += "	";
+						sPlainText += "	";
 						break;
 					}
 				}
 
 			}
 
-			return _t.private_EscapeHtml(sText);
+			return sText + _t.private_EscapeHtml(sPlainText);
 		}
 
 		var oCMarkdownConverter    = this;
@@ -1215,7 +1219,10 @@
 
 		var colorHex = private_ColorToHex(textPr.Color);
 		if (!colorHex && textPr.Unifill && textPr.Unifill.getRGBAColor)
+		{
+			textPr.Unifill.check(run.Paragraph.Get_Theme(), run.Paragraph.Get_ColorMap());
 			colorHex = private_ColorToHex(textPr.Unifill.getRGBAColor());
+		}
 		if (colorHex)
 			styles.push("color:" + colorHex);
 
