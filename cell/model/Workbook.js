@@ -1684,6 +1684,7 @@
 				callback && callback();
 				return;
 			}
+			AscCommonExcel.incRecalcId();
 			var notifyData = {type: c_oNotifyType.Dirty, areaData: undefined};
 			if (!g_cCalcRecursion.getIsSheetCreating()) {
 				this._broadscastVolatile(notifyData);

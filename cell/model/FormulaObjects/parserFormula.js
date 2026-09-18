@@ -7453,6 +7453,8 @@ function parserFormula( formula, parent, _ws ) {
 	//mark function, when need reparse and recalculate on custom function change
 	this.unknownOrCustomFunction = null;
 
+	this._noSelfRefRecalcId = 0;
+
 	if (AscFonts.IsCheckSymbols) {
 		AscFonts.FontPickerByCharacter.getFontsByString(this.Formula);
 	}
@@ -7523,10 +7525,14 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	parserFormula.prototype.notify = function(data) {
 		var eventData = {notifyData: data, assemble: null, formula: this};
-		if (data.areaData && g_cCalcRecursion.getIsCellEdited()) {
+		if (data.areaData && this._noSelfRefRecalcId !== g_nRecalcId && g_cCalcRecursion.getIsCellEdited()) {
 			const sFunctionName = this.getFunctionName();
-			if (this._isConditionalFormula(sFunctionName) && AscCommonExcel.checkFormulaContainCell(this, this.parent)) {
-				this.ca = this.isRecursiveCondFormula(sFunctionName);
+			if (this._isConditionalFormula(sFunctionName)) {
+				if (AscCommonExcel.checkFormulaContainCell(this, this.parent)) {
+					this.ca = this.isRecursiveCondFormula(sFunctionName);
+				} else {
+					this._noSelfRefRecalcId = g_nRecalcId;
+				}
 			}
 		}
 		if (AscCommon.c_oNotifyType.Dirty === data.type) {
@@ -8477,6 +8483,7 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 	parserFormula.prototype.parse = function (local, digitDelim, parseResult, ignoreErrors, renameSheetMap, tablesMap, opt_pivotNamesList) {
+		this._noSelfRefRecalcId = 0;
 		var elemArr = [];
 		var ph = {operand_str: null, pCurrPos: 0};
 		var needAssemble = false;
@@ -11888,6 +11895,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	parserFormula.prototype.buildDependencies = function() {
+		this._noSelfRefRecalcId = 0;
 		if (this.isInDependencies) {
 			return;
 		}
@@ -13516,6 +13524,8 @@ function parserFormula( formula, parent, _ws ) {
 
 	const g_cCalcRecursion = new CalcRecursion();
 
+	let g_nRecalcId = 1;
+
 	function parseNum(str) {
 		if (str.indexOf("x") > -1 || str == "" || str.match(/^\s+$/))//exclude hexadecimal number notation from numbers.
 		{
@@ -14390,6 +14400,9 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cNumFormatFirstCell = cNumFormatFirstCell;
 	window['AscCommonExcel'].cNumFormatNone = cNumFormatNone;
 	window['AscCommonExcel'].g_cCalcRecursion = g_cCalcRecursion;
+	window['AscCommonExcel'].incRecalcId = function () {
+		g_nRecalcId++;
+	};
 	window['AscCommonExcel'].g_ProcessShared = false;
 	window['AscCommonExcel'].cReturnFormulaType = cReturnFormulaType;
 	window['AscCommonExcel'].arrayIndexesType = arrayIndexesType;
