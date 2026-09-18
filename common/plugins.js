@@ -1629,7 +1629,7 @@
 							_t.api.onEndBuilderScript(function(result)
 							{
 								if (!result)
-									commandReturnValue = undefined;
+									commandReturnValue = {"onlyoffice_id_error_message" : "The editor rolled back the changes made by the command."};
 								
 								_t.shiftCommand(commandReturnValue);
 							});
