@@ -13168,6 +13168,21 @@
 		return true;
 	};
 	/**
+	 * Replaces the whole text of the current run with the specified text, keeping the run properties.
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {string | number[]} text - The new text of the run, as a string or as an array of character codes.
+	 * @returns {ApiRun} - The current run.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetText.js
+	 */
+	ApiRun.prototype.SetText = function(text)
+	{
+		this.ClearContent();
+		this.AddText(text);
+		return this;
+	};
+	/**
 	 * Adds some text to the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
@@ -23725,6 +23740,28 @@
 		}
 	};
 
+	/**
+	 * Returns the color of a solid fill.
+	 * @memberof ApiFill
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @return {?ApiColor}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/GetColor.js
+	 */
+	ApiFill.prototype.GetColor = function () {
+		const unifill = this.UniFill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.RGB(unifillColor.RGBA.R, unifillColor.RGBA.G, unifillColor.RGBA.B);
+		}
+
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiStroke
@@ -33963,6 +34000,7 @@
 	ApiRun.prototype["AddHyperlink"]                 = ApiRun.prototype.AddHyperlink;
 	ApiRun.prototype["Copy"]                         = ApiRun.prototype.Copy;
 	ApiRun.prototype["RemoveAllElements"]            = ApiRun.prototype.RemoveAllElements;
+	ApiRun.prototype["SetText"]                      = ApiRun.prototype.SetText;
 	ApiRun.prototype["Delete"]                       = ApiRun.prototype.Delete;
 	ApiRun.prototype["GetRange"]                     = ApiRun.prototype.GetRange;
 	ApiRun.prototype["GetTextRange"]                 = ApiRun.prototype.GetTextRange;
@@ -34513,6 +34551,7 @@
 	ApiFill.prototype["GetClassType"]                = ApiFill.prototype.GetClassType;
 	ApiFill.prototype["ToJSON"]                      = ApiFill.prototype.ToJSON;
 	ApiFill.prototype["GetType"]                     = ApiFill.prototype.GetType;
+	ApiFill.prototype["GetColor"]                    = ApiFill.prototype.GetColor;
 
 	ApiStroke.prototype["GetClassType"]              = ApiStroke.prototype.GetClassType;
 	ApiShadow.prototype["GetClassType"]              = ApiShadow.prototype.GetClassType;
