@@ -612,6 +612,20 @@
 	MasterSlide.prototype.isSlideMaster = function () {
 		return true;
 	};
+	MasterSlide.prototype.checkOnDeletePlaceholder = function (placeholdersMap) {
+		for (let layoutIndex = 0; layoutIndex < this.sldLayoutLst.length; ++layoutIndex) {
+			this.sldLayoutLst[layoutIndex].checkOnDeletePlaceholderInSpTree(placeholdersMap);
+		}
+		const presentation = Asc.editor.private_GetLogicDocument();
+		if (!presentation) return;
+		const slides = presentation.Slides;
+		for (let slideIndex = 0; slideIndex < slides.length; ++slideIndex) {
+			const slide = slides[slideIndex];
+			if (slide.getMaster() === this) {
+				slide.checkOnDeletePlaceholderInSpTree(placeholdersMap);
+			}
+		}
+	};
 	MasterSlide.prototype.Get_ColorMap = function () {
 		if (this.clrMap) {
 			return this.clrMap;

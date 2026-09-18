@@ -586,6 +586,17 @@
 	SlideLayout.prototype.isLayout = function () {
 		return true;
 	};
+	SlideLayout.prototype.checkOnDeletePlaceholder = function (placeholdersMap) {
+		const presentation = Asc.editor.private_GetLogicDocument();
+		if (!presentation) return;
+		const slides = presentation.Slides;
+		for (let slideIndex = 0; slideIndex < slides.length; ++slideIndex) {
+			const slide = slides[slideIndex];
+			if (slide.Layout === this) {
+				slide.checkOnDeletePlaceholderInSpTree(placeholdersMap);
+			}
+		}
+	};
 	SlideLayout.prototype.Get_ColorMap = function () {
 		if (this.clrMap) {
 			return this.clrMap;

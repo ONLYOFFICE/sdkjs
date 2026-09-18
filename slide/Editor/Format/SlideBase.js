@@ -538,41 +538,19 @@
 		}
 		return null;
 	};
+	SlideBase.prototype.checkOnDeletePlaceholder = function (placeholdersMap) {
+	};
+	SlideBase.prototype.checkOnDeletePlaceholderInSpTree = function (placeholdersMap) {
+		this.cSld.forEachSp(function (shape) {
+			shape.checkOnDeletePlaceholder(placeholdersMap);
+		});
+	};
 	SlideBase.prototype.removeFromSpTreeByPos = function (pos) {
 		if (pos > -1 && pos < this.cSld.spTree.length) {
 			var oSp = this.cSld.spTree[pos];
-			if (oSp.isPlaceholder() || this.isSlideMaster() || this.isLayout()) {
-				let oMap = {};
-				oMap[oSp.Id] = oSp;
-				let oPres = Asc.editor.private_GetLogicDocument();
-				let aSlides = oPres.Slides;
-				if (this.isSlideMaster()) {
-					for (let nLt = 0; nLt < this.sldLayoutLst.length; ++nLt) {
-						let oLt = this.sldLayoutLst[nLt];
-						oLt.cSld.forEachSp(function (oSp) {
-							oSp.checkOnDeletePlaceholder(oMap);
-						});
-					}
-					for (let nSld = 0; nSld < aSlides.length; ++nSld) {
-						let oSld = aSlides[nSld];
-						if (oSld.getMaster() === this) {
-							oSld.cSld.forEachSp(function (oSp) {
-								oSp.checkOnDeletePlaceholder(oMap);
-							});
-						}
-					}
-				}
-				if (this.isLayout()) {
-					for (let nSld = 0; nSld < aSlides.length; ++nSld) {
-						let oSld = aSlides[nSld];
-						if (oSld.Layout === this) {
-							oSld.cSld.forEachSp(function (oSp) {
-								oSp.checkOnDeletePlaceholder(oMap);
-							});
-						}
-					}
-				}
-			}
+			let oMap = {};
+			oMap[oSp.Id] = oSp;
+			this.checkOnDeletePlaceholder(oMap);
 			this.shapeRemove(pos, 1);
 			const presentation = this.presentation;
 			if (this.isSlide() && presentation) {

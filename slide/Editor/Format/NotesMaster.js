@@ -330,6 +330,17 @@
 	CNotesMaster.prototype.isNoteMaster = function () {
 		return true;
 	};
+	CNotesMaster.prototype.checkOnDeletePlaceholder = function (placeholdersMap) {
+		const presentation = Asc.editor.private_GetLogicDocument();
+		if (!presentation) return;
+		const notes = presentation.notes;
+		for (let noteIndex = 0; noteIndex < notes.length; ++noteIndex) {
+			const note = notes[noteIndex];
+			if (note.Master === this) {
+				note.checkOnDeletePlaceholderInSpTree(placeholdersMap);
+			}
+		}
+	};
 	CNotesMaster.prototype.collectRedrawSlides = function (redrawSlides, force) {
 		redrawSlides.addRedrawSlide(this);
 		const presentation = redrawSlides.presentation;

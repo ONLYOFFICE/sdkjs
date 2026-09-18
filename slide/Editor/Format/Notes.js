@@ -427,7 +427,14 @@
 			body.setRecalculateInfo();
 		}
 	};
-
+	CNotes.prototype.checkOnDeletePlaceholderInSpTree = function (placeholdersMap) {
+		this.cSld.forEachSp(function (shape) {
+			if (shape.isPlaceholder() && shape.getPlaceholderType() === AscFormat.phType_body) {
+				shape.recalculateTransform();
+			}
+			shape.checkOnDeletePlaceholder(placeholdersMap);
+		});
+	};
 
 	function copyMasterPlaceholderToNotes(oN, oMasterSp, bIsSpecialPh) {
 		const sp = oMasterSp.copy(undefined);
