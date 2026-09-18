@@ -1218,32 +1218,36 @@
 			else if (type === Asc.c_oAscSectionBreakType.OddPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"oddPage\");\n";
 		},
-		addTable				: function(prop){
-			let varName = prop.tableId
-				? varRegistry.register(prop.tableId, "table")
-				: varRegistry.inc('table');
-			let width = prop.tableGrid.map(function(num) { return AscCommon.MMToTwips(num, -1) });
-			let styleStr = prop.style ? prop.style : "";
-			let styleVar = varRegistry.inc('tableStyle');
+	addTable : function(prop)
+	{
+		let varName = prop.tableId
+			? varRegistry.register(prop.tableId, "table")
+			: varRegistry.inc('table');
 
-			return "\tlet " + varName + " = (function()\n"
-				+ "\t{\n"
-				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
-				+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
-				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
-				+ "\t\ttable.SetTableLayout(\"autofit\");\n"
-				+ "\t\tlet row = table.GetRow(0);\n"
-				+ "\t\t[" + width.toString() + "].forEach(function(width, index){\n"
-				+ "\t\t\tlet cellColumnFirst = row.GetCell(index);\n"
-				+ "\t\t\tlet cellPr = Api.CreateTableCellPr();\n"
-				+ "\t\t\tcellPr.SetWidth(\"twips\", width);\n"
-				+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
-				+ "\t\t});\n"
-				+ "\t\tdoc.Push(table);\n"
-				+ "\t\ttable.GetRange(0, 0).Select();\n"
-				+ "\t\treturn table;\n"
-				+ "\t}());\n";
-		},
+		let width = prop.tableGrid.map(function(num) {
+			return AscCommon.MMToTwips(num, -1);
+		});
+
+		let styleStr = prop.style ? prop.style : "";
+		let styleVar = varRegistry.inc('tableStyle');
+
+		return "\tlet " + varName + " = (function()\n"
+			+ "\t{\n"
+			+ "\t\tlet table = doc.InsertTable(" + prop.row + ", " + prop.col + ");\n"
+			+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
+			+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
+			+ "\t\ttable.SetTableLayout(\"autofit\");\n"
+			+ "\t\tlet row = table.GetRow(0);\n"
+			+ "\t\t[" + width.toString() + "].forEach(function(width, index){\n"
+			+ "\t\t\tlet cellColumnFirst = row.GetCell(index);\n"
+			+ "\t\t\tlet cellPr = Api.CreateTableCellPr();\n"
+			+ "\t\t\tcellPr.SetWidth(\"twips\", width);\n"
+			+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
+			+ "\t\t});\n"
+			+ "\t\ttable.GetRange(0, 0).Select();\n"
+			+ "\t\treturn table;\n"
+			+ "\t}());\n";
+	},
 		applyTablePr			: function(style)
 		{
 			return "\t(function () {\n"

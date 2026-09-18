@@ -10586,6 +10586,31 @@
 	}
 
 	/**
+	 * Inserts a new table with the specified number of rows and columns at the current cursor position,
+	 * splitting the current paragraph if necessary.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {number} rows - Number of rows. Must be a positive integer.
+	 * @param {number} cols - Number of columns. Must be a positive integer.
+	 * @returns {ApiTable|null}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/InsertTable.js
+	 */
+	ApiDocument.prototype.InsertTable = function(rows, cols)
+	{
+		let _rows = GetIntParameter(rows, null);
+		if (null === _rows || _rows <= 0)
+			throwException(new Error("Rows must be a positive integer, got " + rows));
+
+		let _cols = GetIntParameter(cols, null);
+		if (null === _cols || _cols <= 0)
+			throwException(new Error("Cols must be a positive integer, got " + cols));
+
+		let oTable = this.Document.AddInlineTable(_cols, _rows);
+
+		return oTable ? new ApiTable(oTable) : null;
+	};
+
+	/**
 	 * Moves the cursor to the left.
 	 * @memberof ApiDocument
 	 * @param {number} [count=1] - Number of movements.
@@ -33953,6 +33978,7 @@
 	ApiDocument.prototype["MoveCursorToFooter"]            = ApiDocument.prototype.MoveCursorToFooter;
 	ApiDocument.prototype["MoveCursorToMainDocument"]      = ApiDocument.prototype.MoveCursorToMainDocument;
 	ApiDocument.prototype["InsertParagraphBreak"]          = ApiDocument.prototype.InsertParagraphBreak;
+	ApiDocument.prototype["InsertTable"]                   = ApiDocument.prototype.InsertTable;
 	ApiDocument.prototype["MoveCursorLeft"]                = ApiDocument.prototype.MoveCursorLeft;
 	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;
 	ApiDocument.prototype["MoveCursorUp"]                  = ApiDocument.prototype.MoveCursorUp;
