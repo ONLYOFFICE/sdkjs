@@ -7508,6 +7508,8 @@ function parserFormula( formula, parent, _ws ) {
 
 		return "";
 	};
+	const aExcludeCondFormulas = ["IFERROR", "IFNA", "COUNTIF", "BITLSHIFT", "BITRSHIFT", "DATEDIF"];
+	const aCondFormulas = ["SWITCH", "LOOKUP"];
 	/**
 	 * Checks a formula is conditional.
 	 * @memberof parserFormula
@@ -7516,24 +7518,14 @@ function parserFormula( formula, parent, _ws ) {
 	 * @private
 	 */
 	parserFormula.prototype._isConditionalFormula = function (sFunctionName) {
-		const aExcludeCondFormulas = ["IFERROR", "IFNA", "COUNTIF", "BITLSHIFT", "BITRSHIFT", "DATEDIF"];
-		const aCondFormulas = ["SWITCH", "LOOKUP"];
-
 		return !!sFunctionName && (sFunctionName.includes("IF") || aCondFormulas.includes(sFunctionName)) &&
 			!aExcludeCondFormulas.includes(sFunctionName);
 	};
 	parserFormula.prototype.notify = function(data) {
 		var eventData = {notifyData: data, assemble: null, formula: this};
-		let sFunctionName = this.getFunctionName();
-
-		if (this._isConditionalFormula(sFunctionName) && data.areaData && g_cCalcRecursion.getIsCellEdited()) {
-			let oCell = null;
-			if (this.parent && null != this.parent.nRow && null != this.parent.nCol) {
-				this.ws._getCell(this.parent.nRow, this.parent.nCol, function (oElem) {
-					oCell = oElem;
-				});
-			}
-			if (oCell && oCell.containInFormula()) {
+		if (data.areaData && g_cCalcRecursion.getIsCellEdited()) {
+			const sFunctionName = this.getFunctionName();
+			if (this._isConditionalFormula(sFunctionName) && AscCommonExcel.checkFormulaContainCell(this, this.parent)) {
 				this.ca = this.isRecursiveCondFormula(sFunctionName);
 			}
 		}

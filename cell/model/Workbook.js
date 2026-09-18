@@ -614,10 +614,10 @@
 		//without $
 		//values in areaMap are stored in A1B1 format
 		//this function is only used for getting data from areaMap
-		var res;
-		AscCommonExcel.executeInR1C1Mode(false, function () {
-			res = bbox.getName(AscCommonExcel.referenceType.R);
-		});
+		var oldMode = AscCommonExcel.g_R1C1Mode;
+		AscCommonExcel.g_R1C1Mode = false;
+		var res = bbox.getName(AscCommonExcel.referenceType.R);
+		AscCommonExcel.g_R1C1Mode = oldMode;
 		return res;
 	}
 
@@ -1497,7 +1497,6 @@
 			changedSheet[name] = bbox;
 		},
 		addToChangedCell2: function(sheetId, row, col) {
-			var t = this;
 			if (!this.changedCell) {
 				this.changedCell = {};
 			}
@@ -1508,23 +1507,19 @@
 				this.changedCell[sheetId] = changedSheet;
 			}
 
-			var addChangedSheet = function(row, col) {
-				var cellIndex = getCellIndex(row, col);
-				if (t.isInCalc && undefined === changedSheet[cellIndex]) {
-					if (!t.changedCellRepeated) {
-						t.changedCellRepeated = {};
-					}
-					var changedSheetRepeated = t.changedCellRepeated[sheetId];
-					if (!changedSheetRepeated) {
-						changedSheetRepeated = {};
-						t.changedCellRepeated[sheetId] = changedSheetRepeated;
-					}
-					changedSheetRepeated[cellIndex] = cellIndex;
+			var cellIndex = getCellIndex(row, col);
+			if (this.isInCalc && undefined === changedSheet[cellIndex]) {
+				if (!this.changedCellRepeated) {
+					this.changedCellRepeated = {};
 				}
-				changedSheet[cellIndex] = cellIndex;
-			};
-
-			addChangedSheet(row, col);
+				var changedSheetRepeated = this.changedCellRepeated[sheetId];
+				if (!changedSheetRepeated) {
+					changedSheetRepeated = {};
+					this.changedCellRepeated[sheetId] = changedSheetRepeated;
+				}
+				changedSheetRepeated[cellIndex] = cellIndex;
+			}
+			changedSheet[cellIndex] = cellIndex;
 		},
 		addToChangedCell: function(cell) {
 			this.addToChangedCell2(cell.ws.getId(), cell.nRow, cell.nCol);
@@ -17041,23 +17036,24 @@
 	 * @returns {boolean}
 	 */
 	Cell.prototype.containInFormula = function () {
-		const oThis = this;
-		const oFormulaParsed = this.getFormulaParsed();
+		return checkFormulaContainCell(this.getFormulaParsed(), this);
+	};
+	function checkFormulaContainCell(oFormulaParsed, oCell) {
 		const aOutStack = oFormulaParsed && oFormulaParsed.outStack;
-		if (!aOutStack) {
+		if (!aOutStack || !oCell || null == oCell.nRow || null == oCell.nCol) {
 			return false;
 		}
+		const sWsId = oCell.ws.getId();
 		let bContainsInFormula = false;
 		foreachRefElements(function (oRange) {
-			const sWsId = oRange.worksheet.getId();
-			if (oRange.containCell2(oThis) && sWsId === oThis.ws.getId()) {
+			if (oRange.containCell2(oCell) && oRange.worksheet.getId() === sWsId) {
 				bContainsInFormula = true;
 				return true;
 			}
 		}, aOutStack);
 
 		return bContainsInFormula;
-	};
+	}
 	/**
 	 * Method finds a start cell index of a recursion formula.
 	 * Uses for iterative calculations feature.
@@ -27136,6 +27132,7 @@
 	window['AscCommonExcel'].Workbook = Workbook;
 	window['AscCommonExcel'].Worksheet = Worksheet;
 	window['AscCommonExcel'].Cell = Cell;
+	window['AscCommonExcel'].checkFormulaContainCell = checkFormulaContainCell;
 	window['AscCommonExcel'].Range = Range;
 	window['AscCommonExcel'].DefName = DefName;
 	window['AscCommonExcel'].DependencyGraph = DependencyGraph;
