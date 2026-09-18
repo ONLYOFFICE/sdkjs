@@ -1247,7 +1247,9 @@
 				+ "\t\t});\n"
 				+ "\t\ttable.GetRange(0, 0).Select();\n"
 				+ "\t\treturn table;\n"
-				+ "\t}());\n";
+				+ "\t}());\n"
+				+ "\tif (!" + varName + ") return;\n";
+
 		},
 		applyTablePr			: function(style)
 		{
