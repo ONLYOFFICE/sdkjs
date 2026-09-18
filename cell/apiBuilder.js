@@ -159,7 +159,7 @@
 	 * @property {string | null} FormulaArray - Returns the array formula of the specified range or sets it to this range.
 	 * @property {string} Value2 - Returns the value2 (value without format) from the first cell of the specified range or sets it to this cell.
 	 * @property {string} Text - Returns the text from the first cell of the specified range or sets it to this cell.
-	 * @property {ApiColor | ApiCellColor} FontColor - Sets the text color to the current cell range with the previously created color object.
+	 * @property {ApiColor} FontColor - Sets the text color to the current cell range with the previously created color object.
 	 * @property {boolean} Hidden - Returns or sets the value hiding property.
 	 * @property {number} ColumnWidth - Returns or sets the width of all the columns in the specified range measured in points.
 	 * @property {number} Width - Returns a value that represents the range width measured in points.
@@ -175,7 +175,7 @@
 	 * @property {'none' | 'single' | 'singleAccounting' | 'double' | 'doubleAccounting'} Underline - Sets the type of underline applied to the font.
 	 * @property {boolean} Strikeout - Sets a value that indicates whether the contents of the current cell or cell range are displayed struck through.
 	 * @property {boolean} WrapText - Returns the information about the wrapping cell style or specifies whether the words in the cell must be wrapped to fit the cell size or not.
-	 * @property {ApiColor | ApiCellColor | 'No Fill'} FillColor - Returns or sets the background color of the current cell range.
+	 * @property {ApiColor | 'No Fill'} FillColor - Returns or sets the background color of the current cell range.
 	 * @property {string} NumberFormat - Sets a value that represents the format code for the object.
 	 * @property {ApiRange} MergeArea - Returns the cell or cell range from the merge area.
 	 * @property {ApiRange} CurrentRegion - Returns a range that represents the expanded range around the current range.
@@ -415,29 +415,6 @@
 	 * @see office-js-api/Examples/Enumerations/ParagraphContent.js
 	 */
 	
-	/**
-	 * Class representing a base class for the color types.
-	 * @constructor
-	 * @deprecated since 10.0.0 version. Use ApiColor instead.
-	 */
-	function ApiCellColor(color) {
-		this.color = color;
-	}
-	/**
-	 * Returns a color value in RGB format.
-	 * @memberof ApiCellColor
-	 * @typeofeditors ["CSE"]
-	 * @deprecated since 10.0.0 version. Use ApiColor#GetRGB instead.
-	 * @returns {number}
-	 * @see office-js-api/Examples/{Editor}/ApiCellColor/Methods/GetRGB.js
-	 */
-	ApiCellColor.prototype.GetRGB = function () {
-		if (!this.color) {
-			return 0;
-		}
-		return this.color.getRgb();
-	};
-
 	/**
 	 * Class representing a name.
 	 * @constructor
@@ -683,7 +660,7 @@
 	 * @property {boolean | null} Subscript - The font subscript property.
 	 * @property {boolean | null} Superscript - The font superscript property.
 	 * @property {string | null} Name - The font name.
-	 * @property {ApiColor | ApiCellColor | null} Color - The font color property.
+	 * @property {ApiColor | null} Color - The font color property.
 	 */
 	function ApiFont(object) {
 		this._object = object;
@@ -1084,11 +1061,11 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @deprecated since 10.0.0 version. Use Api#RGB instead.
-	 * @returns {ApiCellColor}
+	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateColorFromRGB.js
 	 */
 	Api.CreateColorFromRGB = function (r, g, b) {
-		return new ApiCellColor(AscCommonExcel.createRgbColor(r, g, b));
+		return Api.RGB(r, g, b);
 	};
 
 	/**
@@ -1097,12 +1074,11 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {PresetColor} sPresetColor - A preset selected from the list of the available color preset names.
 	 * @deprecated since 10.0.0 version. Use Api#Color instead.
-	 * @returns {ApiCellColor}
+	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateColorByName.js
 	 */
 	Api.CreateColorByName = function (sPresetColor) {
-		var rgb = AscFormat.mapPrstColor[sPresetColor];
-		return new ApiCellColor(AscCommonExcel.createRgbColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF));
+		return Api.Color(sPresetColor);
 	};
 
 	/**
@@ -10828,7 +10804,7 @@
 	 * Sets the text color to the current cell range with the previously created color object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The color object which specifies the color to be set to the text in the cell / cell range.
+	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the text in the cell / cell range.
 	 * @returns {boolean} - returns true if the font color was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontColor.js
 	 */
@@ -11314,7 +11290,7 @@
 	 * Sets 'No Fill' when the previously created color object is 'No Fill' or null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor | 'No Fill' | null} color - The color object which specifies the color to be set to the background in the cell / cell range. Pass 'No Fill' or null to clear the background color.
+	 * @param {ApiColor | 'No Fill' | null} color - The color object which specifies the color to be set to the background in the cell / cell range. Pass 'No Fill' or null to clear the background color.
 	 * @returns {boolean} - returns true if the fill color was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFillColor.js
 	 */
@@ -11329,12 +11305,12 @@
 	 * Returns the background color for the current cell range. Returns 'No Fill' when the color of the background in the cell / cell range is null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor|'No Fill'} - return 'No Fill' when the color to the background in the cell / cell range is null.
+	 * @returns {ApiColor|'No Fill'} - return 'No Fill' when the color to the background in the cell / cell range is null.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFillColor.js
 	 */
 	ApiRange.prototype.GetFillColor = function () {
 		var oColor = this.range.getFillColor();
-		return oColor ? new ApiCellColor(oColor) : 'No Fill';
+		return oColor ? toApiColor(oColor) : 'No Fill';
 	};
 	Object.defineProperty(ApiRange.prototype, "FillColor", {
 		set: function (color) {
@@ -11406,7 +11382,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
 	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
-	 * @param {ApiColor | ApiCellColor} oColor - The color object which specifies the color to be set to the cell border.
+	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the cell border.
 	 * @returns {boolean} - returns true if the borders were set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetBorders.js
 	 */
@@ -12839,18 +12815,45 @@
 	};
 
 	function toCoreColor(color) {
-		if (color instanceof ApiCellColor) {
-			return color.color;
-		}
 		if (!(color instanceof ApiColor)) {
 			color = AscBuilder.private_ParseColor(color);
 		}
 		if (!color) {
 			return null;
 		}
+		if (color.IsThemeColor()) {
+			const themeIndex = private_GetExcelThemeIndex(color.value);
+			if (null !== themeIndex) {
+				return AscCommonExcel.g_oColorManager.getThemeColor(themeIndex, color.GetTintAndShade() || null);
+			}
+		}
 
 		const rgb = color.GetRGB();
 		return AscCommonExcel.createRgbColor(rgb['r'], rgb['g'], rgb['b']);
+	}
+
+	function private_GetExcelThemeIndex(schemeIndex) {
+		const map = AscCommonExcel.map_themeExcel_to_themePresentation;
+		for (let themeIndex in map) {
+			if (map[themeIndex] === schemeIndex) {
+				return themeIndex | 0;
+			}
+		}
+		return null;
+	}
+
+	function toApiColor(coreColor) {
+		if (!coreColor) {
+			return null;
+		}
+
+		const schemeIndex = coreColor instanceof AscCommonExcel.ThemeColor
+			? AscCommonExcel.map_themeExcel_to_themePresentation[coreColor.theme]
+			: undefined;
+
+		return undefined !== schemeIndex
+			? new ApiColor('theme', schemeIndex, coreColor.tint)
+			: Api.RGB(coreColor.getR(), coreColor.getG(), coreColor.getB());
 	}
 
 	ApiColor.prototype.private_getThemeSource = function () {
@@ -12886,7 +12889,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number|null} [Field] - The integer offset of the field on which you want to base the filter (from the left of the list; the leftmost field is field one). If {null} provided, clears the AutoFilter for the range.
-	 * @param {string | string[] | ApiColor | ApiCellColor | XlDynamicFilterCriteria} [Criteria1] - The criteria (a string; for example, "101"). Use "=" to find blank fields, "<>" to find non-blank fields, and "><" to select (No Data) fields in data types.
+	 * @param {string | string[] | ApiColor | XlDynamicFilterCriteria} [Criteria1] - The criteria (a string; for example, "101"). Use "=" to find blank fields, "<>" to find non-blank fields, and "><" to select (No Data) fields in data types.
 	 * If this argument is omitted, the criteria is All. If Operator is xlTop10Items, Criteria1 specifies the number of items (for example, "10").
 	 * @param {XlAutoFilterOperator} [Operator] - An XlAutoFilterOperator constant specifying the type of filter.
 	 * @param {string} [Criteria2] - The second criteria (a string). Used with Criteria1 and Operator to construct compound criteria.
@@ -14746,24 +14749,6 @@
 			return this.Drawing.m_sApplicationId;
 
 		return "";
-	};
-
-	//------------------------------------------------------------------------------------------------------------------
-	//
-	// ApiCellColor
-	//
-	//------------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * Returns a type of the ApiCellColor class.
-	 * @memberof ApiCellColor
-	 * @typeofeditors ["CSE"]
-	 * @deprecated since 10.0.0 version. Use ApiColor#GetClassType instead.
-	 * @returns {"color"}
-	 * @see office-js-api/Examples/{Editor}/ApiCellColor/Methods/GetClassType.js
-	 */
-	ApiCellColor.prototype.GetClassType = function () {
-		return "color";
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16926,7 +16911,7 @@
 	 * Returns the font color property of the specified font.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null}
+	 * @returns {ApiColor | null}
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetColor.js
 	 */
@@ -16951,13 +16936,13 @@
 			} else {
 				color = null;
 			}
-			return (color !== null ? new ApiCellColor(color) : null);
+			return (color !== null ? toApiColor(color) : null);
 		} else if (this._object instanceof ApiFormatCondition) {
 			let fontColor = null;
 			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c) {
 				fontColor = this._object.rule.dxf.font.c;
 			}
-			return fontColor ? new ApiCellColor(fontColor) : null;
+			return fontColor ? toApiColor(fontColor) : null;
 		}
 	};
 
@@ -16966,7 +16951,7 @@
 	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} Color - Font color.
+	 * @param {ApiColor} Color - Font color.
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetColor.js
 	 */
@@ -24438,7 +24423,7 @@
 	 * @property {PTCondition} PTCondition - Returns the pivot table condition object.
 	 * @property {XlPivotConditionScope} ScopeType - Returns or sets the scope type for the format condition.
 	 * @property {XlContainsOperator} TextOperator - Returns or sets the text operator for text-based conditions.
-	 * @property {ApiColor | ApiCellColor | 'No Fill'} FillColor - Returns or sets the background color of the format condition.
+	 * @property {ApiColor | 'No Fill'} FillColor - Returns or sets the background color of the format condition.
 	 */
 	function ApiFormatCondition(rule, range, _parent) {
 		this.rule = rule;
@@ -25558,7 +25543,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
 	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
-	 * @param {ApiColor | ApiCellColor} oColor - The color object which specifies the color to be set to the cell border.
+	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the cell border.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetBorders.js
 	 */
@@ -25623,7 +25608,7 @@
 	 * Sets 'No Fill' when previously created color object is null.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The color object that specifies the background color for the format condition.
+	 * @param {ApiColor} oColor - The color object that specifies the background color for the format condition.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFillColor.js
 	 */
@@ -25650,7 +25635,7 @@
 	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
+	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFillColor.js
 	 */
@@ -25660,7 +25645,7 @@
 		}
 
 		var oColor = this.rule.dxf.fill.bg();
-		return oColor ? new ApiCellColor(oColor) : 'No Fill';
+		return oColor ? toApiColor(oColor) : 'No Fill';
 	};
 
 	Object.defineProperty(ApiFormatCondition.prototype, "FillColor", {
@@ -25929,7 +25914,7 @@
 	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
+	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetFillColor.js
 	 */
@@ -25940,7 +25925,7 @@
 	 * Sets 'No Fill' when previously created color object is null.
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The color object that specifies the background color for the format condition.
+	 * @param {ApiColor} oColor - The color object that specifies the background color for the format condition.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetFillColor.js
 	 */
@@ -26312,7 +26297,7 @@
 	 * @property {XlConditionValueTypes} Type - Returns or sets the type of the color scale criterion.
 	 * @property {string} Value - Returns or sets the value of the color scale criterion.
 	 * @property {number} Index - Returns the index indicating which threshold the criterion represents.
-	 * @property {ApiColor | ApiCellColor} Color - Returns or sets the format color of the color scale criterion.
+	 * @property {ApiColor} Color - Returns or sets the format color of the color scale criterion.
 	 */
 	function ApiColorScaleCriterion(cfvo, color, parent, index) {
 		this.cfvo = cfvo;
@@ -26522,7 +26507,7 @@
 	 * Returns the format color of the color scale criterion.
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} An ApiColor object representing the criterion's color, or `null` if no color is set.
+	 * @returns {ApiColor | null} An ApiColor object representing the criterion's color, or `null` if no color is set.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/GetColor.js
 	 */
@@ -26530,14 +26515,14 @@
 		if (!this.color) {
 			return null;
 		}
-		return new ApiCellColor(this.color);
+		return toApiColor(this.color);
 	};
 
 	/**
 	 * Sets the format color for the color scale criterion.
 	 * @memberof ApiColorScaleCriterion
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The ApiColor object specifying the color.
+	 * @param {ApiColor} oColor - The ApiColor object specifying the color.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/SetColor.js
 	 */
@@ -26583,8 +26568,8 @@
 	 * @property {XlDataBarFillType} BarFillType - Returns or sets the bar fill type of the data bar.
 	 * @property {object} MinPoint - Returns the minimum value condition of the data bar.
 	 * @property {object} MaxPoint - Returns the maximum value condition of the data bar.
-	 * @property {ApiColor | ApiCellColor} NegativeBarColor - Returns or sets the negative bar color of the data bar.
-	 * @property {ApiColor | ApiCellColor} NegativeBorderColor - Returns or sets the negative bar border color of the data bar.
+	 * @property {ApiColor} NegativeBarColor - Returns or sets the negative bar color of the data bar.
+	 * @property {ApiColor} NegativeBorderColor - Returns or sets the negative bar border color of the data bar.
 	 * @property {number} PercentMax - Returns or sets the percent maximum value of the data bar.
 	 * @property {number} PercentMin - Returns or sets the percent minimum value of the data bar.
 	 * @property {string} Formula - Returns the formula of the data bar.
@@ -26601,7 +26586,7 @@
 	 * Returns the axis color of the data bar conditional formatting rule.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} The axis color as an ApiColor object, or null if no color is specified.
+	 * @returns {ApiColor | null} The axis color as an ApiColor object, or null if no color is specified.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetAxisColor.js
 	 */
@@ -26613,7 +26598,7 @@
 			oColor = this.rule.aRuleElements[0].AxisColor;
 		}
 		if (oColor) {
-			return new ApiCellColor(oColor);
+			return toApiColor(oColor);
 		}
 		return null;
 	};
@@ -26622,7 +26607,7 @@
 	 * Sets the axis color for the data bar conditional formatting rule.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The axis color as an ApiColor object.
+	 * @param {ApiColor} oColor - The axis color as an ApiColor object.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetAxisColor.js
 	 */
@@ -26899,7 +26884,7 @@
 	 * Returns the bar color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} Returns the ApiColor object representing the bar color, or null if the bar color is not specified.
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar color, or null if the bar color is not specified.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarColor.js
 	 */
@@ -26913,14 +26898,14 @@
 			return null;
 		}
 
-		return new ApiCellColor(dataBarElement.Color);
+		return toApiColor(dataBarElement.Color);
 	};
 
 	/**
 	 * Sets the bar color for the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The ApiColor object representing the bar color.
+	 * @param {ApiColor} oColor - The ApiColor object representing the bar color.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarColor.js
 	 */
@@ -27212,7 +27197,7 @@
 	 * Returns the negative bar color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} Returns the ApiColor object representing the negative bar color, or null if not specified.
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar color, or null if not specified.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarColor.js
 	 */
@@ -27226,14 +27211,14 @@
 			return null;
 		}
 
-		return new ApiCellColor(dataBarElement.NegativeColor);
+		return toApiColor(dataBarElement.NegativeColor);
 	};
 
 	/**
 	 * Sets the negative bar color for the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The ApiColor object for the negative bars.
+	 * @param {ApiColor} oColor - The ApiColor object for the negative bars.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBarColor.js
 	 */
@@ -27268,7 +27253,7 @@
 	 * Returns the negative bar border color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} Returns the ApiColor object representing the negative bar border color, or null if not specified.
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar border color, or null if not specified.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBorderColor.js
 	 */
@@ -27282,14 +27267,14 @@
 			return null;
 		}
 
-		return new ApiCellColor(dataBarElement.NegativeBorderColor);
+		return toApiColor(dataBarElement.NegativeBorderColor);
 	};
 
 	/**
 	 * Sets the negative bar border color for the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The ApiColor object for the negative bar borders.
+	 * @param {ApiColor} oColor - The ApiColor object for the negative bar borders.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBorderColor.js
 	 */
@@ -27353,7 +27338,7 @@
 	 * Returns the bar border color of the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} Returns the ApiColor object representing the bar border color, or null if not specified.
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar border color, or null if not specified.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorderColor.js
 	 */
@@ -27367,14 +27352,14 @@
 			return null;
 		}
 
-		return new ApiCellColor(dataBarElement.BorderColor);
+		return toApiColor(dataBarElement.BorderColor);
 	};
 
 	/**
 	 * Sets the bar border color for the data bar.
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The ApiColor object for the bar borders.
+	 * @param {ApiColor} oColor - The ApiColor object for the bar borders.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarBorderColor.js
 	 */
@@ -29747,7 +29732,7 @@
 	 * Returns the fill color for the top 10 conditional formatting rule.
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} The background color applied by the format condition, or null if none is set.
+	 * @returns {ApiColor | null} The background color applied by the format condition, or null if none is set.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetFillColor.js
 	 */
@@ -29757,7 +29742,7 @@
 	 * Sets the fill color for the top 10 conditional formatting rule.
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The fill color to apply.
+	 * @param {ApiColor} oColor - The fill color to apply.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetFillColor.js
 	 */
@@ -30056,7 +30041,7 @@
 	 * Returns the fill color for the unique values conditional formatting rule.
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiCellColor | null} The background color applied by the format condition, or null if none is set.
+	 * @returns {ApiColor | null} The background color applied by the format condition, or null if none is set.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetFillColor.js
 	 */
@@ -30066,7 +30051,7 @@
 	 * Sets the fill color for the unique values conditional formatting rule.
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiColor | ApiCellColor} oColor - The fill color to apply.
+	 * @param {ApiColor} oColor - The fill color to apply.
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetFillColor.js
 	 */
@@ -30821,8 +30806,6 @@
 	ApiOleObject.prototype["SetApplicationId"]        = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]        = ApiOleObject.prototype.GetApplicationId;
 
-	ApiCellColor.prototype["GetClassType"]            =  ApiCellColor.prototype.GetClassType;
-	ApiCellColor.prototype["GetRGB"]                  =  ApiCellColor.prototype.GetRGB;
 
 
 	ApiName.prototype["GetName"]                 =  ApiName.prototype.GetName;
@@ -32127,7 +32110,6 @@
 	
 	window['AscBuilder']["Cell"] = window['AscBuilder'].Cell = window['AscBuilder'].Cell || {};
 	AscBuilder.Cell["Api"]            = AscBuilder.Cell.Api            = Api;
-	AscBuilder.Cell["ApiCellColor"]   = AscBuilder.Cell.ApiCellColor   = ApiCellColor;
 	AscBuilder.Cell["ApiDrawing"]     = AscBuilder.Cell.ApiDrawing     = ApiDrawing;
 	AscBuilder.Cell["ApiShape"]       = AscBuilder.Cell.ApiShape       = ApiShape;
 	AscBuilder.Cell["ApiImage"]       = AscBuilder.Cell.ApiImage       = ApiImage;

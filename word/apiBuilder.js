@@ -4000,7 +4000,7 @@
 	 * Represents a color that can be applied to text.
 	 * @constructor
 	 */
-	function ApiColor(type, value)
+	function ApiColor(type, value, tintAndShade)
 	{
 		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
 		if (allowedTypes.indexOf(type) === -1) {
@@ -4011,6 +4011,8 @@
 		if (type !== 'auto') {
 			this.value = value;
 		}
+
+		this.tintAndShade = typeof tintAndShade === 'number' && isFinite(tintAndShade) ? Math.max(-1, Math.min(1, tintAndShade)) : 0;
 	}
 
 	/**
@@ -5313,14 +5315,15 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {SchemeColorId} [name="tx1"] The theme color name. If the provided name is not supported, the 'tx1' color will be used.
+	 * @param {number} [tintAndShade=0] The luminance shift from -1 (the darkest shade) to 1 (the lightest tint). 0 keeps the theme color as it is.
 	 * @returns {ApiColor} Instance of ApiColor with 'theme' type.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/ThemeColor.js
 	 */
-	Api.ThemeColor = function (name) {
+	Api.ThemeColor = function (name, tintAndShade) {
 		const index = ApiColor.ThemeColorMap[name] !== undefined
 			? ApiColor.ThemeColorMap[name]
 			: ApiColor.ThemeColorMap['tx1'];
-		return new ApiColor('theme', index);
+		return new ApiColor('theme', index, tintAndShade);
 	};
 
 	function private_IsHexString(s) {
@@ -24192,10 +24195,46 @@
 			'theme': this.private_resolveThemeColor(),
 		};
 
-		return (this.type in colorMap)
+		const packed = (this.type in colorMap)
 			? colorMap[this.type]
 			: 0x000000FF;
+
+		return private_ApplyTintAndShade(packed, this.tintAndShade);
 	};
+
+	function private_AddTintAndShadeMods(unicolor, tintAndShade) {
+		if (!tintAndShade)
+			return;
+
+		const scale = 100000;
+		if (tintAndShade < 0) {
+			unicolor.addColorMod(new AscFormat.CColorMod('lumMod', ((1 + tintAndShade) * scale) >> 0));
+			return;
+		}
+
+		unicolor.addColorMod(new AscFormat.CColorMod('lumMod', ((1 - tintAndShade) * scale) >> 0));
+		unicolor.addColorMod(new AscFormat.CColorMod('lumOff', (tintAndShade * scale) >> 0));
+	}
+
+	function private_ApplyTintAndShade(packed, tintAndShade) {
+		if (!tintAndShade || null === packed)
+			return packed;
+
+		const modifiers = new AscFormat.CColorModifiers();
+		const hsl = {H : 0, S : 0, L : 0};
+		modifiers.RGB2HSL((packed >> 24) & 0xFF, (packed >> 16) & 0xFF, (packed >> 8) & 0xFF, hsl);
+
+		const maxLuminance = 255;
+		hsl.L = tintAndShade < 0
+			? hsl.L * (1 + tintAndShade)
+			: hsl.L * (1 - tintAndShade) + (maxLuminance - maxLuminance * (1 - tintAndShade));
+		hsl.L >>= 0;
+
+		const rgb = {R : 0, G : 0, B : 0};
+		modifiers.HSL2RGB(hsl, rgb, true);
+
+		return (rgb.R & 0xFF) << 24 | (rgb.G & 0xFF) << 16 | (rgb.B & 0xFF) << 8 | (packed & 0xFF);
+	}
 
 	ApiColor.prototype.private_getThemeSource = function () {
 		const logicDocument = private_GetLogicDocument();
@@ -24259,6 +24298,7 @@
 		if (isTheme) {
 			color = new AscFormat.CSchemeColor();
 			color.id = this.value;
+			private_AddTintAndShadeMods(unicolor, this.tintAndShade);
 		} else {
 			color = new AscFormat.CRGBColor();
 			const components = this.GetRGBA();
@@ -24286,6 +24326,19 @@
 	 */
 	ApiColor.prototype.GetClassType = function () {
 		return 'color';
+	};
+
+	/**
+	 * Returns the luminance shift applied to the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @since 10.0.0
+	 * @returns {number} The shift from -1 (the darkest shade) to 1 (the lightest tint), 0 when the color is not shifted.
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetTintAndShade.js
+	 */
+	ApiColor.prototype.GetTintAndShade = function () {
+		return this.tintAndShade;
 	};
 
 	/**
@@ -24440,6 +24493,7 @@
 
 		if (this.type === 'theme') {
 			oJSON['color']['value'] = this.value;
+			oJSON['color']['tintAndShade'] = this.tintAndShade;
 			return JSON.stringify(oJSON);
 		}
 
@@ -24494,7 +24548,7 @@
 
 		if (colorType === 'theme') {
 			if (AscFormat.isRealNumber(value)) {
-				return new ApiColor('theme', value);
+				return new ApiColor('theme', value, jsonObject.color.tintAndShade);
 			}
 		}
 
@@ -34506,6 +34560,7 @@
 	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
 	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
 	ApiColor.prototype["GetThemeName"] = ApiColor.prototype.GetThemeName;
+	ApiColor.prototype["GetTintAndShade"] = ApiColor.prototype.GetTintAndShade;
 	ApiColor.prototype["ToJSON"] = ApiColor.prototype.ToJSON;
 	ApiColor.prototype["FromJSON"] = ApiColor.prototype.FromJSON;
 
