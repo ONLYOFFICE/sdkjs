@@ -5682,14 +5682,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			if (_arg1 instanceof cError) {
 				return _arg1;
 			}
-			var res = _arg0.toString().concat(_arg1.toString());
 			// Excel caps a string at the cell limit and keeps the beginning. Capping here, where the string
-			// is produced, means every function reading the result already sees the capped one.
+			// is produced, means every function reading the result already sees the capped one; cutting the
+			// pieces rather than the joined string keeps the oversized one from being built at all.
+			var s0 = _arg0.toString(), s1 = _arg1.toString();
 			var maxLen = Asc.c_oAscMaxCellOrCommentLength;
-			if (res.length > maxLen) {
-				res = res.substring(0, maxLen);
+			if (s0.length + s1.length > maxLen) {
+				if (s0.length > maxLen) {
+					s0 = s0.substring(0, maxLen);
+				}
+				s1 = s1.substring(0, maxLen - s0.length);
 			}
-			return new cString(res);
+			return new cString(s0 + s1);
 		};
 
 		if(bIsSpecialFunction){

@@ -3105,6 +3105,9 @@ CellFormat.prototype =
         var cacheKey, cacheVal;
         if (!opt_withoutCache) {
             cacheKey = number + '-' + nValType + '-' + dDigitsCount + '-' + lcid;
+            if (opt_noWidthLimit) {
+                cacheKey += '-n';
+            }
             cacheVal = this.formatCache[cacheKey];
             if(null != cacheVal)
             {

@@ -624,6 +624,18 @@ function (window, undefined) {
 		// return new cNumber(arg0.toLocaleString().charCodeAt());
 	};
 
+	function appendCapped(acc, s, n) {
+		const room = MAX_CELL_TEXT - acc.length;
+		if (room <= 0 || 0 === s.length) {
+			return acc;
+		}
+		if (n > 1) {
+			n = Math.min(n, Math.ceil(room / s.length));
+			s = 1 === n ? s : s.repeat(n);
+		}
+		return s.length > room ? acc + s.substring(0, room) : acc + s;
+	}
+	
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -653,8 +665,7 @@ function (window, undefined) {
 			if (argI instanceof cError) {
 				return argI;
 			} else if (argI instanceof cArray) {
-				//reduceLogical folds head + constant tail; the tail string is repeated n times. The repeat
-				//count is clamped to the cell limit so a full column cannot expand into a huge string.
+				//reduceLogical folds head + constant tail; the tail string is repeated n times
 				sResult = argI.reduceLogical(function (acc, elem, n) {
 					if (errElem) {
 						return acc;
@@ -663,22 +674,14 @@ function (window, undefined) {
 						errElem = elem;
 						return acc;
 					}
-					var s = elem.toLocaleString();
-					if (s.length > 0 && n > 1 && acc.length + s.length * n > MAX_CELL_TEXT) {
-						n = Math.max(1, Math.ceil((MAX_CELL_TEXT - acc.length) / s.length));
-					}
-					return acc + (n === 1 ? s : s.repeat(n));
+					return appendCapped(acc, elem.toLocaleString(), n);
 				}, sResult);
 				if (errElem) {
 					return errElem;
 				}
 			} else {
-				sResult += argI.toLocaleString();
+				sResult = appendCapped(sResult, argI.toLocaleString(), 1);
 			}
-		}
-		//CONCATENATE truncates like "&", it does not fail (measured)
-		if (sResult.length > MAX_CELL_TEXT) {
-			sResult = sResult.substring(0, MAX_CELL_TEXT);
 		}
 		return new cString(sResult);
 	};
