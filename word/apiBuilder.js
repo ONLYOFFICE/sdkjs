@@ -1172,10 +1172,10 @@
 				{
 					if (!sVertAlgnNextRun && !sVertAlgnPrevRun)
 						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'wholly');
-					else if (!sVertAlgnPrevRun || !isEqualTxPr.call(this, oRun, oRunNext))
+					else if (!sVertAlgnPrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
 					{
 						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open');
-						if (!isUnderlineNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+						if (!sVertAlgnNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 						{
 							sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
 						}
