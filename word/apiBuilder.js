@@ -751,7 +751,7 @@
 
 		var sOutputText = '';
 		if (sType === 'html')
-			sOutputText += link ? '<a href="' + link + '">' : '<a>';
+			sOutputText += link ? '<a href="' + this.private_EscapeHtml(link) + '">' : '<a>';
 		else
 			sOutputText += '[';
 
