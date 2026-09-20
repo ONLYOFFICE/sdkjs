@@ -324,7 +324,7 @@
 			case 'open':
 				if (!sStyle)
 					return sHtmlTag + sText;
-				return sHtmlTag.replace('>', ' style="' + sStyle + ';">');
+				return sHtmlTag.replace('>', ' style="' + sStyle + ';">') + sText;
 			case 'close':
 				return sText + sHtmlTag.replace('<', '</');
 			case 'wholly':
