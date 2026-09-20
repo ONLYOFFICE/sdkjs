@@ -741,9 +741,17 @@
 	};
 	CMarkdownConverter.prototype.HandleHyperlink = function(oHyperlink, sType)
 	{
+		let link = oHyperlink.GetLinkedText();
+		if (!link)
+		{
+			let anchor = oHyperlink.ParaHyperlink.GetAnchor();
+			if (anchor)
+				link = '#' + anchor;
+		}
+
 		var sOutputText = '';
 		if (sType === 'html')
-			sOutputText += '<a href="' + oHyperlink.GetLinkedText() + '">';
+			sOutputText += link ? '<a href="' + link + '">' : '<a>';
 		else
 			sOutputText += '[';
 
@@ -755,7 +763,7 @@
 		if (sType === 'html')
 			sOutputText += '</a>';
 		else
-			sOutputText += ']' + '(' + oHyperlink.GetLinkedText() + ')';
+			sOutputText += ']' + '(' + link + ')';
 
 		return sOutputText;
 	};
