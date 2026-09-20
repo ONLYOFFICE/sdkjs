@@ -845,6 +845,7 @@
 		function GetTextWithPicture(oRun)
 		{
 			var sText = '';
+			var sPlainText = '';
 
 			var ContentLen = oRun.Run.Content.length;
 
@@ -859,14 +860,18 @@
 					{
 						if (oCMarkdownConverter.Config.drawingPlaceholders)
 						{
-							sText += String.fromCharCode(AscBuilder.CMarkdownConverter.DrawingPlaceholder);
+							sPlainText += String.fromCharCode(AscBuilder.CMarkdownConverter.DrawingPlaceholder);
 						}
 						else if (Item.IsPicture())
 						{
+							let url = oCMarkdownConverter.Config.base64img ? Item.GraphicObj.getBase64Img() : Item.GraphicObj.getImageUrl();
 							if (sType === 'markdown')
-								sText += oCMarkdownConverter.Config.base64img ? '![](' + Item.GraphicObj.getBase64Img() + ')' : '![](' + Item.GraphicObj.getImageUrl() + ')';
+								sPlainText += '![](' + url + ')';
 							else if (sType === 'html')
-								sText += oCMarkdownConverter.Config.base64img ? '<img src="' + Item.GraphicObj.getBase64Img() + '" alt="img">' : '<img src="' + Item.GraphicObj.getImageUrl() + '" alt="img">';
+							{
+								sText += _t.private_EscapeHtml(sPlainText) + '<img src="' + _t.private_EscapeHtml(url) + '" alt="img">';
+								sPlainText = '';
+							}
 						}
 						break;
 					}
@@ -878,32 +883,35 @@
 					}
 					case para_Text :
 					{
-						sText += Item.ToString();
+						sPlainText += Item.ToString();
 						break;
 					}
 					case para_NewLine:
 						if (!this.isHeading)
 						{
 							if (this.Config.convertType === "html")
-								sText += "<br>"
+							{
+								sText += _t.private_EscapeHtml(sPlainText) + "<br>";
+								sPlainText = '';
+							}
 							else
-								sText += " \\\n";
+								sPlainText += " \\\n";
 						}
 						break;
 					case para_Space:
 					{
-						sText += " ";
+						sPlainText += " ";
 						break;
 					}
 					case para_Tab:
 					{
-						sText += "	";
+						sPlainText += "	";
 						break;
 					}
 				}
 			}
 
-			return sText;
+			return sText + _t.private_EscapeHtml(sPlainText);
 		}
 		function GetText(oRun)
 		{
