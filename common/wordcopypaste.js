@@ -2703,6 +2703,15 @@ CopyProcessor.prototype =
 	}
 };
 
+function GetPasteHyperlinkAnchor(node)
+{
+	let href = node.getAttribute("href");
+	if (!href || "#" !== href.charAt(0))
+		return null;
+
+	let anchor = href.substring(1);
+	return anchor ? anchor : "_top";
+}
 function CopyPasteCorrectString(str)
 {
     /*
@@ -13435,7 +13444,10 @@ PasteProcessor.prototype =
 							isPasteHyperlink = false;
 						}
 						if (isPasteHyperlink) {
-							let HyperProps = new Asc.CHyperlinkProperty({Text: text, Value: href, ToolTip: title});
+							let anchor = GetPasteHyperlinkAnchor(child);
+							let HyperProps = new Asc.CHyperlinkProperty(anchor
+								? {Text: text, Anchor: anchor, ToolTip: title}
+								: {Text: text, Value: href, ToolTip: title});
 							let oCurPar = oShapeContent.GetLastParagraph();
 							oCurPar.MoveCursorToEndPos();
 							oCurPar.AddHyperlink(HyperProps);
@@ -13666,7 +13678,11 @@ PasteProcessor.prototype =
 								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
 								oHyperlink = new ParaHyperlink();
 								oHyperlink.SetParagraph(oThis.oCurPar);
-								oHyperlink.Set_Value(href);
+								let anchor = GetPasteHyperlinkAnchor(child);
+								if (anchor)
+									oHyperlink.SetAnchor(anchor);
+								else
+									oHyperlink.Set_Value(href);
 								if (null != title) {
 									oHyperlink.SetToolTip(title);
 								}
