@@ -749,7 +749,7 @@
 
 		for (var nElm = 0, nElmsCount = oHyperlink.GetElementsCount(); nElm < nElmsCount; nElm++)
 		{
-			sOutputText += this.HandleChildElement(oHyperlink.GetElement(nElm));
+			sOutputText += this.HandleChildElement(oHyperlink.GetElement(nElm), sType);
 		}
 
 		if (sType === 'html')
