@@ -1233,8 +1233,9 @@
 
 			return "\tlet " + varName + " = (function()\n"
 				+ "\t{\n"
-				+ "\t\tlet table = doc.InsertTable(" + prop.row + ", " + prop.col + ");\n"
+				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
 				+ "\t\tif (!table) return null;\n"
+				+ "\t\tdoc.InsertContent([table])\n"
 				+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
 				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
 				+ "\t\ttable.SetTableLayout(\"autofit\");\n"
@@ -1245,7 +1246,7 @@
 				+ "\t\t\tcellPr.SetWidth(\"twips\", width);\n"
 				+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
 				+ "\t\t});\n"
-				+ "\t\ttable.GetRange(0, 0).Select();\n"
+				+ "\t\ttable.GetRange(0, 0).MoveCursorToPos(0);\n"
 				+ "\t\treturn table;\n"
 				+ "\t}());\n"
 				+ "\tif (!" + varName + ") return;\n";
