@@ -159,8 +159,6 @@
 				{
 					_t.addStepData(e.IsShift() ? "moveToPrevCell" : "moveToNextCell", [{}]);
 				}
-
-				_t.lastTableCell = oCell;
 			}
 			else if (e.KeyCode === 13) // Enter
 			{
@@ -198,7 +196,6 @@
 
 				let oPrevCell = _t.lastTableCell;
 				let oCurCell  = private_getCurrentTableCell(_t);
-				_t.lastTableCell = oCurCell;
 
 				if (oPrevCell && oCurCell && oPrevCell !== oCurCell && !e.IsShift() && !e.IsCtrl())
 				{
@@ -238,7 +235,6 @@
 
 				let oPrevCell = _t.lastTableCell;
 				let oCurCell  = private_getCurrentTableCell(_t);
-				_t.lastTableCell = oCurCell;
 
 				if (oPrevCell && oCurCell && oPrevCell !== oCurCell && !e.IsShift() && !e.IsCtrl())
 				{
@@ -272,6 +268,8 @@
 			else if (e.KeyCode === 145) // Scroll Lock
 			{
 			}
+
+			_t.lastTableCell = private_getCurrentTableCell(_t);
 		};
 	};
 	MacroRecorder.prototype.stop = function()
@@ -2032,7 +2030,7 @@
 			let type = data.type;
 			let reg = private_getTableVar(id);
 
-			if (!type || type === c_oAscTableSelectionType.Table) {
+			if (type === undefined || type === c_oAscTableSelectionType.Table) {
 				return reg.declaration + "\t" + reg.varName + ".Select();\n";
 			}
 			// else if (type === c_oAscTableSelectionType.Row) {
