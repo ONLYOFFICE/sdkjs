@@ -2472,6 +2472,50 @@
 	};
 
 	/**
+	 * Moves the cursor to the next table cell.
+	 * @memberof ApiPresentation
+	 * @param {number} [count=1] - Number of cells to move through.
+	 * @returns {boolean}
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveToNextCell.js
+	 */
+	ApiPresentation.prototype.MoveToNextCell = function(count)
+	{
+		count = GetIntParameter(count, 1);
+		if (count <= 0)
+			AscBuilder.throwException(new Error('Argument "count" must be a positive integer, got ' + count));
+
+		for (let i = 0; i < count; ++i)
+		{
+			this.Presentation.MoveCursorToCell(true);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves the cursor to the previous table cell.
+	 * @memberof ApiPresentation
+	 * @param {number} [count=1] - Number of cells to move through.
+	 * @returns {boolean}
+	 * @typeofeditors ["CPE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveToPrevCell.js
+	 */
+	ApiPresentation.prototype.MoveToPrevCell = function(count)
+	{
+		count = GetIntParameter(count, 1);
+		if (count <= 0)
+			AscBuilder.throwException(new Error('Argument "count" must be a positive integer, got ' + count));
+
+		for (let i = 0; i < count; ++i)
+		{
+			this.Presentation.MoveCursorToCell(false);
+		}
+		return true;
+	};
+
+	/**
 	 * Add text to the document on the cursor position.
 	 * @memberof ApiPresentation
 	 * @param {string} text - The text to add to document.
@@ -10741,6 +10785,8 @@
 	ApiPresentation.prototype["MoveCursorRight"]          = ApiPresentation.prototype.MoveCursorRight;
 	ApiPresentation.prototype["MoveCursorUp"]             = ApiPresentation.prototype.MoveCursorUp;
 	ApiPresentation.prototype["MoveCursorDown"]           = ApiPresentation.prototype.MoveCursorDown;
+	ApiPresentation.prototype["MoveToNextCell"]           = ApiPresentation.prototype.MoveToNextCell;
+	ApiPresentation.prototype["MoveToPrevCell"]           = ApiPresentation.prototype.MoveToPrevCell;
 	ApiPresentation.prototype["EnterText"]                = ApiPresentation.prototype.EnterText;
 	ApiPresentation.prototype["InsertParagraphBreak"]     = ApiPresentation.prototype.InsertParagraphBreak;
 	ApiPresentation.prototype["Search"]                   = ApiPresentation.prototype.Search;

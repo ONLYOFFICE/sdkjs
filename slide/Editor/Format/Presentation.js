@@ -4658,7 +4658,16 @@ CPresentation.prototype.MoveCursorToXY = function (X, Y, AddToSelect) {
 };
 
 CPresentation.prototype.MoveCursorToCell = function (bNext) {
+	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+		return;
 
+	let oController = this.GetCurrentController();
+	if (!oController)
+		return;
+
+	let oContent = oController.getTargetDocContent(undefined, true);
+	if (oContent instanceof CTable)
+		oContent.MoveCursorToCell(bNext);
 };
 
 /**

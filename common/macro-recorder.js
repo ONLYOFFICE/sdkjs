@@ -108,6 +108,8 @@
 		this.isFirstAction = true;
 		varRegistry.reset();
 
+		this.lastTableCell = private_getCurrentTableCell(this);
+
 		this.initEvents();
 		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
 
@@ -152,15 +154,13 @@
 				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word && _t.editor.editorId !== AscCommon.c_oEditorId.Presentation)
 					return;
 
-				let doc = _t.editor.getLogicDocument();
-				if (doc.GetCurrentTable())
+				let oCell = private_getCurrentTableCell(_t);
+				if (oCell)
 				{
-					_t.addStepData("moveCursorRight", [{
-						isRtl:			false,
-						isAddSelect:	e.IsShift(),
-						isWord:			e.IsCtrl()
-					}]);
+					_t.addStepData(e.IsShift() ? "moveToPrevCell" : "moveToNextCell", [{}]);
 				}
+
+				_t.lastTableCell = oCell;
 			}
 			else if (e.KeyCode === 13) // Enter
 			{
@@ -196,11 +196,22 @@
 					? "moveCursorRight"
 					: "moveCursorLeft"
 
-				_t.addStepData(type, [{
-					isRtl:			isRtl,
-					isAddSelect:	e.IsShift(),
-					isWord:			e.IsCtrl()
-				}]);
+				let oPrevCell = _t.lastTableCell;
+				let oCurCell  = private_getCurrentTableCell(_t);
+				_t.lastTableCell = oCurCell;
+
+				if (oPrevCell && oCurCell && oPrevCell !== oCurCell)
+				{
+					_t.addStepData(type === "moveCursorRight" ? "moveToNextCell" : "moveToPrevCell", [{}]);
+				}
+				else
+				{
+					_t.addStepData(type, [{
+						isRtl:			isRtl,
+						isAddSelect:	e.IsShift(),
+						isWord:			e.IsCtrl()
+					}]);
+				}
 			}
 			else if (e.KeyCode === 38) // Top Arrow
 			{
@@ -225,11 +236,22 @@
 					? "moveCursorLeft"
 					: "moveCursorRight"
 
-				_t.addStepData(type, [{
-					isRtl:			isRtl,
-					isAddSelect:	e.IsShift(),
-					isWord:			e.IsCtrl()
-				}]);
+				let oPrevCell = _t.lastTableCell;
+				let oCurCell  = private_getCurrentTableCell(_t);
+				_t.lastTableCell = oCurCell;
+
+				if (oPrevCell && oCurCell && oPrevCell !== oCurCell)
+				{
+					_t.addStepData(type === "moveCursorRight" ? "moveToNextCell" : "moveToPrevCell", [{}]);
+				}
+				else
+				{
+					_t.addStepData(type, [{
+						isRtl:			isRtl,
+						isAddSelect:	e.IsShift(),
+						isWord:			e.IsCtrl()
+					}]);
+				}
 			}
 			else if (e.KeyCode === 40) // Bottom Arrow
 			{
@@ -477,6 +499,15 @@
 			},
 			action: ACTION.EXIT
 		},
+		{
+			prevType: "SelectTable",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "moveToNextCell",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
 	];
 	MacroRecorder.prototype.filterAction = function(type, additional)
 	{
@@ -542,6 +573,8 @@
 				&& type !== 'moveCursorRight'
 				&& type !== 'moveCursorUp'
 				&& type !== 'moveCursorDown'
+				&& type !== 'moveToNextCell'
+				&& type !== 'moveToPrevCell'
 				&& type !== 'SelectDrawing'
 				&& type !== 'SetTableBorder'
 			)
@@ -844,6 +877,26 @@
 			}
 		}
 		return "unknown";
+	}
+
+	function private_getCurrentTableCell(recorder) {
+		let doc = recorder.editor.getLogicDocument();
+		if (!doc)
+			return null;
+
+		let oTable = null;
+		if (recorder.editor.editorId === AscCommon.c_oEditorId.Word)
+		{
+			oTable = doc.GetCurrentTable();
+		}
+		else if (recorder.editor.editorId === AscCommon.c_oEditorId.Presentation)
+		{
+			let oController = doc.GetCurrentController();
+			let oContent = oController && oController.getTargetDocContent(undefined, true);
+			oTable = (oContent instanceof CTable) ? oContent : null;
+		}
+
+		return oTable ? oTable.CurCell : null;
 	}
 
 	function sameConditional(a, b, ignoreRtl) {
@@ -1446,6 +1499,12 @@
 
 			return text;
 		},
+		moveToNextCell			: function(arrData){
+			return "\tdoc.MoveToNextCell(" + arrData.length + ");\n";
+		},
+		moveToPrevCell			: function(arrData){
+			return "\tdoc.MoveToPrevCell(" + arrData.length + ");\n";
+		},
 		moveCursorUp			: function(arrData){
 			let data = groupDataForCursor(arrData, true);
 			let text = "";
@@ -1965,10 +2024,10 @@
 			let reg = private_getTableVar(id);
 
 			if (!type || type === c_oAscTableSelectionType.Table) {
-				return reg.declaration + "\ttable.Select()\n"
+				return reg.declaration + "\t" + reg.varName + ".Select();\n";
 			}
 			else if (type === c_oAscTableSelectionType.Row) {
-				return reg.declaration + "\ttable.GetSelectedRows().forEach(function(row){console.log(row)})"
+				return reg.declaration + "\t" + reg.varName + ".GetSelectedRows().forEach(function(row){row.Select()})"
 			}
 			else if (type === c_oAscTableSelectionType.Column) {
 
@@ -2185,6 +2244,8 @@
 	// DEActionMap[AscDFH.historydescription_Document_CutHotKey]				= wordActions;
 	DEActionMap['moveCursorLeft']												= wordActions.moveCursorLeft;
 	DEActionMap['moveCursorRight']												= wordActions.moveCursorRight;
+	DEActionMap['moveToNextCell']												= wordActions.moveToNextCell;
+	DEActionMap['moveToPrevCell']												= wordActions.moveToPrevCell;
 	DEActionMap['moveCursorUp']												= wordActions.moveCursorUp;
 	DEActionMap['moveCursorDown']												= wordActions.moveCursorDown;
 	DEActionMap['remove']														= wordActions.remove;
@@ -3607,6 +3668,12 @@
 
 			return text;
 		},
+		moveToNextCell			: function(arrData){
+			return "\tpresentation.MoveToNextCell(" + arrData.length + ");\n";
+		},
+		moveToPrevCell			: function(arrData){
+			return "\tpresentation.MoveToPrevCell(" + arrData.length + ");\n";
+		},
 		moveCursorUp			: function(arrData){
 			let data = groupDataForCursor(arrData, true);
 			let text = "";
@@ -3713,6 +3780,8 @@
 	PEActionMap["SetCellWidth"]														= presActions.setCellWidth;
 	PEActionMap['moveCursorLeft']													= presActions.moveCursorLeft;
 	PEActionMap['moveCursorRight']													= presActions.moveCursorRight;
+	PEActionMap['moveToNextCell']													= presActions.moveToNextCell;
+	PEActionMap['moveToPrevCell']													= presActions.moveToPrevCell;
 	PEActionMap['moveCursorUp']														= presActions.moveCursorUp;
 	PEActionMap['moveCursorDown']													= presActions.moveCursorDown;
 	PEActionMap[AscDFH.historydescription_Document_AddLetter]						= presActions.addLetter;

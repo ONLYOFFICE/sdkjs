@@ -10679,6 +10679,50 @@
 	};
 
 	/**
+	 * Moves the cursor to the next table cell.
+	 * @memberof ApiDocument
+	 * @param {number} [count=1] - Number of cells to move through.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveToNextCell.js
+	 */
+	ApiDocument.prototype.MoveToNextCell = function(count)
+	{
+		count = GetIntParameter(count, 1);
+		if (count <= 0)
+			throwException(new Error('Argument "count" must be a positive integer, got ' + count));
+
+		for (let i = 0; i < count; ++i)
+		{
+			this.Document.MoveCursorToCell(true);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves the cursor to the previous table cell.
+	 * @memberof ApiDocument
+	 * @param {number} [count=1] - Number of cells to move through.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveToPrevCell.js
+	 */
+	ApiDocument.prototype.MoveToPrevCell = function(count)
+	{
+		count = GetIntParameter(count, 1);
+		if (count <= 0)
+			throwException(new Error('Argument "count" must be a positive integer, got ' + count));
+
+		for (let i = 0; i < count; ++i)
+		{
+			this.Document.MoveCursorToCell(false);
+		}
+		return true;
+	};
+
+	/**
 	 * Moves a cursor to the start of the specified page in the document.
 	 * @memberof ApiDocument
 	 * @param {number} index - The page index.
@@ -33905,6 +33949,8 @@
 	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;
 	ApiDocument.prototype["MoveCursorUp"]                  = ApiDocument.prototype.MoveCursorUp;
 	ApiDocument.prototype["MoveCursorDown"]                = ApiDocument.prototype.MoveCursorDown;
+	ApiDocument.prototype["MoveToNextCell"]                = ApiDocument.prototype.MoveToNextCell;
+	ApiDocument.prototype["MoveToPrevCell"]                = ApiDocument.prototype.MoveToPrevCell;
 	ApiDocument.prototype["GetCurrentFootEndnote"]         = ApiDocument.prototype.GetCurrentFootEndnote;
 	ApiDocument.prototype["GetDrawingsByName"]             = ApiDocument.prototype.GetDrawingsByName;
 	ApiDocument.prototype["CreateTable"]                   = ApiDocument.prototype.CreateTable;
