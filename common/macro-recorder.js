@@ -893,6 +893,68 @@
 		return "\t\t\tfill.SetTransparent(" + Math.round(unifill.transparent * 100 / 255) + ");\n";
 	}
 
+	function private_getDrawingFillReplayCode(selectedDrawingsExpr, isArrowFn, unifill, getStopColorRGBA) {
+		function wrapFillCode(fillExpr, transparentStr) {
+			let forEachHeader = isArrowFn ? "\t\t.forEach(shape => {\n" : "\t\t.forEach(function(shape) {\n";
+			return "\t" + selectedDrawingsExpr + "\n"
+				+ forEachHeader
+				+ "\t\t\tvar fill = " + fillExpr + ";\n"
+				+ transparentStr
+				+ "\t\t\tshape.Fill(fill);\n"
+				+ "\t\t});\n";
+		}
+
+		if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
+		{
+			let color = unifill.fill.color.color.RGBA;
+			return wrapFillCode("Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))", private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CGradFill)
+		{
+			let colors = unifill.fill.colors;
+			let strColor = "";
+
+			for (let nColor = 0; nColor < colors.length; nColor++)
+			{
+				let gs = colors[nColor];
+				let color = getStopColorRGBA ? getStopColorRGBA(gs) : gs.color.color.RGBA;
+				strColor += (nColor !== 0)
+					? ",\n\t\t\t\t"
+					: "\n\t\t\t\t";
+				strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
+			}
+
+			let gradient = "";
+			if (unifill.fill.lin) // leinear
+				gradient = "Api.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
+			else if (unifill.fill.path) // radial
+				gradient = "Api.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
+
+			return wrapFillCode(gradient, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CBlipFill)
+		{
+			let base64data = unifill.fill.getBase64RasterImageId();
+			let blipFill = "Api.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
+			return wrapFillCode(blipFill, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CPattFill)
+		{
+			let bgClr = unifill.fill.bgClr.color.RGBA;
+			let fgClr = unifill.fill.fgClr.color.RGBA;
+			let type = AscCommon.global_hatch_names[unifill.fill.ftype];
+
+			let pattFill = "Api.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\tApi.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
+			return wrapFillCode(pattFill, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CNoFill)
+		{
+			let forEachBody = isArrowFn ? "shape => shape.Fill(Api.CreateNoFill())" : "function(shape) { shape.Fill(Api.CreateNoFill()); }";
+			return "\t" + selectedDrawingsExpr + "\n"
+				+ "\t\t.forEach(" + forEachBody + ");\n";
+		}
+	}
+
 	function private_getCurrentTableCell(recorder) {
 		let doc = recorder.editor.getLogicDocument();
 		if (!doc)
@@ -1594,65 +1656,7 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.fill.color.color.RGBA;
-				let transparentStr = private_getFillTransparentStr(unifill);
-
-				return "\tdoc.GetSelectedDrawings()\n" +
-					"\t\t.forEach(function(shape) {\n" +
-					"\t\t\tvar fill = Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "));\n" +
-					transparentStr +
-					"\t\t\tshape.Fill(fill);\n" +
-					"\t\t});\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.color.RGBA;
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tdoc.GetSelectedDrawings()\n"
-      				+ "\t\t.forEach(function(shape) { shape.Fill(" + gradient + "); }\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tdoc.GetSelectedDrawings()\n"
-    		 		+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
-				return "\tdoc.GetSelectedDrawings()\n"
-       				+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t\t)\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tdoc.GetSelectedDrawings()\n"
-       				+ "\t\t.forEach(function(shape) { shape.Fill(Api.CreateNoFill()); });\n";
-			}
+			return private_getDrawingFillReplayCode("doc.GetSelectedDrawings()", false, unifill);
 		},
 		setDrawingLine			: function(line)
 		{
@@ -2647,71 +2651,10 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.fill.color.color.RGBA;
-				let transparentStr = private_getFillTransparentStr(unifill);
-
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => {\n"
-						+ "\t\t\tvar fill = Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "));\n"
-						+ transparentStr
-						+ "\t\t\tshape.Fill(fill);\n"
-						+ "\t\t});\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colorScheme = Asc.editor.getCurrentColorScheme();
-
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.color.RGBA;
-
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + gradient + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t\t)\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateNoFill()));\n";
-			}
+			let colorScheme = Asc.editor.getCurrentColorScheme();
+			return private_getDrawingFillReplayCode("worksheet.GetSelectedShapes()", true, unifill, function(gs) {
+				return gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.color.RGBA;
+			});
 		},
 		setDrawingLine			: function(line)
 		{
@@ -3240,69 +3183,7 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.fill.color.color.RGBA;
-				let transparentStr = private_getFillTransparentStr(unifill);
-
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => {\n"
-						+ "\t\t\tvar fill = Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "));\n"
-						+ transparentStr
-						+ "\t\t\tshape.Fill(fill);\n"
-						+ "\t\t});\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.color.RGBA;
-
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + gradient + "));\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t\t)\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateNoFill()));\n";
-			}
+			return private_getDrawingFillReplayCode("Api.GetSelection().GetShapes()", true, unifill);
 		},
 		setDrawingLine			: function(line)
 		{
