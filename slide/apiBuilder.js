@@ -2475,7 +2475,7 @@
 	 * Moves the cursor to the next table cell.
 	 * @memberof ApiPresentation
 	 * @param {number} [count=1] - Number of cells to move through.
-	 * @returns {boolean}
+	 * @returns {boolean} - returns false if the cursor isn't currently inside a table cell.
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveToNextCell.js
@@ -2485,6 +2485,10 @@
 		count = GetIntParameter(count, 1);
 		if (count <= 0)
 			AscBuilder.throwException(new Error('Argument "count" must be a positive integer, got ' + count));
+
+		let oParagraph = this.Presentation.GetCurrentParagraph(undefined, undefined, {CheckDocContent: true});
+		if (!oParagraph || !oParagraph.IsTableCellContent())
+			return false;
 
 		for (let i = 0; i < count; ++i)
 		{
@@ -2497,7 +2501,7 @@
 	 * Moves the cursor to the previous table cell.
 	 * @memberof ApiPresentation
 	 * @param {number} [count=1] - Number of cells to move through.
-	 * @returns {boolean}
+	 * @returns {boolean} - returns false if the cursor isn't currently inside a table cell.
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/MoveToPrevCell.js
@@ -2507,6 +2511,10 @@
 		count = GetIntParameter(count, 1);
 		if (count <= 0)
 			AscBuilder.throwException(new Error('Argument "count" must be a positive integer, got ' + count));
+
+		let oParagraph = this.Presentation.GetCurrentParagraph(undefined, undefined, {CheckDocContent: true});
+		if (!oParagraph || !oParagraph.IsTableCellContent())
+			return false;
 
 		for (let i = 0; i < count; ++i)
 		{
