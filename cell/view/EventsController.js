@@ -1701,7 +1701,16 @@
 				t.handlers.trigger("canvasClick");
 			}
 
-			if (!(asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || this.getSelectionDialogMode() || this.getCellEditMode() && !this.handlers.trigger("stopCellEditing"))) {
+			// data validation may reject the entered value and keep the cell editor open.
+			// "stopCellEditing" must be triggered only once per mouse down, otherwise the error message is shown twice
+			var isCellEditingStopped = null;
+			var stopCellEditing = function () {
+				if (null === isCellEditingStopped) {
+					isCellEditingStopped = !!t.handlers.trigger("stopCellEditing");
+				}
+				return isCellEditingStopped;
+			};
+			if (!(asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || this.getSelectionDialogMode() || this.getCellEditMode() && !stopCellEditing())) {
 				const isPlaceholder = t.handlers.trigger("onPointerDownPlaceholder", coord.x, coord.y);
 				if (isPlaceholder) {
 					return;
@@ -1713,7 +1722,7 @@
 				if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
 
 
-					if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
+					if (this.getCellEditMode() && !stopCellEditing()) {
 						return;
 					}
 
@@ -1850,7 +1859,7 @@
 						return;
 					}
 				} else {
-					if (!this.handlers.trigger("stopCellEditing")) {
+					if (!stopCellEditing()) {
 						return;
 					}
 				}
