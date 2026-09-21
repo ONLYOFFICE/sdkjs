@@ -886,6 +886,13 @@
 		return "unknown";
 	}
 
+	function private_getFillTransparentStr(unifill) {
+		if (!AscFormat.isRealNumber(unifill.transparent))
+			return "";
+
+		return "\t\t\tfill.SetTransparent(" + Math.round(unifill.transparent * 100 / 255) + ");\n";
+	}
+
 	function private_getCurrentTableCell(recorder) {
 		let doc = recorder.editor.getLogicDocument();
 		if (!doc)
@@ -1587,15 +1594,16 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
 				let color = unifill.fill.color.color.RGBA;
-				//let transparent = unifill.transparent;
+				let transparentStr = private_getFillTransparentStr(unifill);
 
 				return "\tdoc.GetSelectedDrawings()\n" +
 					"\t\t.forEach(function(shape) {\n" +
-					"\t\t\tshape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")));\n" +
+					"\t\t\tvar fill = Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "));\n" +
+					transparentStr +
+					"\t\t\tshape.Fill(fill);\n" +
 					"\t\t});\n";
 			}
 			else if (unifill.fill instanceof AscFormat.CGradFill)
@@ -2639,14 +2647,17 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
 				let color = unifill.fill.color.color.RGBA;
-				//let transparent = unifill.transparent;
+				let transparentStr = private_getFillTransparentStr(unifill);
 
 				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))));\n";
+						+ "\t\t.forEach(shape => {\n"
+						+ "\t\t\tvar fill = Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "));\n"
+						+ transparentStr
+						+ "\t\t\tshape.Fill(fill);\n"
+						+ "\t\t});\n";
 			}
 			else if (unifill.fill instanceof AscFormat.CGradFill)
 			{
@@ -3229,14 +3240,17 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
 				let color = unifill.fill.color.color.RGBA;
-				//let transparent = unifill.transparent;
+				let transparentStr = private_getFillTransparentStr(unifill);
 
 				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))));\n";
+						+ "\t\t.forEach(shape => {\n"
+						+ "\t\t\tvar fill = Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "));\n"
+						+ transparentStr
+						+ "\t\t\tshape.Fill(fill);\n"
+						+ "\t\t});\n";
 			}
 			else if (unifill.fill instanceof AscFormat.CGradFill)
 			{
