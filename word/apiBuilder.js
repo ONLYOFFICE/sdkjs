@@ -574,12 +574,14 @@
 		}
 		function IsHeading(oParagraph)
 		{
-			var Styles         = private_GetLogicDocument().Get_Styles();
-			var sParaStyleName = '';
-			if (oParagraph.Paragraph.Pr.PStyle)
-				sParaStyleName = Styles.Get(oParagraph.Paragraph.Pr.PStyle).Name;
-			else
+			if (!oParagraph.Paragraph.bFromDocument || !oParagraph.Paragraph.Pr.PStyle)
 				return false;
+
+			var Style = private_GetLogicDocument().Get_Styles().Get(oParagraph.Paragraph.Pr.PStyle);
+			if (!Style)
+				return false;
+
+			var sParaStyleName = Style.Name;
 			return sParaStyleName.search('Heading') !== -1 || sParaStyleName.search('Title') !== -1 || sParaStyleName.search('Subtitle') !== -1;
 
 		}
