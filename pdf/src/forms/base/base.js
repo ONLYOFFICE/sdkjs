@@ -2767,22 +2767,24 @@
             this.contentFormat.SetItalic(oStyle.italic);
         }
     };
-    CBaseField.prototype.SetAlign = function(nAlignType) {
-        if (this._alignment != nAlignType) {
-            AscCommon.History.Add(new CChangesPDFFormAlign(this, this._alignment, nAlignType));
-            this._alignment = nAlignType;
-        }
+	CBaseField.prototype.SetAlign = function(nAlignType) {
+		let nFieldType = this.GetType();
+		if (AscPDF.FIELD_TYPES.text !== nFieldType &&
+			AscPDF.FIELD_TYPES.combobox !== nFieldType &&
+			AscPDF.FIELD_TYPES.listbox !== nFieldType) {
+			return false;
+		}
 
-        let nFieldType = this.GetType();
-        if (AscPDF.FIELD_TYPES.text !== nFieldType &&
-        AscPDF.FIELD_TYPES.combobox !== nFieldType &&
-        AscPDF.FIELD_TYPES.listbox !== nFieldType) {
-            return;
-        }
+		if (this._alignment != nAlignType) {
+			AscCommon.History.Add(new CChangesPDFFormAlign(this, this._alignment, nAlignType));
+			this._alignment = nAlignType;
+		}
 
-        this.SetNeedCheckAlign(true);
-        this.SetWasChanged(true);
+		this.SetNeedCheckAlign(true);
+		this.SetWasChanged(true);
 		this.SetNeedRecalc(true);
+
+		return true;
 	};
     CBaseField.prototype.GetAlign = function() {
         return this._alignment;
