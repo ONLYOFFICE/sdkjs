@@ -7839,8 +7839,17 @@ function (window, undefined) {
 			pMatNewX = prepeareArgs.pMatNewX,
 			bConstant = prepeareArgs.bConstant;
 			
-		let	mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
+		let arg0dimensions = arg[0].getDimensions();
+		if (arg0dimensions && (arg0dimensions.row !== pMatY.length || arg0dimensions.col !== pMatY[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
+		} 
+		
+		let arg1dimensions = pMatX && arg[1] ? arg[1].getDimensions() : null;
+		if (arg1dimensions && (arg1dimensions.row !== pMatX.length || arg1dimensions.col !== pMatX[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
+		let	mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
 		if (mat && mat.type && mat.type === cElementType.error) {
 			return mat;
 		} else if (mat && mat[0] && mat[0][0] !== undefined) {
@@ -8503,6 +8512,16 @@ function (window, undefined) {
 		let bConstant = getBoolValue(argClone[2], true);
 		let bStats = getBoolValue(argClone[3], false);
 
+		let arg0dimensions = arg[0].getDimensions();
+		if (arg0dimensions && (arg0dimensions.row !== pMatY.length || arg0dimensions.col !== pMatY[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
+		} 
+		
+		let arg1dimensions = pMatX && arg[1] ? arg[1].getDimensions() : null;
+		if (arg1dimensions && (arg1dimensions.row !== pMatX.length || arg1dimensions.col !== pMatX[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
 		//return matrix [col][row]
 		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
@@ -8562,6 +8581,16 @@ function (window, undefined) {
 			
 		if (pMatX && !pMatX.length && pMatX.type === cElementType.empty) {
 			pMatX = undefined;
+		}
+
+		let arg0dimensions = arg[0].getDimensions();
+		if (arg0dimensions && (arg0dimensions.row !== pMatY.length || arg0dimensions.col !== pMatY[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
+		} 
+		
+		let arg1dimensions = pMatX && arg[1] ? arg[1].getDimensions() : null;
+		if (arg1dimensions && (arg1dimensions.row !== pMatX.length || arg1dimensions.col !== pMatX[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		//return matrix [col][row]
@@ -12318,6 +12347,16 @@ function (window, undefined) {
 			pMatX = prepeareArgs.pMatX,
 			pMatNewX = prepeareArgs.pMatNewX,
 			bConstant = prepeareArgs.bConstant;
+
+		let arg0dimensions = arg[0].getDimensions();
+		if (arg0dimensions && (arg0dimensions.row !== pMatY.length || arg0dimensions.col !== pMatY[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
+		} 
+		
+		let arg1dimensions = pMatX && arg[1] ? arg[1].getDimensions() : null;
+		if (arg1dimensions && (arg1dimensions.row !== pMatX.length || arg1dimensions.col !== pMatX[0].length)) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
 		let mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
