@@ -2780,6 +2780,7 @@
 		this.MouseDownTrack.Reset();
 
 		this.onMouseMove(e);
+		this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 	};
 
 	COutlineThumbnailsManager.prototype.onMouseLeave = function(e)
