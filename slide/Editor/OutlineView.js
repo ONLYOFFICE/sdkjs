@@ -3740,13 +3740,6 @@
 			}
 		}
 	};
-	OutlineView.prototype.checkNonEmptyPresentation = function () {
-		const presentation = this.getPresentation();
-		if (!presentation.Slides.length) {
-			presentation.addNextSlideAction();
-			this.update();
-		}
-	};
 	OutlineView.prototype.paragraphClearFormatting = function (isClearParaPr, isClearTextPr) {
 		this.applyDocContentFunction(AscFormat.CDrawingDocContent.prototype.ClearParagraphFormatting, [isClearParaPr, isClearTextPr]);
 	};
