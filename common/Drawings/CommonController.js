@@ -4116,10 +4116,14 @@
 							objects_by_type.images[i].changeFill(props.fill);
 						}
 
-						if (objects_by_type.shapes.length)
+						if (objects_by_type.shapes.length) {
+							objects_by_type.shapes[0].recalculateBrush();
 							Asc.editor.addMacroStepData('SetDrawingFill', objects_by_type.shapes[0].getFill().createDuplicate());
-						if (objects_by_type.images.length)
+						}
+						if (objects_by_type.images.length) {
+							objects_by_type.images[0].recalculateBrush();
 							Asc.editor.addMacroStepData('SetDrawingFill', objects_by_type.images[0].getFill().createDuplicate());
+						}
 					}
 					if (isRealObject(props.shadow) || props.shadow === null) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
