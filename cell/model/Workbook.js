@@ -9055,6 +9055,90 @@
 	Worksheet.prototype.isDefaultWidthHidden=function(){
 		return null != this.oAllCol && this.oAllCol.getHidden();
 	};
+	//true if the 0 based range [start, stop] contains a hidden column
+	Worksheet.prototype.containsHiddenCols=function(start, stop){
+		//outside of the used range all the columns keep the default width
+		var last = Math.min(stop, this.getColsCount() - 1);
+		for (var i = start; i <= last; ++i) {
+			if (this.getColHidden(i)) {
+				return true;
+			}
+		}
+		return stop > last && this.isDefaultWidthHidden();
+	};
+	//true if the 0 based range [start, stop] contains a hidden row
+	Worksheet.prototype.containsHiddenRows=function(start, stop){
+		var last = Math.min(stop, this.getRowsCount() - 1);
+		for (var i = start; i <= last; ++i) {
+			if (this.getRowHidden(i)) {
+				return true;
+			}
+		}
+		return stop > last && this.isDefaultHeightHidden();
+	};
+	Worksheet.prototype.isAllColsHidden=function(){
+		var count = this.getColsCount();
+		if (count <= gc_nMaxCol0 && !this.isDefaultWidthHidden()) {
+			return false;
+		}
+		for (var i = 0; i < count; ++i) {
+			if (!this.getColHidden(i)) {
+				return false;
+			}
+		}
+		return true;
+	};
+	Worksheet.prototype.isAllRowsHidden=function(){
+		var count = this.getRowsCount();
+		if (count <= gc_nMaxRow0 && !this.isDefaultHeightHidden()) {
+			return false;
+		}
+		for (var i = 0; i < count; ++i) {
+			if (!this.getRowHidden(i)) {
+				return false;
+			}
+		}
+		return true;
+	};
+	//solid block of hidden columns next to the 0 based index, to the left when bBefore, to the right otherwise.
+	//Returns {start, end} or null if the neighbour column is visible
+	Worksheet.prototype.getAdjacentHiddenCols=function(index, bBefore){
+		var last = Math.max(index, this.getColsCount() - 1);
+		var i = bBefore ? index - 1 : index + 1;
+		if (i < 0 || i > last || !this.getColHidden(i)) {
+			return null;
+		}
+		var res = {start: i, end: i};
+		if (bBefore) {
+			while (res.start > 0 && this.getColHidden(res.start - 1)) {
+				res.start--;
+			}
+		} else {
+			while (res.end < last && this.getColHidden(res.end + 1)) {
+				res.end++;
+			}
+		}
+		return res;
+	};
+	//solid block of hidden rows next to the 0 based index, above when bBefore, below otherwise
+	Worksheet.prototype.getAdjacentHiddenRows=function(index, bBefore){
+		var last = Math.max(index, this.getRowsCount() - 1);
+		var i = bBefore ? index - 1 : index + 1;
+		if (i < 0 || i > last || !this.getRowHidden(i)) {
+			return null;
+		}
+		var res = {start: i, end: i};
+		if (bBefore) {
+			while (res.start > 0 && this.getRowHidden(res.start - 1)) {
+				res.start--;
+			}
+		} else {
+			while (res.end < last && this.getRowHidden(res.end + 1)) {
+				res.end++;
+			}
+		}
+		return res;
+	};
 	Worksheet.prototype.setDefaultHeight = function (h){
 		// ToDo refactoring this
 		if (this.oSheetFormatPr.oAllRow && !this.oSheetFormatPr.oAllRow.getCustomHeight()) {

@@ -4562,8 +4562,8 @@ var editor;
     this.wb.getWorksheet().changeWorksheet("colWidth", width);
   };
 
-  spreadsheet_api.prototype.asc_showColumns = function() {
-    this.wb.getWorksheet().changeWorksheet("showCols");
+  spreadsheet_api.prototype.asc_showColumns = function(start, end) {
+    this.wb.getWorksheet().changeWorksheet("showCols", null != start ? {start: start, end: null != end ? end : start} : undefined);
   };
 
   spreadsheet_api.prototype.asc_hideColumns = function() {
@@ -4586,8 +4586,8 @@ var editor;
     this.wb.getWorksheet().autoFitRowHeight(null);
   };
 
-  spreadsheet_api.prototype.asc_showRows = function() {
-    this.wb.getWorksheet().changeWorksheet("showRows");
+  spreadsheet_api.prototype.asc_showRows = function(start, end) {
+    this.wb.getWorksheet().changeWorksheet("showRows", null != start ? {start: start, end: null != end ? end : start} : undefined);
   };
 
   spreadsheet_api.prototype.asc_hideRows = function() {
