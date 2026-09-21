@@ -5295,7 +5295,7 @@ CDocument.prototype.CheckViewPosition = function()
 };
 /**
  * Scroll the document so that the current cursor/select position ends up at the top of the screen.
- * @param [distance=0] {number} Offset of the position from the top of the screen (in mm)
+ * @param [distance=25] {number} Offset of the position from the top of the screen (in mm)
  * @param [anchorPos] {Array} Document position to scroll to. If not specified, the current cursor/selection position is used
  */
 CDocument.prototype.AlignViewPositionToTop = function(distance, anchorPos)
@@ -5305,8 +5305,11 @@ CDocument.prototype.AlignViewPositionToTop = function(distance, anchorPos)
 
 	if (!anchorPos || !anchorPos.length)
 		return;
-
+	
 	let viewPortH = this.DrawingDocument.GetVisibleMMHeight();
+	if (undefined === distance)
+		distance = 25;
+	
 	distance = Math.max(0, Math.min(distance, viewPortH - 10));
 
 	this.ViewPosition = {
