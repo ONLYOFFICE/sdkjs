@@ -200,7 +200,7 @@
 				let oCurCell  = private_getCurrentTableCell(_t);
 				_t.lastTableCell = oCurCell;
 
-				if (oPrevCell && oCurCell && oPrevCell !== oCurCell)
+				if (oPrevCell && oCurCell && oPrevCell !== oCurCell && !e.IsShift() && !e.IsCtrl())
 				{
 					_t.addStepData(type === "moveCursorRight" ? "moveToNextCell" : "moveToPrevCell", [{}]);
 				}
@@ -240,7 +240,7 @@
 				let oCurCell  = private_getCurrentTableCell(_t);
 				_t.lastTableCell = oCurCell;
 
-				if (oPrevCell && oCurCell && oPrevCell !== oCurCell)
+				if (oPrevCell && oCurCell && oPrevCell !== oCurCell && !e.IsShift() && !e.IsCtrl())
 				{
 					_t.addStepData(type === "moveCursorRight" ? "moveToNextCell" : "moveToPrevCell", [{}]);
 				}
@@ -2026,15 +2026,16 @@
 			if (!type || type === c_oAscTableSelectionType.Table) {
 				return reg.declaration + "\t" + reg.varName + ".Select();\n";
 			}
-			else if (type === c_oAscTableSelectionType.Row) {
-				return reg.declaration + "\t" + reg.varName + ".GetSelectedRows().forEach(function(row){row.Select()})"
-			}
-			else if (type === c_oAscTableSelectionType.Column) {
+			// else if (type === c_oAscTableSelectionType.Row) {
+			// 	return reg.declaration + "\t" + reg.varName + ".GetSelectedRows().forEach(function(row){row.Select()})"
+			// }
+			// else if (type === c_oAscTableSelectionType.Column) {
 
-			}
-			else if (type === c_oAscTableSelectionType.Cell) {
+			// }
+			// else if (type === c_oAscTableSelectionType.Cell) {
 
-			}
+			// }
+			return "";
 		},
 		setTableHPos			: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
