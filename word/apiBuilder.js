@@ -515,7 +515,7 @@
 						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.HtmlTags.Numberring.Bulleted, 'close');
 					else
 						sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.HtmlTags.Numberring.Numbered, 'close');
-					oCMarkdownConverter.openedListsHtml.shift();
+					oCMarkdownConverter.openedListsHtml.pop();
 
 					// == -1 означает, что следующего параграфа не существует или нет нумерации,
 					// значит нужно закрыть все открытые списки
@@ -523,7 +523,7 @@
 					{
 						for (var nList = 0, nCount = oCMarkdownConverter.openedListsHtml.length; nList < nCount; nList++)
 						{
-							sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.openedListsHtml.shift(), 'close');
+							sOutputText = oCMarkdownConverter.WrapInTag(sOutputText, '\n' + oCMarkdownConverter.openedListsHtml.pop(), 'close');
 						}
 					}
 					oCMarkdownConverter.isNumbering      = false;
