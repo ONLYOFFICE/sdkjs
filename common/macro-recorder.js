@@ -508,6 +508,15 @@
 			},
 			action: ACTION.NOT_WRITE_PREV
 		},
+		{
+			prevType: "SelectTable",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "moveToPrevCell",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
 	];
 	MacroRecorder.prototype.filterAction = function(type, additional)
 	{
