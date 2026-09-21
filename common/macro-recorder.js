@@ -1524,7 +1524,7 @@
 			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
-				let color = unifill.fill.color.color.RGBA;
+				let color = unifill.fill.color.RGBA;
 				//let transparent = unifill.transparent;
 
 				return "\tdoc.GetSelectedDrawings()\n" +
@@ -2573,7 +2573,7 @@
 			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
-				let color = unifill.fill.color.color.RGBA;
+				let color = unifill.fill.color.RGBA;
 				//let transparent = unifill.transparent;
 
 				return "\tworksheet.GetSelectedShapes()\n"
@@ -3163,7 +3163,7 @@
 			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
-				let color = unifill.fill.color.color.RGBA;
+				let color = unifill.fill.color.RGBA;
 				//let transparent = unifill.transparent;
 
 				return "\tApi.GetSelection().GetShapes()\n"
