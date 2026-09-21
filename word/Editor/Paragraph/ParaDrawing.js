@@ -1172,7 +1172,8 @@ ParaDrawing.prototype.CheckWH = function()
 	}
 	this.setExtent(extX, extY);
 	if(this.GraphicObj.getObjectType() === AscDFH.historyitem_type_Shape ||
-		this.GraphicObj.getObjectType() === AscDFH.historyitem_type_SmartArt)
+		this.GraphicObj.getObjectType() === AscDFH.historyitem_type_SmartArt ||
+		this.GraphicObj.getObjectType() === AscDFH.historyitem_type_ImageShape)
 	{
 		this.GraphicObj.handleUpdateExtents();
 	}
