@@ -7818,15 +7818,18 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {Array.<DocumentElement|ParagraphContent|ApiDrawing|string|number>} content - An array of elements to insert.
 	 * @param {boolean} [isInline=false] - Inline insert or not (works only for the last and the first element and only if it's a paragraph).
-	 * @param {object} [pr=undefined] - Specifies that text and paragraph document properties are preserved for the inserted elements.
-	 * The object should look like this: {"KeepTextOnly": true}.
+	 * @param {object} [pr] - Insert options.
+	 * @param {boolean} [pr.KeepTextOnly=false] - Specifies that text and paragraph document properties are preserved for the inserted elements.
+	 * @param {boolean} [pr.OverwriteTableCells=false] - Specifies that if a single table is inserted into a table cell, it overwrites the content of the existing cells, starting from the current one, instead of being inserted as a nested table.
 	 * @returns {boolean} Success?
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/InsertContent.js
 	 */
 	ApiDocument.prototype.InsertContent = function(content, isInline, pr)
 	{
 		var oSelectedContent = new AscCommonWord.CSelectedContent();
-		oSelectedContent.SetInsertOptionForTable(Asc.c_oSpecialPasteProps.insertAsNestedTable);
+		oSelectedContent.SetInsertOptionForTable(pr && pr["OverwriteTableCells"]
+			? Asc.c_oSpecialPasteProps.overwriteCells
+			: Asc.c_oSpecialPasteProps.insertAsNestedTable);
 
 		let flushPara = null;
 
@@ -7902,22 +7905,19 @@
 			ContentPos : oParagraph.Get_ParaContentPos(false, false)
 		};
 
-		if (pr)
+		if (pr && pr["KeepTextOnly"])
 		{
-			if (pr["KeepTextOnly"])
-			{
-				var oParaPr = this.Document.GetDirectParaPr();
-				var oTextPr = this.Document.GetDirectTextPr();
+			var oParaPr = this.Document.GetDirectParaPr();
+			var oTextPr = this.Document.GetDirectTextPr();
 
-				for (nIndex = 0, nCount = oSelectedContent.Elements.length; nIndex < nCount; ++nIndex)
+			for (nIndex = 0, nCount = oSelectedContent.Elements.length; nIndex < nCount; ++nIndex)
+			{
+				oElement = oSelectedContent.Elements[nIndex].Element;
+				var arrParagraphs = oElement.GetAllParagraphs();
+				for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 				{
-					oElement = oSelectedContent.Elements[nIndex].Element;
-					var arrParagraphs = oElement.GetAllParagraphs();
-					for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
-					{
-						arrParagraphs[nParaIndex].SetDirectParaPr(oParaPr);
-						arrParagraphs[nParaIndex].SetDirectTextPr(oTextPr);
-					}
+					arrParagraphs[nParaIndex].SetDirectParaPr(oParaPr);
+					arrParagraphs[nParaIndex].SetDirectTextPr(oTextPr);
 				}
 			}
 		}
