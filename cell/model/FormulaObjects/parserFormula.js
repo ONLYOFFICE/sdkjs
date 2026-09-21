@@ -7843,7 +7843,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (!hasIf) {
 			return null;
 		}
-		var spanStack = [];
+		var spanStackS = [], spanStackE = [], nSpanLen = 0;
 		var byCondEnd = null, byBranchStart = null, count = 0;
 		for (var i = 0; i < aOutStack.length; i++) {
 			var el = aOutStack[i];
@@ -7866,16 +7866,17 @@ function parserFormula( formula, parent, _ws ) {
 				if (argCount < 0) {
 					argCount = -argCount;
 				}
-				if (spanStack.length < argCount) {
+				if (!(argCount > 0)) {
+					argCount = 0;
+				}
+				if (nSpanLen < argCount) {
 					return null;
 				}
-				var spans = [];
-				for (var k = 0; k < argCount; k++) {
-					spans.unshift(spanStack.pop());
-				}
-				var start = spans.length ? spans[0].s : i;
+				var nBase = nSpanLen - argCount;
+				var start = argCount ? spanStackS[nBase] : i;
 				if (el.type === cElementType.func && el.name === "IF" && argCount === 3 && !bArrayCtx) {
-					var cE = spans[0].e, tS = spans[1].s, tE = spans[1].e, fS = spans[2].s, fE = spans[2].e;
+					var cE = spanStackE[nBase], tS = spanStackS[nBase + 1], tE = spanStackE[nBase + 1],
+						fS = spanStackS[nBase + 2], fE = spanStackE[nBase + 2];
 					if (!_lazyIfSpanHasUnsafe(aOutStack, tS, tE) && !_lazyIfSpanHasUnsafe(aOutStack, fS, fE)) {
 						if (!byCondEnd) {
 							byCondEnd = {};
@@ -7891,9 +7892,14 @@ function parserFormula( formula, parent, _ws ) {
 						count++;
 					}
 				}
-				spanStack.push({s: start, e: i});
+				nSpanLen = nBase;
+				spanStackS[nSpanLen] = start;
+				spanStackE[nSpanLen] = i;
+				nSpanLen++;
 			} else {
-				spanStack.push({s: i, e: i});
+				spanStackS[nSpanLen] = i;
+				spanStackE[nSpanLen] = i;
+				nSpanLen++;
 			}
 		}
 		if (!count) {
