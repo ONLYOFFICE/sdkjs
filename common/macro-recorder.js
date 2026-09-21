@@ -1598,7 +1598,7 @@
 			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
-				let color = unifill.fill.color.RGBA;
+				let color = unifill.getRGBAColor();
 				//let transparent = unifill.transparent;
 
 				return "\tdoc.GetSelectedDrawings()\n" +
@@ -1614,7 +1614,7 @@
 				for(let nColor = 0; nColor < colors.length; nColor++)
 				{
 					let gs = colors[nColor];
-					let color = gs.color.color.RGBA;
+					let color = gs.color.RGBA;
 					strColor += (nColor !== 0)
 						? ",\n\t\t\t\t"
 						: "\n\t\t\t\t";
@@ -1639,14 +1639,14 @@
 			}
 			else if (unifill.fill instanceof AscFormat.CPattFill)
 			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
+				let bgClr = unifill.fill.bgClr.RGBA;
+				let fgClr = unifill.fill.fgClr.RGBA;
 				let ftype = unifill.fill.ftype;
 				let type = AscCommon.global_hatch_names[ftype];
 
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
+				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
 				return "\tdoc.GetSelectedDrawings()\n"
-       				+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t\t)\n\t\t);\n";
+       				+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t);\n";
 			}
 			else if (unifill.fill instanceof AscFormat.CNoFill)
 			{
@@ -1658,7 +1658,7 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.fill.color.color.RGBA;
+			let color = line.Fill.getRGBAColor();
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
 					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
@@ -2650,7 +2650,7 @@
 			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
-				let color = unifill.fill.color.RGBA;
+				let color = unifill.getRGBAColor();
 				//let transparent = unifill.transparent;
 
 				return "\tworksheet.GetSelectedShapes()\n"
@@ -2695,14 +2695,14 @@
 			}
 			else if (unifill.fill instanceof AscFormat.CPattFill)
 			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
+				let bgClr = unifill.fill.bgClr.RGBA;
+				let fgClr = unifill.fill.fgClr.RGBA;
 				let ftype = unifill.fill.ftype;
 				let type = AscCommon.global_hatch_names[ftype];
 
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
+				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
 				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t\t)\n\t\t);\n";
+						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
 			}
 			else if (unifill.fill instanceof AscFormat.CNoFill)
 			{
@@ -2714,7 +2714,7 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.fill.color.color.RGBA;
+			let color = line.Fill.getRGBAColor();
 
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
@@ -3240,7 +3240,7 @@
 			//TODO add transparent when add api
 			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 			{
-				let color = unifill.fill.color.RGBA;
+				let color = unifill.getRGBAColor();
 				//let transparent = unifill.transparent;
 
 				return "\tApi.GetSelection().GetShapes()\n"
@@ -3254,7 +3254,7 @@
 				for(let nColor = 0; nColor < colors.length; nColor++)
 				{
 					let gs = colors[nColor];
-					let color = gs.color.color.RGBA;
+					let color = gs.color.RGBA;
 
 					strColor += (nColor !== 0)
 						? ",\n\t\t\t\t"
@@ -3283,14 +3283,14 @@
 			}
 			else if (unifill.fill instanceof AscFormat.CPattFill)
 			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
+				let bgClr = unifill.fill.bgClr.RGBA;
+				let fgClr = unifill.fill.fgClr.RGBA;
 				let ftype = unifill.fill.ftype;
 				let type = AscCommon.global_hatch_names[ftype];
 
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
+				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
 				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t\t)\n\t\t);\n";
+						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
 			}
 			else if (unifill.fill instanceof AscFormat.CNoFill)
 			{
@@ -3302,7 +3302,7 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.fill.color.color.RGBA;
+			let color = line.Fill.getRGBAColor();
 
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
