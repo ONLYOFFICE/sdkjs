@@ -506,6 +506,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - widget rect
 	 * @returns {ApiButtonField}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateButtonField.js
 	 */
 	Api.CreateButtonField = function(rect) {
@@ -538,6 +539,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - widget rect
 	 * @returns {ApiSignatureField}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSignatureField.js
 	 */
 	Api.CreateSignatureField = function(rect) {
@@ -621,6 +623,7 @@
 	 * @param {percentage} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
 	 * @param {Rect} rect
 	 * @returns {ApiGoToAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGoToAction.js
 	 */
 	Api.CreateGoToAction = function(page, goToType, zoom, rect) {
@@ -655,6 +658,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} uri
 	 * @returns {ApiUriAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateUriAction.js
 	 */
 	Api.CreateUriAction = function(uri) {
@@ -673,6 +677,7 @@
 	 * @param {boolean} isHidde - to hide - true, to show - false
 	 * @param {string[]} names - field names
 	 * @returns {ApiHideShowFormsAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
 	 */
 	Api.CreateHideShowFormsAction = function(isHide, names) {
@@ -696,6 +701,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {NamedActionType} name
 	 * @returns {ApiNamedAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNamedAction.js
 	 */
 	Api.CreateNamedAction = function(name) {
@@ -713,6 +719,7 @@
 	 * @param {boolean} isAllExcept - will all fields be reset except the fields whose names are specified
 	 * @param {string[]} names - field names
 	 * @returns {ApiHideShowFormsAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
 	 */
 	Api.CreateResetFormsAction = function(isAllExcept, names) {
@@ -737,6 +744,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} script
 	 * @returns {ApiJsAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateJsAction.js
 	 */
 	Api.CreateJsAction = function(script) {
@@ -755,6 +763,7 @@
 	 * @param {Rect} rect - annotation rect.
 	 * @param {ApiBaseAction} [action] - action executed when the link is clicked.
 	 * @returns {ApiLinkAnnotation}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateLinkAnnot.js
 	 */
 	Api.CreateLinkAnnot = function(rect, action) {
@@ -1633,6 +1642,7 @@
 	 * @param {BulletType} numType - The numbering type the paragraphs will be numbered with.
 	 * @param {number} startAt - The number the first numbered paragraph will start with.
 	 * @returns {?ApiBullet} - returns null if numType is not one of the BulletType values.
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNumbering.js
 	 */
 	Api.CreateNumbering = function(numType, startAt)
@@ -2005,6 +2015,7 @@
 	 * Gets document selection info
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?DocSelection}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelection.js
 	 */
 	ApiDocument.prototype.GetSelection = function() {
@@ -2057,6 +2068,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {DocSelection} selection
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetSelection.js
 	 */
 	ApiDocument.prototype.SetSelection = function(selection) {
@@ -2100,6 +2112,7 @@
 	 * Gets document selection quads by page
 	 * @typeofeditors ["PDFE"]
 	 * @returns {DocQuads}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelectionQuads.js
 	 */
 	ApiDocument.prototype.GetSelectionQuads = function() {
@@ -2120,6 +2133,7 @@
 	 * Gets selected text in document
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelectedText.js
 	 */
 	ApiDocument.prototype.GetSelectedText = function() {
@@ -2130,6 +2144,7 @@
 	 * Gets document calculate fields order
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string[]} - order of fields names
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCalculateOrder.js
 	 */
 	ApiDocument.prototype.GetCalculateOrder = function() {
@@ -2141,6 +2156,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string[]} names - order of fields names
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetCalculateOrder.js
 	 */
 	ApiDocument.prototype.SetCalculateOrder = function(names) {
@@ -2152,6 +2168,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {number[]} [indexes] - pages indexes for split (returns result for all pages if the parameter is omitted.)
 	 * @returns {PdfFile}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/Split.js
 	 */
 	ApiDocument.prototype.Split = function(indexes) {
@@ -2178,6 +2195,7 @@
 	 * @param {number} [deleteCount=0] - number of existing pages to replace starting at position, limited to the remaining pages
 	 * @param {PdfFile[] | Base64[]} [files] - pdf files
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/Merge.js
 	 */
 	ApiDocument.prototype.Merge = function(position, deleteCount, files) {
@@ -2461,6 +2479,7 @@
 	 * Gets page selection.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?PageSelection}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetSelection.js
 	 */
 	ApiPage.prototype.GetSelection = function() {
@@ -3150,6 +3169,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {WidgetTextAlign} textAlign - The text alignment.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextAlign.js
 	 */
 	ApiBaseWidget.prototype.SetTextAlign = function(textAlign) {
@@ -3165,6 +3185,7 @@
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @returns {WidgetTextAlign | undefined}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetTextAlign.js
 	 */
 	ApiBaseWidget.prototype.GetTextAlign = function() {
@@ -3249,6 +3270,7 @@
 	 * Gets parent field.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiField}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetParent.js
 	 */
 	ApiBaseWidget.prototype.GetParent = function() {
@@ -3264,6 +3286,7 @@
 	 * Gets actions collection.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiActionCollection}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetActions.js
 	 */
 	ApiBaseWidget.prototype.GetActions = function() {
@@ -3559,6 +3582,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} sPlaceholder - field placeholder 
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/SetPlaceholder.js
 	 */
 	ApiTextField.prototype.SetPlaceholder = function(sText) {
@@ -3574,6 +3598,7 @@
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/GetPlaceholder.js
 	 */
 	ApiTextField.prototype.GetPlaceholder = function() {
@@ -3603,6 +3628,7 @@
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/GetRegularExp.js
 	 */
 	ApiTextField.prototype.GetRegularExp = function() {
@@ -3661,6 +3687,7 @@
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextField/Methods/GetFormattedValue.js
 	 */
 	ApiTextField.prototype.GetFormattedValue = function() {
@@ -4032,6 +4059,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} sPlaceholder - field placeholder 
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetPlaceholder.js
 	 */
 	ApiComboboxField.prototype.SetPlaceholder = function(sText) {
@@ -4047,6 +4075,7 @@
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/GetPlaceholder.js
 	 */
 	ApiComboboxField.prototype.GetPlaceholder = function() {
@@ -4076,6 +4105,7 @@
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/GetRegularExp.js
 	 */
 	ApiComboboxField.prototype.GetRegularExp = function() {
@@ -4134,6 +4164,7 @@
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/GetFormattedValue.js
 	 */
 	ApiComboboxField.prototype.GetFormattedValue = function() {
@@ -5029,6 +5060,7 @@
 	 * Gets class type of this object.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"actionCollection"}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetClassType.js
 	 */
 	ApiActionCollection.prototype.GetClassType = function() {
@@ -5039,6 +5071,7 @@
 	 * Gets MouseUp action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseUp.js
 	 */
 	ApiActionCollection.prototype.GetMouseUp = function() {
@@ -5050,6 +5083,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseUp.js
 	 */
 	ApiActionCollection.prototype.SetMouseUp = function(action) {
@@ -5065,6 +5099,7 @@
 	 * Gets MouseDown action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseDown.js
 	 */
 	ApiActionCollection.prototype.GetMouseDown = function() {
@@ -5076,6 +5111,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseDown.js
 	 */
 	ApiActionCollection.prototype.SetMouseDown = function(action) {
@@ -5091,6 +5127,7 @@
 	 * Gets MouseEnter action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseEnter.js
 	 */
 	ApiActionCollection.prototype.GetMouseEnter = function() {
@@ -5102,6 +5139,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseEnter.js
 	 */
 	ApiActionCollection.prototype.SetMouseEnter = function(action) {
@@ -5117,6 +5155,7 @@
 	 * Gets MouseExit action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetMouseExit.js
 	 */
 	ApiActionCollection.prototype.GetMouseExit = function() {
@@ -5128,6 +5167,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetMouseExit.js
 	 */
 	ApiActionCollection.prototype.SetMouseExit = function(action) {
@@ -5143,6 +5183,7 @@
 	 * Gets OnFocus action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetOnFocus.js
 	 */
 	ApiActionCollection.prototype.GetOnFocus = function() {
@@ -5154,6 +5195,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetOnFocus.js
 	 */
 	ApiActionCollection.prototype.SetOnFocus = function(action) {
@@ -5169,6 +5211,7 @@
 	 * Gets OnBlur action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetOnBlur.js
 	 */
 	ApiActionCollection.prototype.GetOnBlur = function() {
@@ -5180,6 +5223,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetOnBlur.js
 	 */
 	ApiActionCollection.prototype.SetOnBlur = function(action) {
@@ -5195,6 +5239,7 @@
 	 * Gets Format action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetFormat.js
 	 */
 	ApiActionCollection.prototype.GetFormat = function() {
@@ -5206,6 +5251,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetFormat.js
 	 */
 	ApiActionCollection.prototype.SetFormat = function(action) {
@@ -5225,6 +5271,7 @@
 	 * Gets Keystroke action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetKeystroke.js
 	 */
 	ApiActionCollection.prototype.GetKeystroke = function() {
@@ -5236,6 +5283,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetKeystroke.js
 	 */
 	ApiActionCollection.prototype.SetKeystroke = function(action) {
@@ -5251,6 +5299,7 @@
 	 * Gets Validate action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetValidate.js
 	 */
 	ApiActionCollection.prototype.GetValidate = function() {
@@ -5262,6 +5311,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetValidate.js
 	 */
 	ApiActionCollection.prototype.SetValidate = function(action) {
@@ -5277,6 +5327,7 @@
 	 * Gets Calculate action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/GetCalculate.js
 	 */
 	ApiActionCollection.prototype.GetCalculate = function() {
@@ -5288,6 +5339,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiActionCollection/Methods/SetCalculate.js
 	 */
 	ApiActionCollection.prototype.SetCalculate = function(action) {
@@ -5335,6 +5387,7 @@
 	 * Returns next action.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAction/Methods/GetNext.js
 	 */
 	ApiBaseAction.prototype.GetNext = function() {
@@ -5346,6 +5399,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiBaseAction} action
 	 * @returns {ApiBaseAction} - returns next action
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetNext.js
 	 */
 	ApiBaseAction.prototype.SetNext = function(action) {
@@ -5382,6 +5436,7 @@
 	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"goToAction"}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetClassType.js
 	 */
 	ApiGoToAction.prototype.GetClassType = function() {
@@ -5392,6 +5447,7 @@
 	 * Gets desctination page index
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetPage.js
 	 */
 	ApiGoToAction.prototype.GetPage = function() {
@@ -5403,6 +5459,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} page
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetPage.js
 	 */
 	ApiGoToAction.prototype.SetPage = function(page) {
@@ -5422,6 +5479,7 @@
 	 * Gets goto type
 	 * @typeofeditors ["PDFE"]
 	 * @returns {GoToType}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetType.js
 	 */
 	ApiGoToAction.prototype.GetType = function() {
@@ -5433,6 +5491,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {GoToType} type
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetType.js
 	 */
 	ApiGoToAction.prototype.SetType = function(type) {
@@ -5462,6 +5521,7 @@
 	 * Gets goto destination rect
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?Rect}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetRect.js
 	 */
 	ApiGoToAction.prototype.GetRect = function() {
@@ -5477,6 +5537,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetRect.js
 	 */
 	ApiGoToAction.prototype.SetRect = function(rect) {
@@ -5494,6 +5555,7 @@
 	 * Gets zoom for action
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?number}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetRect.js
 	 */
 	ApiGoToAction.prototype.GetZoom = function() {
@@ -5505,6 +5567,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {percentage} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetZoom.js
 	 */
 	ApiGoToAction.prototype.SetZoom = function(zoom) {
@@ -5543,6 +5606,7 @@
 	 * @memberof ApiUriAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"uriAction"}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetClassType.js
 	 */
 	ApiUriAction.prototype.GetClassType = function() {
@@ -5553,6 +5617,7 @@
 	 * Gets uri string
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
 	 */
 	ApiUriAction.prototype.GetUri = function() {
@@ -5564,6 +5629,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} uri
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
 	 */
 	ApiUriAction.prototype.SetUri = function(uri) {
@@ -5602,6 +5668,7 @@
 	 * @memberof ApiHideShowFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"hideShowAction"}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetClassType.js
 	 */
 	ApiHideShowFormsAction.prototype.GetClassType = function() {
@@ -5612,6 +5679,7 @@
 	 * Checks if action hide fields
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - if false then show fields
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/IsHide.js
 	 */
 	ApiHideShowFormsAction.prototype.IsHide = function() {
@@ -5623,6 +5691,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isHide
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/SetHide.js
 	 */
 	ApiHideShowFormsAction.prototype.SetHide = function(isHide) {
@@ -5636,6 +5705,7 @@
 	 * Gets names of fields to hide
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string[]}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetNames.js
 	 */
 	ApiHideShowFormsAction.prototype.GetNames = function() {
@@ -5647,6 +5717,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string[]} names
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetNames.js
 	 */
 	ApiHideShowFormsAction.prototype.SetNames = function(names) {
@@ -5691,6 +5762,7 @@
 	 * @memberof ApiNamedAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"namedAction"}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiNamedAction/Methods/GetClassType.js
 	 */
 	ApiNamedAction.prototype.GetClassType = function() {
@@ -5702,6 +5774,7 @@
 	 * @memberof ApiNamedAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {NamedActionType}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiNamedAction/Methods/GetName.js
 	 */
 	ApiNamedAction.prototype.GetName = function() {
@@ -5714,6 +5787,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {NamedActionType} name
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiNamedAction/Methods/SetName.js
 	 */
 	ApiNamedAction.prototype.SetName = function(name) {
@@ -5751,6 +5825,7 @@
 	 * @memberof ApiResetFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"resetFormsAction"}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetClassType.js
 	 */
 	ApiResetFormsAction.prototype.GetClassType = function() {
@@ -5761,6 +5836,7 @@
 	 * Will all fields be reset except the fields whose names are specified
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/IsAllExcept.js
 	 */
 	ApiResetFormsAction.prototype.IsAllExcept = function() {
@@ -5772,6 +5848,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isAllExcept
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/SetAllExcept.js
 	 */
 	ApiResetFormsAction.prototype.SetAllExcept = function(isAllExcept) {
@@ -5785,6 +5862,7 @@
 	 * Gets names of fields to reset
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string[]}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetNames.js
 	 */
 	ApiResetFormsAction.prototype.GetNames = function() {
@@ -5796,6 +5874,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string[]} names
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetNames.js
 	 */
 	ApiResetFormsAction.prototype.SetNames = function(names) {
@@ -5840,6 +5919,7 @@
 	 * @memberof ApiJsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"jsAction"}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiJsAction/Methods/GetClassType.js
 	 */
 	ApiJsAction.prototype.GetClassType = function() {
@@ -5850,6 +5930,7 @@
 	 * Gets action script
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiJsAction/Methods/GetScript.js
 	 */
 	ApiJsAction.prototype.GetScript = function() {
@@ -5861,6 +5942,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} script
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiJsAction/Methods/SetScript.js
 	 */
 	ApiJsAction.prototype.SetScript = function(script) {
@@ -7748,6 +7830,7 @@
 	 * @memberof ApiLinkAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?ApiBaseAction}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiLinkAnnotation/Methods/GetAction.js
 	 */
 	ApiLinkAnnotation.prototype.GetAction = function() {
@@ -7760,6 +7843,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - GoTo, URI, or another PDF action; null removes the action.
 	 * @returns {boolean}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiLinkAnnotation/Methods/SetAction.js
 	 */
 	ApiLinkAnnotation.prototype.SetAction = function(action) {
@@ -8138,6 +8222,7 @@
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiRun}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/GetLastRunWithText.js
 	 */
 	ApiRichParagraph.prototype.GetLastRunWithText = AscBuilder.ApiParagraph.prototype.GetLastRunWithText;
@@ -9448,6 +9533,7 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?ApiDocumentContent}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
 	 */
 	ApiShape.prototype.GetDocContent = function() {
@@ -9510,6 +9596,7 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
 	 * @returns {VerticalTextAlign}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetVerticalTextAlign.js
 	 */
 	ApiShape.prototype.GetVerticalTextAlign = function() {
@@ -9937,6 +10024,7 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {TableLook}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetTableLook.js
 	 */
 	ApiTable.prototype.GetTableLook = function() {
@@ -10565,6 +10653,7 @@
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {EMU}
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetHeight.js
 	 */
 	ApiTableRow.prototype.GetHeight = function(height) {
