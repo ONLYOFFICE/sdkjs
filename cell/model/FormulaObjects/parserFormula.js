@@ -7453,6 +7453,8 @@ function parserFormula( formula, parent, _ws ) {
 	//mark function, when need reparse and recalculate on custom function change
 	this.unknownOrCustomFunction = null;
 
+	this._noSelfRefRecalcId = 0;
+
 	if (AscFonts.IsCheckSymbols) {
 		AscFonts.FontPickerByCharacter.getFontsByString(this.Formula);
 	}
@@ -7508,6 +7510,8 @@ function parserFormula( formula, parent, _ws ) {
 
 		return "";
 	};
+	const aExcludeCondFormulas = ["IFERROR", "IFNA", "COUNTIF", "BITLSHIFT", "BITRSHIFT", "DATEDIF"];
+	const aCondFormulas = ["SWITCH", "LOOKUP"];
 	/**
 	 * Checks a formula is conditional.
 	 * @memberof parserFormula
@@ -7516,25 +7520,19 @@ function parserFormula( formula, parent, _ws ) {
 	 * @private
 	 */
 	parserFormula.prototype._isConditionalFormula = function (sFunctionName) {
-		const aExcludeCondFormulas = ["IFERROR", "IFNA", "COUNTIF", "BITLSHIFT", "BITRSHIFT", "DATEDIF"];
-		const aCondFormulas = ["SWITCH", "LOOKUP"];
-
 		return !!sFunctionName && (sFunctionName.includes("IF") || aCondFormulas.includes(sFunctionName)) &&
 			!aExcludeCondFormulas.includes(sFunctionName);
 	};
 	parserFormula.prototype.notify = function(data) {
 		var eventData = {notifyData: data, assemble: null, formula: this};
-		let sFunctionName = this.getFunctionName();
-
-		if (this._isConditionalFormula(sFunctionName) && data.areaData && g_cCalcRecursion.getIsCellEdited()) {
-			let oCell = null;
-			if (this.parent && null != this.parent.nRow && null != this.parent.nCol) {
-				this.ws._getCell(this.parent.nRow, this.parent.nCol, function (oElem) {
-					oCell = oElem;
-				});
-			}
-			if (oCell && oCell.containInFormula()) {
-				this.ca = this.isRecursiveCondFormula(sFunctionName);
+		if (data.areaData && this._noSelfRefRecalcId !== g_nRecalcId && g_cCalcRecursion.getIsCellEdited()) {
+			const sFunctionName = this.getFunctionName();
+			if (this._isConditionalFormula(sFunctionName)) {
+				if (AscCommonExcel.checkFormulaContainCell(this, this.parent)) {
+					this.ca = this.isRecursiveCondFormula(sFunctionName);
+				} else {
+					this._noSelfRefRecalcId = g_nRecalcId;
+				}
 			}
 		}
 		if (AscCommon.c_oNotifyType.Dirty === data.type) {
@@ -7845,7 +7843,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (!hasIf) {
 			return null;
 		}
-		var spanStack = [];
+		var spanStackS = [], spanStackE = [], nSpanLen = 0;
 		var byCondEnd = null, byBranchStart = null, count = 0;
 		for (var i = 0; i < aOutStack.length; i++) {
 			var el = aOutStack[i];
@@ -7868,16 +7866,17 @@ function parserFormula( formula, parent, _ws ) {
 				if (argCount < 0) {
 					argCount = -argCount;
 				}
-				if (spanStack.length < argCount) {
+				if (!(argCount > 0)) {
+					argCount = 0;
+				}
+				if (nSpanLen < argCount) {
 					return null;
 				}
-				var spans = [];
-				for (var k = 0; k < argCount; k++) {
-					spans.unshift(spanStack.pop());
-				}
-				var start = spans.length ? spans[0].s : i;
+				var nBase = nSpanLen - argCount;
+				var start = argCount ? spanStackS[nBase] : i;
 				if (el.type === cElementType.func && el.name === "IF" && argCount === 3 && !bArrayCtx) {
-					var cE = spans[0].e, tS = spans[1].s, tE = spans[1].e, fS = spans[2].s, fE = spans[2].e;
+					var cE = spanStackE[nBase], tS = spanStackS[nBase + 1], tE = spanStackE[nBase + 1],
+						fS = spanStackS[nBase + 2], fE = spanStackE[nBase + 2];
 					if (!_lazyIfSpanHasUnsafe(aOutStack, tS, tE) && !_lazyIfSpanHasUnsafe(aOutStack, fS, fE)) {
 						if (!byCondEnd) {
 							byCondEnd = {};
@@ -7893,9 +7892,14 @@ function parserFormula( formula, parent, _ws ) {
 						count++;
 					}
 				}
-				spanStack.push({s: start, e: i});
+				nSpanLen = nBase;
+				spanStackS[nSpanLen] = start;
+				spanStackE[nSpanLen] = i;
+				nSpanLen++;
 			} else {
-				spanStack.push({s: i, e: i});
+				spanStackS[nSpanLen] = i;
+				spanStackE[nSpanLen] = i;
+				nSpanLen++;
 			}
 		}
 		if (!count) {
@@ -8485,6 +8489,7 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 	parserFormula.prototype.parse = function (local, digitDelim, parseResult, ignoreErrors, renameSheetMap, tablesMap, opt_pivotNamesList) {
+		this._noSelfRefRecalcId = 0;
 		var elemArr = [];
 		var ph = {operand_str: null, pCurrPos: 0};
 		var needAssemble = false;
@@ -11896,6 +11901,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	parserFormula.prototype.buildDependencies = function() {
+		this._noSelfRefRecalcId = 0;
 		if (this.isInDependencies) {
 			return;
 		}
@@ -13524,6 +13530,8 @@ function parserFormula( formula, parent, _ws ) {
 
 	const g_cCalcRecursion = new CalcRecursion();
 
+	let g_nRecalcId = 1;
+
 	function parseNum(str) {
 		if (str.indexOf("x") > -1 || str == "" || str.match(/^\s+$/))//exclude hexadecimal number notation from numbers.
 		{
@@ -14398,6 +14406,9 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cNumFormatFirstCell = cNumFormatFirstCell;
 	window['AscCommonExcel'].cNumFormatNone = cNumFormatNone;
 	window['AscCommonExcel'].g_cCalcRecursion = g_cCalcRecursion;
+	window['AscCommonExcel'].incRecalcId = function () {
+		g_nRecalcId++;
+	};
 	window['AscCommonExcel'].g_ProcessShared = false;
 	window['AscCommonExcel'].cReturnFormulaType = cReturnFormulaType;
 	window['AscCommonExcel'].arrayIndexesType = arrayIndexesType;
