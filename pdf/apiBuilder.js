@@ -5565,7 +5565,7 @@
 	/**
 	 * Sets goto zoom ratio
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
+	 * @param {number} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
 	 * @returns {boolean}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetZoom.js
