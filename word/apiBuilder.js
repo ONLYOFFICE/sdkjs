@@ -2578,11 +2578,11 @@
 	 * Sets the font size to the characters of the current text Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} FontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiRange | null} - returns null if can't set font size.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
-	ApiRange.prototype.SetFontSize = function(FontSize)
+	ApiRange.prototype.SetFontSize = function(fontSize)
 	{
 		private_RefreshRangesPosition();
 
@@ -2601,7 +2601,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : FontSize});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -11220,14 +11220,14 @@
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
 	 */
-	ApiParagraph.prototype.SetFontSize = function(nSize)
+	ApiParagraph.prototype.SetFontSize = function(fontSize)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize/2}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;

@@ -131,7 +131,7 @@
 	 * @property {number} Width - Returns a value that represents the range width measured in points.
 	 * @property {number} RowHeight - Returns or sets the height of the first row in the specified range measured in points.
 	 * @property {number} Height - Returns a value that represents the range height measured in points.
-	 * @property {number} FontSize - Sets the font size to the characters of the current cell range.
+	 * @property {number} FontSize - Sets the font size (measured in points) to the characters of the current cell range.
 	 * @property {string} FontName - Sets the specified font family as the font name for the current cell range.
 	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - Sets the text vertical alignment to the current cell range.
 	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - Sets the text horizontal alignment to the current cell range.
@@ -609,7 +609,7 @@
 	 * @property {ApiCharacters} Parent - The parent object of the specified font object.
 	 * @property {boolean | null} Bold - The font bold property.
 	 * @property {boolean | null} Italic - The font italic property.
-	 * @property {number | null} Size - The font size property.
+	 * @property {number | null} Size - The font size property measured in points.
 	 * @property {boolean | null} Strikethrough - The font strikethrough property.
 	 * @property {string | null} Underline - The font type of underline.
 	 * @property {boolean | null} Subscript - The font subscript property.
@@ -15233,7 +15233,7 @@
 	});
 
 	/**
-	 * Returns the font size property of the specified font.
+	 * Returns the font size property of the specified font measured in points.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | null}
@@ -15276,7 +15276,7 @@
 	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @param {number} Size - Font size.
+	 * @param {number} Size - The font size value measured in points.
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSize.js
 	 */
