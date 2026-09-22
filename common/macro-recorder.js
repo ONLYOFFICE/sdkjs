@@ -1672,6 +1672,34 @@
 
 			return strStrokeShape;
 		},
+		setDrawingShadow		: function(shadow)
+		{
+			if (!shadow)
+			{
+				return "\tdoc.GetSelectedDrawings()\n"
+					+ "\t\t.forEach(function(shape) { shape.SetShadow(null); });\n";
+			}
+
+			let color = shadow.color.RGBA;
+			let transparency = shadow.color.getTransparency() / 100;
+			let rad = shadow.dir / 60000 * Math.PI / 180;
+			let offsetX = shadow.dist / 12700 * Math.cos(rad);
+			let offsetY = shadow.dist / 12700 * Math.sin(rad);
+			let size = shadow.getSize();
+			let rotateWithShape = shadow.rotWithShape !== false;
+
+			return "\tdoc.GetSelectedDrawings()\n" +
+				"\t\t.forEach(function(shape) {\n" +
+				"\t\t\tshape.SetShadow(Api.CreateShadow({\n" +
+				"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
+				"\t\t\t\ttransparency: " + transparency + ",\n" +
+				"\t\t\t\toffsetX: " + offsetX + ",\n" +
+				"\t\t\t\toffsetY: " + offsetY + ",\n" +
+				"\t\t\t\tsize: " + size + ",\n" +
+				"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
+				"\t\t\t}));\n" +
+				"\t\t});\n";
+		},
 		setDrawingRotation		: function(nRot)
 		{
 			return "\tdoc.GetSelectedDrawings()\n"
@@ -2283,6 +2311,7 @@
 	DEActionMap['DeselectDrawing']												= wordActions.deselectDrawing;
 	DEActionMap['SetDrawingFill']												= wordActions.setDrawingFill;
 	DEActionMap['SetDrawingLine']												= wordActions.setDrawingLine;
+	DEActionMap['SetDrawingShadow']											= wordActions.setDrawingShadow;
 	DEActionMap['SetDrawingRotation']											= wordActions.setDrawingRotation;
 	DEActionMap['SetDrawingPos']												= wordActions.setDrawingPos;
 	DEActionMap['SetDrawingFlipH']												= wordActions.setDrawingFlipH;
@@ -2729,6 +2758,34 @@
 
 			return strStrokeShape;
 		},
+		setDrawingShadow		: function(shadow)
+		{
+			if (!shadow)
+			{
+				return "\tworksheet.GetSelectedShapes()\n"
+					+ "\t\t.forEach(shape => shape.SetShadow(null));\n";
+			}
+
+			let color = shadow.color.RGBA;
+			let transparency = shadow.color.getTransparency() / 100;
+			let rad = shadow.dir / 60000 * Math.PI / 180;
+			let offsetX = shadow.dist / 12700 * Math.cos(rad);
+			let offsetY = shadow.dist / 12700 * Math.sin(rad);
+			let size = shadow.getSize();
+			let rotateWithShape = shadow.rotWithShape !== false;
+
+			return "\tworksheet.GetSelectedShapes()\n" +
+				"\t\t.forEach(shape => {\n" +
+				"\t\t\tshape.SetShadow(Api.CreateShadow({\n" +
+				"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
+				"\t\t\t\ttransparency: " + transparency + ",\n" +
+				"\t\t\t\toffsetX: " + offsetX + ",\n" +
+				"\t\t\t\toffsetY: " + offsetY + ",\n" +
+				"\t\t\t\tsize: " + size + ",\n" +
+				"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
+				"\t\t\t}));\n" +
+				"\t\t});\n";
+		},
 		setDrawingRotation		: function(nRot)
 		{
 			return "\tworksheet.GetSelectedShapes()\n"
@@ -2844,6 +2901,7 @@
 	SEActionMap['SelectDrawing']													= cellActions.selectDrawing;
 	SEActionMap['SetDrawingFill']													= cellActions.setDrawingFill;
 	SEActionMap['SetDrawingLine']													= cellActions.setDrawingLine;
+	SEActionMap['SetDrawingShadow']												= cellActions.setDrawingShadow;
 	SEActionMap['SetDrawingRotation']												= cellActions.setDrawingRotation;
 	SEActionMap['SetDrawingFlipH']													= cellActions.setDrawingFlipH;
 	SEActionMap['SetDrawingFlipV']													= cellActions.setDrawingFlipV;
@@ -3317,6 +3375,34 @@
 
 			return strStrokeShape;
 		},
+		setDrawingShadow		: function(shadow)
+		{
+			if (!shadow)
+			{
+				return "\tApi.GetSelection().GetShapes()\n"
+					+ "\t\t.forEach(shape => shape.SetShadow(null));\n";
+			}
+
+			let color = shadow.color.RGBA;
+			let transparency = shadow.color.getTransparency() / 100;
+			let rad = shadow.dir / 60000 * Math.PI / 180;
+			let offsetX = shadow.dist / 12700 * Math.cos(rad);
+			let offsetY = shadow.dist / 12700 * Math.sin(rad);
+			let size = shadow.getSize();
+			let rotateWithShape = shadow.rotWithShape !== false;
+
+			return "\tApi.GetSelection().GetShapes()\n" +
+				"\t\t.forEach(shape => {\n" +
+				"\t\t\tshape.SetShadow(Api.CreateShadow({\n" +
+				"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
+				"\t\t\t\ttransparency: " + transparency + ",\n" +
+				"\t\t\t\toffsetX: " + offsetX + ",\n" +
+				"\t\t\t\toffsetY: " + offsetY + ",\n" +
+				"\t\t\t\tsize: " + size + ",\n" +
+				"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
+				"\t\t\t}));\n" +
+				"\t\t});\n";
+		},
 		setDrawingRotation		: function(nRot)
 		{
 			return "\tApi.GetSelection().GetShapes().forEach(draw => {\n" +
@@ -3772,6 +3858,7 @@
 	PEActionMap["SetDrawingFill"]													= presActions.setDrawingFill;
 	PEActionMap["SetGeometry"]														= presActions.setGeometry;
 	PEActionMap["SetDrawingLine"]													= presActions.setDrawingLine;
+	PEActionMap["SetDrawingShadow"]												= presActions.setDrawingShadow;
 	PEActionMap["SetShapeX"]														= presActions.setShapeX;
 	PEActionMap["SetShapeY"]														= presActions.setShapeY;
 	PEActionMap['SetShapeInnerPadding']												= presActions.setShapeInnerPadding;
