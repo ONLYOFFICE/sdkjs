@@ -587,7 +587,7 @@
 		}
 		function IsCodeLine(oParagraph)
 		{
-			if (!oParagraph)
+			if (!oParagraph || !oParagraph.Paragraph.bFromDocument)
 				return false;
 
 			var sFirstRunFont = null;
@@ -624,6 +624,9 @@
 		}
 		function IsQuoteLine(oParagraph)
 		{
+			if (!oParagraph.Paragraph.bFromDocument)
+				return false;
+
 			var Styles         = private_GetLogicDocument().Get_Styles();
 			if (!Styles || !Styles.GetStyleIdByName)
 				return false;
