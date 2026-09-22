@@ -1305,8 +1305,6 @@
 				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
 				+ "\t\tif (!table) return null;\n"
 				+ "\t\tdoc.InsertContent([table])\n"
-				+ "\t\tif (!table) return null;\n"
-				+ "\t\tdoc.InsertContent([table])\n"
 				+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
 				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
 				+ "\t\ttable.SetTableLayout(\"autofit\");\n"
