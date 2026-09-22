@@ -1318,10 +1318,8 @@
 				+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
 				+ "\t\t});\n"
 				+ "\t\ttable.GetRange(0, 0).MoveCursorToPos(0);\n"
-				+ "\t\ttable.GetRange(0, 0).MoveCursorToPos(0);\n"
 				+ "\t\treturn table;\n"
 				+ "\t}());\n"
-				+ "\tif (!" + varName + ") return;\n"
 				+ "\tif (!" + varName + ") return;\n";
 
 
