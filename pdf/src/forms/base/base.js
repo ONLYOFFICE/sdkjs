@@ -2609,7 +2609,7 @@
                 this.DrawFromTextBox(pdfGraphics, textBoxGraphics);
         }
 
-		if (pdfGraphics.isPrint) {
+		if (true !== pdfGraphics.isPrint) {
 			this.DrawRequiredBorder(pdfGraphics);
 		}
 		
