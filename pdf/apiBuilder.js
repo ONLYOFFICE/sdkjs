@@ -2274,7 +2274,7 @@
 	 * <note> Text size === 0 means autofit </note>
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {pt} size - The font size in points.
+	 * @param {hps} size - The font size measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextSize.js
 	 */
@@ -2283,7 +2283,7 @@
 			return false;
 		}
 
-		this.Field.SetTextSize(size);
+		this.Field.SetTextSize(AscBuilder.private_GetHps(size));
 		return true;
 	};
 
@@ -2292,11 +2292,11 @@
 	 * <note> Text size === 0 means autofit </note>
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @returns {pt}
+	 * @returns {hps}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetTextSize.js
 	 */
 	ApiBaseWidget.prototype.GetTextSize = function() {
-		return this.Field.GetTextSize();
+		return 2 * this.Field.GetTextSize();
 	};
 
 	/**
