@@ -495,6 +495,7 @@
 	 * @property {boolean} ColumnGrand - Returns or sets the <b>Grand Totals</b> setting for the pivot table columns.
 	 * @property {boolean} RowGrand - Returns or sets the <b>Grand Totals</b> setting for the pivot table rows.
 	 * @property {boolean} DisplayFieldCaptions - Returns or sets the setting which specifies whether to display field headers for rows and columns.
+	 * @property {boolean} HasAutoFormat - Returns or sets the setting which specifies whether the pivot table is automatically formatted on every update.
 	 * @property {string} Title - Returns or sets the pivot table title.
 	 * @property {string} Description - Returns or sets the pivot table description.
 	 * @property {string} StyleName - Returns or sets the pivot table style name.
@@ -19616,6 +19617,45 @@
 	});
 
 	/**
+	 * Returns whether the pivot table is automatically formatted on update, which in the editor fits the column widths to their content.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetHasAutoFormat.js
+	 */
+	ApiPivotTable.prototype.GetHasAutoFormat = function () {
+		return this.pivot.asc_getUseAutoFormatting();
+	};
+
+	/**
+	 * Sets whether the pivot table is automatically formatted on update, which in the editor fits the column widths to their content.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} hasAutoFormat - Specifies whether to format the pivot table automatically on every update.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetHasAutoFormat.js
+	 */
+	ApiPivotTable.prototype.SetHasAutoFormat = function (hasAutoFormat) {
+		if (typeof hasAutoFormat == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setUseAutoFormatting(hasAutoFormat);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "hasAutoFormat".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "HasAutoFormat", {
+		get: function () {
+			return this.GetHasAutoFormat();
+		},
+		set: function (hasAutoFormat) {
+			this.SetHasAutoFormat(hasAutoFormat);
+		}
+	});
+
+	/**
 	 * Returns the pivot table title.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
@@ -31445,6 +31485,8 @@
 	ApiPivotTable.prototype["SetDisplayFieldsInReportFilterArea"] = ApiPivotTable.prototype.SetDisplayFieldsInReportFilterArea;
 	ApiPivotTable.prototype["GetDisplayFieldCaptions"]            = ApiPivotTable.prototype.GetDisplayFieldCaptions;
 	ApiPivotTable.prototype["SetDisplayFieldCaptions"]            = ApiPivotTable.prototype.SetDisplayFieldCaptions;
+	ApiPivotTable.prototype["GetHasAutoFormat"]                   = ApiPivotTable.prototype.GetHasAutoFormat;
+	ApiPivotTable.prototype["SetHasAutoFormat"]                   = ApiPivotTable.prototype.SetHasAutoFormat;
 	ApiPivotTable.prototype["GetTitle"]                           = ApiPivotTable.prototype.GetTitle;
 	ApiPivotTable.prototype["SetTitle"]                           = ApiPivotTable.prototype.SetTitle;
 	ApiPivotTable.prototype["GetDescription"]                    = ApiPivotTable.prototype.GetDescription;
