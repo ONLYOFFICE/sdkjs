@@ -2629,11 +2629,11 @@
 	 * Sets the font size to the characters of the current text Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} FontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiRange | null} - returns null if can't set font size.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
-	ApiRange.prototype.SetFontSize = function(FontSize)
+	ApiRange.prototype.SetFontSize = function(fontSize)
 	{
 		private_RefreshRangesPosition();
 
@@ -2652,7 +2652,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : FontSize});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -11607,14 +11607,14 @@
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
 	 */
-	ApiParagraph.prototype.SetFontSize = function(nSize)
+	ApiParagraph.prototype.SetFontSize = function(fontSize)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize/2}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -22710,14 +22710,14 @@
 	 *  @memberof ApiChart
 	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 *  @param {boolean} bIsBold - Specifies if the chart title is written in bold font or not.
 	 * 	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetTitle.js
 	 */
-	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold)
+	ApiChart.prototype.SetTitle = function (sTitle, fontSize, bIsBold)
 	{
-		AscFormat.builder_SetChartTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		AscFormat.builder_SetChartTitle(this.Chart, sTitle, private_GetHps(fontSize), bIsBold);
 		return true;
 	};
 
@@ -22738,14 +22738,14 @@
 	 *  @memberof ApiChart
 	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 *  @param {boolean} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
 	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTitle.js
 	 */
-	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
+	ApiChart.prototype.SetHorAxisTitle = function (sTitle, fontSize, bIsBold)
 	{
-		AscFormat.builder_SetChartHorAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		AscFormat.builder_SetChartHorAxisTitle(this.Chart, sTitle, private_GetHps(fontSize), bIsBold);
 		return true;
 	};
 
@@ -22754,14 +22754,14 @@
 	 *  @memberof ApiChart
 	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 *  @param {boolean} bIsBold - Specifies if the vertical axis title is written in bold font or not.
 	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisTitle.js
 	 */
-	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
+	ApiChart.prototype.SetVerAxisTitle = function (sTitle, fontSize, bIsBold)
 	{
-		AscFormat.builder_SetChartVertAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		AscFormat.builder_SetChartVertAxisTitle(this.Chart, sTitle, private_GetHps(fontSize), bIsBold);
 		return true;
 	};
 
@@ -22863,13 +22863,13 @@
 	 * Specifies the legend font size.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendFontSize.js
 	 */
-	ApiChart.prototype.SetLegendFontSize = function(nFontSize)
+	ApiChart.prototype.SetLegendFontSize = function(fontSize)
 	{
-		AscFormat.builder_SetLegendFontSize(this.Chart, nFontSize);
+		AscFormat.builder_SetLegendFontSize(this.Chart, private_GetHps(fontSize));
 		return true;
 	};
 
@@ -23113,12 +23113,12 @@
 	 * Specifies font size for labels of the horizontal axis.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisLabelsFontSize.js
 	 */
-	ApiChart.prototype.SetHorAxisLabelsFontSize = function(nFontSize){
-		AscFormat.builder_SetHorAxisFontSize(this.Chart, nFontSize);
+	ApiChart.prototype.SetHorAxisLabelsFontSize = function(fontSize){
+		AscFormat.builder_SetHorAxisFontSize(this.Chart, private_GetHps(fontSize));
 		return true;
 	};
 
@@ -23126,12 +23126,12 @@
 	 * Specifies font size for labels of the vertical axis.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisLabelsFontSize.js
 	 */
-	ApiChart.prototype.SetVertAxisLabelsFontSize = function(nFontSize){
-		AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
+	ApiChart.prototype.SetVertAxisLabelsFontSize = function(fontSize){
+		AscFormat.builder_SetVerAxisFontSize(this.Chart, private_GetHps(fontSize));
 		return true;
 	};
 
@@ -37120,6 +37120,7 @@
 
 	AscBuilder.private_GetInt = private_GetInt;
 	AscBuilder.private_Twips2MM = private_Twips2MM;
+	AscBuilder.private_GetHps = private_GetHps;
 	AscBuilder.private_getHighlightColorByName = private_getHighlightColorByName;
 	
 	AscBuilder.Word.init = function()

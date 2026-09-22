@@ -1098,7 +1098,7 @@
 		setTextStrikeout		: function(strikeout){return "\tdoc.GetRangeBySelect().SetStrikeout(" + strikeout + ");\n"},
 		setTextSmallCaps		: function(smallCaps){return "\tdoc.GetRangeBySelect().SetSmallCaps(" + smallCaps + ");\n"},
 		setTextFontName			: function(name){return "\tdoc.GetRangeBySelect().SetFontFamily(\"" + name + "\");\n"},
-		setTextFontSize			: function(size){return "\tdoc.GetRangeBySelect().SetFontSize(\"" + size + "\");\n"},
+		setTextFontSize			: function(size){return "\tdoc.GetRangeBySelect().SetFontSize(" + (size * 2) + ");\n"},
 		setTextHighlightColor	: function(highlight){
 			let highlightColor = "";
 			if (highlight)
@@ -1324,7 +1324,7 @@
 				+ "\t\t" + height + ",\n"
 				+ "\t\t" + style + "\n"
 				+ "\t);\n"
-			//+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 14 + ");\n"
+			//+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
 			+ "\tdoc.GetCurrentParagraph().AddDrawing(" + varRegistry.get('chart') + ");\n"
 			return value;
 		},
@@ -2916,7 +2916,7 @@
 			},
 		putTextPrFontSize		: function(fontsize){return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
 			"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
-			"\t\t\tpara.SetFontSize(" + fontsize + ");\n" +
+			"\t\t\tpara.SetFontSize(" + (fontsize * 2) + ");\n" +
 			"\t\t});\n" +
 			"\t});\n"
 			},
@@ -3137,7 +3137,7 @@
 			+ "\t\t" + height + ",\n"
 			+ "\t\t" + style + "\n"
 			+ "\t);\n"
-			+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 14 + ");\n"
+			+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
 			+ "\t" + varRegistry.get('chart') + ".SetPosition("+ chart.x + " * 36000, " + chart.y +" * 36000);\n"
 			+ "\tpresentation.GetCurrentSlide().AddObject(" + varRegistry.get('chart') + ");\n"
 			return value;
