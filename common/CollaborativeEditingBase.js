@@ -1013,7 +1013,7 @@
             }
         }
     };
-    CCollaborativeEditingBase.prototype.Show_ForeignCursorLabel = function(UserId) {
+    CCollaborativeEditingBase.prototype.Show_ForeignCursorLabel = function(UserId, hideTime) {
         var Api = this.GetEditorApi();
         if(!Api) {
             return;
@@ -1034,7 +1034,7 @@
         {
             Cursor.ShowId = null;
             Api.sendEvent("asc_onHideForeignCursorLabel", UserId);
-        }, AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
+        }, hideTime ? hideTime : AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
 
         var UserShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;
         var Color  = AscCommon.getUserColorById(UserShortId, null, true);
