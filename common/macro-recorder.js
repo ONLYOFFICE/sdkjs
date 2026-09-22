@@ -1297,11 +1297,6 @@
 				return AscCommon.MMToTwips(num, -1);
 			});
 
-
-			let width = prop.tableGrid.map(function(num) {
-				return AscCommon.MMToTwips(num, -1);
-			});
-
 			let styleStr = prop.style ? prop.style : "";
 			let styleVar = varRegistry.inc('tableStyle');
 
@@ -3207,7 +3202,6 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.getRGBAColor();
 			let color = line.Fill.getRGBAColor();
 
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
