@@ -1289,8 +1289,6 @@
 		},
 		addTable : function(prop)
 		{
-		addTable : function(prop)
-		{
 			let varName = prop.tableId
 				? varRegistry.register(prop.tableId, "table")
 				: varRegistry.inc('table');
