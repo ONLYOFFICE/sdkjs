@@ -70,6 +70,7 @@ var X_Right_Field  = Page_Width  - X_Right_Margin;
 var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
 var FOREIGN_CURSOR_SCROLL_TOP_OFFSET = 25; // mm
+var FOREIGN_CURSOR_FOLLOW_LABEL_TIME = 3000; // ms
 
 var docpostype_Content        = 0x00;
 var docpostype_HdrFtr         = 0x02;
@@ -16806,6 +16807,7 @@ CDocument.prototype.ScrollToForeignCursor = function(userId)
 		return false;
 
 	this.AlignViewPositionToTop(FOREIGN_CURSOR_SCROLL_TOP_OFFSET, anchorPos);
+	this.CollaborativeEditing.Show_ForeignCursorLabel(userId, FOREIGN_CURSOR_FOLLOW_LABEL_TIME);
 	return true;
 };
 /**
