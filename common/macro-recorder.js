@@ -924,7 +924,7 @@
 				strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
 			}
 
-			let gradient = "";
+			let gradient = "Api.CreateNoFill()";
 			if (unifill.fill.lin) // leinear
 				gradient = "Api.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
 			else if (unifill.fill.path) // radial
@@ -1287,17 +1287,24 @@
 			else if (type === Asc.c_oAscSectionBreakType.OddPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"oddPage\");\n";
 		},
-		addTable				: function(prop){
+		addTable : function(prop)
+		{
 			let varName = prop.tableId
 				? varRegistry.register(prop.tableId, "table")
 				: varRegistry.inc('table');
-			let width = prop.tableGrid.map(function(num) { return AscCommon.MMToTwips(num, -1) });
+
+			let width = prop.tableGrid.map(function(num) {
+				return AscCommon.MMToTwips(num, -1);
+			});
+
 			let styleStr = prop.style ? prop.style : "";
 			let styleVar = varRegistry.inc('tableStyle');
 
 			return "\tlet " + varName + " = (function()\n"
 				+ "\t{\n"
 				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
+				+ "\t\tif (!table) return null;\n"
+				+ "\t\tdoc.InsertContent([table])\n"
 				+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
 				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
 				+ "\t\ttable.SetTableLayout(\"autofit\");\n"
@@ -1308,10 +1315,11 @@
 				+ "\t\t\tcellPr.SetWidth(\"twips\", width);\n"
 				+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
 				+ "\t\t});\n"
-				+ "\t\tdoc.Push(table);\n"
-				+ "\t\ttable.GetRange(0, 0).Select();\n"
+				+ "\t\ttable.GetRange(0, 0).MoveCursorToPos(0);\n"
 				+ "\t\treturn table;\n"
-				+ "\t}());\n";
+				+ "\t}());\n"
+				+ "\tif (!" + varName + ") return;\n";
+
 		},
 		applyTablePr			: function(style)
 		{
@@ -2653,7 +2661,7 @@
 		{
 			let colorScheme = Asc.editor.getCurrentColorScheme();
 			return private_getDrawingFillReplayCode("worksheet.GetSelectedShapes()", true, unifill, function(gs) {
-				return gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.color.RGBA;
+				return gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.RGBA;
 			});
 		},
 		setDrawingLine			: function(line)
