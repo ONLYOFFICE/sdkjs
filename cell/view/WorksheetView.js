@@ -518,6 +518,9 @@ function isAllowPasteLink(pastedWb) {
 		// ctrl+drag deselect: {start: asc_Range, range: asc_Range}
 		this.ctrlDeselectInfo = null;
 		this.resizeTableIndex = null;
+		// The right mouse button has been clicked on the column/row header band
+		this.isRightClickOnColHeader = false;
+		this.isRightClickOnRowHeader = false;
 		// Horizontal (0) or vertical (1) autofill direction
 		this.fillHandleDirection = -1;
 		// Autofill zone
@@ -14623,6 +14626,7 @@ function isAllowPasteLink(pastedWb) {
         // ToDo activeRange type
         cell_info.selectionType = selectionRange.getLast().getType();
         cell_info.multiselect = !selectionRange.isSingleRange();
+        cell_info.hideShowInfo = this._getHideShowInfo();
 
         cell_info.lockText = ("" !== cell_info.text && (isNumberFormat || c.isFormula()));
 
@@ -15158,7 +15162,85 @@ function isAllowPasteLink(pastedWb) {
         } else if (isSelectOnShape) {
 			this._updateSelectionNameAndInfo();
         }
+
+		var xHeader = this.getRightToLeft() ? this.getCtxWidth() - x : x;
+		this.isRightClickOnColHeader = xHeader >= this.cellsLeft && y < this.cellsTop;
+		this.isRightClickOnRowHeader = xHeader < this.cellsLeft && y >= this.cellsTop;
+		//the selection may stay the same (a click inside it), but the info depends on the clicked header
+		this.workbook._updateSelectionInfo();
     };
+
+	//asc_CHideShowInfo for the selection info, null when neither rows, nor columns are selected
+	WorksheetView.prototype._getHideShowInfo = function () {
+		var isColHeaderClick = this.isRightClickOnColHeader;
+		var isRowHeaderClick = this.isRightClickOnRowHeader;
+		this.isRightClickOnColHeader = this.isRightClickOnRowHeader = false;
+
+		var selectionRange = this.model.selectionRange;
+		var ar = selectionRange.getLast();
+		var isRow, isAll = false;
+		switch (ar.getType()) {
+			case c_oAscSelectionType.RangeRow:
+				isRow = true;
+				break;
+			case c_oAscSelectionType.RangeCol:
+				isRow = false;
+				break;
+			case c_oAscSelectionType.RangeMax:
+				isAll = true;
+				//only the column header gives the columns, the cells and the corner give the rows
+				isRow = !isColHeaderClick;
+				break;
+			default:
+				return null;
+		}
+
+		var isAllColsHidden = this.model.isAllColsHidden();
+		var isAllRowsHidden = this.model.isAllRowsHidden();
+		if (isRow && !isRowHeaderClick && isAllColsHidden) {
+			isRow = false;
+			isAll = true;
+		} else if (!isRow && !isColHeaderClick && isAllRowsHidden) {
+			isRow = true;
+			isAll = true;
+		}
+
+		var res = new AscCommonExcel.asc_CHideShowInfo();
+		res.isRow = isRow;
+		res.isAll = isAll;
+		res.isMultiselect = !selectionRange.isSingleRange();
+		res.count = isRow ? ar.r2 - ar.r1 + 1 : ar.c2 - ar.c1 + 1;
+		res.isAllHidden = isRow ? isAllRowsHidden : isAllColsHidden;
+
+		//nothing but "hide" can be done with several separate ranges
+		if (res.isMultiselect && !isAll) {
+			return res;
+		}
+
+		var start = isRow ? ar.r1 : ar.c1;
+		var end = isRow ? ar.r2 : ar.c2;
+		res.hasHiddenInside = isRow ? this.model.containsHiddenRows(start, end) :
+			this.model.containsHiddenCols(start, end);
+		//the whole worksheet has nothing outside of the selection
+		if (isAll) {
+			return res;
+		}
+
+		var last = isRow ? gc_nMaxRow0 : gc_nMaxCol0;
+		var before = isRow ? this.model.getAdjacentHiddenRows(start, true) : this.model.getAdjacentHiddenCols(start, true);
+		var after = isRow ? this.model.getAdjacentHiddenRows(end, false) : this.model.getAdjacentHiddenCols(end, false);
+
+		//a single row/column offers both neighbour blocks, several selected ones - only the blocks at the
+		//border of the worksheet, the others can be shown by expanding the selection
+		if (before && (start === end || 0 === before.start)) {
+			res.hiddenBefore = new AscCommonExcel.asc_CHideShowRange(before.start, before.end, isRow);
+		}
+		if (after && (start === end || last === after.end)) {
+			res.hiddenAfter = new AscCommonExcel.asc_CHideShowRange(after.start, after.end, isRow);
+		}
+
+		return res;
+	};
 
     /**
      *
@@ -18545,14 +18627,21 @@ function isAllowPasteLink(pastedWb) {
 		};
 
 
+		//"showCols"/"showRows" may be applied to an explicit {start, end} range instead of the selection
+		var showRange = ("showCols" === prop || "showRows" === prop) ? val : null;
+
 		//check user protect
 		let checkUserRanges = t.model.selectionRange && t.model.selectionRange.ranges;
 		if (prop === "colWidth" || prop === "showCols" || prop === "groupCols" || prop === "hideCols" || (prop === "delCell" && val === c_oAscDeleteOptions.DeleteColumns)) {
-			if (!checkUserRanges || prop === "groupCols") {
+			if (showRange) {
+				checkUserRanges = new Asc.Range(showRange.start, 0, showRange.end, gc_nMaxRow0);
+			} else if (!checkUserRanges || prop === "groupCols") {
 				checkUserRanges = new Asc.Range(checkRange.c1, 0, checkRange.c2, gc_nMaxRow0);
 			}
 		} else if (prop === "rowHeight" || prop === "showRows" || prop === "groupRows" || prop === "hideRows" || (prop === "delCell" && val === c_oAscDeleteOptions.DeleteRows)) {
-			if (!checkUserRanges || prop === "groupRows") {
+			if (showRange) {
+				checkUserRanges = new Asc.Range(0, showRange.start, gc_nMaxCol0, showRange.end);
+			} else if (!checkUserRanges || prop === "groupRows") {
 				checkUserRanges = new Asc.Range(0, checkRange.r1, gc_nMaxCol0, checkRange.r2);
 			}
 		} else if (prop === "delCell" && (val === c_oAscDeleteOptions.DeleteCellsAndShiftLeft || c_oAscDeleteOptions.DeleteCellsAndShiftTop)) {
@@ -18594,10 +18683,18 @@ function isAllowPasteLink(pastedWb) {
 				}
 				functionModelAction = function () {
 
-					minUpdateIndex = arn.c1;
-					doMultiRanges( function (start, end) {
-						t.model.setColHidden(false, start, end);
-					}, arn.c1, arn.c2, true);
+					if (showRange) {
+						minUpdateIndex = showRange.start;
+						History.Create_NewPoint();
+						History.StartTransaction();
+						t.model.setColHidden(false, showRange.start, showRange.end);
+						History.EndTransaction();
+					} else {
+						minUpdateIndex = arn.c1;
+						doMultiRanges( function (start, end) {
+							t.model.setColHidden(false, start, end);
+						}, arn.c1, arn.c2, true);
+					}
 
 					t._updateGroups(true);
 					oRecalcType = AscCommonExcel.recalcType.full;
@@ -18656,11 +18753,20 @@ function isAllowPasteLink(pastedWb) {
 					//TODO temporarily removing FilteringMode check. verify if it's needed?!
 					//AscCommonExcel.checkFilteringMode(function () {
 
-					minUpdateIndex = checkRange.r1;
-					doMultiRanges( function (start, end, updateRange) {
-						t.model.setRowHidden(false, start, end);
-						t.model.autoFilters.reDrawFilter(updateRange ? updateRange : arn);
-					}, arn.r1, arn.r2);
+					if (showRange) {
+						minUpdateIndex = showRange.start;
+						History.Create_NewPoint();
+						History.StartTransaction();
+						t.model.setRowHidden(false, showRange.start, showRange.end);
+						t.model.autoFilters.reDrawFilter(new asc_Range(0, showRange.start, gc_nMaxCol0, showRange.end));
+						History.EndTransaction();
+					} else {
+						minUpdateIndex = checkRange.r1;
+						doMultiRanges( function (start, end, updateRange) {
+							t.model.setRowHidden(false, start, end);
+							t.model.autoFilters.reDrawFilter(updateRange ? updateRange : arn);
+						}, arn.r1, arn.r2);
+					}
 
 					//TODO _updateRowGroups should be moved to onChangeWorksheetCallback with the corresponding update flag
 					t._updateGroups();

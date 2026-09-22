@@ -640,10 +640,10 @@ var CPresentation = CPresentation || function(){};
 			const fullName = sFormType + nFormNumber;
 
 			let oField;
-			for (let i = aWidgets.length - 1; i >= 0; i--) {
-				if (aWidgets[i].GetFullName() == fullName) {
-					oField = aWidgets[i];
-					break;
+			let aObjects = Object.values(AscCommon.g_oTableId.m_aPairs);
+			for (let i = 0; i < aObjects.length; i++) {
+				if (aObjects[i].IsForm && aObjects[i].IsForm() && aObjects[i].GetFullName() == fullName) {
+					oField = aObjects[i];
 				}
 			}
 

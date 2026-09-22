@@ -1289,9 +1289,16 @@
 		},
 		addTable : function(prop)
 		{
+		addTable : function(prop)
+		{
 			let varName = prop.tableId
 				? varRegistry.register(prop.tableId, "table")
 				: varRegistry.inc('table');
+
+			let width = prop.tableGrid.map(function(num) {
+				return AscCommon.MMToTwips(num, -1);
+			});
+
 
 			let width = prop.tableGrid.map(function(num) {
 				return AscCommon.MMToTwips(num, -1);
@@ -1305,6 +1312,8 @@
 				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
 				+ "\t\tif (!table) return null;\n"
 				+ "\t\tdoc.InsertContent([table])\n"
+				+ "\t\tif (!table) return null;\n"
+				+ "\t\tdoc.InsertContent([table])\n"
 				+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
 				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
 				+ "\t\ttable.SetTableLayout(\"autofit\");\n"
@@ -1316,9 +1325,12 @@
 				+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
 				+ "\t\t});\n"
 				+ "\t\ttable.GetRange(0, 0).MoveCursorToPos(0);\n"
+				+ "\t\ttable.GetRange(0, 0).MoveCursorToPos(0);\n"
 				+ "\t\treturn table;\n"
 				+ "\t}());\n"
+				+ "\tif (!" + varName + ") return;\n"
 				+ "\tif (!" + varName + ") return;\n";
+
 
 		},
 		applyTablePr			: function(style)
@@ -3197,6 +3209,7 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
+			let color = line.Fill.getRGBAColor();
 			let color = line.Fill.getRGBAColor();
 
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +

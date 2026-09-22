@@ -283,7 +283,7 @@
 				this._log("Main document part");
 			else if (obj.moveToFootnote)
 				this._log("Footnote");
-			else if (obj.moveToFootnote)
+			else if (obj.moveToDrawing)
 				this._log("Drawing");
 			else if (obj.moveToHdrFtr)
 				this._log("Header/Footer");

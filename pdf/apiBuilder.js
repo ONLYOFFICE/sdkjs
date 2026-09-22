@@ -79,6 +79,11 @@
 	 */
 
 	/**
+	 * The available widget text alignments.
+	 * @typedef {("left" | "center" | "right")} WidgetTextAlign
+	 */
+
+	/**
 	 * The available button widget border appearances types.
 	 * @typedef {("normal" | "down" | "hover")} ButtonAppearance
 	 */
@@ -3136,6 +3141,43 @@
 		let oRGB = this.Field.GetRGBColor(aInnerColor);
 
 		return new Api.RGB(oRGB.r, oRGB.g, oRGB.b);
+	};
+
+	/**
+	 * Sets widget text alignment.
+	 * <note> Only for text/combobox/listbox fields widgets. </note>
+	 * @memberof ApiBaseWidget
+	 * @typeofeditors ["PDFE"]
+	 * @param {WidgetTextAlign} textAlign - The text alignment.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextAlign.js
+	 */
+	ApiBaseWidget.prototype.SetTextAlign = function(textAlign) {
+		if (undefined === AscPDF.ALIGN_TYPE[textAlign]) {
+			AscBuilder.throwException("The textAlign parameter must be one of WidgetTextAlign");
+		}
+
+		return this.Field.SetAlign(AscPDF.ALIGN_TYPE[textAlign]);
+	};
+
+	/**
+	 * Gets widget text alignment.
+	 * @memberof ApiBaseWidget
+	 * @typeofeditors ["PDFE"]
+	 * @returns {WidgetTextAlign | undefined}
+	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetTextAlign.js
+	 */
+	ApiBaseWidget.prototype.GetTextAlign = function() {
+		switch (this.Field.GetAlign()) {
+			case AscPDF.ALIGN_TYPE.left:
+				return "left";
+			case AscPDF.ALIGN_TYPE.center:
+				return "center";
+			case AscPDF.ALIGN_TYPE.right:
+				return "right";
+		}
+
+		return undefined;
 	};
 
 	/**
@@ -12407,6 +12449,8 @@
 	ApiBaseWidget.prototype["GetBackgroundColor"]			= ApiBaseWidget.prototype.GetBackgroundColor;
 	ApiBaseWidget.prototype["SetTextColor"]					= ApiBaseWidget.prototype.SetTextColor;
 	ApiBaseWidget.prototype["GetTextColor"]					= ApiBaseWidget.prototype.GetTextColor;
+	ApiBaseWidget.prototype["SetTextAlign"]					= ApiBaseWidget.prototype.SetTextAlign;
+	ApiBaseWidget.prototype["GetTextAlign"]					= ApiBaseWidget.prototype.GetTextAlign;
 	ApiBaseWidget.prototype["SetTextSize"]					= ApiBaseWidget.prototype.SetTextSize;
 	ApiBaseWidget.prototype["GetTextSize"]					= ApiBaseWidget.prototype.GetTextSize;
 	ApiBaseWidget.prototype["SetAutoFit"]					= ApiBaseWidget.prototype.SetAutoFit;
