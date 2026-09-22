@@ -1091,6 +1091,29 @@
 			.replace(/"/g, '\\"');
 	}
 
+	function getCreateShadowExpr(shadow)
+	{
+		if (!shadow)
+			return "null";
+
+		let color = shadow.color.RGBA;
+		let transparency = shadow.color.getTransparency() / 100;
+		let rad = shadow.dir / 60000 * Math.PI / 180;
+		let offsetX = shadow.dist / 12700 * Math.cos(rad);
+		let offsetY = shadow.dist / 12700 * Math.sin(rad);
+		let size = shadow.getSize();
+		let rotateWithShape = shadow.rotWithShape !== false;
+
+		return "Api.CreateShadow({\n" +
+			"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
+			"\t\t\t\ttransparency: " + transparency + ",\n" +
+			"\t\t\t\toffsetX: " + offsetX + ",\n" +
+			"\t\t\t\toffsetY: " + offsetY + ",\n" +
+			"\t\t\t\tsize: " + size + ",\n" +
+			"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
+			"\t\t\t})";
+	}
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -1674,30 +1697,9 @@
 		},
 		setDrawingShadow		: function(shadow)
 		{
-			if (!shadow)
-			{
-				return "\tdoc.GetSelectedDrawings()\n"
-					+ "\t\t.forEach(function(shape) { shape.SetShadow(null); });\n";
-			}
-
-			let color = shadow.color.RGBA;
-			let transparency = shadow.color.getTransparency() / 100;
-			let rad = shadow.dir / 60000 * Math.PI / 180;
-			let offsetX = shadow.dist / 12700 * Math.cos(rad);
-			let offsetY = shadow.dist / 12700 * Math.sin(rad);
-			let size = shadow.getSize();
-			let rotateWithShape = shadow.rotWithShape !== false;
-
 			return "\tdoc.GetSelectedDrawings()\n" +
 				"\t\t.forEach(function(shape) {\n" +
-				"\t\t\tshape.SetShadow(Api.CreateShadow({\n" +
-				"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
-				"\t\t\t\ttransparency: " + transparency + ",\n" +
-				"\t\t\t\toffsetX: " + offsetX + ",\n" +
-				"\t\t\t\toffsetY: " + offsetY + ",\n" +
-				"\t\t\t\tsize: " + size + ",\n" +
-				"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
-				"\t\t\t}));\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
 				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
@@ -2760,30 +2762,9 @@
 		},
 		setDrawingShadow		: function(shadow)
 		{
-			if (!shadow)
-			{
-				return "\tworksheet.GetSelectedShapes()\n"
-					+ "\t\t.forEach(shape => shape.SetShadow(null));\n";
-			}
-
-			let color = shadow.color.RGBA;
-			let transparency = shadow.color.getTransparency() / 100;
-			let rad = shadow.dir / 60000 * Math.PI / 180;
-			let offsetX = shadow.dist / 12700 * Math.cos(rad);
-			let offsetY = shadow.dist / 12700 * Math.sin(rad);
-			let size = shadow.getSize();
-			let rotateWithShape = shadow.rotWithShape !== false;
-
 			return "\tworksheet.GetSelectedShapes()\n" +
 				"\t\t.forEach(shape => {\n" +
-				"\t\t\tshape.SetShadow(Api.CreateShadow({\n" +
-				"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
-				"\t\t\t\ttransparency: " + transparency + ",\n" +
-				"\t\t\t\toffsetX: " + offsetX + ",\n" +
-				"\t\t\t\toffsetY: " + offsetY + ",\n" +
-				"\t\t\t\tsize: " + size + ",\n" +
-				"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
-				"\t\t\t}));\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
 				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
@@ -3377,30 +3358,9 @@
 		},
 		setDrawingShadow		: function(shadow)
 		{
-			if (!shadow)
-			{
-				return "\tApi.GetSelection().GetShapes()\n"
-					+ "\t\t.forEach(shape => shape.SetShadow(null));\n";
-			}
-
-			let color = shadow.color.RGBA;
-			let transparency = shadow.color.getTransparency() / 100;
-			let rad = shadow.dir / 60000 * Math.PI / 180;
-			let offsetX = shadow.dist / 12700 * Math.cos(rad);
-			let offsetY = shadow.dist / 12700 * Math.sin(rad);
-			let size = shadow.getSize();
-			let rotateWithShape = shadow.rotWithShape !== false;
-
 			return "\tApi.GetSelection().GetShapes()\n" +
 				"\t\t.forEach(shape => {\n" +
-				"\t\t\tshape.SetShadow(Api.CreateShadow({\n" +
-				"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
-				"\t\t\t\ttransparency: " + transparency + ",\n" +
-				"\t\t\t\toffsetX: " + offsetX + ",\n" +
-				"\t\t\t\toffsetY: " + offsetY + ",\n" +
-				"\t\t\t\tsize: " + size + ",\n" +
-				"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
-				"\t\t\t}));\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
 				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
