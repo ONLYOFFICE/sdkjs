@@ -11595,10 +11595,13 @@
 		if (!this.range.isOneCell()) {
 			return null;
 		}
-		var ws = this.range.worksheet.workbook.oApi.wb.getWorksheet(this.range.worksheet.getIndex());
-		var comment = ws.cellCommentator.getComment(this.range.bbox.c1, this.range.bbox.r1, false);
-		var res = comment ? new ApiComment(comment, this.range.worksheet.workbook.oApi.wb) : null;
-		return res;
+		var wsModel = this.range.worksheet;
+		// read from the sheet model: creating a sheet view here would recalculate and store its row heights
+		var comment = AscCommonExcel.CCellCommentator.getCommentByCell(wsModel, this.range.bbox.c1, this.range.bbox.r1, true);
+		if (comment && !AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
+			comment = null;
+		}
+		return comment ? new ApiComment(comment, wsModel.workbook.oApi.wb) : null;
 	};
 	Object.defineProperty(ApiRange.prototype, "Comments", {
 		get: function () {
@@ -13611,6 +13614,68 @@
 		this.Drawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
 		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
 		private_SetDrawingBaseTo(this.Drawing);
+	};
+
+	/**
+	 * The cell anchor of a drawing.
+	 * @typedef {Object} DrawingCellAnchor
+	 * @property {number} fromCol - The number of the column where the drawing object begins.
+	 * @property {EMU} colOffset - The offset from the fromCol column to the left part of the drawing object.
+	 * @property {number} fromRow - The number of the row where the drawing object begins.
+	 * @property {EMU} rowOffset - The offset from the fromRow row to the upper part of the drawing object.
+	 * @see office-js-api/Examples/Enumerations/DrawingCellAnchor.js
+	 */
+
+	/**
+	 * Returns the cell anchor of the current drawing; the offsets are limited by the anchor cell.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @returns {DrawingCellAnchor | null} - returns null for an absolutely positioned drawing.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosition.js
+	 */
+	ApiDrawing.prototype.GetPosition = function () {
+		var oBase = this.Drawing && this.Drawing.drawingBase;
+		if (!oBase || oBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorAbsolute) {
+			return null;
+		}
+		var oFrom = oBase.from;
+		var nColOffset = oFrom.colOff;
+		var nRowOffset = oFrom.rowOff;
+		if (oBase.getModelWorksheet()) {
+			nColOffset = Math.min(nColOffset, oBase.getModelColWidth(oFrom.col));
+			nRowOffset = Math.min(nRowOffset, oBase.getModelRowHeight(oFrom.row));
+		}
+		return {
+			"fromCol": oFrom.col,
+			"colOffset": private_MM2EMU(nColOffset),
+			"fromRow": oFrom.row,
+			"rowOffset": private_MM2EMU(nRowOffset)
+		};
+	};
+
+	/**
+	 * Returns the x position of the current drawing on the worksheet.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosX.js
+	 */
+	ApiDrawing.prototype.GetPosX = function () {
+		return private_MM2EMU(this.Drawing.GetPosX());
+	};
+
+	/**
+	 * Returns the y position of the current drawing on the worksheet.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosY.js
+	 */
+	ApiDrawing.prototype.GetPosY = function () {
+		return private_MM2EMU(this.Drawing.GetPosY());
 	};
 
 	/**
@@ -30734,6 +30799,9 @@
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
 	ApiDrawing.prototype["SetSize"]                    =  ApiDrawing.prototype.SetSize;
 	ApiDrawing.prototype["SetPosition"]                =  ApiDrawing.prototype.SetPosition;
+	ApiDrawing.prototype["GetPosition"]                =  ApiDrawing.prototype.GetPosition;
+	ApiDrawing.prototype["GetPosX"]                    =  ApiDrawing.prototype.GetPosX;
+	ApiDrawing.prototype["GetPosY"]                    =  ApiDrawing.prototype.GetPosY;
 	ApiDrawing.prototype["GetWidth"]                   =  ApiDrawing.prototype.GetWidth;
 	ApiDrawing.prototype["GetHeight"]                  =  ApiDrawing.prototype.GetHeight;
 	ApiDrawing.prototype["GetName"]                    =  ApiDrawing.prototype.GetName;
