@@ -52,6 +52,7 @@
 	const private_TrackTextRanges       = AscBuilder.private_TrackTextRanges;
 	const private_SearchDocContents     = AscBuilder.private_SearchDocContents;
 	const private_EscapeReplaceControls = AscBuilder.private_EscapeReplaceControls;
+	const private_GetSelectionCharRange = AscBuilder.private_GetSelectionCharRange;
 
     /**
      * Class representing a presentation.
@@ -11349,11 +11350,38 @@
 		return this.GetType() === "none";
 	};
 
+	/**
+	 * Returns the selected text as a text range. With the cursor in the text and nothing selected,
+	 * the range is empty and starts at the cursor.
+	 * @memberof ApiSelection
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTextRange | null} - returns null if the selection is not in the text of a shape, a table cell or the speaker notes.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiSelection/Methods/GetTextRange.js
+	 */
+	ApiSelection.prototype.GetTextRange = function() {
+		let presentation = this.getPresentation();
+		if (AscCommon.FOCUS_OBJECT_THUMBNAILS === presentation.GetFocusObjType())
+			return null;
+
+		let controller = presentation.GetCurrentController();
+		let docContent = controller ? controller.getTargetDocContent() : null;
+		if (!docContent)
+			return null;
+
+		let range = private_GetSelectionCharRange(docContent);
+		if (!range)
+			return null;
+
+		return new ApiTextRange(docContent, range.start, range.end);
+	};
+
 	
 	ApiSelection.prototype["GetType"]                     = ApiSelection.prototype.GetType;
 	ApiSelection.prototype["GetShapes"]                   = ApiSelection.prototype.GetShapes;
 	ApiSelection.prototype["GetSlides"]                   = ApiSelection.prototype.GetSlides;
 	ApiSelection.prototype["IsEmpty"]                     = ApiSelection.prototype.IsEmpty;
+	ApiSelection.prototype["GetTextRange"]                = ApiSelection.prototype.GetTextRange;
 
     function private_GetCurrentSlide(){
         var oApiPresentation = Api.GetPresentation();

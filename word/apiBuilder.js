@@ -33635,6 +33635,60 @@
 		return new AscBuilder.ApiTextPr(this, this.private_GetTextPr());
 	};
 
+	/**
+	 * Converts the text range to HTML.
+	 * @memberof ApiTextRange
+	 * @typeofeditors ["CPE", "CSE"]
+	 * @param {ToHtmlOptions} [options={}] - The HTML conversion options.
+	 * @returns {string}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/ToHtml.js
+	 */
+	ApiTextRange.prototype.ToHtml = function(options)
+	{
+		let docContent = this.DocContent;
+		if (!docContent)
+			return "";
+
+		let start = this.private_GetEffectiveStart();
+		let end   = this.private_GetEffectiveEnd();
+		if (start >= end)
+			return "";
+
+		let config = {
+			convertType         : "html",
+			htmlHeadings        : GetBoolParameter(options && options["HtmlHeadings"],        false),
+			base64img           : GetBoolParameter(options && options["Base64img"],           false),
+			demoteHeadings      : GetBoolParameter(options && options["DemoteHeadings"],      false),
+			renderHTMLTags      : GetBoolParameter(options && options["RenderHTMLTags"],      false),
+			renderTextPr        : GetBoolParameter(options && options["RenderTextPr"],        false),
+			drawingPlaceholders : GetBoolParameter(options && options["DrawingPlaceholders"], false)
+		};
+
+		return AscFormat.ExecuteNoHistory(function()
+		{
+			let state = docContent.GetSelectionState();
+			docContent.SelectCharRange(start, end, false);
+			let selectedContent = new AscCommonWord.CSelectedContent();
+			docContent.GetSelectedContent(selectedContent);
+			docContent.SetSelectionState(state);
+
+			let converter = new CMarkdownConverter(config);
+			let result    = "";
+			for (let i = 0; i < selectedContent.Elements.length; ++i)
+			{
+				let element = selectedContent.Elements[i].Element;
+				if (element instanceof AscWord.Paragraph)
+					result += converter.HandleChildElement(new ApiParagraph(element), "html");
+			}
+
+			if (!config.renderHTMLTags)
+				result = converter.private_EscapeHtml(result);
+
+			return result;
+		}, this, []);
+	};
+
 	ApiTextRange.prototype.OnChangeTextPr = function(apiTextPr)
 	{
 		this.SetTextPr(apiTextPr);
@@ -35172,6 +35226,7 @@
 	ApiTextRange.prototype["SetVertAlign"]       = ApiTextRange.prototype.SetVertAlign;
 	ApiTextRange.prototype["SetTextPr"]          = ApiTextRange.prototype.SetTextPr;
 	ApiTextRange.prototype["GetTextPr"]          = ApiTextRange.prototype.GetTextPr;
+	ApiTextRange.prototype["ToHtml"]             = ApiTextRange.prototype.ToHtml;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35337,6 +35392,7 @@
 	window['AscBuilder'].private_TrackTextRanges         = private_TrackTextRanges;
 	window['AscBuilder'].private_SearchDocContents       = private_SearchDocContents;
 	window['AscBuilder'].private_EscapeReplaceControls   = private_EscapeReplaceControls;
+	window['AscBuilder'].private_GetSelectionCharRange   = private_GetSelectionCharRange;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
