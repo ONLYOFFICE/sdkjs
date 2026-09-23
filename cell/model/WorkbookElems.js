@@ -6350,7 +6350,7 @@ StyleManager.prototype =
 		return oRes;
 	};
 	SheetFormatPr.prototype.correction = function () {
-		if (null !== this.dDefaultColWidth && 0 > this.dDefaultColWidth) {
+		if (null !== this.dDefaultColWidth && 0 >= this.dDefaultColWidth) {
 			this.dDefaultColWidth = null;
 		}
 	};
