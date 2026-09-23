@@ -976,6 +976,9 @@
 		var sOutputText    = GetText.call(this, oRun.Run);
 		var oTextPr        = oRun.Run.Get_CompiledPr();
 
+		if (this.Config.drawingPlaceholders && oRun.Run instanceof AscCommonWord.CPresentationField)
+			sOutputText = String.fromCharCode(AscBuilder.CMarkdownConverter.DrawingPlaceholder);
+
 		// находим все картинки и их позиции в строке
 		for (var nDrawing = 0; nDrawing < arrAllDrawings.length; nDrawing ++)
 		{
