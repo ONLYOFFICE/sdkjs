@@ -534,13 +534,13 @@
 	 */
 
 	/**
-	 * The available slide transition speed values (similar to PowerPoint VBA ppTransitionSpeed).
+	 * The available slide transition speed values.
 	 * @typedef TransitionSpeed
 	 * @type {"slow" | "medium" | "fast"}
 	 */
 
 	/**
-	 * The available slide transition effects (similar to PowerPoint VBA ppEffect).
+	 * The available slide transition effects.
 	 * @typedef EntryEffect
 	 * @type {(
 	 * "effectAppear" |
@@ -2569,6 +2569,90 @@
 		this.Presentation.AddNewParagraph();
 		return true;
 	}
+
+	/**
+	 * Returns the current word or a part of the current word at the cursor.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {undefined | "before" | "after"} part - The part of the word to return. If omitted, the whole word is returned.
+	 * @returns {string} - returns an empty string if the cursor is not in the text or some text is selected.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentWord.js
+	 */
+	ApiPresentation.prototype.GetCurrentWord = function(part)
+	{
+		return this.Presentation.GetCurrentWord(private_GetCursorTextPartDirection(part));
+	};
+
+	/**
+	 * Replaces the current word or a part of the current word at the cursor with the specified text.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to replace the current word with.
+	 * @param {undefined | "before" | "after"} part - The part of the word to replace. If omitted, the whole word is replaced.
+	 * @returns {boolean} - returns false if there is no word at the cursor or some text is selected.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ReplaceCurrentWord.js
+	 */
+	ApiPresentation.prototype.ReplaceCurrentWord = function(text, part)
+	{
+		return this.Presentation.ReplaceCurrentWord(private_GetCursorTextPartDirection(part), AscBuilder.GetStringParameter(text, ""));
+	};
+
+	/**
+	 * Selects the word at the cursor. The current text selection, if any, is removed first.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {boolean} - returns false if there is no word at the cursor.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SelectCurrentWord.js
+	 */
+	ApiPresentation.prototype.SelectCurrentWord = function()
+	{
+		return this.Presentation.SelectCurrentWord();
+	};
+
+	/**
+	 * Returns the current sentence or a part of the current sentence at the cursor.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {undefined | "before" | "after"} part - The part of the sentence to return. If omitted, the whole sentence is returned.
+	 * @returns {string} - returns an empty string if the cursor is not in the text or some text is selected.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentSentence.js
+	 */
+	ApiPresentation.prototype.GetCurrentSentence = function(part)
+	{
+		return this.Presentation.GetCurrentSentence(private_GetCursorTextPartDirection(part));
+	};
+
+	/**
+	 * Replaces the current sentence or a part of the current sentence at the cursor with the specified text.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {string} text - The text to replace the current sentence with.
+	 * @param {undefined | "before" | "after"} part - The part of the sentence to replace. If omitted, the whole sentence is replaced.
+	 * @returns {boolean} - returns false if there is no sentence at the cursor or some text is selected.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ReplaceCurrentSentence.js
+	 */
+	ApiPresentation.prototype.ReplaceCurrentSentence = function(text, part)
+	{
+		return this.Presentation.ReplaceCurrentSentence(private_GetCursorTextPartDirection(part), AscBuilder.GetStringParameter(text, ""));
+	};
+
+	/**
+	 * Selects the sentence at the cursor. The current text selection, if any, is removed first.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {boolean} - returns false if there is no sentence at the cursor.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SelectCurrentSentence.js
+	 */
+	ApiPresentation.prototype.SelectCurrentSentence = function()
+	{
+		return this.Presentation.SelectCurrentSentence();
+	};
 
 	/**
 	 * Searches for the specified text in the presentation and returns all found occurrences as text ranges.
@@ -5762,7 +5846,7 @@
 	};
 
 	/**
-	 * Returns the transition speed (similar to PowerPoint VBA Speed property).
+	 * Returns the transition speed.
 	 * Maps duration to speed based on OOXML spd attribute logic:
 	 * - fast: duration <= 500ms
 	 * - medium: 500ms < duration <= 750ms
@@ -5781,7 +5865,7 @@
 	};
 
 	/**
-	 * Sets the transition speed (similar to PowerPoint VBA Speed property).
+	 * Sets the transition speed.
 	 * Converts speed to duration based on standard values:
 	 * - fast = 500ms
 	 * - medium = 750ms
@@ -10798,6 +10882,12 @@
 	ApiPresentation.prototype["MoveToPrevCell"]           = ApiPresentation.prototype.MoveToPrevCell;
 	ApiPresentation.prototype["EnterText"]                = ApiPresentation.prototype.EnterText;
 	ApiPresentation.prototype["InsertParagraphBreak"]     = ApiPresentation.prototype.InsertParagraphBreak;
+	ApiPresentation.prototype["GetCurrentWord"]           = ApiPresentation.prototype.GetCurrentWord;
+	ApiPresentation.prototype["ReplaceCurrentWord"]       = ApiPresentation.prototype.ReplaceCurrentWord;
+	ApiPresentation.prototype["SelectCurrentWord"]        = ApiPresentation.prototype.SelectCurrentWord;
+	ApiPresentation.prototype["GetCurrentSentence"]       = ApiPresentation.prototype.GetCurrentSentence;
+	ApiPresentation.prototype["ReplaceCurrentSentence"]   = ApiPresentation.prototype.ReplaceCurrentSentence;
+	ApiPresentation.prototype["SelectCurrentSentence"]    = ApiPresentation.prototype.SelectCurrentSentence;
 	ApiPresentation.prototype["Search"]                   = ApiPresentation.prototype.Search;
 	ApiPresentation.prototype["SearchAndReplace"]         = ApiPresentation.prototype.SearchAndReplace;
 	ApiSlide.prototype["Search"]                          = ApiSlide.prototype.Search;
@@ -11472,6 +11562,16 @@
 			return parameter;
 
 		return defaultValue;
+	}
+	function private_GetCursorTextPartDirection(part)
+	{
+		if ("before" === part)
+			return 1;
+
+		if ("after" === part)
+			return -1;
+
+		return 0;
 	}
 	function private_GetTableBorder(sType, nSize, oApiColor)
 	{

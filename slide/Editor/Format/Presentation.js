@@ -6158,6 +6158,96 @@ CPresentation.prototype.GetCurrentParagraph = function(bIgnoreSelection, bReturn
 	}
 	return oContent.GetCurrentParagraph(bIgnoreSelection, bReturnSelectedArray, oPr);
 };
+/**
+ * Get the current word (or a part of the current word) at the cursor
+ * @param direction {number} -1 - the part before the cursor, 1 - the part after the cursor, 0 (or undefined) - the whole word
+ * @returns {string}
+ */
+CPresentation.prototype.GetCurrentWord = function (direction) {
+	let paragraph = this.GetCurrentParagraph();
+	return paragraph ? paragraph.GetCurrentWord(direction) : "";
+};
+/**
+ * Replace the current word (or a part of the current word) at the cursor with the given string
+ * @param direction {number} -1 - the part before the cursor, 1 - the part after the cursor, 0 (or undefined) - the whole word
+ * @param replaceString {string}
+ * @returns {boolean}
+ */
+CPresentation.prototype.ReplaceCurrentWord = function (direction, replaceString) {
+	return this.private_ReplaceAtCursor(function (paragraph) {
+		return paragraph.ReplaceCurrentWord(direction, replaceString);
+	});
+};
+/**
+ * Select the current word at the cursor
+ * @returns {boolean}
+ */
+CPresentation.prototype.SelectCurrentWord = function () {
+	return this.private_SelectAtCursor(function (paragraph) {
+		paragraph.SelectCurrentWord();
+	});
+};
+/**
+ * Get the current sentence (or a part of the current sentence) at the cursor
+ * @param direction {number} -1 - the part before the cursor, 1 - the part after the cursor, 0 (or undefined) - the whole sentence
+ * @returns {string}
+ */
+CPresentation.prototype.GetCurrentSentence = function (direction) {
+	let paragraph = this.GetCurrentParagraph();
+	return paragraph ? paragraph.GetCurrentSentence(direction) : "";
+};
+/**
+ * Replace the current sentence (or a part of the current sentence) at the cursor with the given string
+ * @param direction {number} -1 - the part before the cursor, 1 - the part after the cursor, 0 (or undefined) - the whole sentence
+ * @param replaceString {string}
+ * @returns {boolean}
+ */
+CPresentation.prototype.ReplaceCurrentSentence = function (direction, replaceString) {
+	return this.private_ReplaceAtCursor(function (paragraph) {
+		return paragraph.ReplaceCurrentSentence(direction, replaceString);
+	});
+};
+/**
+ * Select the current sentence at the cursor
+ * @returns {boolean}
+ */
+CPresentation.prototype.SelectCurrentSentence = function () {
+	return this.private_SelectAtCursor(function (paragraph) {
+		paragraph.SelectCurrentSentence();
+	});
+};
+CPresentation.prototype.private_SelectAtCursor = function (select) {
+	let controller = this.GetCurrentController();
+	let docContent = controller ? controller.getTargetDocContent() : null;
+	if (!docContent) {
+		return false;
+	}
+	if (docContent.IsSelectionUse()) {
+		docContent.RemoveSelection();
+	}
+	let paragraph = docContent.GetCurrentParagraph();
+	if (!paragraph) {
+		return false;
+	}
+	select(paragraph);
+	if (docContent.IsSelectionEmpty()) {
+		docContent.RemoveSelection();
+		return false;
+	}
+	return true;
+};
+CPresentation.prototype.private_ReplaceAtCursor = function (replace) {
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph || this.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props)) {
+		return false;
+	}
+	this.StartAction(AscDFH.historydescription_Document_ReplaceCurrentWord);
+	let result = replace(paragraph);
+	this.FinalizeAction();
+	this.Document_UpdateSelectionState();
+	this.Document_UpdateInterfaceState();
+	return result;
+};
 
 CPresentation.prototype.CorrectEnterText = function (oldValue, newValue) {
 	if (undefined === oldValue
