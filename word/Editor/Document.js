@@ -7775,7 +7775,12 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
 
 	var oldDocPosType = this.GetDocPosType();
     // Проверяем, не попали ли мы в колонтитул (если мы попадаем в Flow-объект, то попадание в колонтитул не проверяем)
-    if (true != bFlowTable && nInDrawing < 0 && true === bCheckHdrFtr && MouseEvent.ClickCount >= 2 && ( Y <= PageMetrics.Y || Y > PageMetrics.YLimit ))
+    if (true != bFlowTable 
+		&& nInDrawing < 0 
+		&& true === bCheckHdrFtr
+		&& !this.Layout.IsReadMode()
+		&& MouseEvent.ClickCount >= 2
+		&& ( Y <= PageMetrics.Y || Y > PageMetrics.YLimit ))
     {
         // Если был селект, тогда убираем его
         if (true === this.Selection.Use)
