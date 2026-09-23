@@ -1206,10 +1206,8 @@
 					_t.sendEvent("onCurrentPageChanged", 0);
 
 					_t.sendEvent("onStructure", _t.structure);
-					_t.id_main.style.display = "";
 				}
 				else {
-					_t.id_main.style.display = "none";
 					_t.checkReady();
 				}
 				

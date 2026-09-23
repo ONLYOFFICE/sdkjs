@@ -890,6 +890,75 @@
 		return "unknown";
 	}
 
+	function private_getFillTransparentStr(unifill) {
+		if (!AscFormat.isRealNumber(unifill.transparent))
+			return "";
+
+		return "\t\t\tfill.SetTransparent(" + (1 - unifill.transparent / 255) + ");\n";
+	}
+
+	function private_getDrawingFillReplayCode(selectedDrawingsExpr, isArrowFn, unifill, getStopColorRGBA) {
+		function wrapFillCode(fillExpr, transparentStr) {
+			let forEachHeader = isArrowFn ? "\t\t.forEach(shape => {\n" : "\t\t.forEach(function(shape) {\n";
+			return "\t" + selectedDrawingsExpr + "\n"
+				+ forEachHeader
+				+ "\t\t\tvar fill = " + fillExpr + ";\n"
+				+ transparentStr
+				+ "\t\t\tshape.Fill(fill);\n"
+				+ "\t\t});\n";
+		}
+
+		if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
+		{
+			let color = unifill.getRGBAColor();
+			return wrapFillCode("Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))", private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CGradFill)
+		{
+			let colors = unifill.fill.colors;
+			let strColor = "";
+
+			for (let nColor = 0; nColor < colors.length; nColor++)
+			{
+				let gs = colors[nColor];
+				let color = getStopColorRGBA ? getStopColorRGBA(gs) : gs.color.RGBA;
+				strColor += (nColor !== 0)
+					? ",\n\t\t\t\t"
+					: "\n\t\t\t\t";
+				strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
+			}
+
+			let gradient = "Api.CreateNoFill()";
+			if (unifill.fill.lin) // leinear
+				gradient = "Api.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
+			else if (unifill.fill.path) // radial
+				gradient = "Api.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
+
+			return wrapFillCode(gradient, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CBlipFill)
+		{
+			let base64data = unifill.fill.getBase64RasterImageId();
+			let blipFill = "Api.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
+			return wrapFillCode(blipFill, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CPattFill)
+		{
+			let bgClr = unifill.fill.bgClr.RGBA;
+			let fgClr = unifill.fill.fgClr.RGBA;
+			let type = AscCommon.global_hatch_names[unifill.fill.ftype];
+
+			let pattFill = "Api.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\tApi.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
+			return wrapFillCode(pattFill, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CNoFill)
+		{
+			let forEachBody = isArrowFn ? "shape => shape.Fill(Api.CreateNoFill())" : "function(shape) { shape.Fill(Api.CreateNoFill()); }";
+			return "\t" + selectedDrawingsExpr + "\n"
+				+ "\t\t.forEach(" + forEachBody + ");\n";
+		}
+	}
+
 	function private_getCurrentTableCell(recorder) {
 		let doc = recorder.editor.getLogicDocument();
 		if (!doc)
@@ -1159,6 +1228,29 @@
 		return code;
 	}
 
+	function getCreateShadowExpr(shadow)
+	{
+		if (!shadow)
+			return "null";
+
+		let color = shadow.color.RGBA;
+		let transparency = shadow.color.getTransparency() / 100;
+		let rad = shadow.dir / 60000 * Math.PI / 180;
+		let offsetX = shadow.dist / 12700 * Math.cos(rad);
+		let offsetY = shadow.dist / 12700 * Math.sin(rad);
+		let size = shadow.getSize();
+		let rotateWithShape = shadow.rotWithShape !== false;
+
+		return "Api.CreateShadow({\n" +
+			"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
+			"\t\t\t\ttransparency: " + transparency + ",\n" +
+			"\t\t\t\toffsetX: " + offsetX + ",\n" +
+			"\t\t\t\toffsetY: " + offsetY + ",\n" +
+			"\t\t\t\tsize: " + size + ",\n" +
+			"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
+			"\t\t\t})";
+	}
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -1166,7 +1258,7 @@
 		setTextStrikeout		: function(strikeout){return "\tdoc.GetRangeBySelect().SetStrikeout(" + strikeout + ");\n"},
 		setTextSmallCaps		: function(smallCaps){return "\tdoc.GetRangeBySelect().SetSmallCaps(" + smallCaps + ");\n"},
 		setTextFontName			: function(name){return "\tdoc.GetRangeBySelect().SetFontFamily(\"" + name + "\");\n"},
-		setTextFontSize			: function(size){return "\tdoc.GetRangeBySelect().SetFontSize(\"" + size + "\");\n"},
+		setTextFontSize			: function(size){return "\tdoc.GetRangeBySelect().SetFontSize(" + (size * 2) + ");\n"},
 		setTextHighlightColor	: function(highlight){
 			let highlightColor = "";
 			if (highlight)
@@ -1319,6 +1411,7 @@
 				+ "\t}());\n"
 				+ "\tif (!" + varName + ") return;\n";
 
+
 		},
 		applyTablePr			: function(style)
 		{
@@ -1392,7 +1485,7 @@
 				+ "\t\t" + height + ",\n"
 				+ "\t\t" + style + "\n"
 				+ "\t);\n"
-			//+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 14 + ");\n"
+			//+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
 			+ "\tdoc.GetCurrentParagraph().AddDrawing(" + varRegistry.get('chart') + ");\n"
 			return value;
 		},
@@ -1663,64 +1756,7 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.getRGBAColor();
-				//let transparent = unifill.transparent;
-
-				return "\tdoc.GetSelectedDrawings()\n" +
-					"\t\t.forEach(function(shape) {\n" +
-					"\t\t\tshape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")));\n" +
-					"\t\t});\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.RGBA;
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tdoc.GetSelectedDrawings()\n"
-      				+ "\t\t.forEach(function(shape) { shape.Fill(" + gradient + "); }\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tdoc.GetSelectedDrawings()\n"
-    		 		+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.RGBA;
-				let fgClr = unifill.fill.fgClr.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
-				return "\tdoc.GetSelectedDrawings()\n"
-       				+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tdoc.GetSelectedDrawings()\n"
-       				+ "\t\t.forEach(function(shape) { shape.Fill(Api.CreateNoFill()); });\n";
-			}
+			return private_getDrawingFillReplayCode("doc.GetSelectedDrawings()", false, unifill);
 		},
 		setDrawingLine			: function(line)
 		{
@@ -1739,6 +1775,13 @@
 			strStrokeShape += "\t}());\n";
 
 			return strStrokeShape;
+		},
+		setDrawingShadow		: function(shadow)
+		{
+			return "\tdoc.GetSelectedDrawings()\n" +
+				"\t\t.forEach(function(shape) {\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
+				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
 		{
@@ -2358,6 +2401,7 @@
 	DEActionMap['DeselectDrawing']												= wordActions.deselectDrawing;
 	DEActionMap['SetDrawingFill']												= wordActions.setDrawingFill;
 	DEActionMap['SetDrawingLine']												= wordActions.setDrawingLine;
+	DEActionMap['SetDrawingShadow']											= wordActions.setDrawingShadow;
 	DEActionMap['SetDrawingRotation']											= wordActions.setDrawingRotation;
 	DEActionMap['SetDrawingPos']												= wordActions.setDrawingPos;
 	DEActionMap['SetDrawingFlipH']												= wordActions.setDrawingFlipH;
@@ -2723,68 +2767,10 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.getRGBAColor();
-				//let transparent = unifill.transparent;
-
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))));\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colorScheme = Asc.editor.getCurrentColorScheme();
-
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.color.RGBA;
-
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + gradient + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.RGBA;
-				let fgClr = unifill.fill.fgClr.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateNoFill()));\n";
-			}
+			let colorScheme = Asc.editor.getCurrentColorScheme();
+			return private_getDrawingFillReplayCode("worksheet.GetSelectedShapes()", true, unifill, function(gs) {
+				return gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.RGBA;
+			});
 		},
 		setDrawingLine			: function(line)
 		{
@@ -2804,6 +2790,13 @@
 			strStrokeShape += "\t}());\n";
 
 			return strStrokeShape;
+		},
+		setDrawingShadow		: function(shadow)
+		{
+			return "\tworksheet.GetSelectedShapes()\n" +
+				"\t\t.forEach(shape => {\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
+				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
 		{
@@ -2927,6 +2920,7 @@
 	SEActionMap['SelectDrawing']													= cellActions.selectDrawing;
 	SEActionMap['SetDrawingFill']													= cellActions.setDrawingFill;
 	SEActionMap['SetDrawingLine']													= cellActions.setDrawingLine;
+	SEActionMap['SetDrawingShadow']												= cellActions.setDrawingShadow;
 	SEActionMap['SetDrawingRotation']												= cellActions.setDrawingRotation;
 	SEActionMap['SetDrawingFlipH']													= cellActions.setDrawingFlipH;
 	SEActionMap['SetDrawingFlipV']													= cellActions.setDrawingFlipV;
@@ -3000,7 +2994,7 @@
 			},
 		putTextPrFontSize		: function(fontsize){return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
 			"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
-			"\t\t\tpara.SetFontSize(" + fontsize + ");\n" +
+			"\t\t\tpara.SetFontSize(" + (fontsize * 2) + ");\n" +
 			"\t\t});\n" +
 			"\t});\n"
 			},
@@ -3221,7 +3215,7 @@
 			+ "\t\t" + height + ",\n"
 			+ "\t\t" + style + "\n"
 			+ "\t);\n"
-			+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 14 + ");\n"
+			+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
 			+ "\t" + varRegistry.get('chart') + ".SetPosition("+ chart.x + " * 36000, " + chart.y +" * 36000);\n"
 			+ "\tpresentation.GetCurrentSlide().AddObject(" + varRegistry.get('chart') + ");\n"
 			return value;
@@ -3321,66 +3315,7 @@
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.getRGBAColor();
-				//let transparent = unifill.transparent;
-
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))));\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.RGBA;
-
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + gradient + "));\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.RGBA;
-				let fgClr = unifill.fill.fgClr.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateNoFill()));\n";
-			}
+			return private_getDrawingFillReplayCode("Api.GetSelection().GetShapes()", true, unifill);
 		},
 		setDrawingLine			: function(line)
 		{
@@ -3400,6 +3335,13 @@
 			strStrokeShape += "\t}());\n";
 
 			return strStrokeShape;
+		},
+		setDrawingShadow		: function(shadow)
+		{
+			return "\tApi.GetSelection().GetShapes()\n" +
+				"\t\t.forEach(shape => {\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
+				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
 		{
@@ -3864,6 +3806,7 @@
 	PEActionMap["SetGeometry"]														= presActions.setGeometry;
 	PEActionMap["SetCustomGeometry"]												= presActions.setCustomGeometry;
 	PEActionMap["SetDrawingLine"]													= presActions.setDrawingLine;
+	PEActionMap["SetDrawingShadow"]												= presActions.setDrawingShadow;
 	PEActionMap["SetShapeX"]														= presActions.setShapeX;
 	PEActionMap["SetShapeY"]														= presActions.setShapeY;
 	PEActionMap['SetShapeInnerPadding']												= presActions.setShapeInnerPadding;

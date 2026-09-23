@@ -1611,7 +1611,7 @@
 	/**
 	 * Creates a chart with the parameters specified.
 	 * :::note
-	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices.aspx?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices.aspx?from=api).
+	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
@@ -3206,7 +3206,7 @@
 	 * <note> Text size === 0 means autofit </note>
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @param {pt} size - The font size in points.
+	 * @param {hps} size - The font size measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/SetTextSize.js
 	 */
@@ -3215,7 +3215,7 @@
 			return false;
 		}
 
-		this.Field.SetTextSize(size);
+		this.Field.SetTextSize(AscBuilder.private_GetHps(size));
 		return true;
 	};
 
@@ -3224,11 +3224,11 @@
 	 * <note> Text size === 0 means autofit </note>
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
-	 * @returns {pt}
+	 * @returns {hps}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseWidget/Methods/GetTextSize.js
 	 */
 	ApiBaseWidget.prototype.GetTextSize = function() {
-		return this.Field.GetTextSize();
+		return 2 * this.Field.GetTextSize();
 	};
 
 	/**
@@ -5519,6 +5519,7 @@
 
 	/**
 	 * Gets goto destination rect
+	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?Rect}
 	 * @since 10.0.0
@@ -5534,6 +5535,7 @@
 
 	/**
 	 * Sets goto destination rect
+	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect
 	 * @returns {boolean}
@@ -5565,7 +5567,7 @@
 	/**
 	 * Sets goto zoom ratio
 	 * @typeofeditors ["PDFE"]
-	 * @param {percentage} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
+	 * @param {number} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
 	 * @returns {boolean}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/SetZoom.js

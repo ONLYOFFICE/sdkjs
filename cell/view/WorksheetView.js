@@ -18683,6 +18683,8 @@ function isAllowPasteLink(pastedWb) {
 				}
 				functionModelAction = function () {
 
+					let wasDefaultWidthHidden = t.model.isDefaultWidthHidden();
+
 					if (showRange) {
 						minUpdateIndex = showRange.start;
 						History.Create_NewPoint();
@@ -18695,6 +18697,9 @@ function isAllowPasteLink(pastedWb) {
 							t.model.setColHidden(false, start, end);
 						}, arn.c1, arn.c2, true);
 					}
+
+					//a hidden default column has zero width, it must not stay the default one for the shown columns
+					isUpdateDefaultWidth = wasDefaultWidthHidden && !t.model.isDefaultWidthHidden();
 
 					t._updateGroups(true);
 					oRecalcType = AscCommonExcel.recalcType.full;

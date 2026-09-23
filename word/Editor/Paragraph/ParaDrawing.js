@@ -1014,6 +1014,9 @@ ParaDrawing.prototype.Set_Props = function(Props)
 		{
 			switch (Props.WrappingStyle)
 			{
+				case c_oAscWrapStyle2.Inline      :
+					this.Set_WrappingType(WRAPPING_TYPE_NONE);
+					break;
 				case c_oAscWrapStyle2.Square      :
 					this.Set_WrappingType(WRAPPING_TYPE_SQUARE);
 					break;

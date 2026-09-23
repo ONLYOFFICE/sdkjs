@@ -1250,45 +1250,42 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 
 // Extra functions
 
+	// Model-only lookup, so a caller that must not create a sheet view can reuse it
+	CCellCommentator.getCommentByCell = function (model, col, row, useMerged) {
+		var mergedRange = useMerged ? model.getMergedByCell(row, col) : null;
+		var aComments = model.aComments;
+		for (var i = 0; i < aComments.length; i++) {
+			var commentCell = aComments[i];
+			var isCell = mergedRange ? mergedRange.contains(commentCell.nCol, commentCell.nRow) :
+				(col === commentCell.nCol && row === commentCell.nRow);
+			if (isCell) {
+				return commentCell;
+			}
+		}
+		return null;
+	};
+
 	CCellCommentator.prototype.getComment = function (col, row, excludeHidden, notCheckCanView) {
-		// Array of root items
-		var comment = null;
-		var _col = col, _row = row, mergedRange = null;
-		var aComments = this.model.aComments;
-		var length = aComments.length;
-
 		if (excludeHidden && this.hiddenComments()) {
-			return comment;
+			return null;
 		}
 
-		if (0 < length) {
-			if (null == _col || null == _row) {
-				var activeCell = this.model.selectionRange.activeCell;
-				_col = activeCell.col;
-				_row = activeCell.row;
-			} else {
-				mergedRange = this.model.getMergedByCell(row, col);
-			}
-
-			for (var i = 0; i < length; i++) {
-				var commentCell = aComments[i];
-				if (!mergedRange) {
-					if (_col === commentCell.nCol && _row === commentCell.nRow) {
-						comment = commentCell;
-					}
-				} else {
-					if (mergedRange.contains(commentCell.nCol, commentCell.nRow)) {
-						comment = commentCell;
-					}
-				}
-				if (comment) {
-					var _isHidden = excludeHidden && this._checkHidden(comment);
-					var _canView = notCheckCanView || (!notCheckCanView && AscCommon.UserInfoParser.canViewComment(comment.sUserName));
-					return (_isHidden || !_canView) ? null : comment;
-				}
-			}
+		var _col = col, _row = row, useMerged = true;
+		if (null == _col || null == _row) {
+			var activeCell = this.model.selectionRange.activeCell;
+			_col = activeCell.col;
+			_row = activeCell.row;
+			// the active cell keeps the previous exact match, without expanding to its merged range
+			useMerged = false;
 		}
-		return comment;
+
+		var comment = CCellCommentator.getCommentByCell(this.model, _col, _row, useMerged);
+		if (!comment) {
+			return null;
+		}
+		var _isHidden = excludeHidden && this._checkHidden(comment);
+		var _canView = notCheckCanView || AscCommon.UserInfoParser.canViewComment(comment.sUserName);
+		return (_isHidden || !_canView) ? null : comment;
 	};
 
 	CCellCommentator.prototype.getRangeComments = function (range) {

@@ -4138,6 +4138,12 @@
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].changeShadow(props.shadow);
 						}
+						if (objects_by_type.shapes.length) {
+							Asc.editor.addMacroStepData('SetDrawingShadow', objects_by_type.shapes[0].getOuterShdwAsc());
+						}
+						if (objects_by_type.images.length) {
+							Asc.editor.addMacroStepData('SetDrawingShadow', objects_by_type.images[0].getOuterShdwAsc());
+						}
 					}
 					if (props.title !== null && props.title !== undefined) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {

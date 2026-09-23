@@ -165,7 +165,7 @@
 	 * @property {number} Width - Returns a value that represents the range width measured in points.
 	 * @property {number} RowHeight - Returns or sets the height of the first row in the specified range measured in points.
 	 * @property {number} Height - Returns a value that represents the range height measured in points.
-	 * @property {number} FontSize - Sets the font size to the characters of the current cell range.
+	 * @property {number} FontSize - Sets the font size (measured in points) to the characters of the current cell range.
 	 * @property {string} FontName - Sets the specified font family as the font name for the current cell range.
 	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - Sets the text vertical alignment to the current cell range.
 	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - Sets the text horizontal alignment to the current cell range.
@@ -495,6 +495,7 @@
 	 * @property {boolean} ColumnGrand - Returns or sets the <b>Grand Totals</b> setting for the pivot table columns.
 	 * @property {boolean} RowGrand - Returns or sets the <b>Grand Totals</b> setting for the pivot table rows.
 	 * @property {boolean} DisplayFieldCaptions - Returns or sets the setting which specifies whether to display field headers for rows and columns.
+	 * @property {boolean} HasAutoFormat - Returns or sets the setting which specifies whether the pivot table is automatically formatted on every update.
 	 * @property {string} Title - Returns or sets the pivot table title.
 	 * @property {string} Description - Returns or sets the pivot table description.
 	 * @property {string} StyleName - Returns or sets the pivot table style name.
@@ -654,7 +655,7 @@
 	 * @property {ApiCharacters} Parent - The parent object of the specified font object.
 	 * @property {boolean | null} Bold - The font bold property.
 	 * @property {boolean | null} Italic - The font italic property.
-	 * @property {number | null} Size - The font size property.
+	 * @property {number | null} Size - The font size property measured in points.
 	 * @property {boolean | null} Strikethrough - The font strikethrough property.
 	 * @property {string | null} Underline - The font type of underline.
 	 * @property {boolean | null} Subscript - The font subscript property.
@@ -9427,7 +9428,7 @@
 	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of the specified column and
 	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
 	 * :::note
-	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices.aspx?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices.aspx?from=api).
+	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -11594,10 +11595,13 @@
 		if (!this.range.isOneCell()) {
 			return null;
 		}
-		var ws = this.range.worksheet.workbook.oApi.wb.getWorksheet(this.range.worksheet.getIndex());
-		var comment = ws.cellCommentator.getComment(this.range.bbox.c1, this.range.bbox.r1, false);
-		var res = comment ? new ApiComment(comment, this.range.worksheet.workbook.oApi.wb) : null;
-		return res;
+		var wsModel = this.range.worksheet;
+		// read from the sheet model: creating a sheet view here would recalculate and store its row heights
+		var comment = AscCommonExcel.CCellCommentator.getCommentByCell(wsModel, this.range.bbox.c1, this.range.bbox.r1, true);
+		if (comment && !AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
+			comment = null;
+		}
+		return comment ? new ApiComment(comment, wsModel.workbook.oApi.wb) : null;
 	};
 	Object.defineProperty(ApiRange.prototype, "Comments", {
 		get: function () {
@@ -12267,6 +12271,8 @@
 			options.asc_setActiveCell(start);
 			options.asc_setWsIndex(this.range.worksheet.index);
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			// the engine is cached, its previous result must not shift the scan off "After"
+			engine.ResetCurrent();
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(options.scanForward);
 			if (id != null) {
                 engine.SetCurrent(id);
@@ -12300,16 +12306,11 @@
 				activeCell = {row: After.range.bbox.r1, col: After.range.bbox.c1};
 				activeCell.row += (!this._searchOptions.scanByRows ? 1 : 0);
 				activeCell.col += (this._searchOptions.scanByRows ? 1 : 0);
-			} else {
-				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
-			}
-			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
 				this._searchOptions.asc_setActiveCell(activeCell);
-			} else {
-				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
-				engine.Reset();
 			}
 			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			// without a cell the iteration continues from the last found element
+			activeCell && engine.ResetCurrent();
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
 			if (id != null) {
                 engine.SetCurrent(id);
@@ -12342,16 +12343,11 @@
 				activeCell = {row: Before.range.bbox.r1, col: Before.range.bbox.c1};
 				activeCell.row += (!this._searchOptions.scanByRows ? -1 : 0);
 				activeCell.col += (this._searchOptions.scanByRows ? -1 : 0);
-			} else {
-				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
-			}
-			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
 				this._searchOptions.asc_setActiveCell(activeCell);
-			} else {
-				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
-				engine.Reset();
 			}
 			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			// without a cell the iteration continues from the last found element
+			activeCell && engine.ResetCurrent();
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(false);
 			if (id != null) {
 				engine.SetCurrent(id);
@@ -13610,6 +13606,68 @@
 		this.Drawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
 		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
 		private_SetDrawingBaseTo(this.Drawing);
+	};
+
+	/**
+	 * The cell anchor of a drawing.
+	 * @typedef {Object} DrawingCellAnchor
+	 * @property {number} fromCol - The number of the column where the drawing object begins.
+	 * @property {EMU} colOffset - The offset from the fromCol column to the left part of the drawing object.
+	 * @property {number} fromRow - The number of the row where the drawing object begins.
+	 * @property {EMU} rowOffset - The offset from the fromRow row to the upper part of the drawing object.
+	 * @see office-js-api/Examples/Enumerations/DrawingCellAnchor.js
+	 */
+
+	/**
+	 * Returns the cell anchor of the current drawing; the offsets are limited by the anchor cell.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @returns {DrawingCellAnchor | null} - returns null for an absolutely positioned drawing.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosition.js
+	 */
+	ApiDrawing.prototype.GetPosition = function () {
+		var oBase = this.Drawing && this.Drawing.drawingBase;
+		if (!oBase || oBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorAbsolute) {
+			return null;
+		}
+		var oFrom = oBase.from;
+		var nColOffset = oFrom.colOff;
+		var nRowOffset = oFrom.rowOff;
+		if (oBase.getModelWorksheet()) {
+			nColOffset = Math.min(nColOffset, oBase.getModelColWidth(oFrom.col));
+			nRowOffset = Math.min(nRowOffset, oBase.getModelRowHeight(oFrom.row));
+		}
+		return {
+			"fromCol": oFrom.col,
+			"colOffset": private_MM2EMU(nColOffset),
+			"fromRow": oFrom.row,
+			"rowOffset": private_MM2EMU(nRowOffset)
+		};
+	};
+
+	/**
+	 * Returns the x position of the current drawing on the worksheet.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosX.js
+	 */
+	ApiDrawing.prototype.GetPosX = function () {
+		return private_MM2EMU(this.Drawing.GetPosX());
+	};
+
+	/**
+	 * Returns the y position of the current drawing on the worksheet.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosY.js
+	 */
+	ApiDrawing.prototype.GetPosY = function () {
+		return private_MM2EMU(this.Drawing.GetPosY());
 	};
 
 	/**
@@ -16243,7 +16301,7 @@
 	});
 
 	/**
-	 * Returns the font size property of the specified font.
+	 * Returns the font size property of the specified font measured in points.
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | null}
@@ -16286,7 +16344,7 @@
 	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
-	 * @param {number} Size - Font size.
+	 * @param {number} Size - The font size value measured in points.
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSize.js
 	 */
@@ -19612,6 +19670,45 @@
 		},
 		set: function (show) {
 			this.SetDisplayFieldCaptions (show);
+		}
+	});
+
+	/**
+	 * Returns whether the pivot table is automatically formatted on update, which in the editor fits the column widths to their content.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/GetHasAutoFormat.js
+	 */
+	ApiPivotTable.prototype.GetHasAutoFormat = function () {
+		return this.pivot.asc_getUseAutoFormatting();
+	};
+
+	/**
+	 * Sets whether the pivot table is automatically formatted on update, which in the editor fits the column widths to their content.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} hasAutoFormat - Specifies whether to format the pivot table automatically on every update.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetHasAutoFormat.js
+	 */
+	ApiPivotTable.prototype.SetHasAutoFormat = function (hasAutoFormat) {
+		if (typeof hasAutoFormat == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setUseAutoFormatting(hasAutoFormat);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "hasAutoFormat".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "HasAutoFormat", {
+		get: function () {
+			return this.GetHasAutoFormat();
+		},
+		set: function (hasAutoFormat) {
+			this.SetHasAutoFormat(hasAutoFormat);
 		}
 	});
 
@@ -30694,6 +30791,9 @@
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
 	ApiDrawing.prototype["SetSize"]                    =  ApiDrawing.prototype.SetSize;
 	ApiDrawing.prototype["SetPosition"]                =  ApiDrawing.prototype.SetPosition;
+	ApiDrawing.prototype["GetPosition"]                =  ApiDrawing.prototype.GetPosition;
+	ApiDrawing.prototype["GetPosX"]                    =  ApiDrawing.prototype.GetPosX;
+	ApiDrawing.prototype["GetPosY"]                    =  ApiDrawing.prototype.GetPosY;
 	ApiDrawing.prototype["GetWidth"]                   =  ApiDrawing.prototype.GetWidth;
 	ApiDrawing.prototype["GetHeight"]                  =  ApiDrawing.prototype.GetHeight;
 	ApiDrawing.prototype["GetName"]                    =  ApiDrawing.prototype.GetName;
@@ -31445,6 +31545,8 @@
 	ApiPivotTable.prototype["SetDisplayFieldsInReportFilterArea"] = ApiPivotTable.prototype.SetDisplayFieldsInReportFilterArea;
 	ApiPivotTable.prototype["GetDisplayFieldCaptions"]            = ApiPivotTable.prototype.GetDisplayFieldCaptions;
 	ApiPivotTable.prototype["SetDisplayFieldCaptions"]            = ApiPivotTable.prototype.SetDisplayFieldCaptions;
+	ApiPivotTable.prototype["GetHasAutoFormat"]                   = ApiPivotTable.prototype.GetHasAutoFormat;
+	ApiPivotTable.prototype["SetHasAutoFormat"]                   = ApiPivotTable.prototype.SetHasAutoFormat;
 	ApiPivotTable.prototype["GetTitle"]                           = ApiPivotTable.prototype.GetTitle;
 	ApiPivotTable.prototype["SetTitle"]                           = ApiPivotTable.prototype.SetTitle;
 	ApiPivotTable.prototype["GetDescription"]                    = ApiPivotTable.prototype.GetDescription;

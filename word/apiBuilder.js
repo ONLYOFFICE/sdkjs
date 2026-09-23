@@ -587,7 +587,7 @@
 		}
 		function IsCodeLine(oParagraph)
 		{
-			if (!oParagraph)
+			if (!oParagraph || !oParagraph.Paragraph.bFromDocument)
 				return false;
 
 			var sFirstRunFont = null;
@@ -624,6 +624,9 @@
 		}
 		function IsQuoteLine(oParagraph)
 		{
+			if (!oParagraph.Paragraph.bFromDocument)
+				return false;
+
 			var Styles         = private_GetLogicDocument().Get_Styles();
 			if (!Styles || !Styles.GetStyleIdByName)
 				return false;
@@ -973,6 +976,9 @@
 		var sOutputText    = GetText.call(this, oRun.Run);
 		var oTextPr        = oRun.Run.Get_CompiledPr();
 
+		if (this.Config.drawingPlaceholders && oRun.Run instanceof AscCommonWord.CPresentationField)
+			sOutputText = String.fromCharCode(AscBuilder.CMarkdownConverter.DrawingPlaceholder);
+
 		// находим все картинки и их позиции в строке
 		for (var nDrawing = 0; nDrawing < arrAllDrawings.length; nDrawing ++)
 		{
@@ -1249,6 +1255,13 @@
 			var highlightHex = private_ColorToHex(textPr.HighLight);
 			if (highlightHex)
 				styles.push("background-color:" + highlightHex);
+		}
+		else if (textPr.HighlightColor)
+		{
+			textPr.HighlightColor.check(run.Paragraph.Get_Theme(), run.Paragraph.Get_ColorMap());
+			let highlightColorHex = private_ColorToHex(textPr.HighlightColor.RGBA);
+			if (highlightColorHex)
+				styles.push("background-color:" + highlightColorHex);
 		}
 
 		if (undefined !== textPr.Spacing && 0 !== textPr.Spacing)
@@ -2629,11 +2642,11 @@
 	 * Sets the font size to the characters of the current text Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} FontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiRange | null} - returns null if can't set font size.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
-	ApiRange.prototype.SetFontSize = function(FontSize)
+	ApiRange.prototype.SetFontSize = function(fontSize)
 	{
 		private_RefreshRangesPosition();
 
@@ -2652,7 +2665,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : FontSize});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -5133,7 +5146,7 @@
 	/**
 	 * Creates a chart with the parameters specified.
 	 * :::note
-	 * Values of <em>styleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices.aspx?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices.aspx?from=api).
+	 * Values of <em>styleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -11607,14 +11620,14 @@
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
 	 */
-	ApiParagraph.prototype.SetFontSize = function(nSize)
+	ApiParagraph.prototype.SetFontSize = function(fontSize)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : nSize/2}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -22710,14 +22723,14 @@
 	 *  @memberof ApiChart
 	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 *  @param {boolean} bIsBold - Specifies if the chart title is written in bold font or not.
 	 * 	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetTitle.js
 	 */
-	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold)
+	ApiChart.prototype.SetTitle = function (sTitle, fontSize, bIsBold)
 	{
-		AscFormat.builder_SetChartTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		AscFormat.builder_SetChartTitle(this.Chart, sTitle, private_GetHps(fontSize), bIsBold);
 		return true;
 	};
 
@@ -22738,14 +22751,14 @@
 	 *  @memberof ApiChart
 	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 *  @param {boolean} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
 	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTitle.js
 	 */
-	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
+	ApiChart.prototype.SetHorAxisTitle = function (sTitle, fontSize, bIsBold)
 	{
-		AscFormat.builder_SetChartHorAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		AscFormat.builder_SetChartHorAxisTitle(this.Chart, sTitle, private_GetHps(fontSize), bIsBold);
 		return true;
 	};
 
@@ -22754,14 +22767,14 @@
 	 *  @memberof ApiChart
 	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
+	 *  @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 *  @param {boolean} bIsBold - Specifies if the vertical axis title is written in bold font or not.
 	 *	@returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisTitle.js
 	 */
-	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
+	ApiChart.prototype.SetVerAxisTitle = function (sTitle, fontSize, bIsBold)
 	{
-		AscFormat.builder_SetChartVertAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
+		AscFormat.builder_SetChartVertAxisTitle(this.Chart, sTitle, private_GetHps(fontSize), bIsBold);
 		return true;
 	};
 
@@ -22863,13 +22876,13 @@
 	 * Specifies the legend font size.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendFontSize.js
 	 */
-	ApiChart.prototype.SetLegendFontSize = function(nFontSize)
+	ApiChart.prototype.SetLegendFontSize = function(fontSize)
 	{
-		AscFormat.builder_SetLegendFontSize(this.Chart, nFontSize);
+		AscFormat.builder_SetLegendFontSize(this.Chart, private_GetHps(fontSize));
 		return true;
 	};
 
@@ -23113,12 +23126,12 @@
 	 * Specifies font size for labels of the horizontal axis.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisLabelsFontSize.js
 	 */
-	ApiChart.prototype.SetHorAxisLabelsFontSize = function(nFontSize){
-		AscFormat.builder_SetHorAxisFontSize(this.Chart, nFontSize);
+	ApiChart.prototype.SetHorAxisLabelsFontSize = function(fontSize){
+		AscFormat.builder_SetHorAxisFontSize(this.Chart, private_GetHps(fontSize));
 		return true;
 	};
 
@@ -23126,12 +23139,12 @@
 	 * Specifies font size for labels of the vertical axis.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
+	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisLabelsFontSize.js
 	 */
-	ApiChart.prototype.SetVertAxisLabelsFontSize = function(nFontSize){
-		AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
+	ApiChart.prototype.SetVertAxisLabelsFontSize = function(fontSize){
+		AscFormat.builder_SetVerAxisFontSize(this.Chart, private_GetHps(fontSize));
 		return true;
 	};
 
@@ -23831,6 +23844,41 @@
 		}
 
 		return null;
+	};
+
+	/**
+	 * Sets the transparency of the fill.
+	 * @memberof ApiFill
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {number} transparent - The transparency value, from 0 (fully opaque) to 1 (fully transparent).
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/SetTransparent.js
+	 */
+	ApiFill.prototype.SetTransparent = function (transparent)
+	{
+		transparent = GetNumberParameter(transparent, null);
+		if (null === transparent || transparent < 0 || transparent > 1)
+			throwException(new Error("The transparent parameter must be a number from 0 to 1"));
+
+		this.UniFill.setTransparent(Math.round((1 - transparent) * 255));
+		return true;
+	};
+
+	/**
+	 * Returns the transparency of the fill.
+	 * @memberof ApiFill
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {number} - The transparency value, from 0 (fully opaque) to 1 (fully transparent).
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/GetTransparent.js
+	 */
+	ApiFill.prototype.GetTransparent = function ()
+	{
+		if (!AscFormat.isRealNumber(this.UniFill.transparent))
+			return 0;
+
+		return 1 - this.UniFill.transparent / 255;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -34625,6 +34673,8 @@
 	ApiFill.prototype["ToJSON"]                      = ApiFill.prototype.ToJSON;
 	ApiFill.prototype["GetType"]                     = ApiFill.prototype.GetType;
 	ApiFill.prototype["GetColor"]                    = ApiFill.prototype.GetColor;
+	ApiFill.prototype["SetTransparent"]              = ApiFill.prototype.SetTransparent;
+	ApiFill.prototype["GetTransparent"]              = ApiFill.prototype.GetTransparent;
 
 	ApiStroke.prototype["GetClassType"]              = ApiStroke.prototype.GetClassType;
 	ApiShadow.prototype["GetClassType"]              = ApiShadow.prototype.GetClassType;
@@ -37120,6 +37170,7 @@
 
 	AscBuilder.private_GetInt = private_GetInt;
 	AscBuilder.private_Twips2MM = private_Twips2MM;
+	AscBuilder.private_GetHps = private_GetHps;
 	AscBuilder.private_getHighlightColorByName = private_getHighlightColorByName;
 	
 	AscBuilder.Word.init = function()

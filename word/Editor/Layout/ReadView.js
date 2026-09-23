@@ -69,18 +69,27 @@
 	{
 		return true;
 	};
-	CDocumentReadView.prototype.Set = function(nW, nH, nScale)
+	CDocumentReadView.prototype.Set = function(nW, nH, nScale, marginLeft, marginTop, marginRight, marginBottom)
 	{
 		this.W     = nW;
 		this.H     = nH;
 		this.Scale = nScale;
-		
+
+		if (undefined === marginLeft)
+			marginLeft = 5;
+		if (undefined === marginTop)
+			marginTop = 5;
+		if (undefined === marginRight)
+			marginRight = 5;
+		if (undefined === marginBottom)
+			marginBottom = 5;
+
 		let oSectPr = this.SectPr;
-		
+
 		AscCommon.ExecuteNoHistory(function()
 		{
 			oSectPr.SetPageSize(nW, nH);
-			oSectPr.SetPageMargins(5, 5, 5, 5);
+			oSectPr.SetPageMargins(marginLeft, marginTop, marginRight, marginBottom);
 		}, this.LogicDocument);
 	};
 	CDocumentReadView.prototype.IsHeaders = function()

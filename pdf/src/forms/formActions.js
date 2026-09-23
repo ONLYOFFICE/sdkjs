@@ -305,7 +305,7 @@
 	CActionGoTo.prototype.constructor = CActionGoTo;
 
     CActionGoTo.prototype.Copy = function() {
-        return new CActionGoTo(this.GetPageId(), this.GetKind(), this.GetZoom(true), this.GetRect().slice());
+        return new CActionGoTo(this.GetPageId(), this.GetKind(), this.GetZoom(true), this.GetRect());
     };
     CActionGoTo.prototype.GetZoom = function(bSource) {
         if (this.zoom != null || bSource) {
@@ -392,12 +392,15 @@
         this.goToType = kind;
     };
 
-    CActionGoTo.prototype.GetRect = function() {
-        return this.rect;
-    };
-    CActionGoTo.prototype.SetRect = function(rect) {
-        this.rect = rect;
-    };
+	CActionGoTo.prototype.GetRect = function() {
+		if (!this.rect) {
+			return this.rect;
+		}
+		return this.GetKind() == AscPDF.GOTO_TYPES.fitR ? this.rect.slice() : this.rect.slice(0, 2);
+	};
+	CActionGoTo.prototype.SetRect = function(rect) {
+		this.rect = rect ? rect.slice() : rect;
+	};
 
     CActionGoTo.prototype.Do = function() {
         let oViewer         = Asc.editor.getDocumentRenderer();

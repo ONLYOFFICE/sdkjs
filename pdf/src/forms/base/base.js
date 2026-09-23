@@ -65,13 +65,6 @@
 	//
 	//------------------------------------------------------------------------------------------------------------------
     
-    let ALIGN_TYPE = {
-        left:   0,
-        center: 1,
-        right:  2,
-        justify:3
-    };
-
     // For Span attributes (start)
     let FONT_STRETCH = ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal",
         "semi-expanded", "expanded", "extra-expanded", "ultra-expanded"];
@@ -91,7 +84,6 @@
 	// freeze objects
     Object.freeze(FIELDS_HIGHLIGHT);
     Object.freeze(FIELDS_HIGHLIGHT_OTHER_ROLE);
-    Object.freeze(ALIGN_TYPE);
     Object.freeze(FONT_STRETCH);
     Object.freeze(FONT_STYLE);
     Object.freeze(FONT_WEIGHT);
@@ -3752,7 +3744,6 @@
 	CBaseField.prototype.hitInBoundingRect = function() {};
 	CBaseField.prototype.IsEditFieldShape = function() {};
 
-	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
 	window["AscPDF"].VALID_ROTATIONS    = VALID_ROTATIONS;
     window["AscPDF"].MAX_TEXT_SIZE      = MAX_TEXT_SIZE;
     window["AscPDF"].FONT_STRETCH       = FONT_STRETCH;

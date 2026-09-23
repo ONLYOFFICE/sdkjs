@@ -10154,8 +10154,11 @@ PasteProcessor.prototype =
 			if (PasteElementsId.g_bIsDocumentCopyPaste) {
 				if (background_color)
 					rPr.HighLight = background_color;
-			} else
+			} else {
 				delete rPr.HighLight;
+				if (background_color)
+					rPr.HighlightColor = AscFormat.CreateUniColorRGB(background_color.r, background_color.g, background_color.b);
+			}
 			if (null != underline)
 				rPr.Underline = underline;
 			if (null != Strikeout)

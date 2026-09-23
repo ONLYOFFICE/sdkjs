@@ -523,6 +523,18 @@
 	ACTION_NAMED_TYPES["FirstPage"]		= ACTION_NAMED_TYPES.FirstPage;
 	ACTION_NAMED_TYPES["LastPage"]		= ACTION_NAMED_TYPES.LastPage;
 
+	const ALIGN_TYPE = {
+        left:   0,
+        center: 1,
+        right:  2,
+        justify:3
+    }
+
+	ALIGN_TYPE["left"]		= ALIGN_TYPE.left;
+	ALIGN_TYPE["center"]	= ALIGN_TYPE.center;
+	ALIGN_TYPE["right"]		= ALIGN_TYPE.right;
+	ALIGN_TYPE["justify"]	= ALIGN_TYPE.justify;
+
     asc["FIELD_TYPES"]                  = asc.FIELD_TYPES                = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES       = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]                = asc.REF_TO_REASON              = REF_TO_REASON;
@@ -547,5 +559,7 @@
     asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
     asc["ACTION_NAMED_TYPES"]           = asc.ACTION_NAMED_TYPES         = ACTION_NAMED_TYPES;
     asc["GetAnnotTypeStr"]              = asc.GetAnnotTypeStr            = GetAnnotTypeStr;
+	asc["ALIGN_TYPE"]					= asc.ALIGN_TYPE				 = ALIGN_TYPE;
+
     asc.CommandType                     = CommandType;
 })();

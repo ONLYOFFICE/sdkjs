@@ -70,6 +70,7 @@ var X_Right_Field  = Page_Width  - X_Right_Margin;
 var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
 var FOREIGN_CURSOR_SCROLL_TOP_OFFSET = 25; // mm
+var FOREIGN_CURSOR_FOLLOW_LABEL_TIME = 3000; // ms
 
 var docpostype_Content        = 0x00;
 var docpostype_HdrFtr         = 0x02;
@@ -7774,7 +7775,12 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
 
 	var oldDocPosType = this.GetDocPosType();
     // Проверяем, не попали ли мы в колонтитул (если мы попадаем в Flow-объект, то попадание в колонтитул не проверяем)
-    if (true != bFlowTable && nInDrawing < 0 && true === bCheckHdrFtr && MouseEvent.ClickCount >= 2 && ( Y <= PageMetrics.Y || Y > PageMetrics.YLimit ))
+    if (true != bFlowTable 
+		&& nInDrawing < 0 
+		&& true === bCheckHdrFtr
+		&& !this.Layout.IsReadMode()
+		&& MouseEvent.ClickCount >= 2
+		&& ( Y <= PageMetrics.Y || Y > PageMetrics.YLimit ))
     {
         // Если был селект, тогда убираем его
         if (true === this.Selection.Use)
@@ -16806,6 +16812,7 @@ CDocument.prototype.ScrollToForeignCursor = function(userId)
 		return false;
 
 	this.AlignViewPositionToTop(FOREIGN_CURSOR_SCROLL_TOP_OFFSET, anchorPos);
+	this.CollaborativeEditing.Show_ForeignCursorLabel(userId, FOREIGN_CURSOR_FOLLOW_LABEL_TIME);
 	return true;
 };
 /**
@@ -17540,9 +17547,9 @@ CDocument.prototype.GetDocumentLayout = function()
 {
 	return this.Layout;
 };
-CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale)
+CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale, marginLeft, marginTop, marginRight, marginBottom)
 {
-	this.Layouts.Read.Set(nW, nH, nScale);
+	this.Layouts.Read.Set(nW, nH, nScale, marginLeft, marginTop, marginRight, marginBottom);
 	this.Layout = this.Layouts.Read;
 
 	this.CheckAllRunContent(function(oRun)
