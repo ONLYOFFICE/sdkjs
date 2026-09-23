@@ -910,7 +910,13 @@
 					}
 					case para_Tab:
 					{
-						sPlainText += "	";
+						if (this.Config.convertType === "html")
+						{
+							sText += _t.private_EscapeHtml(sPlainText) + '<span style="mso-tab-count:1">	</span>';
+							sPlainText = "";
+						}
+						else
+							sPlainText += "	";
 						break;
 					}
 				}
@@ -960,7 +966,13 @@
 					}
 					case para_Tab:
 					{
-						sPlainText += "	";
+						if (this.Config.convertType === "html")
+						{
+							sText += _t.private_EscapeHtml(sPlainText) + '<span style="mso-tab-count:1">	</span>';
+							sPlainText = "";
+						}
+						else
+							sPlainText += "	";
 						break;
 					}
 				}
