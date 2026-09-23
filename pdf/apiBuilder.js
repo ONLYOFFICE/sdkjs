@@ -5519,6 +5519,7 @@
 
 	/**
 	 * Gets goto destination rect
+	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?Rect}
 	 * @since 10.0.0
@@ -5534,6 +5535,7 @@
 
 	/**
 	 * Sets goto destination rect
+	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect
 	 * @returns {boolean}
