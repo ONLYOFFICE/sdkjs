@@ -11815,6 +11815,9 @@
 			case AscPDF.BORDER_WIDTH.thick: {
 				return "thick";
 			}
+			default: {
+				return "none";
+			}
 		}
 	}
 
@@ -11854,6 +11857,9 @@
 			}
 			case AscPDF.BORDER_TYPES.underline: {
 				return "underline";
+			}
+			default: {
+				return "solid";
 			}
 		}
 	}
