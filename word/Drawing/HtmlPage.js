@@ -1100,7 +1100,7 @@ function CEditorPage(api)
 			const nPageW = sectPr.GetPageWidth() / AscCommon.AscBrowser.retinaPixelRatio;
 			const nPageH = sectPr.GetPageHeight() / AscCommon.AscBrowser.retinaPixelRatio;
 			const nScale = this.ReaderFontSizes[this.ReaderFontSizeCur] / 16;
-			this.m_oLogicDocument.SetDocumentReadMode(nPageW, nPageH, nScale);
+			this.m_oLogicDocument.SetDocumentReadMode(nPageW, nPageH, nScale, 5, 0, 5, 0);
 			return true;
 		}
 		return false;

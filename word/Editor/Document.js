@@ -17542,9 +17542,9 @@ CDocument.prototype.GetDocumentLayout = function()
 {
 	return this.Layout;
 };
-CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale)
+CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale, marginLeft, marginTop, marginRight, marginBottom)
 {
-	this.Layouts.Read.Set(nW, nH, nScale);
+	this.Layouts.Read.Set(nW, nH, nScale, marginLeft, marginTop, marginRight, marginBottom);
 	this.Layout = this.Layouts.Read;
 
 	this.CheckAllRunContent(function(oRun)
