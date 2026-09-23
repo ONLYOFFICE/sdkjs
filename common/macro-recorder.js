@@ -417,7 +417,9 @@
 			editor: [AscCommon.c_oEditorId.Word],
 			curType: AscDFH.historydescription_Document_AddNewShape,
 			check: function(type, additional) {
-				return this.prevData.name === additional.id || this.prevData.includes(additional.id)
+				return Array.isArray(this.prevData)
+					? this.prevData.some(function(d) { return d && d.name === additional.id; })
+					: !!this.prevData && this.prevData.name === additional.id;
 			},
 			action: ACTION.NOT_WRITE_PREV
 		},
@@ -426,7 +428,9 @@
 			editor: [AscCommon.c_oEditorId.Word],
 			curType: "SetDrawingPos",
 			check: function(type, additional) {
-				return this.prevData.name === additional.id || this.prevData.includes(additional.id)
+				return Array.isArray(this.prevData)
+					? this.prevData.some(function(d) { return d && d.name === additional.id; })
+					: !!this.prevData && this.prevData.name === additional.id;
 			},
 			action: ACTION.NOT_WRITE_PREV
 		},
@@ -1091,6 +1095,70 @@
 			.replace(/"/g, '\\"');
 	}
 
+	function private_getShapeVar(shapeId)
+	{
+		let varName = varRegistry.get(shapeId);
+		if (varName)
+			return { varName: varName, declaration: "" };
+
+		varName = varRegistry.register(shapeId, "shape");
+
+		let getSelectedShape = "";
+		let editorId = oMacroRecorderContext.editor.editorId;
+		if (editorId === AscCommon.c_oEditorId.Word)
+			getSelectedShape = "doc.GetSelectedDrawings().filter(function(item) { return item.GetClassType() === \"shape\"; })[0]";
+		else if (editorId === AscCommon.c_oEditorId.Spreadsheet)
+			getSelectedShape = "worksheet.GetSelectedShapes()[0]";
+		else if (editorId === AscCommon.c_oEditorId.Presentation)
+			getSelectedShape = "Api.GetSelection().GetShapes()[0]";
+
+		return { varName: varName, declaration: "\tlet " + varName + " = " + getSelectedShape + ";\n" };
+	}
+
+	function private_getCustomGeometryCode(oGeometry, sShapeVar)
+	{
+		let code = "\t\tlet oGeometry = Api.CreateCustomGeometry();\n";
+		for (let nPath = 0; nPath < oGeometry.pathLst.length; ++nPath)
+		{
+			let oPath = oGeometry.pathLst[nPath];
+			let sPathVar = "oPath" + nPath;
+			code += "\t\tlet " + sPathVar + " = oGeometry.AddPath();\n";
+			code += "\t\t" + sPathVar + ".SetStroke(" + oPath.stroke + ");\n";
+			code += "\t\t" + sPathVar + ".SetFill(\"" + (oPath.fill || "norm") + "\");\n";
+			code += "\t\t" + sPathVar + ".SetWidth(" + oPath.pathW + ");\n";
+			code += "\t\t" + sPathVar + ".SetHeight(" + oPath.pathH + ");\n";
+
+			let aCommands = oPath.ArrPathCommandInfo;
+			for (let nCommand = 0; nCommand < aCommands.length; ++nCommand)
+			{
+				let oCommand = aCommands[nCommand];
+				switch (oCommand.id)
+				{
+					case AscFormat.moveTo:
+						code += "\t\t" + sPathVar + ".MoveTo(" + oCommand.X + ", " + oCommand.Y + ");\n";
+						break;
+					case AscFormat.lineTo:
+						code += "\t\t" + sPathVar + ".LineTo(" + oCommand.X + ", " + oCommand.Y + ");\n";
+						break;
+					case AscFormat.bezier3:
+						code += "\t\t" + sPathVar + ".QuadBezTo(" + oCommand.X0 + ", " + oCommand.Y0 + ", " + oCommand.X1 + ", " + oCommand.Y1 + ");\n";
+						break;
+					case AscFormat.bezier4:
+						code += "\t\t" + sPathVar + ".CubicBezTo(" + oCommand.X0 + ", " + oCommand.Y0 + ", " + oCommand.X1 + ", " + oCommand.Y1 + ", " + oCommand.X2 + ", " + oCommand.Y2 + ");\n";
+						break;
+					case AscFormat.arcTo:
+						code += "\t\t" + sPathVar + ".ArcTo(" + oCommand.wR + ", " + oCommand.hR + ", " + oCommand.stAng + ", " + oCommand.swAng + ");\n";
+						break;
+					case AscFormat.close:
+						code += "\t\t" + sPathVar + ".Close();\n";
+						break;
+				}
+			}
+		}
+		code += "\t\t" + sShapeVar + ".SetGeometry(oGeometry);\n";
+		return code;
+	}
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -1337,7 +1405,7 @@
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
-			let varName = varRegistry.register(shapeProps.id, 'shape');
+			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 
 			return "\tlet " + varName + " = (function () {\n" +
 					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
@@ -1693,10 +1761,10 @@
 		},
 		setDrawingPos			: function(pos)
 		{
-			return "\tdoc.GetDrawingsByName([\"" + pos.name + "\"]).forEach(function(draw) {\n" +
-				"\t\tdraw.SetVerPosition(\"page\", " + pos.y + " * 36000.0);\n" +
-				"\t\tdraw.SetHorPosition(\"page\", " + pos.x + " * 36000.0);\n" +
-				"\t});\n"
+			let reg = private_getShapeVar(pos.formatId);
+			return reg.declaration +
+				"\t" + reg.varName + ".SetVerPosition(\"page\", " + pos.y + " * 36000.0);\n" +
+				"\t" + reg.varName + ".SetHorPosition(\"page\", " + pos.x + " * 36000.0);\n"
 		},
 		setPositionH			: function(data)
 		{
@@ -1851,6 +1919,13 @@
 				+ "\t\t.forEach(function(draw) {\n"
 				+ "\t\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"));\n"
 				+ "\t\t});\n";
+		},
+		setCustomGeometry	: function(oAdditional)
+		{
+			let reg = private_getShapeVar(oAdditional.id);
+			return reg.declaration
+				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
+				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
 		},
 		setDrawingTitle			: function(title){
 			return "\tdoc.GetSelectedDrawings().forEach(function(draw) { draw.SetTitle(\"" + title + "\") });\n";
@@ -2296,6 +2371,7 @@
 	DEActionMap['SetRelSizeH']													= wordActions.setShapeRelSizeH;
 	DEActionMap['SetRelSizeV']													= wordActions.setShapeRelSizeV;
 	DEActionMap['SetGeometry']													= wordActions.setGeometry;
+	DEActionMap['SetCustomGeometry']											= wordActions.setCustomGeometry;
 	DEActionMap[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
 	DEActionMap[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
 	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
@@ -2786,6 +2862,13 @@
 					+ "\t\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"))\n"
 				+ "\t\t});\n"
 		},
+		setCustomGeometry	: function(oAdditional)
+		{
+			let reg = private_getShapeVar(oAdditional.id);
+			return reg.declaration
+				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
+				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
+		},
 		setDrawingTitle		: function(title){
 			return "\tworksheet.GetSelectedDrawings().forEach(function(draw) { draw.SetTitle(\"" + title + "\") });\n";
 		},
@@ -2851,6 +2934,7 @@
 	SEActionMap['SetShapeSize']													= cellActions.setShapeSize;
 	SEActionMap['SetShapeInnerPadding']											= cellActions.setShapeInnerPadding;
 	SEActionMap['SetGeometry']														= cellActions.setGeometry;
+	SEActionMap['SetCustomGeometry']												= cellActions.setCustomGeometry;
 	SEActionMap['SetDrawingTitle']													= cellActions.setDrawingTitle;
 	SEActionMap['SetDrawingDescription']											= cellActions.setDrawingDescription;
 	SEActionMap['SetDrawingAspectRatio']											= cellActions.setDrawingAspectRatio;
@@ -3497,6 +3581,13 @@
 				"\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"));\n" +
 				"\t});\n"
 		},
+		setCustomGeometry	: function(oAdditional)
+		{
+			let reg = private_getShapeVar(oAdditional.id);
+			return reg.declaration
+				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
+				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
+		},
 		setDrawingTitle		: function(title){
 			return "\tApi.GetSelection().GetShapes()\n"
 				+ "\t\t.forEach(function(shape) {\n"
@@ -3771,6 +3862,7 @@
 	PEActionMap["SetDrawingRotation"]												= presActions.setDrawingRotation;
 	PEActionMap["SetDrawingFill"]													= presActions.setDrawingFill;
 	PEActionMap["SetGeometry"]														= presActions.setGeometry;
+	PEActionMap["SetCustomGeometry"]												= presActions.setCustomGeometry;
 	PEActionMap["SetDrawingLine"]													= presActions.setDrawingLine;
 	PEActionMap["SetShapeX"]														= presActions.setShapeX;
 	PEActionMap["SetShapeY"]														= presActions.setShapeY;
