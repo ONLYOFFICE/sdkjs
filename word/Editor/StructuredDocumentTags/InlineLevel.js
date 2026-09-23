@@ -3062,6 +3062,9 @@ CInlineLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 	}
 
 	CParagraphContentWithParagraphLikeContent.prototype.AcceptRevisionChanges.call(this, Type, bAll);
+
+	if (this.IsEmpty())
+		this.ReplaceContentWithPlaceHolder();
 };
 CInlineLevelSdt.prototype.RejectRevisionChanges = function(Type, bAll)
 {
@@ -3072,6 +3075,9 @@ CInlineLevelSdt.prototype.RejectRevisionChanges = function(Type, bAll)
 	}
 
 	CParagraphContentWithParagraphLikeContent.prototype.RejectRevisionChanges.call(this, Type, bAll);
+
+	if (this.IsEmpty())
+		this.ReplaceContentWithPlaceHolder();
 };
 CInlineLevelSdt.prototype.SetPlaceholder = function(sDocPartName)
 {

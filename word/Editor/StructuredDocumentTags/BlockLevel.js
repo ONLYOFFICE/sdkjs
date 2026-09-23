@@ -1250,10 +1250,16 @@ CBlockLevelSdt.prototype.GetRevisionsChangeElement = function(SearchEngine)
 CBlockLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 {
 	this.Content.AcceptRevisionChanges(Type, bAll);
+
+	if (this.IsEmpty())
+		this.ReplaceContentWithPlaceHolder();
 };
 CBlockLevelSdt.prototype.RejectRevisionChanges = function(Type, bAll)
 {
 	this.Content.RejectRevisionChanges(Type, bAll);
+
+	if (this.IsEmpty())
+		this.ReplaceContentWithPlaceHolder();
 };
 CBlockLevelSdt.prototype.IsContentOnFirstPage = function()
 {

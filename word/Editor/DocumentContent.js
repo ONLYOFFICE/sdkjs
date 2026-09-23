@@ -2106,10 +2106,10 @@ CDocumentContent.prototype.AddContent = function(arrElements)
 };
 CDocumentContent.prototype.Is_Empty = function()
 {
-	if (this.Content.length > 1 || type_Paragraph !== this.Content[0].GetType())
-		return false;
-
-	return this.Content[0].IsEmpty({SkipPlcHldr : false});
+	return (this.Content.length <= 0
+		|| (1 === this.Content.length
+			&& this.Content[0].IsParagraph()
+			&& this.Content[0].IsEmpty({SkipPlcHldr : false})));
 };
 
 
