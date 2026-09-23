@@ -1256,6 +1256,13 @@
 			if (highlightHex)
 				styles.push("background-color:" + highlightHex);
 		}
+		else if (textPr.HighlightColor)
+		{
+			textPr.HighlightColor.check(run.Paragraph.Get_Theme(), run.Paragraph.Get_ColorMap());
+			let highlightColorHex = private_ColorToHex(textPr.HighlightColor.RGBA);
+			if (highlightColorHex)
+				styles.push("background-color:" + highlightColorHex);
+		}
 
 		if (undefined !== textPr.Spacing && 0 !== textPr.Spacing)
 			styles.push("letter-spacing:" + (textPr.Spacing / 20) + "pt");
