@@ -1365,9 +1365,52 @@
 			return 1;
 		}
 
+		function isLocalImagePath(sSrc) {
+			if (typeof sSrc !== "string" || 0 === sSrc.length)
+				return false;
+			if (0 === sSrc.toLowerCase().indexOf("file://"))
+				return true;
+			if (0 === sSrc.indexOf("\\\\"))
+				return true;
+			// "/pictures/a.png" is a path; "//host/share/a.png" is an address in the
+			// protocol-relative form, and it must not be handed to the host as a file
+			if ('/' === sSrc.charAt(0) && '/' !== sSrc.charAt(1))
+				return true;
+			if (sSrc.length > 2 && ':' === sSrc.charAt(1) && ('/' === sSrc.charAt(2) || '\\' === sSrc.charAt(2))) {
+				var nLetter = sSrc.charCodeAt(0);
+				if ((nLetter >= 0x41 && nLetter <= 0x5A) || (nLetter >= 0x61 && nLetter <= 0x7A))
+					return true;
+			}
+			return false;
+		}
+
+		function prepareLocalImageSrc(sSrc) {
+			if (!isLocalImagePath(sSrc))
+				return sSrc;
+
+			if (AscCommon.g_oDocumentUrls && AscCommon.g_oDocumentUrls.getImageLocal(sSrc))
+				return sSrc;
+
+			let url = undefined;
+			try {
+				if (window["native"] && window["native"]["GetImageUrl"])
+					url = window["native"]["GetImageUrl"](sSrc);
+				else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["LocalFileGetImageUrl"])
+					url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sSrc);
+			} catch (e) {
+				return sSrc;
+			}
+
+			if (typeof url !== "string" || 0 === url.length || "error" === url)
+				return sSrc;
+
+			return url;
+		}
+
 		function checkRasterImageId(rasterImageId) {
-			var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(rasterImageId);
-			return imageLocal ? imageLocal : rasterImageId;
+			var sSrc = prepareLocalImageSrc(rasterImageId);
+			var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(sSrc);
+			return imageLocal ? imageLocal : sSrc;
 		}
 
 
@@ -17815,7 +17858,7 @@
 		function builder_CreateBlipFill(sImageUrl, sBlipFillType) {
 			var oUniFill = new AscFormat.CUniFill();
 			oUniFill.fill = new AscFormat.CBlipFill();
-			oUniFill.fill.RasterImageId = sImageUrl;
+			oUniFill.fill.RasterImageId = prepareLocalImageSrc(sImageUrl);
 			if (sBlipFillType === "tile") {
 				oUniFill.fill.tile = new AscFormat.CBlipFillTile();
 			} else if (sBlipFillType === "stretch") {
@@ -21322,6 +21365,8 @@
 		window['AscFormat'].CBaseFormatNoIdObject = CBaseFormatNoIdObject;
 		window['AscFormat'].CBaseNoIdObject = CBaseNoIdObject;
 		window['AscFormat'].checkRasterImageId = checkRasterImageId;
+		window['AscFormat'].isLocalImagePath = isLocalImagePath;
+		window['AscFormat'].prepareLocalImageSrc = prepareLocalImageSrc;
 		window['AscFormat'].IdEntry = IdEntry;
 		window['AscFormat'].CEffectStyle = CEffectStyle;
 

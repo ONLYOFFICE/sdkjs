@@ -816,6 +816,8 @@
 			sRasterId = "";
 		}
 
+		sRasterId = AscFormat.prepareLocalImageSrc(sRasterId);
+
         let sPrevRasterId;
 
         if (undefined == nAPType) {
