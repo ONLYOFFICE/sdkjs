@@ -12271,6 +12271,8 @@
 			options.asc_setActiveCell(start);
 			options.asc_setWsIndex(this.range.worksheet.index);
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			// the engine is cached, its previous result must not shift the scan off "After"
+			engine.ResetCurrent();
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(options.scanForward);
 			if (id != null) {
                 engine.SetCurrent(id);
@@ -12304,16 +12306,11 @@
 				activeCell = {row: After.range.bbox.r1, col: After.range.bbox.c1};
 				activeCell.row += (!this._searchOptions.scanByRows ? 1 : 0);
 				activeCell.col += (this._searchOptions.scanByRows ? 1 : 0);
-			} else {
-				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
-			}
-			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
 				this._searchOptions.asc_setActiveCell(activeCell);
-			} else {
-				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
-				engine.Reset();
 			}
 			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			// without a cell the iteration continues from the last found element
+			activeCell && engine.ResetCurrent();
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
 			if (id != null) {
                 engine.SetCurrent(id);
@@ -12346,16 +12343,11 @@
 				activeCell = {row: Before.range.bbox.r1, col: Before.range.bbox.c1};
 				activeCell.row += (!this._searchOptions.scanByRows ? -1 : 0);
 				activeCell.col += (this._searchOptions.scanByRows ? -1 : 0);
-			} else {
-				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
-			}
-			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
 				this._searchOptions.asc_setActiveCell(activeCell);
-			} else {
-				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
-				engine.Reset();
 			}
 			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			// without a cell the iteration continues from the last found element
+			activeCell && engine.ResetCurrent();
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(false);
 			if (id != null) {
 				engine.SetCurrent(id);
