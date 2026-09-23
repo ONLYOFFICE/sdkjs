@@ -890,7 +890,7 @@
 		if (!AscFormat.isRealNumber(unifill.transparent))
 			return "";
 
-		return "\t\t\tfill.SetTransparent(" + Math.round(unifill.transparent * 100 / 255) + ");\n";
+		return "\t\t\tfill.SetTransparent(" + (1 - unifill.transparent / 255) + ");\n";
 	}
 
 	function private_getDrawingFillReplayCode(selectedDrawingsExpr, isArrowFn, unifill, getStopColorRGBA) {

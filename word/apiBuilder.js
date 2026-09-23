@@ -23837,7 +23837,7 @@
 	 * Sets the transparency of the fill.
 	 * @memberof ApiFill
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {number} transparent - The transparency value, from 0 (fully transparent) to 100 (fully opaque).
+	 * @param {number} transparent - The transparency value, from 0 (fully opaque) to 1 (fully transparent).
 	 * @returns {boolean}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/SetTransparent.js
@@ -23845,10 +23845,10 @@
 	ApiFill.prototype.SetTransparent = function (transparent)
 	{
 		transparent = GetNumberParameter(transparent, null);
-		if (null === transparent || transparent < 0 || transparent > 100)
-			throwException(new Error("The transparent parameter must be a number from 0 to 100"));
+		if (null === transparent || transparent < 0 || transparent > 1)
+			throwException(new Error("The transparent parameter must be a number from 0 to 1"));
 
-		this.UniFill.setTransparent(Math.round(transparent * 255 / 100));
+		this.UniFill.setTransparent(Math.round((1 - transparent) * 255));
 		return true;
 	};
 
@@ -23856,16 +23856,16 @@
 	 * Returns the transparency of the fill.
 	 * @memberof ApiFill
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @returns {number} - The transparency value, from 0 (fully transparent) to 100 (fully opaque).
+	 * @returns {number} - The transparency value, from 0 (fully opaque) to 1 (fully transparent).
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/GetTransparent.js
 	 */
 	ApiFill.prototype.GetTransparent = function ()
 	{
 		if (!AscFormat.isRealNumber(this.UniFill.transparent))
-			return 100;
+			return 0;
 
-		return Math.round(this.UniFill.transparent * 100 / 255);
+		return 1 - this.UniFill.transparent / 255;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
