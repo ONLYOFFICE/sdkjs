@@ -5574,7 +5574,7 @@
 	 */
 	ApiGoToAction.prototype.SetZoom = function(zoom) {
 		if ("xyz" == this.GetType()) {
-			zoom = AscBuilder.GetNumberParameter(zoom, 1);
+			zoom = Math.max(0.5, Math.min(AscBuilder.GetNumberParameter(zoom, 1), 5));
 
 			this.Action.SetZoom(zoom);
 			this.private_OnChange();
