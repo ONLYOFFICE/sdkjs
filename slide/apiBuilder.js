@@ -11566,10 +11566,10 @@
 	function private_GetCursorTextPartDirection(part)
 	{
 		if ("before" === part)
-			return 1;
+			return -1;
 
 		if ("after" === part)
-			return -1;
+			return 1;
 
 		return 0;
 	}
