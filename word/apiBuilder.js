@@ -23846,6 +23846,41 @@
 		return null;
 	};
 
+	/**
+	 * Sets the transparency of the fill.
+	 * @memberof ApiFill
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {number} transparent - The transparency value, from 0 (fully opaque) to 1 (fully transparent).
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/SetTransparent.js
+	 */
+	ApiFill.prototype.SetTransparent = function (transparent)
+	{
+		transparent = GetNumberParameter(transparent, null);
+		if (null === transparent || transparent < 0 || transparent > 1)
+			throwException(new Error("The transparent parameter must be a number from 0 to 1"));
+
+		this.UniFill.setTransparent(Math.round((1 - transparent) * 255));
+		return true;
+	};
+
+	/**
+	 * Returns the transparency of the fill.
+	 * @memberof ApiFill
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @returns {number} - The transparency value, from 0 (fully opaque) to 1 (fully transparent).
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/GetTransparent.js
+	 */
+	ApiFill.prototype.GetTransparent = function ()
+	{
+		if (!AscFormat.isRealNumber(this.UniFill.transparent))
+			return 0;
+
+		return 1 - this.UniFill.transparent / 255;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiStroke
@@ -34638,6 +34673,8 @@
 	ApiFill.prototype["ToJSON"]                      = ApiFill.prototype.ToJSON;
 	ApiFill.prototype["GetType"]                     = ApiFill.prototype.GetType;
 	ApiFill.prototype["GetColor"]                    = ApiFill.prototype.GetColor;
+	ApiFill.prototype["SetTransparent"]              = ApiFill.prototype.SetTransparent;
+	ApiFill.prototype["GetTransparent"]              = ApiFill.prototype.GetTransparent;
 
 	ApiStroke.prototype["GetClassType"]              = ApiStroke.prototype.GetClassType;
 	ApiShadow.prototype["GetClassType"]              = ApiShadow.prototype.GetClassType;
