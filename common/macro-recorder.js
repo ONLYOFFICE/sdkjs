@@ -1633,14 +1633,14 @@
 			let macroShapes = [];
 
 			shapes.forEach(function(element) {
-				if (!macroShapes.includes(element) && varRegistry.get(element.getObjectName()) !== undefined)
+				if (!macroShapes.includes(element) && varRegistry.get(element.getFormatIdString()) !== undefined)
 					macroShapes.push(element);
 			});
 
 			let ids = [];
 
 			for (let i = 0; i < macroShapes.length; i++) {
-				let varName = varRegistry.get(macroShapes[i].getObjectName());
+				let varName = varRegistry.get(macroShapes[i].getFormatIdString());
 				if (varName !== undefined)
 					ids.push(varName);
 			}
@@ -1655,7 +1655,7 @@
 		deselectDrawing			: function(oAdditional)
 		{
 			// for non-stored shape don't write anything
-			let varName = varRegistry.get(oAdditional.name);
+			let varName = varRegistry.get(oAdditional.formatId);
 			if (varName === undefined) {
 				return "";
 			}
@@ -2677,7 +2677,7 @@
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
-			let varName = varRegistry.register(shapeProps.id, 'shape');
+			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 			let from = shapeProps.base.from;
 			return "\tlet " + varName + " = (function () {\n" +
 					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
@@ -2689,7 +2689,7 @@
 		},
 		deselectDrawing				: function(oAdditional)
 		{
-			let varName = varRegistry.get(oAdditional.name);
+			let varName = varRegistry.get(oAdditional.formatId);
 			if (varName === undefined) {
 				return "\tworksheet.GetSelectedDrawings().forEach(function(drawing){drawing.Unselect()});\n";
 			}
@@ -2706,7 +2706,7 @@
 			});
 
 			shapesSort = shapesSort.filter(function(element) {
-				return varRegistry.get(element.getObjectName()) !== undefined;
+				return varRegistry.get(element.getFormatIdString()) !== undefined;
 			});
 
 			if (shapesSort.length === 0)
@@ -2714,7 +2714,7 @@
 
 			let ids = "";
 			for (let i = 0; i < shapesSort.length; i++) {
-				let varName = varRegistry.get(shapesSort[i].getObjectName());
+				let varName = varRegistry.get(shapesSort[i].getFormatIdString());
 				if (varName !== undefined)
 					ids += varName + (i != (shapesSort.length - 1) && shapesSort.length > 1 ? ", " : "")
 			}
@@ -3250,7 +3250,7 @@
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
-			let varName = varRegistry.register(shapeProps.id, 'shape');
+			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 
 			return "\tlet " + varName + " = (function () {\n" +
 					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor(" + fill.R +", " + fill.G + ", " + fill.B + "));\n" +
@@ -3289,7 +3289,7 @@
 				return "";
 
 			shapesSort = shapesSort.filter(function(element) {
-				return varRegistry.get(element.getObjectName()) !== undefined;
+				return varRegistry.get(element.getFormatIdString()) !== undefined;
 			});
 
 			if (shapesSort.length === 0)
@@ -3297,7 +3297,7 @@
 
 			let ids = "";
 			for (let i = 0; i < shapesSort.length; i++) {
-				let varName = varRegistry.get(shapesSort[i].getObjectName());
+				let varName = varRegistry.get(shapesSort[i].getFormatIdString());
 				if (varName !== undefined)
 					ids += varName + (i != (shapesSort.length - 1) && shapesSort.length > 1 ? ", " : "")
 			}
@@ -3307,7 +3307,7 @@
 		},
 		deselectDrawing			: function(oAdditional)
 		{
-			let varName = varRegistry.get(oAdditional.name);
+			let varName = varRegistry.get(oAdditional.formatId);
 			let isTable = oAdditional.isTable;
 
 			if (isTable === true) {

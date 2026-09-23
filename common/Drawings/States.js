@@ -403,7 +403,8 @@ StartAddNewShape.prototype =
                             fill: track.overlayObject.brush,
                             border: track.overlayObject.pen,
                             base: shape.drawingBase ? shape.drawingBase : null,
-							id: shape.getObjectName()
+							id: shape.getObjectName(),
+							formatId: shape.getFormatIdString()
                         };
 
                     if (oAPI.editorId === AscCommon.c_oEditorId.Presentation)
