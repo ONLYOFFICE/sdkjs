@@ -1162,7 +1162,7 @@
 			targetContent.ClearContent(false);
 		}
 		for (let i = 0; i < sourceParagraphs.length; i += 1) {
-			const newParagraph = sourceParagraphs[i].Copy(targetContent);
+			const newParagraph = sourceParagraphs[i].Copy2(targetContent);
 			targetContent.Add_ToContent(targetContent.Content.length, newParagraph);
 			addedParagraphs.push(newParagraph);
 		}
@@ -2457,7 +2457,7 @@
 	}
 	OutlineView.prototype.getCopyParagraph = function (parent, paragraph, isTitle) {
 		return AscFormat.ExecuteNoHistory(function () {
-			const copyParagraph = paragraph.Copy2(parent, null, null);
+			const copyParagraph = paragraph.Copy2(parent);
 			this.applyParagraphProps(copyParagraph, paragraph, isTitle);
 			return copyParagraph;
 		}, this, []);
