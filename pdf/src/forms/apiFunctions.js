@@ -672,6 +672,12 @@
                     return pattern.test(time);
                 }
                 break;
+			default:
+				sFormat = ptf;
+				fIsValidTime = function isValidTime(time) {
+					return true;
+				}
+				break;
         }
 
         let oTargetRun = oForm.contentFormat.GetElement(0).GetElement(0);
@@ -761,7 +767,11 @@
                 }
                 break;
             default:
-                break;
+				sFormat = ptf;
+				fIsValidTime = function isValidTime(time) {
+					return true;
+				}
+				break;
         }
 
         let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
