@@ -10075,55 +10075,65 @@
 	 * Specifies the shading which shall be applied to the extents of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShdType | ApiFill} shadingType - The shading type or fill to apply.
+	 * @deprecated since 10.0.0 version.
+	 * @param {ShdType | ApiFill} type - The shading type or fill to apply.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetShd.js
 	 */
-	ApiTable.prototype.SetShd = function(shadingType, r, g, b) {
-		let oPr = this.Table.Pr.Copy();
-		let color = new Asc.asc_CColor({
-			r: r,
-			g: g,
-			b: b,
-			Auto: false
-		});
-		let oShd = new CDocumentShd();
-		let _Shd = null;
+	/**
+	 * Specifies the shading which shall be applied to the extents of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["PDFE"]
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetShd.js
+	 */
+	ApiTable.prototype.SetShd = function(type, r, g, b)
+	{
+		if (type instanceof AscBuilder.ApiShd)
+			return this.SetShd("clear" === type.GetType() ? Api.CreateSolidFill(type.GetColor()) : "nil");
 
-		if (shadingType === "nil") {
-			_Shd = {
-				Value: Asc.c_oAscShdNil
-			};
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType === "clear") {
+		const pr    = this.Table.Pr.Copy();
+		const color = new Asc.asc_CColor({r : r, g : g, b : b, Auto : false});
+		const shd   = new CDocumentShd();
 
-			let Unifill = new AscFormat.CUniFill();
-			Unifill.fill = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			_Shd = {
-				Value: Asc.c_oAscShdClear,
-				Color: {
-					r: color.asc_getR(),
-					g: color.asc_getG(),
-					b: color.asc_getB()
+		if (type === "nil")
+		{
+			shd.Set_FromObject({
+				Value : Asc.c_oAscShdNil
+			});
+			pr.Shd = shd;
+		}
+		else if (type === "clear")
+		{
+			const unifill      = new AscFormat.CUniFill();
+			unifill.fill       = new AscFormat.CSolidFill();
+			unifill.fill.color = AscFormat.CorrectUniColor(color, unifill.fill.color, 1);
+			shd.Set_FromObject({
+				Value   : Asc.c_oAscShdClear,
+				Color   : {
+					r : color.asc_getR(),
+					g : color.asc_getG(),
+					b : color.asc_getB()
 				},
-				Unifill: Unifill
-			};
+				Unifill : unifill
+			});
+			pr.Shd = shd;
+		}
+		else if (type.GetClassType && type.GetClassType() === "fill")
+		{
+			shd.Value   = Asc.c_oAscShdClear;
+			shd.Unifill = type.UniFill;
+			pr.Shd      = shd;
+		}
+		else
+			pr.Shd = null;
 
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType.GetClassType && shadingType.GetClassType() === "fill") {
-			oShd.Value = Asc.c_oAscShdClear;
-			oShd.Unifill = shadingType.UniFill;
-			oPr.Shd = oShd;
-		} else
-			oPr.Shd = null;
-
-		this.Table.Set_Pr(oPr);
+		this.Table.Set_Pr(pr);
 
 		return true;
 	};
@@ -10901,55 +10911,65 @@
 	 * Specifies the shading which shall be applied to the extents of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShdType | ApiFill} shadingType - The shading type or fill to apply.
+	 * @deprecated since 10.0.0 version.
+	 * @param {ShdType | ApiFill} type - The shading type or fill to apply.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetShd.js
 	 */
-	ApiTableCell.prototype.SetShd = function(shadingType, r, g, b) {
-		let oPr = this.Cell.Pr.Copy();
-		let color = new Asc.asc_CColor({
-			r: r,
-			g: g,
-			b: b,
-			Auto: false
-		});
-		let oShd = new CDocumentShd();
-		let _Shd = null;
+	/**
+	 * Specifies the shading which shall be applied to the extents of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["PDFE"]
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetShd.js
+	 */
+	ApiTableCell.prototype.SetShd = function(type, r, g, b)
+	{
+		if (type instanceof AscBuilder.ApiShd)
+			return this.SetShd("clear" === type.GetType() ? Api.CreateSolidFill(type.GetColor()) : "nil");
 
-		if (shadingType === "nil") {
-			_Shd = {
-				Value: Asc.c_oAscShdNil
-			};
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType === "clear") {
+		const pr    = this.Cell.Pr.Copy();
+		const color = new Asc.asc_CColor({r : r, g : g, b : b, Auto : false});
+		const shd   = new CDocumentShd();
 
-			let Unifill = new AscFormat.CUniFill();
-			Unifill.fill = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			_Shd = {
-				Value: Asc.c_oAscShdClear,
-				Color: {
-					r: color.asc_getR(),
-					g: color.asc_getG(),
-					b: color.asc_getB()
+		if (type === "nil")
+		{
+			shd.Set_FromObject({
+				Value : Asc.c_oAscShdNil
+			});
+			pr.Shd = shd;
+		}
+		else if (type === "clear")
+		{
+			const unifill      = new AscFormat.CUniFill();
+			unifill.fill       = new AscFormat.CSolidFill();
+			unifill.fill.color = AscFormat.CorrectUniColor(color, unifill.fill.color, 1);
+			shd.Set_FromObject({
+				Value   : Asc.c_oAscShdClear,
+				Color   : {
+					r : color.asc_getR(),
+					g : color.asc_getG(),
+					b : color.asc_getB()
 				},
-				Unifill: Unifill
-			};
+				Unifill : unifill
+			});
+			pr.Shd = shd;
+		}
+		else if (type.GetClassType && type.GetClassType() === "fill")
+		{
+			shd.Value   = Asc.c_oAscShdClear;
+			shd.Unifill = type.UniFill;
+			pr.Shd      = shd;
+		}
+		else
+			pr.Shd = null;
 
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType.GetClassType && shadingType.GetClassType() === "fill") {
-			oShd.Value = Asc.c_oAscShdClear;
-			oShd.Unifill = shadingType.UniFill;
-			oPr.Shd = oShd;
-		} else
-			oPr.Shd = null;
-
-		this.Cell.Set_Pr(oPr);
+		this.Cell.Set_Pr(pr);
 		return true;
 	};
 

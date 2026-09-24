@@ -2322,15 +2322,30 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @since 9.1.0
+	 * @deprecated since 10.0.0 version.
 	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
 	 * @param {ApiColor} color - The shading color.
 	 * @returns {ApiRange | null} - returns null if can't apply shadow.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
 	 */
+	/**
+	 * Specifies the shading applied to the contents of the current text Range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
+	 */
 	ApiRange.prototype.SetShd = function (type, color)
 	{
+		if (type instanceof ApiShd)
+			return this.SetShd(type.GetType(), type.GetColor());
+
 		let r, g, b;
 		let isAuto, isTheme;
 
@@ -4086,6 +4101,18 @@
 	}
 
 	/**
+	 * Class representing the shading of text, a paragraph, a table or a table cell.
+	 * @constructor
+	 * @property {ShdType} Type - The shading type: <b>"nil"</b> - no shading, <b>"clear"</b> - solid fill.
+	 * @property {ApiColor} Color - The shading color.
+	 */
+	function ApiShd(type, color)
+	{
+		this["Type"]  = type;
+		this["Color"] = color;
+	}
+
+	/**
 	 * Class representing a stroke.
 	 * @constructor
 	 */
@@ -4249,13 +4276,6 @@
 	 * A shade type which can be added to the document element.
 	 * @typedef {("nil" | "clear")} ShdType
 	 * @see office-js-api/Examples/Enumerations/ShdType.js
-	 */
-
-	/**
-	 * @typedef {Object} Shd
-	 * The shading information object.
-	 * @property {ShdType} Type - The shading type: <b>"nil"</b> - no shading, <b>"clear"</b> - solid fill.
-	 * @property {ApiColor} Color - The shading color.
 	 */
 
 	/**
@@ -5461,6 +5481,27 @@
 		}
 		return Api.RGB(color.RGBA.R, color.RGBA.G, color.RGBA.B);
 	}
+
+	/**
+	 * Creates the shading which can be applied to text, a paragraph, a table or a table cell.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @since 10.0.0
+	 * @param {ShdType} type - The shading type: <b>"nil"</b> - no shading, <b>"clear"</b> - solid fill.
+	 * @param {ApiColor} [color] - The shading color. Required for the <b>"clear"</b> type.
+	 * @returns {ApiShd}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShd.js
+	 */
+	Api.CreateShd = function (type, color)
+	{
+		if ("nil" !== type && "clear" !== type)
+			throwException(new Error('Type ' + type + ' is not a valid shading type. Allowed types are: nil, clear'));
+
+		if ("nil" === type)
+			return new ApiShd(type, null);
+
+		return new ApiShd(type, color instanceof ApiColor ? color : Api.Color(color));
+	};
 
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
@@ -17775,15 +17816,30 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @since 9.1.0
+	 * @deprecated since 10.0.0 version.
 	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {ApiColor} color - The color or pattern used to fill the shading.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
 	 */
+	/**
+	 * Specifies the shading applied to the contents of the current text run.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
+	 */
 	ApiTextPr.prototype.SetShd = function (type, color)
 	{
+		if (type instanceof ApiShd)
+			return this.SetShd(type.GetType(), type.GetColor());
+
 		let r, g, b;
 		let isAuto, isTheme;
 
@@ -17821,7 +17877,7 @@
 	 * Gets the text shading from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {Shd | undefined}
+	 * @return {ApiShd | undefined}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetShd.js
 	 */
@@ -17851,7 +17907,7 @@
 				apiColor = (true === color.Auto) ? Api.AutoColor() : Api.RGB(color.r, color.g, color.b);
 		}
 
-		return { "Type": type, "Color": apiColor };
+		return new ApiShd(type, apiColor);
 	};
 
 	/**
@@ -18455,15 +18511,30 @@
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @since 9.1.0
+	 * @deprecated since 10.0.0 version.
 	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
 	 * @param {ApiColor} color - The color or pattern used to fill the shading.
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
 	 */
+	/**
+	 * Specifies the shading applied to the contents of the paragraph.
+	 *
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
+	 */
 	ApiParaPr.prototype.SetShd = function(type, color)
 	{
+		if (type instanceof ApiShd)
+			return this.SetShd(type.GetType(), type.GetColor());
+
 		let r, g, b;
 		let isAuto, isTheme;
 
@@ -18500,7 +18571,7 @@
 	 * Returns the shading applied to the contents of the paragraph.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @returns {Shd | undefined}
+	 * @returns {ApiShd | undefined}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetShd.js
 	 */
 	ApiParaPr.prototype.GetShd = function()
@@ -18529,10 +18600,7 @@
 				apiColor = (true === color.Auto) ? Api.AutoColor() : Api.RGB(color.r, color.g, color.b);
 		}
 
-		return { 
-			"Type"  : type, 
-			"Color" : apiColor 
-		};
+		return new ApiShd(type, apiColor);
 	};
 	/**
 	 * Specifies the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
@@ -18540,18 +18608,33 @@
 	 * to the whole block rather than to every paragraph in this block.</note>
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The border style.
-	 * @param {pt_8} nSize - The width of the current bottom border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset below the paragraph measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current bottom border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset below the paragraph measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetBottomBorder.js
 	 */
-	ApiParaPr.prototype.SetBottomBorder = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
+	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added
+	 * to the whole block rather than to every paragraph in this block.</note>
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current bottom border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset below the paragraph measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetBottomBorder.js
+	 */
+	ApiParaPr.prototype.SetBottomBorder = function(type, size, space, color)
 	{
-		this.ParaPr.Brd.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.ParaPr.Brd.Bottom = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -18572,18 +18655,31 @@
 	 * Specifies the border which will be displayed at the left side of the page around the specified paragraph.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The border style.
-	 * @param {pt_8} nSize - The width of the current left border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset to the left of the paragraph measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current left border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset to the left of the paragraph measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetLeftBorder.js
 	 */
-	ApiParaPr.prototype.SetLeftBorder = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies the border which will be displayed at the left side of the page around the specified paragraph.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current left border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset to the left of the paragraph measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetLeftBorder.js
+	 */
+	ApiParaPr.prototype.SetLeftBorder = function(type, size, space, color)
 	{
-		this.ParaPr.Brd.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.ParaPr.Brd.Left = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -18604,18 +18700,31 @@
 	 * Specifies the border which will be displayed at the right side of the page around the specified paragraph.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The border style.
-	 * @param {pt_8} nSize - The width of the current right border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset to the right of the paragraph measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current right border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset to the right of the paragraph measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetRightBorder.js
 	 */
-	ApiParaPr.prototype.SetRightBorder = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies the border which will be displayed at the right side of the page around the specified paragraph.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current right border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset to the right of the paragraph measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetRightBorder.js
+	 */
+	ApiParaPr.prototype.SetRightBorder = function(type, size, space, color)
 	{
-		this.ParaPr.Brd.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.ParaPr.Brd.Right = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -18637,18 +18746,32 @@
 	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.</note>
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The border style.
-	 * @param {pt_8} nSize - The width of the current top border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset above the paragraph measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current top border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset above the paragraph measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetTopBorder.js
 	 */
-	ApiParaPr.prototype.SetTopBorder = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies the border which will be displayed above a set of paragraphs which have the same set of paragraph border settings.
+	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.</note>
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current top border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset above the paragraph measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetTopBorder.js
+	 */
+	ApiParaPr.prototype.SetTopBorder = function(type, size, space, color)
 	{
-		this.ParaPr.Brd.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.ParaPr.Brd.Top = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -18669,18 +18792,31 @@
 	 * Specifies the border which will be displayed between each paragraph in a set of paragraphs which have the same set of paragraph border settings.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The border style.
-	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset between the paragraphs measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset between the paragraphs measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetBetweenBorder.js
 	 */
-	ApiParaPr.prototype.SetBetweenBorder = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies the border which will be displayed between each paragraph in a set of paragraphs which have the same set of paragraph border settings.
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset between the paragraphs measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetBetweenBorder.js
+	 */
+	ApiParaPr.prototype.SetBetweenBorder = function(type, size, space, color)
 	{
-		this.ParaPr.Brd.Between = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.ParaPr.Brd.Between = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19269,7 +19405,8 @@
 	 * Specifies the shading which is applied to the extents of the current table.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type applied to the extents of the current table.
+	 * @deprecated since 10.0.0 version.
+	 * @param {ShdType} type - The shading type applied to the extents of the current table.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
@@ -19277,9 +19414,21 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetShd.js
 	 */
-	ApiTablePr.prototype.SetShd = function(sType, r, g, b, isAuto)
+	/**
+	 * Specifies the shading which is applied to the extents of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetShd.js
+	 */
+	ApiTablePr.prototype.SetShd = function(type, color)
 	{
-		this.TablePr.Shd = private_GetShd(sType, r, g, b, isAuto);
+		if (type instanceof ApiShd)
+			return this.SetShd(type.GetType(), type.GetColor());
+
+		this.TablePr.Shd = private_GetShd(type, color, arguments[2], arguments[3], arguments[4]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19287,18 +19436,31 @@
 	 * Sets the border which will be displayed at the top of the current table.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The top border style.
-	 * @param {pt_8} nSize - The width of the current top border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the top part of the table measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The top border style.
+	 * @param {pt_8} size - The width of the current top border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the top part of the table measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderTop.js
 	 */
-	ApiTablePr.prototype.SetTableBorderTop = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed at the top of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The top border style.
+	 * @param {pt_8} size - The width of the current top border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the top part of the table measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderTop.js
+	 */
+	ApiTablePr.prototype.SetTableBorderTop = function(type, size, space, color)
 	{
-		this.TablePr.TableBorders.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Top = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19306,18 +19468,31 @@
 	 * Sets the border which will be displayed at the bottom of the current table.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The bottom border style.
-	 * @param {pt_8} nSize - The width of the current bottom border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the bottom part of the table measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The bottom border style.
+	 * @param {pt_8} size - The width of the current bottom border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the bottom part of the table measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderBottom.js
 	 */
-	ApiTablePr.prototype.SetTableBorderBottom = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed at the bottom of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The bottom border style.
+	 * @param {pt_8} size - The width of the current bottom border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the bottom part of the table measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderBottom.js
+	 */
+	ApiTablePr.prototype.SetTableBorderBottom = function(type, size, space, color)
 	{
-		this.TablePr.TableBorders.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Bottom = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19325,18 +19500,31 @@
 	 * Sets the border which will be displayed on the left of the current table.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The left border style.
-	 * @param {pt_8} nSize - The width of the current left border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the left part of the table measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The left border style.
+	 * @param {pt_8} size - The width of the current left border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the left part of the table measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderLeft.js
 	 */
-	ApiTablePr.prototype.SetTableBorderLeft = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed on the left of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The left border style.
+	 * @param {pt_8} size - The width of the current left border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the left part of the table measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderLeft.js
+	 */
+	ApiTablePr.prototype.SetTableBorderLeft = function(type, size, space, color)
 	{
-		this.TablePr.TableBorders.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Left = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19344,18 +19532,31 @@
 	 * Sets the border which will be displayed on the right of the current table.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The right border style.
-	 * @param {pt_8} nSize - The width of the current right border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the right part of the table measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The right border style.
+	 * @param {pt_8} size - The width of the current right border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the right part of the table measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderRight.js
 	 */
-	ApiTablePr.prototype.SetTableBorderRight = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed on the right of the current table.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The right border style.
+	 * @param {pt_8} size - The width of the current right border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the right part of the table measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderRight.js
+	 */
+	ApiTablePr.prototype.SetTableBorderRight = function(type, size, space, color)
 	{
-		this.TablePr.TableBorders.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Right = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19364,18 +19565,32 @@
 	 * of the parent table (all horizontal borders which are not the topmost or bottommost borders).
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The horizontal table cell border style.
-	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the horizontal table cells of the table measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The horizontal table cell border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the horizontal table cells of the table measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideH.js
 	 */
-	ApiTablePr.prototype.SetTableBorderInsideH = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies the border which will be displayed on all horizontal table cell borders which are not on the outmost edge
+	 * of the parent table (all horizontal borders which are not the topmost or bottommost borders).
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The horizontal table cell border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the horizontal table cells of the table measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideH.js
+	 */
+	ApiTablePr.prototype.SetTableBorderInsideH = function(type, size, space, color)
 	{
-		this.TablePr.TableBorders.InsideH = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.InsideH = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19384,18 +19599,32 @@
 	 * of the parent table (all vertical borders which are not the leftmost or rightmost borders).
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The vertical table cell border style.
-	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the vertical table cells of the table measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The vertical table cell border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the vertical table cells of the table measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideV.js
 	 */
-	ApiTablePr.prototype.SetTableBorderInsideV = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies the border which will be displayed on all vertical table cell borders which are not on the outmost edge
+	 * of the parent table (all vertical borders which are not the leftmost or rightmost borders).
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The vertical table cell border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the vertical table cells of the table measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderInsideV.js
+	 */
+	ApiTablePr.prototype.SetTableBorderInsideV = function(type, size, space, color)
 	{
-		this.TablePr.TableBorders.InsideV = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.InsideV = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19403,24 +19632,36 @@
 	 * Specifies a border which will be displayed on all table cell borders.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The border style.
-	 * @param {pt_8} nSize - The width of the current border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the table cells measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the table cells measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
-	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderAll.js
 	 */
-	ApiTablePr.prototype.SetTableBorderAll = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Specifies a border which will be displayed on all table cell borders.
+	 * @memberof ApiTablePr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The border style.
+	 * @param {pt_8} size - The width of the current border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the table cells measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTablePr/Methods/SetTableBorderAll.js
+	 */
+	ApiTablePr.prototype.SetTableBorderAll = function(type, size, space, color)
 	{
-		this.TablePr.TableBorders.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
-		this.TablePr.TableBorders.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
-		this.TablePr.TableBorders.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
-		this.TablePr.TableBorders.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
-		this.TablePr.TableBorders.InsideH = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
-		this.TablePr.TableBorders.InsideV = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.TablePr.TableBorders.Top = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
+		this.TablePr.TableBorders.Bottom = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
+		this.TablePr.TableBorders.Left = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
+		this.TablePr.TableBorders.Right = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
+		this.TablePr.TableBorders.InsideH = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
+		this.TablePr.TableBorders.InsideV = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19716,7 +19957,8 @@
 	 * Specifies the shading applied to the contents of the table cell.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type which will be applied to the contents of the current table cell.
+	 * @deprecated since 10.0.0 version.
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current table cell.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
@@ -19724,9 +19966,21 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetShd.js
 	 */
-	ApiTableCellPr.prototype.SetShd = function(sType, r, g, b, isAuto)
+	/**
+	 * Specifies the shading applied to the contents of the table cell.
+	 * @memberof ApiTableCellPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetShd.js
+	 */
+	ApiTableCellPr.prototype.SetShd = function(type, color)
 	{
-		this.CellPr.Shd = private_GetShd(sType, r, g, b, isAuto);
+		if (type instanceof ApiShd)
+			return this.SetShd(type.GetType(), type.GetColor());
+
+		this.CellPr.Shd = private_GetShd(type, color, arguments[2], arguments[3], arguments[4]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19857,18 +20111,31 @@
 	 * Sets the border which will be displayed at the bottom of the current table cell.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The cell bottom border style.
-	 * @param {pt_8} nSize - The width of the current cell bottom border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the bottom part of the table cell measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The cell bottom border style.
+	 * @param {pt_8} size - The width of the current cell bottom border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the bottom part of the table cell measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderBottom.js
 	 */
-	ApiTableCellPr.prototype.SetCellBorderBottom = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed at the bottom of the current table cell.
+	 * @memberof ApiTableCellPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The cell bottom border style.
+	 * @param {pt_8} size - The width of the current cell bottom border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the bottom part of the table cell measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderBottom.js
+	 */
+	ApiTableCellPr.prototype.SetCellBorderBottom = function(type, size, space, color)
 	{
-		this.CellPr.TableCellBorders.Bottom = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.CellPr.TableCellBorders.Bottom = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19876,18 +20143,31 @@
 	 * Sets the border which will be displayed to the left of the current table cell.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The cell left border style.
-	 * @param {pt_8} nSize - The width of the current cell left border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the left part of the table cell measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The cell left border style.
+	 * @param {pt_8} size - The width of the current cell left border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the left part of the table cell measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderLeft.js
 	 */
-	ApiTableCellPr.prototype.SetCellBorderLeft = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed to the left of the current table cell.
+	 * @memberof ApiTableCellPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The cell left border style.
+	 * @param {pt_8} size - The width of the current cell left border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the left part of the table cell measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderLeft.js
+	 */
+	ApiTableCellPr.prototype.SetCellBorderLeft = function(type, size, space, color)
 	{
-		this.CellPr.TableCellBorders.Left = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.CellPr.TableCellBorders.Left = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19895,18 +20175,31 @@
 	 * Sets the border which will be displayed to the right of the current table cell.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The cell right border style.
-	 * @param {pt_8} nSize - The width of the current cell right border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the right part of the table cell measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The cell right border style.
+	 * @param {pt_8} size - The width of the current cell right border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the right part of the table cell measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderRight.js
 	 */
-	ApiTableCellPr.prototype.SetCellBorderRight = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed to the right of the current table cell.
+	 * @memberof ApiTableCellPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The cell right border style.
+	 * @param {pt_8} size - The width of the current cell right border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the right part of the table cell measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderRight.js
+	 */
+	ApiTableCellPr.prototype.SetCellBorderRight = function(type, size, space, color)
 	{
-		this.CellPr.TableCellBorders.Right = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.CellPr.TableCellBorders.Right = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -19914,18 +20207,31 @@
 	 * Sets the border which will be displayed at the top of the current table cell.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
-	 * @param {BorderType} sType - The cell top border style.
-	 * @param {pt_8} nSize - The width of the current cell top border measured in eighths of a point.
-	 * @param {pt} nSpace - The spacing offset in the top part of the table cell measured in points used to place this border.
+	 * @deprecated since 10.0.0 version.
+	 * @param {BorderType} type - The cell top border style.
+	 * @param {pt_8} size - The width of the current cell top border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the top part of the table cell measured in points used to place this border.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderTop.js
 	 */
-	ApiTableCellPr.prototype.SetCellBorderTop = function(sType, nSize, nSpace, r, g, b)
+	/**
+	 * Sets the border which will be displayed at the top of the current table cell.
+	 * @memberof ApiTableCellPr
+	 * @typeofeditors ["CDE"]
+	 * @since 10.0.0
+	 * @param {BorderType} type - The cell top border style.
+	 * @param {pt_8} size - The width of the current cell top border measured in eighths of a point.
+	 * @param {pt} space - The spacing offset in the top part of the table cell measured in points used to place this border.
+	 * @param {ApiColor} color - The border color.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCellPr/Methods/SetCellBorderTop.js
+	 */
+	ApiTableCellPr.prototype.SetCellBorderTop = function(type, size, space, color)
 	{
-		this.CellPr.TableCellBorders.Top = private_GetTableBorder(sType, nSize, nSpace, r, g, b);
+		this.CellPr.TableCellBorders.Top = private_GetTableBorder(type, size, space, color, arguments[4], arguments[5]);
 		this.private_OnChange();
 		return true;
 	};
@@ -24829,6 +25135,51 @@
 		}
 
 		return null;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiShd
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiShd class.
+	 * @memberof ApiShd
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @since 10.0.0
+	 * @returns {"shd"}
+	 * @see office-js-api/Examples/{Editor}/ApiShd/Methods/GetClassType.js
+	 */
+	ApiShd.prototype.GetClassType = function ()
+	{
+		return "shd";
+	};
+
+	/**
+	 * Returns the shading type.
+	 * @memberof ApiShd
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @since 10.0.0
+	 * @returns {ShdType}
+	 * @see office-js-api/Examples/{Editor}/ApiShd/Methods/GetType.js
+	 */
+	ApiShd.prototype.GetType = function ()
+	{
+		return this["Type"];
+	};
+
+	/**
+	 * Returns the shading color.
+	 * @memberof ApiShd
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @since 10.0.0
+	 * @returns {?ApiColor}
+	 * @see office-js-api/Examples/{Editor}/ApiShd/Methods/GetColor.js
+	 */
+	ApiShd.prototype.GetColor = function ()
+	{
+		return this["Color"];
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -33900,6 +34251,7 @@
 	Api["HexColor"]                         = Api.HexColor;
 	Api["ThemeColor"]                       = Api.ThemeColor;
 	Api["Color"]                            = Api.Color;
+	Api["CreateShd"]                        = Api.CreateShd;
 	Api["CreateSolidFill"]                  = Api.CreateSolidFill;
 	Api["CreateLinearGradientFill"]         = Api.CreateLinearGradientFill;
 	Api["CreateRadialGradientFill"]         = Api.CreateRadialGradientFill;
@@ -34865,6 +35217,10 @@
 	ApiColor.prototype["ToJSON"] = ApiColor.prototype.ToJSON;
 	ApiColor.prototype["FromJSON"] = ApiColor.prototype.FromJSON;
 
+	ApiShd.prototype["GetClassType"] = ApiShd.prototype.GetClassType;
+	ApiShd.prototype["GetType"]      = ApiShd.prototype.GetType;
+	ApiShd.prototype["GetColor"]     = ApiShd.prototype.GetColor;
+
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
 
@@ -35372,6 +35728,7 @@
 	window['AscBuilder'].ApiCustomXmlParts	 = ApiCustomXmlParts;
 	window['AscBuilder'].ApiColor            = ApiColor;
 	window['AscBuilder'].ApiFill             = ApiFill;
+	window['AscBuilder'].ApiShd              = ApiShd;
 	window['AscBuilder'].ApiStroke           = ApiStroke;
 	window['AscBuilder'].ApiShadow           = ApiShadow;
 	window['AscBuilder'].ApiDropCap          = ApiDropCap;
@@ -35836,28 +36193,39 @@
 		return "left";
 	}
 
-	function private_GetTableBorder(sType, nSize, nSpace, r, g, b)
+	function private_GetTableBorder(type, size, space, r, g, b)
 	{
-		var oBorder = new CDocumentBorder();
+		const border = new CDocumentBorder();
 
-		if ("none" === sType)
+		if ("none" === type)
 		{
-			oBorder.Value = border_None;
-			oBorder.Size  = 0;
-			oBorder.Space = 0;
-			oBorder.Color.Set(0, 0, 0, true);
+			border.Value = border_None;
+			border.Size  = 0;
+			border.Space = 0;
+			border.Color.Set(0, 0, 0, true);
 		}
 		else
 		{
-			if ("single" === sType)
-				oBorder.Value = border_Single;
+			if ("single" === type)
+				border.Value = border_Single;
 
-			oBorder.Size  = private_Pt_8ToMM(nSize);
-			oBorder.Space = private_PtToMM(nSpace);
-			oBorder.Color.Set(r, g, b);
+			border.Size  = private_Pt_8ToMM(size);
+			border.Space = private_PtToMM(space);
+
+			if (r instanceof ApiColor)
+			{
+				const rgb = r.GetRGB();
+				border.Color.Set(rgb['r'], rgb['g'], rgb['b'], r.IsAutoColor());
+				if (r.IsThemeColor())
+					border.Unifill = r.private_createUnifill();
+			}
+			else
+			{
+				border.Color.Set(r, g, b);
+			}
 		}
 
-		return oBorder;
+		return border;
 	}
 	
 	function private_ToBorderInfo(border)
@@ -35866,11 +36234,12 @@
 			return undefined;
 		
 		let color = border.Color;
+		const isTheme = !!border.Unifill && border.Unifill.isSolidFillScheme();
 		return {
 			"Type"  : border_None === border.Value ? "none" : "single",
 			"Size"  : Math.round(private_MM2Pt(border.Size) * 8),
 			"Space" : private_MM2Pt(border.Space),
-			"Color" : color.Auto ? Api.AutoColor() : Api.RGB(color.r, color.g, color.b)
+			"Color" : isTheme ? new ApiColor('theme', border.Unifill.fill.color.color.id) : (color.Auto ? Api.AutoColor() : Api.RGB(color.r, color.g, color.b))
 		};
 	}
 
@@ -35902,18 +36271,37 @@
 		return new CTableMeasurement(nType, nW);
 	}
 
-	function private_GetShd(sType, r, g, b, isAuto)
+	function private_GetShd(type, r, g, b, isAuto)
 	{
-		var oShd = new CDocumentShd();
+		let unifill;
+		if (r instanceof ApiColor)
+		{
+			const color = r;
+			const rgb   = color.GetRGB();
+			r      = rgb['r'];
+			g      = rgb['g'];
+			b      = rgb['b'];
+			isAuto = color.IsAutoColor();
+			if (color.IsThemeColor())
+				unifill = color.private_createUnifill();
+		}
 
-		if ("nil" === sType)
-			oShd.Value = Asc.c_oAscShdNil;
-		else if ("clear" === sType)
-			oShd.Value = Asc.c_oAscShdClear;
+		const shd = new CDocumentShd();
 
-		oShd.Color.Set(r, g, b, isAuto);
-		oShd.Fill = new CDocumentColor(r, g, b, isAuto);
-		return oShd;
+		if ("nil" === type)
+			shd.Value = Asc.c_oAscShdNil;
+		else if ("clear" === type)
+			shd.Value = Asc.c_oAscShdClear;
+
+		shd.Color.Set(r, g, b, isAuto);
+		shd.Fill = new CDocumentColor(r, g, b, isAuto);
+
+		if (unifill)
+		{
+			shd.Unifill   = unifill;
+			shd.ThemeFill = unifill;
+		}
+		return shd;
 	}
 
 	function private_GetTableBackgroundShd(color, args)
