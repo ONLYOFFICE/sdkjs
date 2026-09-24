@@ -2156,7 +2156,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | ApiUniColor} color - The text color.
 	 * @return {ApiRange | null} - returns null if can't apply color.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
@@ -2165,6 +2165,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		private_CheckColorArgument(color);
+		const uniFill = color instanceof ApiUniColor ? private_GetUnifillFromUniColor(color) : null;
+
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -2172,6 +2175,12 @@
 			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
+		} else if (uniFill) {
+			r = 0;
+			g = 0;
+			b = 0;
+			isAuto = false;
+			isTheme = false;
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -2201,7 +2210,9 @@
 			Unifill: undefined,
 		};
 
-		if (!isAuto && isTheme) {
+		if (uniFill) {
+			paraTextPrOptions = { Unifill : uniFill };
+		} else if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
 
@@ -2331,6 +2342,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		private_CheckColorArgument(color);
+		// an ApiUniColor (Api.CreateRGBColor) is resolved to RGB instead of being read as missing numeric arguments
+		const uniColorRGBA = private_GetRGBAFromUniColor(color);
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -2338,6 +2352,12 @@
 			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
+		} else if (uniColorRGBA) {
+			r = uniColorRGBA.R;
+			g = uniColorRGBA.G;
+			b = uniColorRGBA.B;
+			isAuto = false;
+			isTheme = false;
 		} else {
 			r = GetIntParameter(arguments[1], 0);
 			g = GetIntParameter(arguments[2], 0);
@@ -11545,7 +11565,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | ApiUniColor} color - The text color.
 	 * @return {ApiParagraph} this
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
@@ -11555,6 +11575,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		private_CheckColorArgument(color);
+		const uniFill = color instanceof ApiUniColor ? private_GetUnifillFromUniColor(color) : null;
+
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -11562,6 +11585,12 @@
 			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
+		} else if (uniFill) {
+			r = 0;
+			g = 0;
+			b = 0;
+			isAuto = false;
+			isTheme = false;
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -11575,7 +11604,9 @@
 			Unifill: undefined
 		};
 
-		if (!isAuto && isTheme) {
+		if (uniFill) {
+			paraTextPrOptions = { Unifill : uniFill };
+		} else if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
 
@@ -17366,7 +17397,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | ApiUniColor} color - The text color.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
@@ -17375,6 +17406,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		private_CheckColorArgument(color);
+		const uniFill = color instanceof ApiUniColor ? private_GetUnifillFromUniColor(color) : null;
+
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -17382,6 +17416,12 @@
 			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
+		} else if (uniFill) {
+			r = 0;
+			g = 0;
+			b = 0;
+			isAuto = false;
+			isTheme = false;
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -17390,7 +17430,10 @@
 			isTheme = false;
 		}
 
-		if (isTheme) {
+		if (uniFill) {
+			this.TextPr.Unifill = uniFill;
+			this.TextPr.Color = undefined;
+		} else if (isTheme) {
 			this.TextPr.Unifill = color.private_createUnifill();
 			this.TextPr.Color = undefined;
 		} else {
@@ -17760,6 +17803,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		private_CheckColorArgument(color);
+		// GEN-049: an ApiUniColor (Api.CreateRGBColor) is resolved to RGB instead of being read as missing numeric arguments
+		const uniColorRGBA = private_GetRGBAFromUniColor(color);
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -17767,6 +17813,12 @@
 			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
+		} else if (uniColorRGBA) {
+			r = uniColorRGBA.R;
+			g = uniColorRGBA.G;
+			b = uniColorRGBA.B;
+			isAuto = false;
+			isTheme = false;
 		} else {
 			r = GetIntParameter(arguments[1], 0);
 			g = GetIntParameter(arguments[2], 0);
@@ -18437,6 +18489,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		private_CheckColorArgument(color);
+		// GEN-049: an ApiUniColor (Api.CreateRGBColor) is resolved to RGB instead of being read as missing numeric arguments
+		const uniColorRGBA = private_GetRGBAFromUniColor(color);
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -18444,6 +18499,12 @@
 			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
+		} else if (uniColorRGBA) {
+			r = uniColorRGBA.R;
+			g = uniColorRGBA.G;
+			b = uniColorRGBA.B;
+			isAuto = false;
+			isTheme = false;
 		} else {
 			r = GetIntParameter(arguments[1], 0);
 			g = GetIntParameter(arguments[2], 0);
@@ -33383,7 +33444,7 @@
 	 * Sets the text color of the current range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor | ApiUniColor} color - The text color.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetColor.js
@@ -33392,6 +33453,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		private_CheckColorArgument(color);
+		const uniFill = color instanceof ApiUniColor ? private_GetUnifillFromUniColor(color) : null;
+
 		if (color instanceof AscBuilder.ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -33399,6 +33463,12 @@
 			b = rgb['b'];
 			isAuto = color.IsAutoColor();
 			isTheme = color.IsThemeColor();
+		} else if (uniFill) {
+			r = 0;
+			g = 0;
+			b = 0;
+			isAuto = false;
+			isTheme = false;
 		} else {
 			r = AscBuilder.GetIntParameter(arguments[0], 0);
 			g = AscBuilder.GetIntParameter(arguments[1], 0);
@@ -33412,7 +33482,9 @@
 			Unifill: undefined
 		};
 
-		if (!isAuto && isTheme) {
+		if (uniFill) {
+			paraTextPrOptions = { Unifill : uniFill };
+		} else if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
 
@@ -35304,6 +35376,31 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Reject a non-color object instead of reading it as the red component
+	function private_CheckColorArgument(color)
+	{
+		if (null !== color && "object" === typeof color && !(color instanceof ApiColor) && !(color instanceof ApiUniColor))
+			throwException(new Error("The color parameter must be an ApiColor or ApiUniColor object"));
+	}
+
+	// Unifill for an ApiUniColor, the type Api.CreateRGBColor returns
+	function private_GetUnifillFromUniColor(color)
+	{
+		return AscFormat.CreateUniFillByUniColor(color.Unicolor.createDuplicate());
+	}
+
+	// RGBA of an ApiUniColor resolved against the document theme, exactly as the file writer resolves a shading fill; null for any other argument
+	function private_GetRGBAFromUniColor(color)
+	{
+		if (!(color instanceof ApiUniColor))
+			return null;
+
+		const unifill = private_GetUnifillFromUniColor(color);
+		const logicDocument = private_GetLogicDocument();
+		unifill.check(logicDocument.Get_Theme(), logicDocument.Get_ColorMap());
+		return unifill.getRGBAColor();
+	}
+
 	function GetStringParameter(parameter, defaultValue, checkEmpty)
 	{
 		if (undefined !== parameter && typeof(parameter) === "string" && ("" !== parameter || false === checkEmpty))
