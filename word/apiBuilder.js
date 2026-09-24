@@ -31028,7 +31028,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} px - The number of pixels to convert to EMUs.
 	 * @returns {number}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/PixelsToEmu.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/PixelsToEmus.js
 	 */
 	Api.PixelsToEmus = function Px2Emu(px) {
 		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);

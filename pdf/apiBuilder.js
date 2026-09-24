@@ -675,15 +675,13 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isHidde - to hide - true, to show - false
-	 * @param {string[]} names - field names
+	 * @param {string[]} [names=[]] - field names
 	 * @returns {ApiHideShowFormsAction}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
 	 */
 	Api.CreateHideShowFormsAction = function(isHide, names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
 
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
@@ -717,15 +715,13 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isAllExcept - will all fields be reset except the fields whose names are specified
-	 * @param {string[]} names - field names
+	 * @param {string[]} [names=[]] - field names
 	 * @returns {ApiHideShowFormsAction}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateResetFormsAction.js
 	 */
 	Api.CreateResetFormsAction = function(isAllExcept, names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
 
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
@@ -5400,7 +5396,7 @@
 	 * @param {ApiBaseAction} action
 	 * @returns {ApiBaseAction} - returns next action
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetNext.js
+	 * @see office-js-api/Examples/{Editor}/ApiBaseAction/Methods/SetNext.js
 	 */
 	ApiBaseAction.prototype.SetNext = function(action) {
 		this.Next = action;
@@ -5558,7 +5554,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?number}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetRect.js
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetZoom.js
 	 */
 	ApiGoToAction.prototype.GetZoom = function() {
 		return this.Action.GetZoom(true);
@@ -5620,7 +5616,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
+	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetUri.js
 	 */
 	ApiUriAction.prototype.GetUri = function() {
 		return this.Action.GetUri();
@@ -5632,7 +5628,7 @@
 	 * @param {string} uri
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
+	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/SetUri.js
 	 */
 	ApiUriAction.prototype.SetUri = function(uri) {
 		uri = AscBuilder.GetStringParameter(uri, null);
@@ -5720,13 +5716,10 @@
 	 * @param {string[]} names
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetNames.js
+	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/SetNames.js
 	 */
 	ApiHideShowFormsAction.prototype.SetNames = function(names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
-
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
 			if (!name) {
@@ -5877,13 +5870,10 @@
 	 * @param {string[]} names
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetNames.js
+	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/SetNames.js
 	 */
 	ApiResetFormsAction.prototype.SetNames = function(names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
-
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
 			if (!name) {
@@ -8749,7 +8739,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?ApiPage}
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetParentPage.js
 	 */
 	ApiDrawing.prototype.GetParentPage = function() {
 		let oParentPage = this.Drawing.GetParentPage();
