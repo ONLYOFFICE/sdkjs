@@ -4029,6 +4029,8 @@
 			case "bg2": {  oUniColor.color.id      = 7; break;}
 			case "dk1": {  oUniColor.color.id      = 8; break;}
 			case "dk2": {  oUniColor.color.id      = 9; break;}
+			case "folHlink": {  oUniColor.color.id = 10; break;}
+			case "hlink": {  oUniColor.color.id    = 11; break;}
 			case "lt1": {  oUniColor.color.id      = 12; break;}
 			case "lt2": {  oUniColor.color.id      = 13; break;}
 			case "tx1": {  oUniColor.color.id      = 15; break;}
@@ -4491,7 +4493,7 @@
 	/**
 	* The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
-	 *     | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
+	 *     | "folHlink" | "hlink" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
 	 * @see office-js-api/Examples/Enumerations/SchemeColorId.js
 	 */
 
@@ -24679,6 +24681,8 @@
 		'bg2': 7,
 		'dk1': 8,
 		'dk2': 9,
+		'folHlink': 10,
+		'hlink': 11,
 		'lt1': 12,
 		'lt2': 13,
 		'tx1': 15,

@@ -418,7 +418,7 @@
 
     /**
      * The available color scheme identifiers.
-     * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
+     * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "folHlink" | "hlink" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
      * @see office-js-api/Examples/Enumerations/SchemeColorId.js
 	 */
 
