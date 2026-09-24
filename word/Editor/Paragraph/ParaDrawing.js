@@ -1798,7 +1798,7 @@ ParaDrawing.prototype.Set_XY = function(X, Y, Paragraph, PageNum, bResetAlign)
 
 		this.private_SetXYByLayout(X, Y, PageNum, Layout, (bResetAlign || true !== this.PositionH.Align ? true : false), (bResetAlign || true !== this.PositionV.Align ? true : false));
 		if (this.IsShape() || this.IsPicture())
-			Asc.editor.addMacroStepData("SetDrawingPos", {x: this.X, y: this.Y, id: this.GraphicObj.getObjectName()});
+			Asc.editor.addMacroStepData("SetDrawingPos", {x: this.X, y: this.Y, id: this.GraphicObj.getObjectName(), formatId: this.GraphicObj.getFormatIdString()});
 	}
 };
 ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bChangeX, bChangeY)

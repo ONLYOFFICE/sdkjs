@@ -559,8 +559,11 @@
 				oXfrm.setOffY(oOffset.OffY);
 			}
 
-			oSpPr.setGeometry(this.geometry.createDuplicate());
+			const oNewGeometry = this.geometry.createDuplicate();
+			oSpPr.setGeometry(oNewGeometry);
 			this.originalObject.checkDrawingBaseCoords();
+
+			Asc.editor.addMacroStepData("SetCustomGeometry", {id: this.originalObject.getFormatIdString(), geometry: oNewGeometry, width: dExtX, height: dExtY});
 		}
 
 		if (this.addedPointIdx !== null) {

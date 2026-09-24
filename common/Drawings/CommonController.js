@@ -2516,7 +2516,7 @@
 								this.lastSelectedObject = object;
 							}
 							this.checkShowMediaControlOnSelect();
-							Asc.editor.addMacroStepData("DeselectDrawing", {name: object.getObjectName(), isTable: object.isTable()});
+							Asc.editor.addMacroStepData("DeselectDrawing", {name: object.getObjectName(), isTable: object.isTable(), formatId: object.getFormatIdString()});
 							return;
 						}
 					}
