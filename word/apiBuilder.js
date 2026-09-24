@@ -20255,7 +20255,7 @@
 	 */
 	ApiDrawing.prototype.HasTextContent = function()
 	{
-		if (!this.Drawing.isShape())
+		if (!this.Drawing.isShape() || this.Drawing.isForm())
 			return false;
 
 		return !!this.Drawing.getDocContent();
