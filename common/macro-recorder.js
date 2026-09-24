@@ -2698,6 +2698,14 @@
 
 			return "\tApi.GetSelection().Paste(Api.GetSheet(\"" + escapeMacroString(copiedRange.sheet) + "\").GetRange(\"" + copiedRange.range.getName() + "\"));\n";
 		},
+		cutRange				: function(){
+			if (!copiedRange)
+				return "";
+
+			let text = "\tApi.GetSheet(\"" + escapeMacroString(copiedRange.sheet) + "\").GetRange(\"" + copiedRange.range.getName() + "\").Cut(Api.GetSelection());\n";
+			copiedRange = null;
+			return text;
+		},
 		insertCells				: function(insert){
 			let ar = insert.range;
 			let isRows = Asc.c_oAscInsertOptions.InsertRows === insert.type || Asc.c_oAscInsertOptions.InsertCellsAndShiftDown === insert.type;
@@ -2983,6 +2991,7 @@
 	SEActionMap['SetDrawingAspectRatio']											= cellActions.setDrawingAspectRatio;
 	SEActionMap['CopyRange']														= cellActions.copyRange;
 	SEActionMap['PasteRange']														= cellActions.setCellPaste;
+	SEActionMap['CutRange']															= cellActions.cutRange;
 	SEActionMap['InsertCells']														= cellActions.insertCells;
 
 	const presActions = {

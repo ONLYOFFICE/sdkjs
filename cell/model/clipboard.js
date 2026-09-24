@@ -463,6 +463,7 @@
 					if (!ws.isNeedSelectionCut() && false === ws.isMultiSelect()) {
 						ws.workbook.cutIdSheet = ws.model.Id;
 						ws.setCutRange([ws.model.selectionRange.getLast()]);
+						ws.workbook.MacrosAddData("CopyRange", [{sheet: ws.model.getName(), range: ws.model.selectionRange.getLast().clone()}]);
 					}
 				} else if (!ws.objectRender.selectedGraphicObjectsExists()) {
 					ws.setCutRange(ws.model.selectionRange.ranges);
@@ -1984,7 +1985,7 @@
 					}
 
 					if (!isPasteAll && t._checkPastedInOriginalDoc(tempWorkbook)) {
-						worksheet.workbook.MacrosAddData("PasteRange", [pasteData]);
+						worksheet.workbook.MacrosAddData("PasteRange", [true]);
 					}
 
 					//close the common transaction _loadDataBeforePaste after loading fonts
@@ -2195,6 +2196,7 @@
 
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
 						wsFrom.applyCutRange(fromRange, toRange, wsTo);
+						ws.workbook.MacrosAddData("CutRange", [true]);
 						ws.handlers.trigger("cleanCutData", true);
 						res = true;
 
