@@ -6840,6 +6840,7 @@
 		}
 
 		this.Annot.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE[intentType]);
+		this.Annot.private_UpdateRect();
 		return true;
 	};
 
@@ -6891,6 +6892,7 @@
 		});
 
 		this.Annot.SetCallout(flatCallout);
+		this.Annot.private_UpdateRect();
 		return true;
 	};
 
