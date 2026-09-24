@@ -1270,6 +1270,41 @@
 			"\t\t\t})";
 	}
 
+	function getLineEndTypeName(type)
+	{
+		switch (type)
+		{
+			case AscFormat.LineEndType.Arrow:		return "arrow";
+			case AscFormat.LineEndType.Diamond:		return "diamond";
+			case AscFormat.LineEndType.Oval:		return "oval";
+			case AscFormat.LineEndType.Stealth:		return "stealth";
+			case AscFormat.LineEndType.Triangle:	return "triangle";
+		}
+		return null;
+	}
+
+	function getLineEndSizeName(size)
+	{
+		switch (size)
+		{
+			case AscFormat.LineEndSize.Large:	return "large";
+			case AscFormat.LineEndSize.Small:	return "small";
+		}
+		return "medium";
+	}
+
+	function getStrokeArrowCode(method, arrow)
+	{
+		if (!arrow)
+			return "";
+
+		let type = getLineEndTypeName(arrow.type);
+		if (!type)
+			return "";
+
+		return "\t\tstroke." + method + "(\"" + type + "\", \"" + getLineEndSizeName(arrow.w) + "\", \"" + getLineEndSizeName(arrow.len) + "\");\n";
+	}
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -1787,6 +1822,8 @@
 					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+
+			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 
 			strStrokeShape += "\t\tdoc.GetSelectedDrawings()\n"
                  + "\t\t\t.forEach(function(draw) { draw.SetOutLine(stroke); });\n";
@@ -2841,6 +2878,8 @@
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
 
+			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
+
 			strStrokeShape += "\t\tworksheet.GetSelectedShapes()\n"
 				+ "\t\t\t.forEach(shape => shape.SetOutLine(stroke));\n";
 
@@ -3389,6 +3428,8 @@
 					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+
+			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 
 			strStrokeShape += "\t\tApi.GetSelection().GetShapes()\n"
 				+ "\t\t\t.forEach(shape => shape.SetOutLine(stroke));\n";
