@@ -24324,7 +24324,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetJoinType.js
 	 */
 	ApiStroke.prototype.GetJoinType = function () {
-		if (this.Ln && this.Ln.Join) {
+		if (this.Ln && this.Ln.Join && this.Ln.Join.type !== null && this.Ln.Join.type !== undefined) {
 			return private_GetLineJoinTypeString(this.Ln.Join.type);
 		}
 		return null;
