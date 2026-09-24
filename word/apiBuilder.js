@@ -20226,6 +20226,41 @@
 		return null;
 	};
 	/**
+	 * Returns a range that covers the whole text of the current drawing.
+	 * Creates a text body if the drawing does not yet have one.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiRange | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTextRange.js
+	 */
+	ApiDrawing.prototype.GetTextRange = function()
+	{
+		if (!this.Drawing.isShape())
+			return null;
+
+		let content = this.GetContent();
+		if (!content)
+			return null;
+
+		return content.GetRange();
+	};
+	/**
+	 * Checks whether the drawing has an associated text body.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextContent.js
+	 */
+	ApiDrawing.prototype.HasTextContent = function()
+	{
+		if (!this.Drawing.isShape())
+			return false;
+
+		return !!this.Drawing.getDocContent();
+	};
+	/**
 	 * Sets the size of the object (image, shape, chart) bounding box.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
@@ -34587,6 +34622,8 @@
 
 	ApiDrawing.prototype["GetClassType"]             = ApiDrawing.prototype.GetClassType;
 	ApiDrawing.prototype["GetContent"]               = ApiDrawing.prototype.GetContent;
+	ApiDrawing.prototype["GetTextRange"]             = ApiDrawing.prototype.GetTextRange;
+	ApiDrawing.prototype["HasTextContent"]           = ApiDrawing.prototype.HasTextContent;
 	ApiDrawing.prototype["SetSize"]                  = ApiDrawing.prototype.SetSize;
 	ApiDrawing.prototype["SetWrappingStyle"]         = ApiDrawing.prototype.SetWrappingStyle;
 	ApiDrawing.prototype["SetHorAlign"]              = ApiDrawing.prototype.SetHorAlign;
