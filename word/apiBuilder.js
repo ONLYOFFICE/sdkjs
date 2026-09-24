@@ -426,6 +426,8 @@
 				return this.HandleTableRow(oChild, sType);
 			case "tableCell":
 				return this.HandleTableCell(oChild, sType);
+			case "math":
+				return this.HandleMath(oChild);
 			default:
 				return '';
 		}
@@ -1283,6 +1285,13 @@
 			styles.push("font-variant:small-caps");
 
 		return styles.join(";");
+	};
+	CMarkdownConverter.prototype.HandleMath = function(math)
+	{
+		if (!this.Config.drawingPlaceholders)
+			return '';
+
+		return String.fromCharCode(AscBuilder.CMarkdownConverter.DrawingPlaceholder);
 	};
 	CMarkdownConverter.prototype.HandleTable = function(oTable)
 	{
