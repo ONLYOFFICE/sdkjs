@@ -14282,9 +14282,9 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextContent.js
 	 */
-	ApiDrawing.prototype.HasTextRange = function() {
+	ApiDrawing.prototype.HasTextContent = function() {
 		if (this.Drawing.isTable())
 			return false;
 
@@ -30796,7 +30796,7 @@
 	ApiDrawing.prototype["SetDescription"]             =  ApiDrawing.prototype.SetDescription;
 	ApiDrawing.prototype["GetDescription"]             =  ApiDrawing.prototype.GetDescription;
 	ApiDrawing.prototype["GetTextRange"]               =  ApiDrawing.prototype.GetTextRange;
-	ApiDrawing.prototype["HasTextRange"]               =  ApiDrawing.prototype.HasTextRange;
+	ApiDrawing.prototype["HasTextContent"]               =  ApiDrawing.prototype.HasTextContent;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["SetFill"]                    =  ApiDrawing.prototype.SetFill;
 	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;

@@ -8107,9 +8107,6 @@
 
 		if (!this.Drawing.getDocContent()) {
 			this.Drawing.createTextBodyOnEdit();
-			if (this.Drawing.style && this.Drawing.style.fontRef) {
-				this.Drawing.style.fontRef.setColor(null);
-			}
 		}
 
 		return new ApiTextRange(this.Drawing.getDocContent(), 0, -1);
@@ -8121,9 +8118,9 @@
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextContent.js
 	 */
-	ApiDrawing.prototype.HasTextRange = function() {
+	ApiDrawing.prototype.HasTextContent = function() {
 		if (this.Drawing.isTable())
 			return false;
 
@@ -11104,7 +11101,7 @@
     ApiDrawing.prototype["GetShadow"]                     = ApiDrawing.prototype.GetShadow;
 
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
-	ApiDrawing.prototype["HasTextRange"]					= ApiDrawing.prototype.HasTextRange;
+	ApiDrawing.prototype["HasTextContent"]					= ApiDrawing.prototype.HasTextContent;
 
 
 	ApiChart.prototype["GetClassType"] = ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;

@@ -9474,9 +9474,9 @@
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextContent.js
 	 */
-	ApiDrawing.prototype.HasTextRange = function() {
+	ApiDrawing.prototype.HasTextContent = function() {
 		if (this.Drawing.isTable())
 			return false;
 
@@ -12932,7 +12932,7 @@
 	ApiDrawing.prototype["SetLine"]							= ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["SetOutLine"]						= ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
-	ApiDrawing.prototype["HasTextRange"]					= ApiDrawing.prototype.HasTextRange;
+	ApiDrawing.prototype["HasTextContent"]					= ApiDrawing.prototype.HasTextContent;
 	ApiDrawing.prototype["GetLine"]							= ApiDrawing.prototype.GetLine;
 	ApiDrawing.prototype["SetShadow"]						= ApiDrawing.prototype.SetShadow;
 	ApiDrawing.prototype["GetShadow"]						= ApiDrawing.prototype.GetShadow;
