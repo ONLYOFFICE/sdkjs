@@ -8121,7 +8121,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextContent.js
 	 */
 	ApiDrawing.prototype.HasTextContent = function() {
-		if (this.Drawing.isTable())
+		if (!this.Drawing.isShape())
 			return false;
 
 		return !!this.Drawing.getDocContent();
