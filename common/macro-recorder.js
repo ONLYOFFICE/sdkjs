@@ -930,7 +930,7 @@
 		if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
 		{
 			let color = unifill.getRGBAColor();
-			return wrapFillCode("Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))", private_getFillTransparentStr(unifill));
+			return wrapFillCode("Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + "))", private_getFillTransparentStr(unifill));
 		}
 		else if (unifill.fill instanceof AscFormat.CGradFill)
 		{
@@ -944,7 +944,7 @@
 				strColor += (nColor !== 0)
 					? ",\n\t\t\t\t"
 					: "\n\t\t\t\t";
-				strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
+				strColor += "Api.CreateGradientStop(Api.Color(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
 			}
 
 			let gradient = "Api.CreateNoFill()";
@@ -967,7 +967,7 @@
 			let fgClr = unifill.fill.fgClr.RGBA;
 			let type = AscCommon.global_hatch_names[unifill.fill.ftype];
 
-			let pattFill = "Api.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\tApi.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
+			let pattFill = "Api.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\tApi.Color(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.Color(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
 			return wrapFillCode(pattFill, private_getFillTransparentStr(unifill));
 		}
 		else if (unifill.fill instanceof AscFormat.CNoFill)
@@ -1261,7 +1261,7 @@
 		let rotateWithShape = shadow.rotWithShape !== false;
 
 		return "Api.CreateShadow({\n" +
-			"\t\t\t\tcolor: Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
+			"\t\t\t\tcolor: Api.Color(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
 			"\t\t\t\ttransparency: " + transparency + ",\n" +
 			"\t\t\t\toffsetX: " + offsetX + ",\n" +
 			"\t\t\t\toffsetY: " + offsetY + ",\n" +
@@ -1338,7 +1338,7 @@
 
 			return "\tApi.GetDocument().GetRangeBySelect().SetVertAlign(\"" + align + "\");\n";
 		},
-		setTextColor			: function(color){return "\tdoc.GetRangeBySelect().SetColor(" + color.r + "," + color.g + "," + color.b  + ");\n"},
+		setTextColor			: function(color){return "\tdoc.GetRangeBySelect().SetColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n"},
 		setStyleHeading			: function(data){
 			let name		= data.name;
 			let use_select	= data.use_select;
@@ -1375,7 +1375,7 @@
 			}
 			return "\tdoc.GetCurrentParagraph().SetJc(\"" + align + "\");\n"
 		},
-		setParagraphShd			: function(color){return "\tdoc.GetRangeBySelect().SetShd(\"clear\", "+ color.asc_getR() + " , " + color.asc_getG() +", "+ color.asc_getB() +", false);\n"},
+		setParagraphShd			: function(color){return "\tdoc.GetRangeBySelect().SetShd(Api.CreateShd(\"clear\", Api.Color(" + color.asc_getR() + ", " + color.asc_getG() + ", " + color.asc_getB() + ")));\n"},
 		addDropCap				: function(data){
 			let type = data.bInText ? "drop" : "margin";
 			return "\tdoc.GetCurrentParagraph().SetDropCap(\"" + type + "\");\n";
@@ -1555,8 +1555,8 @@
 			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 
 			return "\tlet " + varName + " = (function () {\n" +
-					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
-					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
+					"\t\tlet fill = Api.CreateSolidFill(Api.Color("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
+					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.Color("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = Api.CreateShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke);\n" +
 					"\t\tshape.SetWrappingStyle(\"inFront\");\n" +
 					"\t\tdoc.AddDrawingToPage(shape, doc.GetCurrentPage(), " + shapeProps.pos.x + " * 36000.0, " + shapeProps.pos.y + " * 36000.0 )\n" +
@@ -1658,24 +1658,24 @@
 			}
 
 			if (oPr.Color)
-				text += "\t\toCC.SetColor(Api.RGBA(" +
+				text += "\t\toCC.SetColor(Api.Color(" +
 					oPr.Color.r + ", " +
 					oPr.Color.g + ", " +
 					oPr.Color.b + "));\n";
 
 			if (oPr.BorderColor)
-				text += "\t\toCC.SetBorderColor(" +
+				text += "\t\toCC.SetBorderColor(Api.Color(" +
 					oPr.BorderColor.r + ", " +
 					oPr.BorderColor.g + ", " +
 					oPr.BorderColor.b + ", " +
-					oPr.BorderColor.a + ");\n";
+					oPr.BorderColor.a + "));\n";
 
 			if (oPr.ShdColor)
-				text += "\t\toCC.SetBackgroundColor(" +
+				text += "\t\toCC.SetBackgroundColor(Api.Color(" +
 					oPr.ShdColor.r + ", " +
 					oPr.ShdColor.g + ", " +
 					oPr.ShdColor.b + ", " +
-					oPr.ShdColor.a + ");\n";
+					oPr.ShdColor.a + "));\n";
 
 			if (isApplyToAll)
 			{
@@ -1819,7 +1819,7 @@
 			let color = line.Fill.getRGBAColor();
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\t" + "Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
 
@@ -2091,16 +2091,16 @@
 			let insideH = borders.InsideH;
 			let insideV = borders.InsideV;
 			let insideHStr = insideH
-				? "\t" + reg.varName + ".SetTableBorderInsideH(\"" + (insideH.Value ? 'single' : 'none') + "\", " + insideH.Size * 72 * 8 / 25.4 + ", " + insideH.Space + ", " + insideH.Color.r + ", " + insideH.Color.g + ", " + insideH.Color.b + ");\n"
+				? "\t" + reg.varName + ".SetTableBorderInsideH(\"" + (insideH.Value ? 'single' : 'none') + "\", " + insideH.Size * 72 * 8 / 25.4 + ", " + insideH.Space + ", Api.Color(" + insideH.Color.r + ", " + insideH.Color.g + ", " + insideH.Color.b + "));\n"
 				: "";
 			let insideVStr = insideV
-				? "\t" + reg.varName + ".SetTableBorderInsideV(\"" + (insideV.Value ? 'single' : 'none') + "\", " + insideV.Size * 72 * 8 / 25.4 + ", " + insideV.Space + ", " + insideV.Color.r + ", " + insideV.Color.g + ", " + insideV.Color.b + ");\n"
+				? "\t" + reg.varName + ".SetTableBorderInsideV(\"" + (insideV.Value ? 'single' : 'none') + "\", " + insideV.Size * 72 * 8 / 25.4 + ", " + insideV.Space + ", Api.Color(" + insideV.Color.r + ", " + insideV.Color.g + ", " + insideV.Color.b + "));\n"
 				: "";
 			return reg.declaration +
-				"\t" + reg.varName + ".SetTableBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", " + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + ");\n" +
-				"\t" + reg.varName + ".SetTableBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", " + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + ");\n" +
-				"\t" + reg.varName + ".SetTableBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", " + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + ");\n" +
-				"\t" + reg.varName + ".SetTableBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size * 72 * 8 / 25.4 + ", " + top.Space + ", " + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + ");\n" +
+				"\t" + reg.varName + ".SetTableBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", Api.Color(" + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + "));\n" +
+				"\t" + reg.varName + ".SetTableBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", Api.Color(" + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + "));\n" +
+				"\t" + reg.varName + ".SetTableBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", Api.Color(" + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + "));\n" +
+				"\t" + reg.varName + ".SetTableBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size * 72 * 8 / 25.4 + ", " + top.Space + ", Api.Color(" + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + "));\n" +
 				insideHStr +
 				insideVStr;
 		},
@@ -2113,10 +2113,10 @@
 			let right = borders.Right;
 			let cellsReg = private_getSelectedCellsVar(reg);
 			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
-				"\t\tcell.SetCellBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", " + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + ");\n" +
-				"\t\tcell.SetCellBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", " + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + ");\n" +
-				"\t\tcell.SetCellBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", " + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + ");\n" +
-				"\t\tcell.SetCellBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size * 72 * 8 / 25.4 + ", " + top.Space + ", " + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + ");\n" +
+				"\t\tcell.SetCellBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", Api.Color(" + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + "));\n" +
+				"\t\tcell.SetCellBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", Api.Color(" + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + "));\n" +
+				"\t\tcell.SetCellBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", Api.Color(" + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + "));\n" +
+				"\t\tcell.SetCellBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size * 72 * 8 / 25.4 + ", " + top.Space + ", Api.Color(" + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + "));\n" +
 				"\t});\n";
 		},
 		setTableAlign			: function(oAdditional){
@@ -2134,14 +2134,14 @@
 		setTableBackground		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let color = oAdditional.data.Color;
-			return reg.declaration + "\t" + reg.varName + ".SetBackgroundColor(" + color.r + ", " + color.g + ", " + color.b + ");\n";
+			return reg.declaration + "\t" + reg.varName + ".SetBackgroundColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n";
 		},
 		setCellBackground		: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
 			let color = oAdditional.data.Color;
 			let cellsReg = private_getSelectedCellsVar(reg);
 			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
-				"\t\tcell.SetBackgroundColor(" + color.r + ", " + color.g + ", " + color.b + ");\n" +
+				"\t\tcell.SetBackgroundColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n" +
 				"\t});\n";
 		},
 		setCellWidth			: function(oAdditional){
@@ -2818,8 +2818,8 @@
 			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 			let from = shapeProps.base.from;
 			return "\tlet " + varName + " = (function () {\n" +
-					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
-					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
+					"\t\tlet fill = Api.CreateSolidFill(Api.Color("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
+					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.Color("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = worksheet.AddShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke, " + from.col + ", " + from.colOff * 36000 + ", " + from.row + ", " + from.rowOff * 36000 + ");\n" +
 					"\t\tshape.Select();\n" +
 					"\t\treturn shape\n" +
@@ -2874,7 +2874,7 @@
 
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\t" + "Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
 
@@ -3162,7 +3162,7 @@
 		putTextColor			: function(color){
 			return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
 				"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
-				"\t\t\tpara.SetColor(" + color.r + ", " + color.g + ", " + color.b + ");\n" +
+				"\t\t\tpara.SetColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n" +
 				"\t\t});\n" +
 				"\t});\n";
 		},
@@ -3347,8 +3347,8 @@
 			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 
 			return "\tlet " + varName + " = (function () {\n" +
-					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor(" + fill.R +", " + fill.G + ", " + fill.B + "));\n" +
-					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor(" + borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
+					"\t\tlet fill = Api.CreateSolidFill(Api.Color(" + fill.R +", " + fill.G + ", " + fill.B + "));\n" +
+					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.Color(" + borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = Api.CreateShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke);\n" +
 					"\t\tshape.SetPosition(" + shapeProps.pos.x + " * 36000 , " + shapeProps.pos.y + " * 36000 );\n" +
 					"\t\tpresentation.GetCurrentSlide().AddObject(shape);\n" +
@@ -3425,7 +3425,7 @@
 
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\t" + "Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
 
