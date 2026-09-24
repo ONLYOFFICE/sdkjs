@@ -4480,7 +4480,7 @@
 
 	/**
 	 * The line join type.
-	 * @typedef {"round" | "bevel" | "miter"} LineJoinType
+	 * @typedef {"empty" | "round" | "bevel" | "miter"} LineJoinType
 	 */
 
 	/**
@@ -24251,7 +24251,7 @@
 	ApiStroke.prototype.SetJoinType = function (type) {
 		const typeCode = private_GetLineJoinTypeCode(type);
 		if (typeCode === undefined) {
-			throwException(new Error('The type parameter must be one of "round", "bevel" or "miter"'));
+			throwException(new Error('The type parameter must be one of "empty", "round", "bevel" or "miter"'));
 		}
 
 		if (this.Ln) {
@@ -36183,11 +36183,12 @@
 			case Asc.c_oAscLineCapType.Round: return 'round';
 			case Asc.c_oAscLineCapType.Square: return 'square';
 		}
-		return 'flat';
+		return undefined;
 	}
 
 	function private_GetLineJoinTypeCode(typeName) {
 		switch (typeName) {
+			case 'empty': return AscFormat.LineJoinType.Empty;
 			case 'round': return AscFormat.LineJoinType.Round;
 			case 'bevel': return AscFormat.LineJoinType.Bevel;
 			case 'miter': return AscFormat.LineJoinType.Miter;
@@ -36197,11 +36198,12 @@
 
 	function private_GetLineJoinTypeString(typeCode) {
 		switch (typeCode) {
+			case AscFormat.LineJoinType.Empty: return 'empty';
 			case AscFormat.LineJoinType.Round: return 'round';
 			case AscFormat.LineJoinType.Bevel: return 'bevel';
 			case AscFormat.LineJoinType.Miter: return 'miter';
 		}
-		return 'round';
+		return undefined;
 	}
 
 	function private_GetDrawingLockType(sType)

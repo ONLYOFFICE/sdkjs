@@ -1173,6 +1173,7 @@
 			code += "\t\tstroke.SetCapType(\"" + capTypes[line.cap] + "\");\n";
 
 		let joinTypes = {
+			[AscFormat.LineJoinType.Empty]: "empty",
 			[AscFormat.LineJoinType.Round]: "round",
 			[AscFormat.LineJoinType.Bevel]: "bevel",
 			[AscFormat.LineJoinType.Miter]: "miter"
