@@ -1388,8 +1388,11 @@
 			if (!isLocalImagePath(sSrc))
 				return sSrc;
 
-			if (AscCommon.g_oDocumentUrls && AscCommon.g_oDocumentUrls.getImageLocal(sSrc))
-				return sSrc;
+			if (AscCommon.g_oDocumentUrls) {
+				let sKnown = AscCommon.g_oDocumentUrls.getImageLocal(sSrc);
+				if (sKnown && sKnown !== sSrc)
+					return sSrc;
+			}
 
 			let url = undefined;
 			try {
