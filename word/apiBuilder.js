@@ -426,6 +426,8 @@
 				return this.HandleTableRow(oChild, sType);
 			case "tableCell":
 				return this.HandleTableCell(oChild, sType);
+			case "math":
+				return this.HandleMath(oChild);
 			default:
 				return '';
 		}
@@ -1283,6 +1285,13 @@
 			styles.push("font-variant:small-caps");
 
 		return styles.join(";");
+	};
+	CMarkdownConverter.prototype.HandleMath = function(math)
+	{
+		if (!this.Config.drawingPlaceholders)
+			return '';
+
+		return String.fromCharCode(AscBuilder.CMarkdownConverter.DrawingPlaceholder);
 	};
 	CMarkdownConverter.prototype.HandleTable = function(oTable)
 	{
@@ -2156,6 +2165,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		if (color instanceof ApiUniColor)
+			color = private_ParseColor(color);
+
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -2321,6 +2333,9 @@
 	{
 		let r, g, b;
 		let isAuto, isTheme;
+
+		if (color instanceof ApiUniColor)
+			color = private_ParseColor(color);
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
@@ -5415,6 +5430,8 @@
 	};
 
 	function private_ParseColor(r, g, b, a) {
+		if (r instanceof ApiUniColor)
+			return private_UniColorToApiColor(r);
 		if (arguments.length === 4)
 			return Api.RGBA(r, g, b, a);
 		if (arguments.length === 3)
@@ -5440,6 +5457,17 @@
 				return Api.HexColor(hex);
 		}
 		return null;
+	}
+
+	function private_UniColorToApiColor(uniColor) {
+		const color = uniColor.Unicolor.color;
+		if (color instanceof AscFormat.CSchemeColor)
+			return new ApiColor('theme', color.id);
+		if (color instanceof AscFormat.CPrstColor) {
+			const v = AscFormat.map_prst_color[color.id];
+			return Api.RGB((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF);
+		}
+		return Api.RGB(color.RGBA.R, color.RGBA.G, color.RGBA.B);
 	}
 
 	/**
@@ -11556,6 +11584,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		if (color instanceof ApiUniColor)
+			color = private_ParseColor(color);
+
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -17376,6 +17407,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		if (color instanceof ApiUniColor)
+			color = private_ParseColor(color);
+
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -17760,6 +17794,9 @@
 	{
 		let r, g, b;
 		let isAuto, isTheme;
+
+		if (color instanceof ApiUniColor)
+			color = private_ParseColor(color);
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
@@ -18437,6 +18474,9 @@
 	{
 		let r, g, b;
 		let isAuto, isTheme;
+
+		if (color instanceof ApiUniColor)
+			color = private_ParseColor(color);
 
 		if (color instanceof ApiColor) {
 			const rgb = color.GetRGB();
@@ -33499,6 +33539,9 @@
 		let r, g, b;
 		let isAuto, isTheme;
 
+		if (color instanceof ApiUniColor)
+			color = private_ParseColor(color);
+
 		if (color instanceof AscBuilder.ApiColor) {
 			const rgb = color.GetRGB();
 			r = rgb['r'];
@@ -33766,7 +33809,7 @@
 	/**
 	 * Converts the text range to HTML.
 	 * @memberof ApiTextRange
-	 * @typeofeditors ["CPE", "CSE"]
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
 	 * @param {ToHtmlOptions} [options={}] - The HTML conversion options.
 	 * @returns {string}
 	 * @since 10.0.0

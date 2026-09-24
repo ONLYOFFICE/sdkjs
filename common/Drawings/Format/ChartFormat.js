@@ -10734,6 +10734,12 @@
         this.spPr = pr;
         this.setParentToChild(pr);
     };
+    CDPt.prototype.handleUpdateFill = function() {
+        this.onChartInternalUpdate();
+    };
+    CDPt.prototype.handleUpdateLn = function() {
+        this.onChartInternalUpdate();
+    };
 
     function CDTable() {
         CBaseChartObject.call(this);
