@@ -73,6 +73,7 @@
 		};
 	}
 	let varRegistry = new VarRegistry();
+	let copiedRange = null;
 
 	/**
 	 * @param editor
@@ -107,6 +108,7 @@
 		this.inProgress = true;
 		this.isFirstAction = true;
 		varRegistry.reset();
+		copiedRange = null;
 
 		this.lastTableCell = private_getCurrentTableCell(this);
 
@@ -519,10 +521,27 @@
 			},
 			action: ACTION.NOT_WRITE_PREV
 		},
+		{
+			prevType: AscDFH.historydescription_Spreadsheet_SelectRange,
+			editor: [AscCommon.c_oEditorId.Spreadsheet],
+			curType: AscDFH.historydescription_Spreadsheet_SelectRange,
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
 	];
 	MacroRecorder.prototype.filterAction = function(type, additional)
 	{
 		if (type === "remove") {
+			return this.getResultByType(type, additional);
+		}
+		else if (type === "CopyRange") {
+			if (this.prevChangeType !== AscDFH.historydescription_Spreadsheet_SelectRange) {
+				this.getResultByType(this.prevChangeType, this.prevData);
+				this.prevChangeType = null;
+				this.prevData = undefined;
+			}
 			return this.getResultByType(type, additional);
 		}
 		else {
@@ -2669,7 +2688,37 @@
 		},
 		setCellEmpty			: function(){ return "\tApi.GetSelection().Clear();\n";},
 		setNumberFormat			: function(format){ return "\tApi.GetSelection().SetNumberFormat(\"" + format + "\");\n";},
-		setCellPaste			: function(){return "\tApi.GetSelection().Paste();\n";},
+		copyRange				: function(copy){
+			copiedRange = copy;
+			return "";
+		},
+		setCellPaste			: function(){
+			if (!copiedRange)
+				return "";
+
+			return "\tApi.GetSelection().Paste(Api.GetSheet(\"" + escapeMacroString(copiedRange.sheet) + "\").GetRange(\"" + copiedRange.range.getName() + "\"));\n";
+		},
+		insertCells				: function(insert){
+			let ar = insert.range;
+			let isRows = Asc.c_oAscInsertOptions.InsertRows === insert.type || Asc.c_oAscInsertOptions.InsertCellsAndShiftDown === insert.type;
+			let range;
+			switch (insert.type) {
+				case Asc.c_oAscInsertOptions.InsertRows:				range = new Asc.Range(0, ar.r1, AscCommon.gc_nMaxCol0, ar.r2); break;
+				case Asc.c_oAscInsertOptions.InsertColumns:				range = new Asc.Range(ar.c1, 0, ar.c2, AscCommon.gc_nMaxRow0); break;
+				default:												range = ar;
+			}
+
+			// Replay reads the source at paste time, so it must follow the shifted cells.
+			if (copiedRange && copiedRange.sheet === insert.sheet) {
+				let src = copiedRange.range;
+				if (isRows && range.r1 <= src.r1 && range.c1 <= src.c1 && src.c2 <= range.c2)
+					src.setOffset(new AscCommon.CellBase(range.r2 - range.r1 + 1, 0));
+				else if (!isRows && range.c1 <= src.c1 && range.r1 <= src.r1 && src.r2 <= range.r2)
+					src.setOffset(new AscCommon.CellBase(0, range.c2 - range.c1 + 1));
+			}
+
+			return "\tApi.GetRange(\"" + range.getName() + "\").Insert(\"" + (isRows ? "down" : "right") + "\");\n";
+		},
 		addChart				: function(chart){ //todo title
 			let range = chart.parent.dataRefs.getRange();
 			let type = private_ChartInternalTypeToBuilder(chart.getChartType());
@@ -2932,6 +2981,9 @@
 	SEActionMap['SetDrawingTitle']													= cellActions.setDrawingTitle;
 	SEActionMap['SetDrawingDescription']											= cellActions.setDrawingDescription;
 	SEActionMap['SetDrawingAspectRatio']											= cellActions.setDrawingAspectRatio;
+	SEActionMap['CopyRange']														= cellActions.copyRange;
+	SEActionMap['PasteRange']														= cellActions.setCellPaste;
+	SEActionMap['InsertCells']														= cellActions.insertCells;
 
 	const presActions = {
 		setParagraphAlign		: function(align){

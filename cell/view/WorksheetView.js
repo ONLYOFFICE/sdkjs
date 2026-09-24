@@ -18457,6 +18457,9 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			asc_applyFunction(functionModelAction);
+			if ("insCell" === prop) {
+				t.workbook.MacrosAddData("InsertCells", [{sheet: t.model.getName(), type: val, range: arn}]);
+			}
 
 			t._initCellsArea(oRecalcType);
 			if (oRecalcType) {

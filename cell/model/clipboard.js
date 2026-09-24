@@ -466,6 +466,7 @@
 					}
 				} else if (!ws.objectRender.selectedGraphicObjectsExists()) {
 					ws.setCutRange(ws.model.selectionRange.ranges);
+					ws.workbook.MacrosAddData("CopyRange", [{sheet: ws.model.getName(), range: ws.model.selectionRange.getLast().clone()}]);
 				}
 			}
 		};
@@ -1980,6 +1981,10 @@
 
 					if (isPasteAll) {
 						window['AscCommon'].g_specialPasteHelper.Special_Paste_Hide_Button();
+					}
+
+					if (!isPasteAll && t._checkPastedInOriginalDoc(tempWorkbook)) {
+						worksheet.workbook.MacrosAddData("PasteRange", [pasteData]);
 					}
 
 					//close the common transaction _loadDataBeforePaste after loading fonts
