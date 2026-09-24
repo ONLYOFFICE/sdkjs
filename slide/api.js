@@ -7414,7 +7414,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.ChangeTheme = function(indexTheme, bSelectedSlides)
 	{
 		if (true === AscCommon.CollaborativeEditing.Get_GlobalLock())
-			return;
+			return false;
 
 		if (!this.isViewMode && this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Theme) === false)
 		{
@@ -7425,7 +7425,9 @@ background-repeat: no-repeat;\
 			this.inkDrawer.endSilentMode();
 			this.bSelectedSlidesTheme = (bSelectedSlides === true);
 			this.ThemeLoader.StartLoadTheme(indexTheme);
+			return true;
 		}
+		return false;
 	};
 
 	asc_docs_api.prototype.StartLoadTheme = function()

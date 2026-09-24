@@ -416,6 +416,12 @@
 	 * @see office-js-api/Examples/Enumerations/TextFitType.js
 	 */
 
+	/**
+	 * The available scripts of a theme font: <b>"latin"</b> - the latin text, <b>"ea"</b> - the east asian text, <b>"cs"</b> - the complex script text.
+	 * @typedef {("latin" | "ea" | "cs")} ThemeFontScript
+	 * @see office-js-api/Examples/Enumerations/ThemeFontScript.js
+	 */
+
     /**
      * The available color scheme identifiers.
      * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "folHlink" | "hlink" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
@@ -642,14 +648,8 @@
 			return new AscBuilder.ApiDocumentContent(obj);
 		else if (obj instanceof AscWord.Paragraph)
 			return new AscBuilder.ApiParagraph(obj);
-		else if (obj instanceof AscFormat.CGraphicFrame) {
-			return new ApiTable(obj);
-		}
-		else if (obj instanceof AscFormat.CShape) {
-			return new ApiShape(obj);
-		}
 		else if (obj instanceof AscFormat.CGraphicObjectBase) {
-			return new ApiDrawing(obj);
+			return GetApiDrawing(obj);
 		}
 		else if (obj instanceof AscCommonSlide.MasterSlide) {
 			return new ApiMaster(obj);
@@ -4116,6 +4116,19 @@
     };
 
     /**
+     * Returns the name of the current theme color scheme.
+     * @memberof ApiThemeColorScheme
+     * @typeofeditors ["CPE"]
+     * @returns {string}
+     * @since 10.0.0
+     * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/GetSchemeName.js
+	 */
+    ApiThemeColorScheme.prototype.GetSchemeName = function()
+    {
+        return this.ColorScheme.name;
+    };
+
+    /**
      * Changes a color in the theme color scheme.
      * @memberof ApiThemeColorScheme
      * @typeofeditors ["CPE"]
@@ -4146,6 +4159,30 @@
 		});
 
         return true;
+    };
+
+    /**
+     * Returns a color of the theme color scheme.
+     * @memberof ApiThemeColorScheme
+     * @typeofeditors ["CPE"]
+     * @param {number} position - The color position in the color scheme, the same as in the ChangeColor method:
+     * 0-5 - accent1-accent6, 6 - dk1, 7 - dk2, 8 - folHlink, 9 - hlink, 10 - lt1, 11 - lt2.
+     * @returns {?ApiColor} - The RGB color, or null if the position is out of range or the scheme has no color at this position.
+     * @since 10.0.0
+     * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/GetColor.js
+	 */
+    ApiThemeColorScheme.prototype.GetColor = function(position)
+    {
+        if (!(position >= 0 && position <= 11))
+            return null;
+
+        let uniColor = this.ColorScheme.colors[position <= 5 ? position : position + 2];
+        if (!uniColor)
+            return null;
+
+        let color = uniColor.createDuplicate();
+        color.Calculate(this.Theme, null, null, null, {R: 0, G: 0, B: 0, A: 255});
+        return Api.RGB(color.RGBA.R, color.RGBA.G, color.RGBA.B);
     };
 
     /**
@@ -4418,6 +4455,19 @@
     };
 
     /**
+     * Returns the name of the current theme font scheme.
+     * @memberof ApiThemeFontScheme
+     * @typeofeditors ["CPE"]
+     * @returns {string}
+     * @since 10.0.0
+     * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/GetSchemeName.js
+	 */
+    ApiThemeFontScheme.prototype.GetSchemeName = function()
+    {
+        return this.FontScheme.name;
+    };
+
+    /**
      * Sets the fonts to the current theme font scheme.
      * @typeofeditors ["CPE"]
      * @memberof ApiThemeFontScheme
@@ -4449,6 +4499,34 @@
 			if (typeof(mnCs) === "string")
 				oMinorFontCollection.setCS(mnCs);
 		});
+    };
+
+    /**
+     * Returns the major theme font of the current theme font scheme.
+     * @memberof ApiThemeFontScheme
+     * @typeofeditors ["CPE"]
+     * @param {ThemeFontScript} [script="latin"] - The script the font is applied to.
+     * @returns {?string} - The font name, an empty string if the scheme has no font for this script, or null if the script is not supported.
+     * @since 10.0.0
+     * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/GetMajorFont.js
+	 */
+    ApiThemeFontScheme.prototype.GetMajorFont = function(script)
+    {
+        return private_GetThemeFont(this.FontScheme.majorFont, script);
+    };
+
+    /**
+     * Returns the minor theme font of the current theme font scheme.
+     * @memberof ApiThemeFontScheme
+     * @typeofeditors ["CPE"]
+     * @param {ThemeFontScript} [script="latin"] - The script the font is applied to.
+     * @returns {?string} - The font name, an empty string if the scheme has no font for this script, or null if the script is not supported.
+     * @since 10.0.0
+     * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/GetMinorFont.js
+	 */
+    ApiThemeFontScheme.prototype.GetMinorFont = function(script)
+    {
+        return private_GetThemeFont(this.FontScheme.minorFont, script);
     };
 
     /**
@@ -10975,7 +11053,9 @@
 
     ApiThemeColorScheme.prototype["GetClassType"]         = ApiThemeColorScheme.prototype.GetClassType;
     ApiThemeColorScheme.prototype["SetSchemeName"]        = ApiThemeColorScheme.prototype.SetSchemeName;
+    ApiThemeColorScheme.prototype["GetSchemeName"]        = ApiThemeColorScheme.prototype.GetSchemeName;
     ApiThemeColorScheme.prototype["ChangeColor"]          = ApiThemeColorScheme.prototype.ChangeColor;
+    ApiThemeColorScheme.prototype["GetColor"]             = ApiThemeColorScheme.prototype.GetColor;
     ApiThemeColorScheme.prototype["Copy"]                 = ApiThemeColorScheme.prototype.Copy;
     ApiThemeColorScheme.prototype["ToJSON"]               = ApiThemeColorScheme.prototype.ToJSON;
 
@@ -10989,7 +11069,10 @@
 
     ApiThemeFontScheme.prototype["GetClassType"]          = ApiThemeFontScheme.prototype.GetClassType;
     ApiThemeFontScheme.prototype["SetSchemeName"]         = ApiThemeFontScheme.prototype.SetSchemeName;
+    ApiThemeFontScheme.prototype["GetSchemeName"]         = ApiThemeFontScheme.prototype.GetSchemeName;
     ApiThemeFontScheme.prototype["SetFonts"]              = ApiThemeFontScheme.prototype.SetFonts;
+    ApiThemeFontScheme.prototype["GetMajorFont"]          = ApiThemeFontScheme.prototype.GetMajorFont;
+    ApiThemeFontScheme.prototype["GetMinorFont"]          = ApiThemeFontScheme.prototype.GetMinorFont;
     ApiThemeFontScheme.prototype["Copy"]                  = ApiThemeFontScheme.prototype.Copy;
     ApiThemeFontScheme.prototype["ToJSON"]                = ApiThemeFontScheme.prototype.ToJSON;
 
@@ -11513,6 +11596,22 @@
 	function private_ApiColorToUniColor(color) {
 		const rgb = color.GetRGB();
 		return Api.RGB(rgb['r'], rgb['g'], rgb['b']).private_createUnifill().fill.color;
+	}
+
+	function private_GetThemeFont(fontCollection, script)
+	{
+		switch (script)
+		{
+			case undefined:
+			case "latin":
+				return fontCollection.latin || "";
+			case "ea":
+				return fontCollection.ea || "";
+			case "cs":
+				return fontCollection.cs || "";
+			default:
+				return null;
+		}
 	}
 
     function private_EMU2MM(EMU)
