@@ -3965,12 +3965,14 @@
 			if(oSpPr.ln) {
 				oLn = oSpPr.ln.createDuplicate();
 			}
+			let effectProps = oSpPr.effectProps ? oSpPr.effectProps.createDuplicate() : null;
 			if(!this.spPr) {
 				this.setSpPr(new AscFormat.CSpPr());
 			}
 			let oImgSpPr = this.spPr;
 			oImgSpPr.setFill(oFill);
 			oImgSpPr.setLn(oLn);
+			oImgSpPr.setEffectPr(effectProps);
 		}
 		else {
 			if(this.spPr) {
