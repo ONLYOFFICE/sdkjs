@@ -37,13 +37,6 @@
 
 (function(window, undefined)
 {
-    /**
-     * Base class.
-     * @global
-     * @class
-     * @name Api
-     */
-	
 	/**
 	 * @typedef {Object} ContentControl
 	 * The content control object.
@@ -145,6 +138,14 @@
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlListElement.js
 	 */
 
+	/**
+	 * The Document API contains the methods and events available to a plugin
+	 * in the ONLYOFFICE Document editor.
+	 * @global
+	 * @class
+	 * @name Api
+	 * @typeofeditors ["CDE"]
+	 */
     var Api = window["asc_docs_api"];
 
     /**
