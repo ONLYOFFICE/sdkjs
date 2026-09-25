@@ -380,6 +380,11 @@
 			graphics._e();
 		} else {
 			geometry.check_bounds(graphics, graphicObject);
+			const shapeDrawer = new AscCommon.CShapeDrawer();
+			shapeDrawer.fromShape2(graphicObject, graphics, geometry);
+			if (!shapeDrawer.bIsNoStrokeAttack && shapeDrawer.isArrowPresent()) {
+				shapeDrawer.drawArrows(false);
+			}
 		}
 
 		if (graphics.AutoCheckLineWidth) {
