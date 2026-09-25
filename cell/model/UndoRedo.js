@@ -685,6 +685,7 @@ function (window, undefined) {
 		this.RichValueStructures = 196;
 		this.RichValueTypesInfo = 197;
 		this.RichValueData = 198;
+		this.TableStyle = 199;
 
 		this.Create = function (nType) {
 			switch (nType) {
@@ -873,6 +874,8 @@ function (window, undefined) {
 					return new AscCommonExcel.CRichValueTypesInfo();
 				case this.RichValueData:
 					return new AscCommonExcel.CRichValueData();
+				case this.TableStyle:
+					return new Asc.CTableStyle();
 			}
 			return null;
 		};
@@ -3319,6 +3322,16 @@ function (window, undefined) {
 			wb.richValueTypesInfo = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		} else if (AscCH.historyitem_Workbook_RichValueData === Type) {
 			wb.richValueData = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
+		} else if (AscCH.historyitem_Workbook_TableStyle === Type) {
+			let tableStyleRef = Data.to || Data.from;
+			if (tableStyleRef) {
+				let tableStyleSide = bUndo ? Data.from : Data.to;
+				wb.setCustomTableStyle(tableStyleRef.name, tableStyleSide ? tableStyleSide.clone() : null, false);
+			}
+		} else if (AscCH.historyitem_Workbook_DefaultTableStyle === Type) {
+			wb.setDefaultTableStyle(bUndo ? Data.from : Data.to, false);
+		} else if (AscCH.historyitem_Workbook_DefaultPivotStyle === Type) {
+			wb.setDefaultPivotStyle(bUndo ? Data.from : Data.to, false);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

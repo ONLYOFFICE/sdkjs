@@ -4877,7 +4877,7 @@
 	var blackColor = new CColor(0, 0, 0);
 
 	var defaultColor;
-	if (!style || !style.wholeTable || !style.wholeTable.dxf.font) {
+	if (!style || !style.wholeTable || !style.wholeTable.dxf || !style.wholeTable.dxf.font) {
 		defaultColor = blackColor;
 	} else {
 		defaultColor = style.wholeTable.dxf.font.getColor();

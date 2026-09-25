@@ -3760,6 +3760,71 @@
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
 			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
 	};
+	Workbook.prototype.setCustomTableStyle = function (name, style, addToHistory) {
+		let tableStyles = this.TableStyles;
+		let oldStyle = tableStyles.CustomStyles[name] || null;
+		if (style) {
+			tableStyles.CustomStyles[name] = style;
+			tableStyles.AllStyles[name] = style;
+		} else {
+			delete tableStyles.CustomStyles[name];
+			delete tableStyles.AllStyles[name];
+			//a removed custom style may have shadowed a built-in style of the same name
+			if (tableStyles.DefaultStyles.hasOwnProperty(name)) {
+				tableStyles.AllStyles[name] = tableStyles.DefaultStyles[name];
+			} else if (tableStyles.DefaultStylesPivot.hasOwnProperty(name)) {
+				tableStyles.AllStyles[name] = tableStyles.DefaultStylesPivot[name];
+			}
+		}
+		if (addToHistory) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_TableStyle,
+				null, null, new UndoRedoData_FromTo(oldStyle, style));
+		}
+		this.updateTableStylesByName(name);
+	};
+	Workbook.prototype.setDefaultTableStyle = function (name, addToHistory) {
+		let oldName = this.TableStyles.DefaultTableStyle;
+		this.TableStyles.DefaultTableStyle = name;
+		if (addToHistory) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefaultTableStyle,
+				null, null, new UndoRedoData_FromTo(oldName, name));
+		}
+	};
+	Workbook.prototype.setDefaultPivotStyle = function (name, addToHistory) {
+		let oldName = this.TableStyles.DefaultPivotStyle;
+		this.TableStyles.DefaultPivotStyle = name;
+		if (addToHistory) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefaultPivotStyle,
+				null, null, new UndoRedoData_FromTo(oldName, name));
+		}
+	};
+	//re-renders every table and pivot table that references this style name after its definition changed
+	Workbook.prototype.updateTableStylesByName = function (name) {
+		for (let i = 0; i < this.aWorksheets.length; ++i) {
+			let ws = this.aWorksheets[i];
+			for (let j = 0; j < ws.TableParts.length; ++j) {
+				let tablePart = ws.TableParts[j];
+				if (tablePart.TableStyleInfo && tablePart.TableStyleInfo.Name === name) {
+					ws.autoFilters._cleanStyleTable(tablePart.Ref);
+					ws.autoFilters._setColorStyleTable(tablePart.Ref, tablePart);
+					if (this.handlers) {
+						this.handlers.trigger("cleanCellCache", ws.getId(), [tablePart.Ref], true);
+					}
+				}
+			}
+			for (let j = 0; j < ws.pivotTables.length; ++j) {
+				let pivotTable = ws.pivotTables[j];
+				let styleInfo = pivotTable.asc_getStyleInfo();
+				if (styleInfo && styleInfo.asc_getName() === name) {
+					ws.updatePivotTablesStyle(pivotTable.getRange());
+					if (this.handlers) {
+						//the report ranges include the page field cells, which sit outside the pivot body range
+						this.handlers.trigger("cleanCellCache", ws.getId(), pivotTable.getReportRanges(), true);
+					}
+				}
+			}
+		}
+	};
 	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
 		if (obj && undefined !== obj.id && aImages.length === 1 && aImages[0].Image) {
@@ -11898,7 +11963,7 @@
 				}
 				if (stripe2.dxf && start + stripe1.size <= pivotRange.r2) {
 					cells = this.getRange3(start + stripe1.size, pivotRange.c1, pivotRange.r2, pivotRange.c2);
-					cells.setTableStyle(stripe1.dxf, new Asc.CTableStyleStripe(stripe2.size, stripe1.size, true));
+					cells.setTableStyle(stripe2.dxf, new Asc.CTableStyleStripe(stripe2.size, stripe1.size, true));
 				}
 			}
 

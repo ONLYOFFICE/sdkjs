@@ -489,6 +489,54 @@
 	}
 
 	/**
+	 * Class representing the collection of table styles of the workbook.
+	 * @undocumented
+	 * @constructor
+	 * @property {number} Count - Returns the number of table styles in the workbook.
+	 */
+	function ApiTableStyles(workbook) {
+		this.workbook = workbook;
+	}
+
+	/**
+	 * Class representing a single custom or built-in table style.
+	 * @undocumented
+	 * @constructor
+	 * @property {string} Name - Returns the name of the table style.
+	 * @property {boolean} BuiltIn - Returns whether the table style is a built-in style.
+	 * @property {boolean} ShowAsAvailableTableStyle - Returns or sets whether the style is shown in the table style gallery.
+	 * @property {boolean} ShowAsAvailablePivotTableStyle - Returns or sets whether the style is shown in the pivot table style gallery.
+	 * @property {ApiTableStyleElements} TableStyleElements - Returns the collection of formatted parts of the table style.
+	 */
+	function ApiTableStyle(workbook, name) {
+		this.workbook = workbook;
+		this.name = name;
+	}
+
+	/**
+	 * Class representing the collection of formatted parts (header row, stripes, total row, etc.) of a table style.
+	 * @undocumented
+	 * @constructor
+	 */
+	function ApiTableStyleElements(tableStyle) {
+		this.tableStyle = tableStyle;
+	}
+
+	/**
+	 * Class representing a single formatted part of a table style.
+	 * @undocumented
+	 * @constructor
+	 * @property {ApiFont} Font - Returns the font of the table style element.
+	 * @property {ApiColor | 'No Fill'} FillColor - Returns or sets the background color of the table style element.
+	 * @property {boolean} HasFormat - Returns whether the element carries any explicit formatting.
+	 * @property {number} StripeSize - Returns or sets the number of rows or columns in one stripe of the element.
+	 */
+	function ApiTableStyleElement(tableStyle, type) {
+		this.tableStyle = tableStyle;
+		this.type = type;
+	}
+
+	/**
 	 * Class representing a pivot table.
 	 * @constructor
 	 * @property {string} Name - Returns or sets a name of the pivot table.
@@ -665,6 +713,19 @@
 	 */
 	function ApiFont(object) {
 		this._object = object;
+	}
+
+	// true for the two owners whose font lives inside a dxf (a format condition rule or a table style element)
+	function private_IsDxfFontOwner(obj) {
+		return obj instanceof ApiFormatCondition || obj instanceof ApiTableStyleElement;
+	}
+
+	// returns the current dxf-carrying rule/element for a dxf font owner, read fresh from its model every call
+	function private_GetFontDxfRule(obj) {
+		if (obj instanceof ApiFormatCondition) {
+			return obj.rule;
+		}
+		return obj.private_getDxfRule();
 	}
 
 	/**
@@ -8491,6 +8552,733 @@
 			return ids.includes(drawing.GetName());
 		});
 	};
+
+	/**
+	 * Returns the collection of table styles of the workbook.
+	 * @undocumented
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiTableStyles}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetTableStyles.js
+	 */
+	ApiWorkbook.prototype.GetTableStyles = function () {
+		return new ApiTableStyles(this);
+	};
+
+	Object.defineProperty(ApiWorkbook.prototype, "TableStyles", {
+		get: function () {
+			return this.GetTableStyles();
+		}
+	});
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiTableStyles / ApiTableStyle / ApiTableStyleElements / ApiTableStyleElement
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Table style element type. xlGrandTotalRow is the same element as xlTotalRow, xlGrandTotalColumn is the same element as xlLastColumn.
+	 * @undocumented
+	 * @typedef {("xlWholeTable" | "xlHeaderRow" | "xlTotalRow" | "xlGrandTotalRow" | "xlFirstColumn" | "xlLastColumn" | "xlGrandTotalColumn" | "xlRowStripe1" | "xlRowStripe2" | "xlColumnStripe1" | "xlColumnStripe2" | "xlFirstHeaderCell" | "xlLastHeaderCell" | "xlFirstTotalCell" | "xlLastTotalCell" | "xlSubtotalColumn1" | "xlSubtotalColumn2" | "xlSubtotalColumn3" | "xlSubtotalRow1" | "xlSubtotalRow2" | "xlSubtotalRow3" | "xlBlankRow" | "xlColumnSubheading1" | "xlColumnSubheading2" | "xlColumnSubheading3" | "xlRowSubheading1" | "xlRowSubheading2" | "xlRowSubheading3" | "xlPageFieldLabels" | "xlPageFieldValues")} XlTableStyleElementType
+	 * @see office-js-api/Examples/Enumerations/XlTableStyleElementType.js
+	 */
+
+	// maps the public XlTableStyleElementType name to the internal ETableStyleType enum; unmapped values (slicer/timeline types, unknown strings) return null
+	function private_XlTableStyleElementTypeToInternal(sType) {
+		switch (sType) {
+			case "xlWholeTable": return Asc.ETableStyleType.tablestyletypeWholeTable;
+			case "xlHeaderRow": return Asc.ETableStyleType.tablestyletypeHeaderRow;
+			case "xlTotalRow": return Asc.ETableStyleType.tablestyletypeTotalRow;
+			case "xlGrandTotalRow": return Asc.ETableStyleType.tablestyletypeTotalRow;
+			case "xlFirstColumn": return Asc.ETableStyleType.tablestyletypeFirstColumn;
+			case "xlLastColumn": return Asc.ETableStyleType.tablestyletypeLastColumn;
+			case "xlGrandTotalColumn": return Asc.ETableStyleType.tablestyletypeLastColumn;
+			case "xlRowStripe1": return Asc.ETableStyleType.tablestyletypeFirstRowStripe;
+			case "xlRowStripe2": return Asc.ETableStyleType.tablestyletypeSecondRowStripe;
+			case "xlColumnStripe1": return Asc.ETableStyleType.tablestyletypeFirstColumnStripe;
+			case "xlColumnStripe2": return Asc.ETableStyleType.tablestyletypeSecondColumnStripe;
+			case "xlFirstHeaderCell": return Asc.ETableStyleType.tablestyletypeFirstHeaderCell;
+			case "xlLastHeaderCell": return Asc.ETableStyleType.tablestyletypeLastHeaderCell;
+			case "xlFirstTotalCell": return Asc.ETableStyleType.tablestyletypeFirstTotalCell;
+			case "xlLastTotalCell": return Asc.ETableStyleType.tablestyletypeLastTotalCell;
+			case "xlSubtotalColumn1": return Asc.ETableStyleType.tablestyletypeFirstSubtotalColumn;
+			case "xlSubtotalColumn2": return Asc.ETableStyleType.tablestyletypeSecondSubtotalColumn;
+			case "xlSubtotalColumn3": return Asc.ETableStyleType.tablestyletypeThirdSubtotalColumn;
+			case "xlSubtotalRow1": return Asc.ETableStyleType.tablestyletypeFirstSubtotalRow;
+			case "xlSubtotalRow2": return Asc.ETableStyleType.tablestyletypeSecondSubtotalRow;
+			case "xlSubtotalRow3": return Asc.ETableStyleType.tablestyletypeThirdSubtotalRow;
+			case "xlBlankRow": return Asc.ETableStyleType.tablestyletypeBlankRow;
+			case "xlColumnSubheading1": return Asc.ETableStyleType.tablestyletypeFirstColumnSubheading;
+			case "xlColumnSubheading2": return Asc.ETableStyleType.tablestyletypeSecondColumnSubheading;
+			case "xlColumnSubheading3": return Asc.ETableStyleType.tablestyletypeThirdColumnSubheading;
+			case "xlRowSubheading1": return Asc.ETableStyleType.tablestyletypeFirstRowSubheading;
+			case "xlRowSubheading2": return Asc.ETableStyleType.tablestyletypeSecondRowSubheading;
+			case "xlRowSubheading3": return Asc.ETableStyleType.tablestyletypeThirdRowSubheading;
+			case "xlPageFieldLabels": return Asc.ETableStyleType.tablestyletypePageFieldLabels;
+			case "xlPageFieldValues": return Asc.ETableStyleType.tablestyletypePageFieldValues;
+		}
+		return null;
+	}
+
+	// true when at least one explicit font property is set on the dxf font (null means unset, false still counts)
+	function private_FontHasContent(font) {
+		return !!font && (null !== font.b || null !== font.i || null !== font.u || null !== font.s ||
+			null !== font.c || null !== font.fn || null !== font.fs || null !== font.va);
+	}
+
+	// true when the dxf fill carries a pattern or a gradient
+	function private_FillHasContent(fill) {
+		return !!fill && !!(fill.patternFill || fill.gradientFill);
+	}
+
+	// true when at least one edge or inside line has a non-None style; Border.prototype.notEmpty ignores ih/iv
+	function private_BorderHasContent(border) {
+		return !!border && ((border.l && !border.l.isEmpty()) || (border.r && !border.r.isEmpty()) ||
+			(border.t && !border.t.isEmpty()) || (border.b && !border.b.isEmpty()) ||
+			(border.ih && !border.ih.isEmpty()) || (border.iv && !border.iv.isEmpty()));
+	}
+
+	// throws unless the name is a non-empty string that no custom or built-in style uses, compared case-insensitively
+	function private_CheckNewTableStyleName(tableStyles, name) {
+		if (typeof name !== 'string' || 0 === name.length) {
+			private_MakeError('Invalid name.');
+			return false;
+		}
+		let lower = name.toLowerCase();
+		for (let key in tableStyles.AllStyles) {
+			if (key.toLowerCase() === lower) {
+				private_MakeError('A table style with this name already exists.');
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// style names in Excel's TableStyles order: built-in table, pivot and other (slicer) styles, then custom styles sorted by name
+	function private_GetTableStyleNames(tableStyles) {
+		let tableNames = [], pivotNames = [], otherNames = [], customNames = [];
+		for (let name in tableStyles.AllStyles) {
+			let style = tableStyles.AllStyles[name];
+			if (tableStyles.CustomStyles[name]) {
+				customNames.push(name);
+			} else if (style.table) {
+				tableNames.push(name);
+			} else if (style.pivot) {
+				pivotNames.push(name);
+			} else {
+				otherNames.push(name);
+			}
+		}
+		customNames.sort(function (a, b) {
+			let la = a.toLowerCase(), lb = b.toLowerCase();
+			return la < lb ? -1 : (la > lb ? 1 : 0);
+		});
+		return tableNames.concat(pivotNames, otherNames, customNames);
+	}
+
+	/**
+	 * Adds a new custom table style to the workbook.
+	 * @undocumented
+	 * @memberof ApiTableStyles
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - The name of the new table style. Must be unique among the custom and built-in style names (case-insensitive).
+	 * @returns {ApiTableStyle}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyles/Methods/Add.js
+	 */
+	ApiTableStyles.prototype.Add = function (name) {
+		let wb = this.workbook.Workbook;
+		if (!private_CheckNewTableStyleName(wb.TableStyles, name)) {
+			return;
+		}
+		let style = new Asc.CTableStyle();
+		style.name = name;
+		style.displayName = name;
+		style.pivot = false;
+		style.table = false;
+		wb.setCustomTableStyle(name, style, true);
+		return new ApiTableStyle(this.workbook, name);
+	};
+
+	/**
+	 * Returns the number of table styles in the workbook, built-in and custom.
+	 * @undocumented
+	 * @memberof ApiTableStyles
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyles/Methods/GetCount.js
+	 */
+	ApiTableStyles.prototype.GetCount = function () {
+		return private_GetTableStyleNames(this.workbook.Workbook.TableStyles).length;
+	};
+
+	Object.defineProperty(ApiTableStyles.prototype, "Count", {
+		get: function () {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Returns a table style by its name or by its index. Built-in table, pivot table and slicer styles come first, custom styles last in name order.
+	 * @undocumented
+	 * @memberof ApiTableStyles
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} nameOrIndex - The table style name (case-insensitive; custom styles are searched before built-in ones) or its 1-based index.
+	 * @returns {ApiTableStyle | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyles/Methods/GetItem.js
+	 */
+	ApiTableStyles.prototype.GetItem = function (nameOrIndex) {
+		let wb = this.workbook.Workbook;
+		if (typeof nameOrIndex === 'number') {
+			let names = private_GetTableStyleNames(wb.TableStyles);
+			return (nameOrIndex % 1 === 0 && nameOrIndex >= 1 && nameOrIndex <= names.length) ? new ApiTableStyle(this.workbook, names[nameOrIndex - 1]) : null;
+		}
+		if (typeof nameOrIndex !== 'string' || 0 === nameOrIndex.length) {
+			return null;
+		}
+		let lower = nameOrIndex.toLowerCase();
+		for (let key in wb.TableStyles.CustomStyles) {
+			if (key.toLowerCase() === lower) {
+				return new ApiTableStyle(this.workbook, key);
+			}
+		}
+		for (let key in wb.TableStyles.AllStyles) {
+			if (key.toLowerCase() === lower) {
+				return new ApiTableStyle(this.workbook, key);
+			}
+		}
+		return null;
+	};
+
+	/**
+	 * Returns the name of the table style.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetName.js
+	 */
+	ApiTableStyle.prototype.GetName = function () {
+		return this.name;
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		}
+	});
+
+	/**
+	 * Returns whether the table style is a built-in style.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetBuiltIn.js
+	 */
+	ApiTableStyle.prototype.GetBuiltIn = function () {
+		let wb = this.workbook.Workbook;
+		return !wb.TableStyles.CustomStyles[this.name];
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "BuiltIn", {
+		get: function () {
+			return this.GetBuiltIn();
+		}
+	});
+
+	/**
+	 * Returns whether the table style is shown in the table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetShowAsAvailableTableStyle.js
+	 */
+	ApiTableStyle.prototype.GetShowAsAvailableTableStyle = function () {
+		let model = this.private_getModel();
+		return model ? model.table : null;
+	};
+
+	/**
+	 * Sets whether the table style is shown in the table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Specifies whether the style is shown in the table style gallery.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/SetShowAsAvailableTableStyle.js
+	 */
+	ApiTableStyle.prototype.SetShowAsAvailableTableStyle = function (show) {
+		if (typeof show !== 'boolean') {
+			private_MakeError('Invalid type of "show".');
+			return;
+		}
+		this.private_changeStyle(function (style) {
+			style.table = show;
+		});
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "ShowAsAvailableTableStyle", {
+		get: function () {
+			return this.GetShowAsAvailableTableStyle();
+		},
+		set: function (show) {
+			this.SetShowAsAvailableTableStyle(show);
+		}
+	});
+
+	/**
+	 * Returns whether the table style is shown in the pivot table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetShowAsAvailablePivotTableStyle.js
+	 */
+	ApiTableStyle.prototype.GetShowAsAvailablePivotTableStyle = function () {
+		let model = this.private_getModel();
+		return model ? model.pivot : null;
+	};
+
+	/**
+	 * Sets whether the table style is shown in the pivot table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Specifies whether the style is shown in the pivot table style gallery.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/SetShowAsAvailablePivotTableStyle.js
+	 */
+	ApiTableStyle.prototype.SetShowAsAvailablePivotTableStyle = function (show) {
+		if (typeof show !== 'boolean') {
+			private_MakeError('Invalid type of "show".');
+			return;
+		}
+		this.private_changeStyle(function (style) {
+			style.pivot = show;
+		});
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "ShowAsAvailablePivotTableStyle", {
+		get: function () {
+			return this.GetShowAsAvailablePivotTableStyle();
+		},
+		set: function (show) {
+			this.SetShowAsAvailablePivotTableStyle(show);
+		}
+	});
+
+	/**
+	 * Returns the collection of formatted parts of the table style, or a single part when its type is passed.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTableStyleElementType} [type] - The table style element type to return instead of the whole collection.
+	 * @returns {ApiTableStyleElements | ApiTableStyleElement | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetTableStyleElements.js
+	 */
+	ApiTableStyle.prototype.GetTableStyleElements = function (type) {
+		let elements = new ApiTableStyleElements(this);
+		return undefined === type ? elements : elements.GetItem(type);
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "TableStyleElements", {
+		get: function () {
+			return this.GetTableStyleElements();
+		}
+	});
+
+	/**
+	 * Deletes the custom table style. Formatted tables and pivot tables that use it switch to the workbook default styles.
+	 * If the style is itself a workbook default, that default is reset to TableStyleMedium2 or PivotStyleLight16 first.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/Delete.js
+	 */
+	ApiTableStyle.prototype.Delete = function () {
+		let wb = this.workbook.Workbook;
+		let tableStyles = wb.TableStyles;
+		let name = this.name;
+		if (!this.private_getModel()) {
+			private_MakeError('The table style does not exist.');
+			return;
+		}
+		if (this.GetBuiltIn()) {
+			private_MakeError('Cannot delete a built-in table style.');
+			return;
+		}
+		// a custom style that shadows a built-in one leaves the built-in in place, so only an unshadowed name needs a fallback
+		let builtInLeft = tableStyles.DefaultStyles.hasOwnProperty(name) || tableStyles.DefaultStylesPivot.hasOwnProperty(name);
+		AscCommon.History.Create_NewPoint();
+		AscCommon.History.StartTransaction();
+		try {
+			if (!builtInLeft) {
+				// Excel resets a deleted workbook default to its own defaults before tables and pivots fall back to it
+				if (tableStyles.DefaultTableStyle === name) {
+					wb.setDefaultTableStyle("TableStyleMedium2", true);
+				}
+				if (tableStyles.DefaultPivotStyle === name) {
+					wb.setDefaultPivotStyle("PivotStyleLight16", true);
+				}
+				for (let i = 0; i < wb.aWorksheets.length; ++i) {
+					let ws = wb.aWorksheets[i];
+					let refs = [], pivots = [];
+					for (let j = 0; j < ws.TableParts.length; ++j) {
+						if (ws.TableParts[j].TableStyleInfo && ws.TableParts[j].TableStyleInfo.Name === name) {
+							refs.push(ws.TableParts[j].Ref);
+						}
+					}
+					for (let j = 0; j < ws.pivotTables.length; ++j) {
+						let styleInfo = ws.pivotTables[j].asc_getStyleInfo();
+						if (styleInfo && styleInfo.asc_getName() === name) {
+							pivots.push(ws.pivotTables[j]);
+						}
+					}
+					for (let j = 0; j < refs.length; ++j) {
+						ws.autoFilters.changeTableStyleInfo(tableStyles.DefaultTableStyle, refs[j]);
+					}
+					for (let j = 0; j < pivots.length; ++j) {
+						pivots[j].asc_getStyleInfo().asc_setName(Asc.editor, pivots[j], tableStyles.DefaultPivotStyle);
+					}
+				}
+			}
+			wb.setCustomTableStyle(name, null, true);
+		} finally {
+			AscCommon.History.EndTransaction();
+		}
+	};
+
+	/**
+	 * Creates a custom copy of the table style with all its formatting and gallery flags.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - The name of the copy. Must be unique among the custom and built-in style names (case-insensitive).
+	 * @returns {ApiTableStyle}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/Duplicate.js
+	 */
+	ApiTableStyle.prototype.Duplicate = function (name) {
+		let wb = this.workbook.Workbook;
+		let model = this.private_getModel();
+		if (!model) {
+			private_MakeError('The table style does not exist.');
+			return;
+		}
+		if (!private_CheckNewTableStyleName(wb.TableStyles, name)) {
+			return;
+		}
+		let copy = model.clone();
+		copy.name = name;
+		copy.displayName = name;
+		wb.setCustomTableStyle(name, copy, true);
+		return new ApiTableStyle(this.workbook, name);
+	};
+
+	// returns the live model style for this name, custom styles first, then built-in, or null if it no longer exists
+	ApiTableStyle.prototype.private_getModel = function () {
+		let wb = this.workbook.Workbook;
+		return wb.TableStyles.CustomStyles[this.name] || wb.TableStyles.AllStyles[this.name] || null;
+	};
+
+	// clones the current custom style, lets the callback mutate the clone, then stores it as one history item; throws for a built-in or missing style
+	ApiTableStyle.prototype.private_changeStyle = function (callback) {
+		let wb = this.workbook.Workbook;
+		let model = this.private_getModel();
+		if (!model) {
+			private_MakeError('The table style does not exist.');
+			return;
+		}
+		if (this.GetBuiltIn()) {
+			private_MakeError('Cannot modify a built-in table style.');
+			return;
+		}
+		let s = model.clone();
+		callback(s);
+		wb.setCustomTableStyle(this.name, s, true);
+	};
+
+	/**
+	 * Returns a table style element by its type.
+	 * @undocumented
+	 * @memberof ApiTableStyleElements
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTableStyleElementType} type - The table style element type.
+	 * @returns {ApiTableStyleElement | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElements/Methods/GetItem.js
+	 */
+	ApiTableStyleElements.prototype.GetItem = function (type) {
+		let internalType = private_XlTableStyleElementTypeToInternal(type);
+		if (null === internalType) {
+			return null;
+		}
+		return new ApiTableStyleElement(this.tableStyle, internalType);
+	};
+
+	/**
+	 * Returns the font of the table style element. Its Size, Name, Subscript and Superscript cannot be set.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFont}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetFont.js
+	 */
+	ApiTableStyleElement.prototype.GetFont = function () {
+		return new ApiFont(this);
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "Font", {
+		get: function () {
+			return this.GetFont();
+		}
+	});
+
+	/**
+	 * Sets the background color of the table style element. Pass null or 'No Fill' to remove the fill.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor | 'No Fill' | null} color - The fill color, or null / 'No Fill' to remove the fill.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/SetFillColor.js
+	 */
+	ApiTableStyleElement.prototype.SetFillColor = function (color) {
+		let noFill = ('No Fill' === color || null === color);
+		let coreColor = noFill ? null : toCoreColor(color);
+		if (!noFill && !coreColor) {
+			private_MakeError('Invalid color.');
+			return;
+		}
+		this.private_changeStyle(function (wrap) {
+			if (noFill) {
+				wrap.dxf.fill = null;
+				return;
+			}
+			wrap.dxf.fill = new AscCommonExcel.Fill();
+			wrap.dxf.fill.fromColor(coreColor);
+		}, true);
+	};
+
+	/**
+	 * Returns the background color of the table style element. Returns 'No Fill' when no fill is set.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | 'No Fill'}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetFillColor.js
+	 */
+	ApiTableStyleElement.prototype.GetFillColor = function () {
+		let el = this.private_getDxfRule();
+		if (!el || !el.dxf || !el.dxf.fill) {
+			return 'No Fill';
+		}
+		let oColor = el.dxf.fill.bg();
+		return oColor ? toApiColor(oColor) : 'No Fill';
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "FillColor", {
+		get: function () {
+			return this.GetFillColor();
+		},
+		set: function (color) {
+			this.SetFillColor(color);
+		}
+	});
+
+	/**
+	 * Sets the border style for the table style element. Only the Left, Top, Bottom, Right, InsideHorizontal and InsideVertical positions are supported.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
+	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
+	 * @param {ApiColor} color - The color object which specifies the color to be set to the cell border.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/SetBorders.js
+	 */
+	ApiTableStyleElement.prototype.SetBorders = function (bordersIndex, lineStyle, color) {
+		let index = (typeof bordersIndex === 'string') ? bordersIndex.toLowerCase() : bordersIndex;
+		if ('left' !== index && 'top' !== index && 'bottom' !== index && 'right' !== index &&
+			'insidehorizontal' !== index && 'insidevertical' !== index) {
+			private_MakeError('Unable to set the Borders property of the TableStyleElement class.');
+			return;
+		}
+		this.private_changeStyle(function (wrap) {
+			if (!wrap.dxf.border) {
+				wrap.dxf.border = new AscCommonExcel.Border();
+			}
+			let borders = wrap.dxf.border;
+			switch (index) {
+				case 'left':
+					borders.l = private_MakeBorder(lineStyle, color);
+					break;
+				case 'top':
+					borders.t = private_MakeBorder(lineStyle, color);
+					break;
+				case 'bottom':
+					borders.b = private_MakeBorder(lineStyle, color);
+					break;
+				case 'right':
+					borders.r = private_MakeBorder(lineStyle, color);
+					break;
+				case 'insidehorizontal':
+					borders.ih = private_MakeBorder(lineStyle, color);
+					break;
+				case 'insidevertical':
+					borders.iv = private_MakeBorder(lineStyle, color);
+					break;
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns whether the table style element carries any explicit formatting.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetHasFormat.js
+	 */
+	ApiTableStyleElement.prototype.GetHasFormat = function () {
+		let el = this.private_getDxfRule();
+		let dxf = el && el.dxf;
+		if (!dxf) {
+			return false;
+		}
+		if (private_FontHasContent(dxf.font)) {
+			return true;
+		}
+		if (private_FillHasContent(dxf.fill)) {
+			return true;
+		}
+		if (private_BorderHasContent(dxf.border)) {
+			return true;
+		}
+		return !!(dxf.num || dxf.align);
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "HasFormat", {
+		get: function () {
+			return this.GetHasFormat();
+		}
+	});
+
+	/**
+	 * Removes all the explicit formatting from the table style element, keeping its stripe size.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/Clear.js
+	 */
+	ApiTableStyleElement.prototype.Clear = function () {
+		let elementType = this.type;
+		this.tableStyle.private_changeStyle(function (style) {
+			let current = style.getElementByType(elementType);
+			if (!current) {
+				return;
+			}
+			if (1 === current.size) {
+				style.setElementByType(elementType, null);
+			} else {
+				let el = current.clone();
+				el.dxf = null;
+				style.setElementByType(elementType, el);
+			}
+		});
+	};
+
+	/**
+	 * Returns the number of rows or columns in one stripe of the table style element.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetStripeSize.js
+	 */
+	ApiTableStyleElement.prototype.GetStripeSize = function () {
+		let el = this.private_getDxfRule();
+		return el ? el.size : 1;
+	};
+
+	/**
+	 * Sets the number of rows or columns in one stripe of the table style element. It affects the row and column stripe elements.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @param {number} size - An integer from 1 to 9.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/SetStripeSize.js
+	 */
+	ApiTableStyleElement.prototype.SetStripeSize = function (size) {
+		if (typeof size !== 'number' || size % 1 !== 0 || size < 1 || size > 9) {
+			private_MakeError('Invalid stripe size.');
+			return;
+		}
+		let elementType = this.type;
+		this.tableStyle.private_changeStyle(function (style) {
+			let current = style.getElementByType(elementType);
+			let el = current ? current.clone() : new Asc.CTableStyleElement();
+			el.size = size;
+			style.setElementByType(elementType, (1 === size && !el.dxf) ? null : el);
+		});
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "StripeSize", {
+		get: function () {
+			return this.GetStripeSize();
+		},
+		set: function (size) {
+			this.SetStripeSize(size);
+		}
+	});
+
+	// returns the current model element for this slot, or null; read fresh from the model on every call
+	ApiTableStyleElement.prototype.private_getDxfRule = function () {
+		let style = this.tableStyle.private_getModel();
+		return style ? style.getElementByType(this.type) : null;
+	};
+
+	// clones the slot element and its dxf, lets the callback mutate the clone, then drops empty font/fill/border and stores the element
+	ApiTableStyleElement.prototype.private_changeStyle = function (callback, notInitFont) {
+		let elementType = this.type;
+		this.tableStyle.private_changeStyle(function (style) {
+			let current = style.getElementByType(elementType);
+			let el = current ? current.clone() : new Asc.CTableStyleElement();
+			let dxf = el.dxf ? el.dxf.clone() : new AscCommonExcel.CellXfs();
+			if (!dxf.font && !notInitFont) {
+				dxf.font = new AscCommonExcel.Font();
+			}
+			callback({dxf: dxf});
+			if (dxf.font && !private_FontHasContent(dxf.font)) {
+				dxf.font = null;
+			}
+			if (dxf.fill && !private_FillHasContent(dxf.fill)) {
+				dxf.fill = null;
+			}
+			if (dxf.border && !private_BorderHasContent(dxf.border)) {
+				dxf.border = null;
+			}
+			el.dxf = (dxf.font || dxf.fill || dxf.border || dxf.num || dxf.align) ? dxf : null;
+			style.setElementByType(elementType, el);
+		});
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiWorksheet
@@ -16084,10 +16872,11 @@
 				isBold = null;
 			}
 			return isBold;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isBold = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isBold = this._object.rule.dxf.font.b;
+			if (rule && rule.dxf && rule.dxf.font) {
+				isBold = rule.dxf.font.b;
 			}
 			return isBold;
 		}
@@ -16103,7 +16892,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetBold.js
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
-		if (typeof isBold !== 'boolean') {
+		let isTableStyleElement = this._object instanceof ApiTableStyleElement;
+		if (typeof isBold !== 'boolean' && !(isTableStyleElement && null === isBold)) {
 			throwException(new Error('Invalid type of parametr "isBold".'));
 			return;
 		}
@@ -16131,18 +16921,19 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentBold = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.b;
-			let newBold = isBold ? true : null;
-			
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentBold = rule && rule.dxf && rule.dxf.font && rule.dxf.font.b;
+			let newBold = isTableStyleElement ? isBold : (isBold ? true : null);
+
 			if (currentBold === newBold) {
 				return;
 			}
-			
+
 			this._object.private_changeStyle(function (_newRule) {
 				_newRule.dxf.font.b = newBold;
 			});
-		} 
+		}
 	};
 	Object.defineProperty(ApiFont.prototype, "Bold", {
 		get: function () {
@@ -16183,10 +16974,11 @@
 				isItalic = null;
 			}
 			return isItalic;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isItalic = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isItalic = this._object.rule.dxf.font.i;
+			if (rule && rule.dxf && rule.dxf.font) {
+				isItalic = rule.dxf.font.i;
 			}
 			return isItalic;
 		}
@@ -16202,7 +16994,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetItalic.js
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
-		if (typeof isItalic !== 'boolean') {
+		let isTableStyleElement = this._object instanceof ApiTableStyleElement;
+		if (typeof isItalic !== 'boolean' && !(isTableStyleElement && null === isItalic)) {
 			throwException(new Error('Invalid type of parametr "isItalic".'));
 			return;
 		}
@@ -16230,14 +17023,15 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentItalic = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.i;
-			let newItalic = isItalic ? true : null;
-			
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentItalic = rule && rule.dxf && rule.dxf.font && rule.dxf.font.i;
+			let newItalic = isTableStyleElement ? isItalic : (isItalic ? true : null);
+
 			if (currentItalic === newItalic) {
 				return;
 			}
-			
+
 			this._object.private_changeStyle(function (_newRule) {
 				_newRule.dxf.font.i = newItalic;
 			});
@@ -16283,10 +17077,11 @@
 				size = null;
 			}
 			return size;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let fontSize = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				fontSize = this._object.rule.dxf.font.fs;
+			if (rule && rule.dxf && rule.dxf.font) {
+				fontSize = rule.dxf.font.fs;
 			}
 			return fontSize;
 		}
@@ -16302,6 +17097,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSize.js
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Size property of the Font class.'));
+			return;
+		}
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
 			throwException(new Error('Invalid type of parametr "Size".'));
 			return;
@@ -16382,10 +17181,11 @@
 				isStrikethrough = null;
 			}
 			return isStrikethrough;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isStrikethrough = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isStrikethrough = this._object.rule.dxf.font.s;
+			if (rule && rule.dxf && rule.dxf.font) {
+				isStrikethrough = rule.dxf.font.s;
 			}
 			return isStrikethrough;
 		}
@@ -16401,7 +17201,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetStrikethrough.js
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
-		if (typeof isStrikethrough !== 'boolean') {
+		let isTableStyleElement = this._object instanceof ApiTableStyleElement;
+		if (typeof isStrikethrough !== 'boolean' && !(isTableStyleElement && null === isStrikethrough)) {
 			throwException(new Error('Invalid type of parametr "isStrikethrough".'));
 			return;
 		}
@@ -16429,9 +17230,10 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentStrike = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.s;
-			let newStrike = isStrikethrough ? true : null;
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentStrike = rule && rule.dxf && rule.dxf.font && rule.dxf.font.s;
+			let newStrike = isTableStyleElement ? isStrikethrough : (isStrikethrough ? true : null);
 
 			if (currentStrike === newStrike) {
 				return;
@@ -16514,10 +17316,11 @@
 			}
 
 			return Underline;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let underlineType = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				underlineType = this._object.rule.dxf.font.u;
+			if (rule && rule.dxf && rule.dxf.font) {
+				underlineType = rule.dxf.font.u;
 			}
 
 			 switch (underlineType) {
@@ -16598,8 +17401,9 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentUnderline = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.u;
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentUnderline = rule && rule.dxf && rule.dxf.font && rule.dxf.font.u;
 			if (currentUnderline === Underline) {
 				return;
 			}
@@ -16648,10 +17452,11 @@
 				isSubscript = null;
 			}
 			return isSubscript;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isSubscript = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isSubscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SubScript; // 2 = subscript
+			if (rule && rule.dxf && rule.dxf.font) {
+				isSubscript = rule.dxf.font.va === AscCommon.vertalign_SubScript; // 2 = subscript
 			}
 			return isSubscript;
 		}
@@ -16667,6 +17472,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSubscript.js
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Subscript property of the Font class.'));
+			return;
+		}
 		if (typeof isSubscript !== 'boolean') {
 			throwException(new Error('Invalid type of parametr "isSubscript".'));
 			return;
@@ -16748,10 +17557,11 @@
 				isSuperscript = null;
 			}
 			return isSuperscript;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isSuperscript = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isSuperscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SuperScript; // 1 = superscript
+			if (rule && rule.dxf && rule.dxf.font) {
+				isSuperscript = rule.dxf.font.va === AscCommon.vertalign_SuperScript; // 1 = superscript
 			}
 			return isSuperscript;
 		}
@@ -16767,6 +17577,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSuperscript.js
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Superscript property of the Font class.'));
+			return;
+		}
 		if (typeof isSuperscript !== 'boolean') {
 			throwException(new Error('Invalid type of parametr "isSuperscript".'));
 			return;
@@ -16848,10 +17662,11 @@
 				FontName = null;
 			}
 			return FontName;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let fontName = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				fontName = this._object.rule.dxf.font.fn;
+			if (rule && rule.dxf && rule.dxf.font) {
+				fontName = rule.dxf.font.fn;
 			}
 			return fontName;
 		}
@@ -16867,6 +17682,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetName.js
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Name property of the Font class.'));
+			return;
+		}
 		if (typeof FontName !== 'string') {
 			throwException(new Error('Invalid type of parametr "FontName".'));
 			return;
@@ -16948,10 +17767,11 @@
 				color = null;
 			}
 			return (color !== null ? toApiColor(color) : null);
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let fontColor = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c) {
-				fontColor = this._object.rule.dxf.font.c;
+			if (rule && rule.dxf && rule.dxf.font && rule.dxf.font.c) {
+				fontColor = rule.dxf.font.c;
 			}
 			return fontColor ? toApiColor(fontColor) : null;
 		}
@@ -16996,8 +17816,9 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentColor = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c;
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentColor = rule && rule.dxf && rule.dxf.font && rule.dxf.font.c;
 			let newColor = coreColor;
 
 			if (currentColor === newColor) {
@@ -19757,9 +20578,10 @@
 
 	/**
 	 * Sets the pivot table style name.
+	 * Built-in pivot table style names: PivotStyleLight1-28, PivotStyleMedium1-28, PivotStyleDark1-28.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - The pivot table style name.
+	 * @param {string} name - The name of a built-in pivot table style (for example, "PivotStyleMedium9"), or a custom style defined in the workbook.
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetStyleName.js
 	 */
@@ -30565,6 +31387,32 @@
 	ApiWorkbook.prototype["Redraw"] = ApiWorkbook.prototype.Redraw;
 	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
 	ApiWorkbook.prototype["GetDrawingsByName"] = ApiWorkbook.prototype.GetDrawingsByName;
+	ApiWorkbook.prototype["GetTableStyles"] = ApiWorkbook.prototype.GetTableStyles;
+
+	ApiTableStyles.prototype["Add"] = ApiTableStyles.prototype.Add;
+	ApiTableStyles.prototype["GetItem"] = ApiTableStyles.prototype.GetItem;
+	ApiTableStyles.prototype["GetCount"] = ApiTableStyles.prototype.GetCount;
+
+	ApiTableStyle.prototype["GetName"] = ApiTableStyle.prototype.GetName;
+	ApiTableStyle.prototype["GetBuiltIn"] = ApiTableStyle.prototype.GetBuiltIn;
+	ApiTableStyle.prototype["GetShowAsAvailableTableStyle"] = ApiTableStyle.prototype.GetShowAsAvailableTableStyle;
+	ApiTableStyle.prototype["SetShowAsAvailableTableStyle"] = ApiTableStyle.prototype.SetShowAsAvailableTableStyle;
+	ApiTableStyle.prototype["GetShowAsAvailablePivotTableStyle"] = ApiTableStyle.prototype.GetShowAsAvailablePivotTableStyle;
+	ApiTableStyle.prototype["SetShowAsAvailablePivotTableStyle"] = ApiTableStyle.prototype.SetShowAsAvailablePivotTableStyle;
+	ApiTableStyle.prototype["GetTableStyleElements"] = ApiTableStyle.prototype.GetTableStyleElements;
+	ApiTableStyle.prototype["Delete"] = ApiTableStyle.prototype.Delete;
+	ApiTableStyle.prototype["Duplicate"] = ApiTableStyle.prototype.Duplicate;
+
+	ApiTableStyleElements.prototype["GetItem"] = ApiTableStyleElements.prototype.GetItem;
+
+	ApiTableStyleElement.prototype["GetFont"] = ApiTableStyleElement.prototype.GetFont;
+	ApiTableStyleElement.prototype["SetFillColor"] = ApiTableStyleElement.prototype.SetFillColor;
+	ApiTableStyleElement.prototype["GetFillColor"] = ApiTableStyleElement.prototype.GetFillColor;
+	ApiTableStyleElement.prototype["SetBorders"] = ApiTableStyleElement.prototype.SetBorders;
+	ApiTableStyleElement.prototype["GetHasFormat"] = ApiTableStyleElement.prototype.GetHasFormat;
+	ApiTableStyleElement.prototype["Clear"] = ApiTableStyleElement.prototype.Clear;
+	ApiTableStyleElement.prototype["GetStripeSize"] = ApiTableStyleElement.prototype.GetStripeSize;
+	ApiTableStyleElement.prototype["SetStripeSize"] = ApiTableStyleElement.prototype.SetStripeSize;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;

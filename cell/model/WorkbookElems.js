@@ -5901,6 +5901,10 @@ StyleManager.prototype =
 	}
 
 	SheetMergedStyles.prototype.setTablePivotStyle = function(range, xf, stripe) {
+		//a style element without a dxf formats nothing; its stripe size already reaches the other stripe's offset
+		if (!xf) {
+			return;
+		}
 		this.stylesTablePivot.push({xf: xf, range: range, stripe: stripe, borders: undefined});
 	};
 	SheetMergedStyles.prototype.clearTablePivotStyle = function(range) {
