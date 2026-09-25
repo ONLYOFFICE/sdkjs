@@ -116,7 +116,10 @@
 		this.ResetBuffer();
 		
 		let oFontInfo = this.GetFontInfo(this.FontSlot);
-		let nFontId   = AscCommon.FontNameMap.GetId(this.FontId.m_pFaceInfo.family_name);
+		// register the requested (logical) font name rather than the physical face name of
+		// the substitute, so the toolbar keeps showing the font used in the document
+		// (e.g. "Times New Roman") even when it is not installed and has been substituted
+		let nFontId   = AscCommon.FontNameMap.GetId(oFontInfo.Name);
 		AscCommon.g_oTextMeasurer.SetFontInternal(this.FontId.m_pFaceInfo.family_name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
 
 		this.FontSize = oFontInfo.Size;
