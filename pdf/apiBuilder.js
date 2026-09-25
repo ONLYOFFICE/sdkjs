@@ -11097,7 +11097,7 @@
 	 * Sets the background color of the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} [color] - If not passed, the background color will be cleared (see arguments below for RGB triplet form).
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js

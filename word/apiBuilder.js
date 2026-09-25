@@ -2762,6 +2762,46 @@
 	};
 
 	/**
+	 * Specifies the language which will be used to check spelling and grammar (if requested) when processing
+	 * the contents of the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @returns {ApiRange | null} - returns null if the language identifier is not supported or the language can't be set.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetLanguage.js
+	 */
+	ApiRange.prototype.SetLanguage = function(langId)
+	{
+		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		if (undefined === lcid)
+			return null;
+
+		private_RefreshRangesPosition();
+
+		const logicDocument = private_GetLogicDocument();
+		const oldSelectionInfo = logicDocument.SaveDocumentState();
+
+		this.Select();
+		private_TrackRangesPositions();
+
+		const selectedContent = logicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
+		if (!selectedContent.CanEditBlockSdts() || !selectedContent.CanDeleteInlineSdts())
+		{
+			logicDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.UpdateSelection();
+			return null;
+		}
+
+		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Lang : {Val : lcid}}));
+
+		logicDocument.LoadDocumentState(oldSelectionInfo);
+		logicDocument.UpdateSelection();
+		return this;
+	};
+
+	/**
 	 * Sets the style to the current Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
@@ -11891,6 +11931,29 @@
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr({VertAlign : value}));
 		this.Paragraph.SetApplyToAll(false);
 		
+		return this;
+	};
+	/**
+	 * Specifies the language which will be used to check spelling and grammar (if requested) when processing
+	 * the contents of the current paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @returns {ApiParagraph | null} - returns null if the language identifier is not supported.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetLanguage.js
+	 */
+	ApiParagraph.prototype.SetLanguage = function(langId)
+	{
+		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		if (undefined === lcid)
+			return null;
+
+		this.Paragraph.SetApplyToAll(true);
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Lang : {Val : lcid}}));
+		this.Paragraph.SetApplyToAll(false);
+
 		return this;
 	};
 	/**
@@ -34039,6 +34102,25 @@
 		return this.private_ApplyTextPr({FontFamily: {Name: fontFamily, Index: -1}});
 	};
 
+	/**
+	 * Specifies the language which will be used to check spelling and grammar (if requested) when processing
+	 * the contents of the current text range.
+	 * @memberof ApiTextRange
+	 * @typeofeditors ["CPE", "CSE", "PDFE"]
+	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @returns {ApiTextRange | null} - returns null if the language identifier is not supported.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetLanguage.js
+	 */
+	ApiTextRange.prototype.SetLanguage = function(langId) {
+		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		if (undefined === lcid)
+			return null;
+
+		return this.private_ApplyTextPr({Lang: {Val: lcid}});
+	};
+
 	// /**
 	//  * Sets the style to the current Range.
 	//  * @memberof ApiTextRange
@@ -34378,6 +34460,7 @@
 	ApiRange.prototype["SetPosition"]                = ApiRange.prototype.SetPosition;
 	ApiRange.prototype["SetFontSize"]                = ApiRange.prototype.SetFontSize;
 	ApiRange.prototype["SetFontFamily"]              = ApiRange.prototype.SetFontFamily;
+	ApiRange.prototype["SetLanguage"]                = ApiRange.prototype.SetLanguage;
 	ApiRange.prototype["SetStyle"]                   = ApiRange.prototype.SetStyle;
 	ApiRange.prototype["SetTextPr"]                  = ApiRange.prototype.SetTextPr;
 	ApiRange.prototype["GetTextPr"]                  = ApiRange.prototype.GetTextPr;
@@ -34565,6 +34648,7 @@
 	ApiParagraph.prototype["SetStrikeout"]           = ApiParagraph.prototype.SetStrikeout;
 	ApiParagraph.prototype["SetUnderline"]           = ApiParagraph.prototype.SetUnderline;
 	ApiParagraph.prototype["SetVertAlign"]           = ApiParagraph.prototype.SetVertAlign;
+	ApiParagraph.prototype["SetLanguage"]            = ApiParagraph.prototype.SetLanguage;
 	ApiParagraph.prototype["SetReadingOrder"]        = ApiParagraph.prototype.SetReadingOrder;
 	ApiParagraph.prototype["SetDropCap"]             = ApiParagraph.prototype.SetDropCap;
 	ApiParagraph.prototype["GetDropCap"]             = ApiParagraph.prototype.GetDropCap;
@@ -35673,6 +35757,7 @@
 	ApiTextRange.prototype["SetColor"]           = ApiTextRange.prototype.SetColor;
 	ApiTextRange.prototype["SetFontSize"]        = ApiTextRange.prototype.SetFontSize;
 	ApiTextRange.prototype["SetFontFamily"]      = ApiTextRange.prototype.SetFontFamily;
+	ApiTextRange.prototype["SetLanguage"]        = ApiTextRange.prototype.SetLanguage;
 	ApiTextRange.prototype["SetSpacing"]         = ApiTextRange.prototype.SetSpacing;
 	//ApiTextRange.prototype["SetPosition"]        = ApiTextRange.prototype.SetPosition;
 	ApiTextRange.prototype["SetVertAlign"]       = ApiTextRange.prototype.SetVertAlign;
