@@ -1267,11 +1267,17 @@
 		oTransform.shx = this.getValBetween(this.transform1.shx, this.transform2.shx);
 		oTransform.shy = this.getValBetween(this.transform1.shy, this.transform2.shy);
 
+		const bounds = this.drawingParams.bounds;
+		const inverseTransform = AscCommon.global_MatrixTransformer.Invert(this.drawingParams.transform);
+		const drawTransform = new AscCommon.CMatrix();
+		AscCommon.global_MatrixTransformer.TranslateAppend(drawTransform, inverseTransform.TransformPointX(bounds.l, bounds.t), inverseTransform.TransformPointY(bounds.l, bounds.t));
+		AscCommon.global_MatrixTransformer.MultiplyAppend(drawTransform, oTransform);
+
 		const oOldTransform = this.drawing.transform;
 		const oOldBounds = this.drawing.bounds;
 		this.drawing.transform = this.drawingParams.transform;
 		this.drawing.bounds = this.drawingParams.bounds;
-		this.drawWithAlpha(oGraphics, this.getAlpha(), oTransform);
+		this.drawWithAlpha(oGraphics, this.getAlpha(), drawTransform);
 		this.drawing.transform = oOldTransform;
 		this.drawing.bounds = oOldBounds;
 	};
