@@ -2156,7 +2156,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | null} color - The text color. Pass <em>null</em> to remove the text color.
 	 * @return {ApiRange | null} - returns null if can't apply color.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
@@ -2206,6 +2206,9 @@
 
 		if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
+		}
+		else if (null === color) {
+			paraTextPrOptions = { Color : null, Unifill : null, TextFill : null };
 		}
 
 		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr(paraTextPrOptions));
@@ -2519,11 +2522,11 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @returns {ApiRange | null} - returns null if can't apply spacing.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetSpacing.js
 	 */
-	ApiRange.prototype.SetSpacing = function(nSpacing)
+	ApiRange.prototype.SetSpacing = function(spacing)
 	{
 		private_RefreshRangesPosition();
 
@@ -2542,7 +2545,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : private_Twips2MM(nSpacing)});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : null === spacing ? null : private_Twips2MM(spacing)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2596,11 +2599,11 @@
 	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
 	 * @returns {ApiRange | null} - returns null if can't apply align.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetVertAlign.js
 	 */
-	ApiRange.prototype.SetVertAlign = function(sType)
+	ApiRange.prototype.SetVertAlign = function(type)
 	{
 		private_RefreshRangesPosition();
 
@@ -2612,12 +2615,14 @@
 
 		var value = undefined;
 
-		if (sType === "baseline")
+		if (type === "baseline")
 			value = AscCommon.vertalign_Baseline;
-		else if (sType === "subscript")
+		else if (type === "subscript")
 			value = AscCommon.vertalign_SubScript;
-		else if (sType === "superscript")
+		else if (type === "superscript")
 			value = AscCommon.vertalign_SuperScript;
+		else if (type === null)
+			value = null;
 		else 
 			return null;
 
@@ -2644,12 +2649,12 @@
 	 * baseline of the surrounding non-positioned text.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
+	 * @param {hps | null} position - Specifies a positive (raised text) or negative (lowered text)
+	 * measurement in half-points (1/144 of an inch). Pass <em>null</em> to remove the position.
 	 * @returns {ApiRange | null} - returns null if can't set position.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetPosition.js
 	 */
-	ApiRange.prototype.SetPosition = function(nPosition)
+	ApiRange.prototype.SetPosition = function(position)
 	{
 		private_RefreshRangesPosition();
 
@@ -2659,7 +2664,7 @@
 		this.Select();
 		private_TrackRangesPositions();
 
-		if (typeof nPosition !== "number")
+		if (null !== position && typeof position !== "number")
 			return null;
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2671,7 +2676,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : private_PtToMM(private_GetHps(nPosition))});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : null === position ? null : private_PtToMM(private_GetHps(position))});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2684,7 +2689,7 @@
 	 * Sets the font size to the characters of the current text Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} fontSize - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @returns {ApiRange | null} - returns null if can't set font size.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
@@ -2707,7 +2712,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : null === fontSize ? null : private_GetHps(fontSize)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2720,18 +2725,19 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sFontFamily - The font family or families used for the current text Range.
+	 * @param {string | null} fontFamily - The font family or families used for the current text Range. Pass <em>null</em> to remove the font family.
 	 * @returns {ApiRange | null} - returns null if can't set font family.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontFamily.js
 	 */
-	ApiRange.prototype.SetFontFamily = function(sFontFamily)
+	ApiRange.prototype.SetFontFamily = function(fontFamily)
 	{
 		private_RefreshRangesPosition();
 
-		if (typeof sFontFamily !== "string")
+		if (null !== fontFamily && typeof fontFamily !== "string")
 			return null;
 		
-		LoadFont(sFontFamily);
+		if (null !== fontFamily)
+			LoadFont(fontFamily);
 		
 		var Document			= private_GetLogicDocument();
 		let oldSelectionInfo = Document.SaveDocumentState();
@@ -2740,7 +2746,7 @@
 		private_TrackRangesPositions();
 
 		var FontFamily = {
-			Name : sFontFamily,
+			Name : fontFamily,
 			Index : -1
 		};
 
@@ -2753,7 +2759,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
+		var ParaTextPr = null === fontFamily ? private_GetRemoveFontFamilyTextPr() : new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2766,15 +2772,15 @@
 	 * the contents of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @returns {ApiRange | null} - returns null if the language identifier is not supported or the language can't be set.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetLanguage.js
 	 */
 	ApiRange.prototype.SetLanguage = function(langId)
 	{
-		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		const lcid = null === langId ? null : Asc.g_oLcidNameToIdMap[langId];
 		if (undefined === lcid)
 			return null;
 
@@ -11645,7 +11651,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | null} color - The text color. Pass <em>null</em> to remove the text color.
 	 * @return {ApiParagraph} this
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
@@ -11681,6 +11687,9 @@
 		if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
+		else if (null === color) {
+			paraTextPrOptions = { Color : null, Unifill : null, TextFill : null };
+		}
 
 		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr(paraTextPrOptions));
@@ -11707,20 +11716,21 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sFontFamily - The font family or families used for the current paragraph.
+	 * @param {string | null} fontFamily - The font family or families used for the current paragraph. Pass <em>null</em> to remove the font family.
 	 * @returns {?ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontFamily.js
 	 */
-	ApiParagraph.prototype.SetFontFamily = function(sFontFamily)
+	ApiParagraph.prototype.SetFontFamily = function(fontFamily)
 	{
-		if (typeof sFontFamily !== "string")
+		if (null !== fontFamily && typeof fontFamily !== "string")
 			return null;
 		
-		LoadFont(sFontFamily);
+		if (null !== fontFamily)
+			LoadFont(fontFamily);
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
+		this.Paragraph.Add(null === fontFamily ? private_GetRemoveFontFamilyTextPr() : new AscCommonWord.ParaTextPr({
 			FontFamily : {
-				Name  : sFontFamily,
+				Name  : fontFamily,
 				Index : -1
 			}
 		}));
@@ -11744,14 +11754,14 @@
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} fontSize - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
 	 */
 	ApiParagraph.prototype.SetFontSize = function(fontSize)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : null === fontSize ? null : private_GetHps(fontSize)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -11816,15 +11826,15 @@
 	 * baseline of the surrounding non-positioned text.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
+	 * @param {hps | null} position - Specifies a positive (raised text) or negative (lowered text)
+	 * measurement in half-points (1/144 of an inch). Pass <em>null</em> to remove the position.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetPosition.js
 	 */
-	ApiParagraph.prototype.SetPosition = function(nPosition)
+	ApiParagraph.prototype.SetPosition = function(position)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : private_PtToMM(private_GetHps(nPosition))}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : null === position ? null : private_PtToMM(private_GetHps(position))}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -11853,14 +11863,14 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSpacing.js
 	 */
-	ApiParagraph.prototype.SetSpacing = function(nSpacing)
+	ApiParagraph.prototype.SetSpacing = function(spacing)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : private_Twips2MM(nSpacing)}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : null === spacing ? null : private_Twips2MM(spacing)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -11908,20 +11918,22 @@
 	 * <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
-	 * @returns {ApiParagraph | null} - returns null is sType is invalid.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
+	 * @returns {ApiParagraph | null} - returns null is type is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetVertAlign.js
 	 */
-	ApiParagraph.prototype.SetVertAlign = function(sType)
+	ApiParagraph.prototype.SetVertAlign = function(type)
 	{
 		var value = undefined;
 
-		if (sType === "baseline")
+		if (type === "baseline")
 			value = AscCommon.vertalign_Baseline;
-		else if (sType === "subscript")
+		else if (type === "subscript")
 			value = AscCommon.vertalign_SubScript;
-		else if (sType === "superscript")
+		else if (type === "superscript")
 			value = AscCommon.vertalign_SuperScript;
+		else if (type === null)
+			value = null;
 		else 
 			return null;
 
@@ -11936,15 +11948,15 @@
 	 * the contents of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @returns {ApiParagraph | null} - returns null if the language identifier is not supported.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetLanguage.js
 	 */
 	ApiParagraph.prototype.SetLanguage = function(langId)
 	{
-		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		const lcid = null === langId ? null : Asc.g_oLcidNameToIdMap[langId];
 		if (undefined === lcid)
 			return null;
 
@@ -17442,13 +17454,13 @@
 	 * Sets the font size to the characters of the current text run.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} size - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetFontSize.js
 	 */
-	ApiTextPr.prototype.SetFontSize = function(nSize)
+	ApiTextPr.prototype.SetFontSize = function(size)
 	{
-		this.TextPr.FontSize = private_GetHps(nSize);
+		this.TextPr.FontSize = null === size ? undefined : private_GetHps(size);
 		this.private_OnChange();
 		return this;
 	};
@@ -17492,12 +17504,19 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | null} color - The text color. Pass <em>null</em> to remove the text color.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
 	ApiTextPr.prototype.SetColor = function(color) {
+		if (null === color) {
+			this.TextPr.Color = undefined;
+			this.TextPr.Unifill = undefined;
+			this.private_OnChange();
+			return this;
+		}
+
 		let r, g, b;
 		let isAuto, isTheme;
 
@@ -17569,18 +17588,20 @@
 	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetVertAlign.js
 	 */
-	ApiTextPr.prototype.SetVertAlign = function(sType)
+	ApiTextPr.prototype.SetVertAlign = function(type)
 	{
-		if ("baseline" === sType)
+		if ("baseline" === type)
 			this.TextPr.VertAlign = AscCommon.vertalign_Baseline;
-		else if ("subscript" === sType)
+		else if ("subscript" === type)
 			this.TextPr.VertAlign = AscCommon.vertalign_SubScript;
-		else if ("superscript" === sType)
+		else if ("superscript" === type)
 			this.TextPr.VertAlign = AscCommon.vertalign_SuperScript;
+		else if (null === type)
+			this.TextPr.VertAlign = undefined;
 
 		this.private_OnChange();
 		return this;
@@ -17665,13 +17686,13 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetSpacing.js
 	 */
-	ApiTextPr.prototype.SetSpacing = function(nSpacing)
+	ApiTextPr.prototype.SetSpacing = function(spacing)
 	{
-		this.TextPr.Spacing = private_Twips2MM(nSpacing);
+		this.TextPr.Spacing = null === spacing ? undefined : private_Twips2MM(spacing);
 		this.private_OnChange();
 		return this;
 	};
@@ -17784,14 +17805,14 @@
 	 * baseline of the surrounding non-positioned text.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
+	 * @param {hps | null} position - Specifies a positive (raised text) or negative (lowered text)
+	 * measurement in half-points (1/144 of an inch). Pass <em>null</em> to remove the position.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetPosition.js
 	 */
-	ApiTextPr.prototype.SetPosition = function(nPosition)
+	ApiTextPr.prototype.SetPosition = function(position)
 	{
-		this.TextPr.Position = private_PtToMM(private_GetHps(nPosition));
+		this.TextPr.Position = null === position ? undefined : private_PtToMM(private_GetHps(position));
 		this.private_OnChange();
 		return this;
 	};
@@ -17820,17 +17841,17 @@
 	 * the contents of the text run.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetLanguage.js
 	 */
-	ApiTextPr.prototype.SetLanguage = function(sLangId)
+	ApiTextPr.prototype.SetLanguage = function(langId)
 	{
-		var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
-		if (undefined !== nLcid)
+		const lcid = null === langId ? undefined : Asc.g_oLcidNameToIdMap[langId];
+		if (null === langId || undefined !== lcid)
 		{
-			this.TextPr.Lang.Val = nLcid;
+			this.TextPr.Lang.Val = lcid;
 			this.private_OnChange();
 			return this;
 		}
@@ -33810,7 +33831,7 @@
 
 		private_RefreshTextRanges(this.DocContent);
 		docContent.SelectCharRange(start, end, false);
-		docContent.AddToParagraph(new AscCommonWord.ParaTextPr(props), false);
+		docContent.AddToParagraph(props instanceof AscCommonWord.ParaTextPr ? props : new AscCommonWord.ParaTextPr(props), false);
 		private_RestoreSelectionCharRange(docContent, selection);
 		docContent.Recalculate();
 		private_TrackTextRanges(this.DocContent);
@@ -33836,13 +33857,13 @@
 	 * Sets bold formatting for the contents of the current text range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isBold
+	 * @param {boolean | null} isBold - Pass <em>null</em> to remove the bold formatting.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetBold.js
 	 */
 	ApiTextRange.prototype.SetBold = function(isBold) {
-		isBold = AscBuilder.GetBoolParameter(isBold, false);
+		isBold = null === isBold ? null : AscBuilder.GetBoolParameter(isBold, false);
 		return this.private_ApplyTextPr({Bold: isBold});
 	};
 
@@ -33850,14 +33871,14 @@
 	 * Specifies that any lowercase characters in the current text Range are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isCaps - Specifies if the Range contents are displayed capitalized or not.
+	 * @param {boolean | null} isCaps - Specifies if the Range contents are displayed capitalized or not. Pass <em>null</em> to remove the capitalization.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetCaps.js
 	 */
 	ApiTextRange.prototype.SetCaps = function(isCaps)
 	{
-		isCaps = AscBuilder.GetBoolParameter(isCaps, false);
+		isCaps = null === isCaps ? null : AscBuilder.GetBoolParameter(isCaps, false);
 		return this.private_ApplyTextPr({Caps : isCaps});
 	};
 
@@ -33865,7 +33886,7 @@
 	 * Sets the text color of the current range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor | null} color - Pass <em>null</em> to remove the text color.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetColor.js
@@ -33900,6 +33921,9 @@
 		if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
+		else if (null === color) {
+			paraTextPrOptions = { Color : null, Unifill : null, TextFill : null };
+		}
 
 		return this.private_ApplyTextPr(paraTextPrOptions);
 	};
@@ -33908,13 +33932,13 @@
 	 * Specifies that the contents of the current Range are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isDoubleStrikeout
+	 * @param {boolean | null} isDoubleStrikeout - Pass <em>null</em> to remove the double strikeout.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetDoubleStrikeout.js
 	 */
 	ApiTextRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout) {
-		isDoubleStrikeout = AscBuilder.GetBoolParameter(isDoubleStrikeout, false);
+		isDoubleStrikeout = null === isDoubleStrikeout ? null : AscBuilder.GetBoolParameter(isDoubleStrikeout, false);
 		return this.private_ApplyTextPr({DStrikeout : isDoubleStrikeout});
 	};
 
@@ -33944,13 +33968,13 @@
 	 * Sets the italic property to the text character.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isItalic
+	 * @param {boolean | null} isItalic - Pass <em>null</em> to remove the italic formatting.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetItalic.js
 	 */
 	ApiTextRange.prototype.SetItalic = function(isItalic) {
-		isItalic = AscBuilder.GetBoolParameter(isItalic, false);
+		isItalic = null === isItalic ? null : AscBuilder.GetBoolParameter(isItalic, false);
 		return this.private_ApplyTextPr({Italic: isItalic});
 	};
 
@@ -33958,13 +33982,13 @@
 	 * Specifies that the contents of the current Range are displayed with a single horizontal line through the range center.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isStrikeout
+	 * @param {boolean | null} isStrikeout - Pass <em>null</em> to remove the strikeout.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetStrikeout.js
 	 */
 	ApiTextRange.prototype.SetStrikeout = function(isStrikeout) {
-		isStrikeout = AscBuilder.GetBoolParameter(isStrikeout, false);
+		isStrikeout = null === isStrikeout ? null : AscBuilder.GetBoolParameter(isStrikeout, false);
 		return this.private_ApplyTextPr({Strikeout: isStrikeout, DStrikeout : false});
 	};
 
@@ -33973,13 +33997,13 @@
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isSmallCaps - Specifies if the contents of the current Range are displayed capitalized two points smaller or not.
+	 * @param {boolean | null} isSmallCaps - Specifies if the contents of the current Range are displayed capitalized two points smaller or not. Pass <em>null</em> to remove the small capitals.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetSmallCaps.js
 	 */
 	ApiTextRange.prototype.SetSmallCaps = function(isSmallCaps) {
-		isSmallCaps = AscBuilder.GetBoolParameter(isSmallCaps, false);
+		isSmallCaps = null === isSmallCaps ? null : AscBuilder.GetBoolParameter(isSmallCaps, false);
 		return this.private_ApplyTextPr({SmallCaps : isSmallCaps, Caps : false});
 	};
 
@@ -33987,12 +34011,15 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {twips} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetSpacing.js
 	 */
 	ApiTextRange.prototype.SetSpacing = function(spacing) {
+		if (null === spacing)
+			return this.private_ApplyTextPr({Spacing : null});
+
 		spacing = AscBuilder.GetNumberParameter(spacing, null);
 		if (spacing === null)
 			return null;
@@ -34004,13 +34031,13 @@
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isUnderline - Specifies if the contents of the current Range are displayed underlined or not.
+	 * @param {boolean | null} isUnderline - Specifies if the contents of the current Range are displayed underlined or not. Pass <em>null</em> to remove the underline.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetUnderline.js
 	 */
 	ApiTextRange.prototype.SetUnderline = function(isUnderline) {
-		isUnderline = AscBuilder.GetBoolParameter(isUnderline, false);
+		isUnderline = null === isUnderline ? null : AscBuilder.GetBoolParameter(isUnderline, false);
 		return this.private_ApplyTextPr({Underline: isUnderline});
 	};
 
@@ -34021,7 +34048,7 @@
 	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {("baseline" | "subscript" | "superscript")} type - The vertical alignment type applied to the text contents.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetVertAlign.js
@@ -34035,6 +34062,8 @@
 			value = AscCommon.vertalign_SubScript;
 		else if (type === "superscript")
 			value = AscCommon.vertalign_SuperScript;
+		else if (type === null)
+			value = null;
 		else 
 			return null;
 
@@ -34062,12 +34091,15 @@
 	 * Sets the font size of the characters in the current text Range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} fontSize - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontSize.js
 	 */
 	ApiTextRange.prototype.SetFontSize = function(fontSize) {
+		if (null === fontSize)
+			return this.private_ApplyTextPr({FontSize: null});
+
 		fontSize = AscBuilder.GetNumberParameter(fontSize, null);
 
 		if (!AscFormat.isRealNumber(fontSize) || fontSize === null)
@@ -34083,12 +34115,15 @@
 	 * Sets the font family for the current TextRange.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string} fontFamily - The font family or families used for the current text Range.
+	 * @param {string | null} fontFamily - The font family or families used for the current text Range. Pass <em>null</em> to remove the font family.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
 	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
+		if (null === fontFamily)
+			return this.private_ApplyTextPr(private_GetRemoveFontFamilyTextPr());
+
 		fontFamily = AscBuilder.GetStringParameter(fontFamily, null, false);
 		if (null === fontFamily)
 			AscBuilder.throwException(new Error('Invalid type of parameter "fontFamily".'));
@@ -34105,14 +34140,14 @@
 	 * the contents of the current text range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @returns {ApiTextRange | null} - returns null if the language identifier is not supported.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetLanguage.js
 	 */
 	ApiTextRange.prototype.SetLanguage = function(langId) {
-		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		const lcid = null === langId ? null : Asc.g_oLcidNameToIdMap[langId];
 		if (undefined === lcid)
 			return null;
 
@@ -36225,6 +36260,17 @@
 			return - Math.ceil(Math.abs(hps)) / 2.0
 		}
 		return Math.ceil(hps) / 2.0;
+	}
+
+	function private_GetRemoveFontFamilyTextPr()
+	{
+		const paraTextPr = new AscCommonWord.ParaTextPr();
+		const fonts = paraTextPr.Value.RFonts;
+		fonts.Ascii    = fonts.AsciiTheme    = null;
+		fonts.EastAsia = fonts.EastAsiaTheme = null;
+		fonts.HAnsi    = fonts.HAnsiTheme    = null;
+		fonts.CS       = fonts.CSTheme       = null;
+		return paraTextPr;
 	}
 
 	function private_GetColor(r, g, b, Auto)

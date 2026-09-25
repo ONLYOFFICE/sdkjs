@@ -12783,10 +12783,12 @@ CRFonts.prototype.IsEqualSlot = function(rFonts, fontSlot)
 	
 	return this.IsEqual(rFonts);
 };
-CRFonts.prototype.private_IsEqual = function(oFont1, oFont2)
+CRFonts.prototype.private_IsEqual = function(font1, font2)
 {
-	return ((undefined === oFont1 && undefined === oFont2)
-		|| (undefined !== oFont1 && undefined !== oFont2 && oFont1.Name === oFont2.Name));
+	if (undefined === font1 || null === font1 || undefined === font2 || null === font2)
+		return font1 === font2;
+
+	return font1.Name === font2.Name;
 };
 CRFonts.prototype.Is_Equal = function(oRFonts)
 {
