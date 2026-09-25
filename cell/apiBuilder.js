@@ -8022,7 +8022,7 @@
 	};
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Adds a comment to the current workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The comment text.
@@ -8791,7 +8791,7 @@
 	};
 
 	/**
-	 * Sets a name to the current active sheet.
+	 * Sets a name to the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name which will be displayed for the current sheet at the sheet tab.
@@ -9268,7 +9268,7 @@
 	 * Returns the ApiName object by the worksheet name.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} defName - The worksheet name.
+	 * @param {string} defName - The defined name.
 	 * @returns {ApiName | null} - returns null if definition name doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetDefName.js
 	 */
@@ -15105,7 +15105,7 @@
 	 * Sets the timestamp of the comment creation in UTC format.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
-	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in UTC format.
+	 * @param {Number | String} timeStamp - The timestamp of the comment creation in UTC format.
 	 * @since 7.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetTimeUTC.js
 	 */
@@ -15147,7 +15147,7 @@
 	 * Sets the timestamp of the comment creation in the current time zone format.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
-	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in the current time zone format.
+	 * @param {Number | String} timeStamp - The timestamp of the comment creation in the current time zone format.
 	 * @since 7.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetTime.js
 	 */
@@ -15447,7 +15447,7 @@
 	 * Sets the timestamp of the comment reply creation in UTC format.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CSE"]
-	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in UTC format.
+	 * @param {Number | String} timeStamp - The timestamp of the comment reply creation in UTC format.
 	 * @since 7.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetTimeUTC.js
 	 */
@@ -15489,7 +15489,7 @@
 	 * Sets the timestamp of the comment reply creation in the current time zone format.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CSE"]
-	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in the current time zone format.
+	 * @param {Number | String} timeStamp - The timestamp of the comment reply creation in the current time zone format.
 	 * @since 7.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetTime.js
 	 */
@@ -15544,7 +15544,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @param {number} ind - The index number of the object.
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | null}
 	 * @see office-js-api/Examples/{Editor}/ApiAreas/Methods/GetItem.js
 	 */
 	ApiAreas.prototype.GetItem = function (ind) {
@@ -15555,7 +15555,7 @@
 	 * Returns the parent object for the specified collection.
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
-	 * @returns {number}
+	 * @returns {ApiRange}
 	 * @see office-js-api/Examples/{Editor}/ApiAreas/Methods/GetParent.js
 	 */
 	ApiAreas.prototype.GetParent = function () {
