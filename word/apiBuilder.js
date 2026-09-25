@@ -6524,10 +6524,9 @@
 	 * Subscribes to the specified event and calls the callback function when the event fires.
 	 * @function
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} eventName - The event name.
 	 * @param {function} callback - Function to be called when the event fires.
-	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
 	Api.attachEvent = function(eventName, callback)
@@ -6539,9 +6538,8 @@
 	 * Unsubscribes from the specified event.
 	 * @function
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} eventName - The event name.
-	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
 	Api.detachEvent = function(eventName)

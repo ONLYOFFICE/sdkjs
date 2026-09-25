@@ -89,13 +89,16 @@
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
 	 */
 
-    /**
-     * Base class.
-     * @global
-     * @class
-     * @name Api
-     */
-    let Api = window["PDFEditorApi"];
+	/**
+	 * The PDF API contains the methods and events available to a plugin
+	 * in the ONLYOFFICE PDF editor. Methods are run with executeMethod,
+	 * events are attached with attachEvent.
+	 * @global
+	 * @class
+	 * @name Api
+	 * @typeofeditors ["PDFE"]
+	 */
+	let Api = window["PDFEditorApi"];
 
 	/**
      * Returns the current page index.
