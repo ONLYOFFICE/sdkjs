@@ -1014,8 +1014,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cError.prototype = Object.create(cBaseType.prototype);
 	cError.prototype.constructor = cError;
 	cError.prototype.type = cElementType.error;
-	//set on the errors that answer for a whole call, see cArray.collapsedError
-	cError.prototype.collapsesResult = false;
+	cError.prototype.collapsesCall = null;
 	cError.prototype.tocNumber = cError.prototype.tocString = cError.prototype.tocBool = function () {
 		return this;
 	};
@@ -3047,9 +3046,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//takes priority over missedValue. signature: (row, col) -> cElement
 		this.missedValueFn = null;
 		//the error that answers for the whole call this array came out of, rather than being one element's
-		//value. Excel keeps the elements but reports this one for anything that asks about the shape or a
-		//position (ROWS/COLUMNS/INDEX). Set by the function that produced it, and carried over when another
-		//function rebuilds the array from it.
+		//value: set when an element comes back with an error whose collapsesCall is this very call.
+		//The next function receives this error instead of the array.
 		this.collapsedError = null;
 	}
 
@@ -4154,9 +4152,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.excludeErrorsVal = false;
 	cBaseFunction.prototype.excludeNestedStAg = false;
 	cBaseFunction.prototype.bArrayFormula = null;
-	//opt-in: an element error that answers for the whole call (cArray.collapsedError) is carried onto the
-	//assembled array. Off by default - a function that only passes one through keeps its own shape.
-	cBaseFunction.prototype.elementErrorCollapsesArray = false;
 	//necessary for array formulas
 	//arrayIndexes - map, where key is the argument that is passed to the function as array,area,area3d (i.e. unchanged)
 	//and value is either boolean or object
@@ -4928,10 +4923,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
 						_elem = _elem.getValueByRowCol(0, 0, true);
 					}
-					//only the producer may promote: a function that merely spread this error over its own
-					//elements still answers about its own shape
-					if (t.elementErrorCollapsesArray && !array.collapsedError &&
-						_elem.type === cElementType.error && _elem.collapsesResult) {
+					if (!array.collapsedError && _elem.type === cElementType.error && _elem.collapsesCall === _argInfo) {
 						array.collapsedError = _elem;
 					}
 					array.addElement(_elem);
