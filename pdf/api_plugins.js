@@ -69,13 +69,15 @@
 	 * @property {pt} 3 - y2 (bottom)
 	 */
 
-    /**
-     * Base class.
-     * @global
-     * @class
-     * @name Api
-     */
-    let Api = window["PDFEditorApi"];
+	/**
+	 * The PDF API contains the methods and events available to a plugin
+	 * in the ONLYOFFICE PDF editor.
+	 * @global
+	 * @class
+	 * @name Api
+	 * @typeofeditors ["PDFE"]
+	 */
+	let Api = window["PDFEditorApi"];
 
 	/**
      * Returns the current page index.

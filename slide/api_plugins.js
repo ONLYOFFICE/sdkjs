@@ -37,14 +37,15 @@
 
 (function(window, undefined)
 {
-    /**
-     * Base class.
-     * @global
-     * @class
-     * @name Api
-     */
-
-    var Api = window["asc_docs_api"];
+	/**
+	 * The Presentation API contains the methods and events available to a plugin
+	 * in the ONLYOFFICE Presentation editor.
+	 * @global
+	 * @class
+	 * @name Api
+	 * @typeofeditors ["CPE"]
+	 */
+	var Api = window["asc_docs_api"];
 
 	/**
 	 * @typedef {Object} comment

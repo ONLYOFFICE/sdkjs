@@ -1279,34 +1279,7 @@
 		return apiHyperlink;
 	};
 
-    /**
-	 * Subscribes to the specified event and calls the callback function when the event fires.
-     * @function
-	 * @memberof Api
-	 * @typeofeditors ["CPE"]
-	 * @param {string} eventName - The event name.
-	 * @param {function} callback - Function to be called when the event fires.
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
-	 */
-	Api.attachEvent = function(eventName, callback)
-	{
-		Asc.editor.attachEvent(eventName, callback);
-	};
-
-	/**
-	 * Unsubscribes from the specified event.
-     * @function
-	 * @memberof Api
-	 * @typeofeditors ["CPE"]
-	 * @param {string} eventName - The event name.
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
-	 */
-	Api.detachEvent = function(eventName)
-	{
-		Asc.editor.detachEvent(eventName);
-	};
-
-    //------------------------------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiPresentation
     //
@@ -8237,8 +8210,6 @@
     Api["CreateTable"]                          = Api.CreateTable;
     Api["CreateParagraph"]                      = Api.CreateParagraph;
     Api["CreateHyperlink"]                      = Api.CreateHyperlink;
-    Api["attachEvent"]                      	= Api.attachEvent;
-    Api["detachEvent"]                      	= Api.detachEvent;
     Api["Save"]                                 = Api.Save;
     Api["CreateMaster"]                         = Api.CreateMaster;
     Api["CreateDefaultMasterSlide"]             = Api.CreateDefaultMasterSlide;
