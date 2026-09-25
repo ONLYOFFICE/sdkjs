@@ -11117,7 +11117,8 @@ function parserFormula( formula, parent, _ws ) {
 				for (let c = oldRange.c1; c <= oldRange.c2; c++) {
 					this.ws._getCell(r, c, function(cell) {
 						if (cell) {
-							cell.setValue("");
+							// the same formula is written back below, so its external links are still in use
+							cell.setValue("", null, null, null, null, null, true);
 							cell.setIsDirty(true);
 						}
 					});

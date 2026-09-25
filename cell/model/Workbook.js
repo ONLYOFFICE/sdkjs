@@ -21355,7 +21355,8 @@
 				// Transient style-only cells have no text; skip them.
 				if (cell._isTransient) { return; }
 				if (!(cell.nRow === nRowStart && cell.nCol === nColStart)) {
-					cell.setValue("");
+					// the first cell keeps the formula, so its external links are still in use
+					cell.setValue("", null, null, null, null, null, true);
 				}
 			});
 		History.EndTransaction();

@@ -1370,17 +1370,15 @@ function (window, undefined) {
 					let index = eR.getSheetByName(is3DRef.sheet);
 					if (index != null) {
 						let externalSheetDataSet = eR.SheetDataSet[index];
+						// size by the address, not by loaded data: the spill range is chosen before the data arrives
 						for (let i = bbox.r1; i <= bbox.r2; i++) {
-							let row = externalSheetDataSet.getRow(i + 1);
-							if (!row) {
-								continue;
-							}
-							if (!ret.array[i - bbox.r1]) {
-								ret.addRow();
-							}
+							let row = externalSheetDataSet && externalSheetDataSet.getRow(i + 1);
+							ret.addRow();
 							for (let j = bbox.c1; j <= bbox.c2; j++) {
-								let externalCell = row.getCell(j);
-								if (externalCell) {
+								let externalCell = row && row.getCell(j);
+								if (!externalCell) {
+									ret.addElement(new cError(cErrorType.not_available));
+								} else {
 									let cellValue = externalCell.getFormulaValue();
 									if (cellValue && cellValue.value && checkHyperlink(cellValue.value)) {
 										cellValue.hyperlink = cellValue.value;
