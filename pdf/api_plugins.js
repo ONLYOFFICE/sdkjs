@@ -91,8 +91,7 @@
 
 	/**
 	 * The PDF API contains the methods and events available to a plugin
-	 * in the ONLYOFFICE PDF editor. Methods are run with executeMethod,
-	 * events are attached with attachEvent.
+	 * in the ONLYOFFICE PDF editor.
 	 * @global
 	 * @class
 	 * @name Api

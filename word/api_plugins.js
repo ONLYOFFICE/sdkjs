@@ -140,8 +140,7 @@
 
 	/**
 	 * The Document API contains the methods and events available to a plugin
-	 * in the ONLYOFFICE Document editor. Methods are run with executeMethod,
-	 * events are attached with attachEvent.
+	 * in the ONLYOFFICE Document editor.
 	 * @global
 	 * @class
 	 * @name Api

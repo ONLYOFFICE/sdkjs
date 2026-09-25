@@ -39,8 +39,7 @@
 {
 	/**
 	 * The Presentation API contains the methods and events available to a plugin
-	 * in the ONLYOFFICE Presentation editor. Methods are run with executeMethod,
-	 * events are attached with attachEvent.
+	 * in the ONLYOFFICE Presentation editor.
 	 * @global
 	 * @class
 	 * @name Api
