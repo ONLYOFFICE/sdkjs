@@ -6912,6 +6912,44 @@
 	};
 
 	/**
+	 * Sets a line end style.
+	 * @memberof ApiFreeTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {LineEndStyle} style - The style of the polyline end endpoint.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetEndStyle.js
+	 */
+	ApiFreeTextAnnotation.prototype.SetEndStyle = function(style) {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return false;
+		}
+
+		if (undefined == private_GetInnerLineEndType(style)) {
+			AscBuilder.throwException("The style parameter must be one of available");
+		}
+
+		this.Annot.SetLineEnd(private_GetInnerLineEndType(style));
+		this.Annot.private_UpdateRect();
+		return true;
+	};
+
+	/**
+	 * Gets a line end style.
+	 * @memberof ApiFreeTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {LineEndStyle}
+	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/GetEndStyle.js
+	 */
+	ApiFreeTextAnnotation.prototype.GetEndStyle = function() {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return "none";
+		}
+
+		let nStyle = this.Annot.GetLineEnd();
+		return private_GetStrLineEndType(nStyle);
+	};
+
+	/**
 	 * Sets annotation rect difference.
 	 * @memberof ApiFreeTextAnnotation
 	 * @typeofeditors ["PDFE"]
@@ -12201,6 +12239,9 @@
 			case AscPDF.LINE_END_TYPE.slash: {
 				return "slash";
 			}
+			default: {
+				return "none";
+			}
 		}
 	}
 
@@ -12785,6 +12826,8 @@
 	ApiFreeTextAnnotation.prototype["GetIntent"]			= ApiFreeTextAnnotation.prototype.GetIntent;
 	ApiFreeTextAnnotation.prototype["SetCallout"]			= ApiFreeTextAnnotation.prototype.SetCallout;
 	ApiFreeTextAnnotation.prototype["GetCallout"]			= ApiFreeTextAnnotation.prototype.GetCallout;
+	ApiFreeTextAnnotation.prototype["SetEndStyle"]			= ApiFreeTextAnnotation.prototype.SetEndStyle;
+	ApiFreeTextAnnotation.prototype["GetEndStyle"]			= ApiFreeTextAnnotation.prototype.GetEndStyle;
 	ApiFreeTextAnnotation.prototype["SetRectDiff"]			= ApiFreeTextAnnotation.prototype.SetRectDiff;
 	ApiFreeTextAnnotation.prototype["GetRectDiff"]			= ApiFreeTextAnnotation.prototype.GetRectDiff;
 	ApiFreeTextAnnotation.prototype["GetContent"]			= ApiFreeTextAnnotation.prototype.GetContent;

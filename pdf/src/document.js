@@ -10385,10 +10385,9 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.FreeText: {
                 oAnnotProps = new Asc.asc_CFreeTextAnnotProperty();
                 oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
-                annot.GetIntent() == AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout && oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
+                annot.GetIntent() == AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout && oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putCanEditText(annot.IsInTextBox());
-				oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 break;
             }
             case AscPDF.ANNOTATIONS_TYPES.Line: {
