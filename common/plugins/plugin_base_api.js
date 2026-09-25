@@ -796,27 +796,30 @@ window.startPluginApi = function() {
 		window.Asc.plugin.executeMethod("SendEventInternal", [name, data]);
 	};
 
-	Plugin.api = new Proxy({}, {
-		get: function(_target, name)
-		{
-			if (typeof name !== "string")
-				return undefined;
-
-			return function()
+	if (!("Editor" in window))
+	{
+		window.Editor = new Proxy({}, {
+			get: function(_target, name)
 			{
-				var args = Array.from(arguments);
-				var callback = typeof args[args.length - 1] === "function" ? args.pop() : null;
+				if (typeof name !== "string" || name === "then")
+					return undefined;
 
-				if (callback)
-					return Plugin.executeMethod(name, args, callback);
-
-				return new Promise(function(resolve)
+				return function()
 				{
-					Plugin.executeMethod(name, args, resolve);
-				});
-			};
-		}
-	});
+					var args = Array.from(arguments);
+					var callback = typeof args[args.length - 1] === "function" ? args.pop() : null;
+
+					if (callback)
+						return Plugin.executeMethod(name, args, callback);
+
+					return new Promise(function(resolve)
+					{
+						Plugin.executeMethod(name, args, resolve);
+					});
+				};
+			}
+		});
+	}
 
 };
 
