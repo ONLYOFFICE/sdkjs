@@ -2575,6 +2575,10 @@
 	COutlineThumbnailsManager.prototype.GetOutlineView = function () {
 		return this.m_oWordControl.m_oLogicDocument && this.m_oWordControl.m_oLogicDocument.GetOutlineView();
 	};
+	COutlineThumbnailsManager.prototype.GetDragDropManager = function () {
+		const outlineView = this.GetOutlineView();
+		return outlineView ? outlineView.getDragDropManager() : null;
+	};
 	// events
 	COutlineThumbnailsManager.prototype.getSelectedPage = function () {
 		const outlineView = this.GetOutlineView();
@@ -2641,6 +2645,11 @@
 		if ((global_mouseEvent.Button === 0 || global_mouseEvent.Button === 2) && outlineView) {
 			const outlineXMm = pos.X * g_dKoef_pix_to_mm;
 			const outlineYMm = pos.Y * g_dKoef_pix_to_mm;
+			if (outlineView.getDragDropManager().checkMouseDown(global_mouseEvent, outlineXMm, outlineYMm)) {
+				this.OnUpdateOverlay();
+				checkSelectionEnd();
+				return false;
+			}
 			outlineView.selectionSetStart(global_mouseEvent, outlineXMm, outlineYMm, 0);
 			const selectedPage = outlineView.getSelectedSlide();
 			if (selectedPage !== null) {
@@ -2698,6 +2707,13 @@
 			{
 				if (this.MouseDownTrack.IsMoved(global_mouseEvent.X, global_mouseEvent.Y))
 					this.MouseDownTrack.ResetSimple();
+			}
+			const dragDropManager = this.GetDragDropManager();
+			if (dragDropManager && dragDropManager.isActive())
+			{
+				if (!this.MouseDownTrack.IsSimple())
+					dragDropManager.startTrackText();
+				this.m_oWordControl.m_oThumbnails.HtmlElement.style.cursor = "default";
 			}
 			this.OnUpdateOverlay();
 
@@ -2771,6 +2787,26 @@
 		if (!this.MouseDownTrack.IsStarted())
 			return;
 
+		const dragDropManager = this.GetDragDropManager();
+		if (dragDropManager && dragDropManager.isActive())
+		{
+			if (global_mouseEvent.Sender != control)
+			{
+				dragDropManager.cancelTrackText();
+			}
+			else
+			{
+				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
+				dragDropManager.checkMouseUp(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm);
+			}
+			this.MouseDownTrack.Reset();
+			this.m_oWordControl.OnUpdateOverlay();
+			this.OnUpdateOverlay();
+			this.onMouseMove(e);
+			this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			return;
+		}
+
 		if (this.MouseDownTrack.IsSimple())
 		{
 			if (this.MouseDownTrack.IsMoved(global_mouseEvent.X, global_mouseEvent.Y))
@@ -2820,6 +2856,13 @@
 		var control = this.m_oWordControl.m_oThumbnails.HtmlElement;
 		if (global_mouseEvent.IsLocked == true && global_mouseEvent.Sender == control)
 		{
+			const dragDropManager = this.GetDragDropManager();
+			if (dragDropManager && dragDropManager.isActive() && e.keyCode === Asc.c_oAscKeyCodes.Escape)
+			{
+				dragDropManager.cancelTrackText();
+				this.m_oWordControl.OnUpdateOverlay();
+				this.OnUpdateOverlay();
+			}
 			e.preventDefault();
 			return false;
 		}
@@ -2971,7 +3014,15 @@
 
 		outlineView.drawDecorations(this.getOutlineGraphics(context), this.GetSelectedSlideIndexesMap(), this.MouseDownTrack.FocusPage);
 		const shape = outlineView.outlineShape;
-		if (shape) {
+		const dragDropManager = outlineView.getDragDropManager();
+		if (shape && dragDropManager.isActive()) {
+			this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
+			if (dragDropManager.isTrackText()) {
+				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
+				dragDropManager.checkMouseMove(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm);
+			}
+			this.m_oWordControl.OnUpdateOverlay();
+		} else if (shape) {
 			this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
 			if ((checkSelectionEnd || this.MouseDownTrack.IsDragged()) && !outlineView.isDecorationMouseDown) {
 				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);

@@ -3294,6 +3294,15 @@
 		const presentation = this.getPresentation();
 		let returnValue = keydownresult_PreventNothing;
 		switch (e.KeyCode) {
+			case Asc.c_oAscKeyCodes.Escape: {
+				if (this.getDragDropManager().cancelTrackText()) {
+					this.updateSelectionState();
+					returnValue = keydownresult_PreventAll;
+				} else {
+					returnValue = null;
+				}
+				break;
+			}
 			case Asc.c_oAscKeyCodes.ArrowLeft: {
 				if (isMacOs && e.CtrlKey) {
 					this.moveCursorToStartOfLine(e.ShiftKey);
@@ -4345,24 +4354,33 @@
 
 
 
-	OutlineView.prototype.checkSelectedObjectsAndCallback = function (callback, historyPointType, isNeedCheckDrawings, isNeedCheckSlides, isRemoveAction, removeDirection) {
+	OutlineView.prototype.checkSelectedObjectsAndCallback = function (callback, historyPointType, isNeedCheckDrawings, isNeedCheckSlides, isRemoveAction, removeDirection, additionalLockObjects) {
 		const presentation = this.getPresentation();
 		const pointType = AscFormat.isRealNumber(historyPointType) ? historyPointType : AscDFH.historydescription_CommonControllerCheckSelected;
 		isNeedCheckDrawings = typeof isNeedCheckDrawings === "boolean" ? isNeedCheckDrawings : true;
 		isNeedCheckSlides = typeof isNeedCheckSlides === "boolean" ? isNeedCheckSlides : false;
 		let checkType = null;
-		if (isNeedCheckDrawings && isNeedCheckSlides) {
+		if (additionalLockObjects || (isNeedCheckDrawings && isNeedCheckSlides)) {
 			checkType = AscCommon.changestype_OutlineSlideDrawingProps;
 		} else if (isNeedCheckDrawings) {
 			checkType = AscCommon.changestype_Drawing_Props;
 		}
 
-		if(checkType === null || presentation.Document_Is_SelectionLocked(checkType, {isRemoveAction: isRemoveAction, removeDirection: removeDirection}, undefined, null) === false) {
+		const additionalData = {isRemoveAction: isRemoveAction, removeDirection: removeDirection, additionalLockObjects: additionalLockObjects};
+		if(checkType === null || presentation.Document_Is_SelectionLocked(checkType, additionalData, undefined, null) === false) {
 			presentation.StartAction(pointType);
 			callback.call(this);
 			presentation.FinalizeAction();
+			return true;
 		}
+		return false;
 	}
+	OutlineView.prototype.getDragDropManager = function () {
+		if (!this.dragDropManager) {
+			this.dragDropManager = new AscCommonSlide.COutlineDragDropManager(this);
+		}
+		return this.dragDropManager;
+	};
 	OutlineView.prototype.paraApplyCallback = function (props) {
 		AscFormat.paraApplyCallback(props, this);
 	};
@@ -4407,4 +4425,7 @@
 	window["AscCommonSlide"].OutlineView = OutlineView;
 	window["AscCommonSlide"].DecoratorDrawer = DecoratorDrawer;
 	window["AscCommonSlide"].OutlineSlidesSelectionManager = OutlineSlidesSelectionManager;
+	window["AscCommonSlide"].SavedPosition = SavedPosition;
+	window["AscCommonSlide"].ContentPosition = ContentPosition;
+	window["AscCommonSlide"].SlidePosition = SlidePosition;
 })();

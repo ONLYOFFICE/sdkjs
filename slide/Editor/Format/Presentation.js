@@ -9894,7 +9894,8 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 	}
 	if (CheckType === AscCommon.changestype_OutlineSlideDrawingProps) {
 		const view = this.GetOutlineView();
-		if (view) {
+		const additionalLockObjects = AdditionalData && AdditionalData.additionalLockObjects;
+		if (view && !(additionalLockObjects && additionalLockObjects.isOnlyAdditional)) {
 			const outlineSlides = view.getSlidesForLock(!(AdditionalData && AdditionalData.isRemoveAction), AdditionalData && AdditionalData.removeDirection);
 			for (let i = 0; i < outlineSlides.length; i += 1) {
 				const slide = outlineSlides[i];
@@ -9905,6 +9906,16 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 			const selectedObjects = view.getSelectedObjects();
 			fCheckObjects(selectedObjects);
 			fCheckSlides(function (slide) {return slide.deleteLock;}, outlineSlides);
+		}
+		if (additionalLockObjects) {
+			const additionalSlides = additionalLockObjects.slides || [];
+			for (let i = 0; i < additionalSlides.length; i += 1) {
+				if (additionalSlides[i].isLockedObject()) {
+					return true;
+				}
+			}
+			fCheckSlides(function (slide) {return slide.deleteLock;}, additionalSlides);
+			fCheckObjects(additionalLockObjects.shapes || []);
 		}
 	}
 
