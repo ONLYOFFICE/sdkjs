@@ -38,8 +38,9 @@
 (function (window, undefined) {
 
 	/**
-	 * The Spreadsheet API contains the methods and events available to a plugin
-	 * in the ONLYOFFICE Spreadsheet editor.
+	 * The Spreadsheet API lists the methods and events a plugin can use when working with a
+	 * spreadsheet in ONLYOFFICE Docs. To create or edit spreadsheets from a script instead, see
+	 * the Office API {@link /docs/office-api/usage-api/spreadsheet-api/spreadsheet-api Spreadsheet API}.
 	 * @global
 	 * @class
 	 * @name Api
