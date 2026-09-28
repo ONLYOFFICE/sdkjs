@@ -12425,6 +12425,34 @@
 		this.lastFindOptions = null;
 		this.workbook.handlers && this.workbook.handlers.trigger("clearFindResults", this.index);
 	};
+	// used range for empty cell search; a style equal to the column style is not counted
+	Worksheet.prototype._getUsedRangeForFind = function () {
+		var t = this, r2 = -1, c2 = -1;
+		this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0)._foreachNoEmpty(function (cell) {
+			var used = !cell.isNullText(true) || cell.formulaParsed;
+			if (!used && cell.xfs) {
+				var col = t._getColNoEmptyWithAll(cell.nCol);
+				used = !(col && col.xfs && col.xfs.getIndexNumber() === cell.xfs.getIndexNumber());
+			}
+			if (used) {
+				r2 = Math.max(r2, cell.nRow);
+				c2 = Math.max(c2, cell.nCol);
+			}
+		});
+		return r2 < 0 ? null : {r2: r2, c2: c2};
+	};
+	var foreachCellInRange = function (action) {
+		var ws = this.worksheet, bbox = this.bbox;
+		var r, c;
+		var callAction = function (cell) {
+			action(cell, r, c);
+		};
+		for (r = bbox.r1; r <= bbox.r2; ++r) {
+			for (c = bbox.c1; c <= bbox.c2; ++c) {
+				ws._getCellNoEmpty(r, c, callAction);
+			}
+		}
+	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
 		//***searchEngine
 		if (options.findWhat == null) {
@@ -12482,8 +12510,9 @@
 					func = findRange._foreachDataOnly;
 				}
 			} else {
-				findRange = this.getRange3(0, 0, maxRowsCount - 1, maxColsCount - 1);
-				func = findRange._foreach2;
+				var usedRange = this._getUsedRangeForFind();
+				findRange = usedRange ? this.getRange3(0, 0, usedRange.r2, usedRange.c2) : this.getRange3(0, 0, 0, 0);
+				func = usedRange ? foreachCellInRange : findRange._foreachDataOnly;
 			}
 		} else {
 			findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
@@ -12498,16 +12527,21 @@
 
 		var oldResults = this.lastFindOptions && this.lastFindOptions.findResults.isNotEmpty();
 		var result = new AscCommonExcel.findResults(), tmp;
-		var emptyCell, t = this;
+		var emptyCell, emptyCellEqual, t = this;
 		func.apply(findRange, [function (cell, r, c) {
+			var isEqual;
 			if (cell === null) {
 				if (!emptyCell) {
 					emptyCell = new Cell(t);
 					emptyCell._isTransient = true;
+					emptyCellEqual = emptyCell.isEqual(options);
 				}
 				cell = emptyCell;
+				isEqual = emptyCellEqual;
+			} else {
+				isEqual = cell.isEqual(options);
 			}
-			if (cell && cell.isEqual(options)) {
+			if (isEqual) {
 				if (!options.scanByRows) {
 					tmp = r;
 					r = c;
