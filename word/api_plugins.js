@@ -139,8 +139,9 @@
 	 */
 
 	/**
-	 * The Document API contains the methods and events available to a plugin
-	 * in the ONLYOFFICE Document editor.
+	 * The Document API lists the methods and events a plugin can use when working with a text
+	 * document in ONLYOFFICE Docs. To create or edit documents from a script instead, see the
+	 * Office API {@link /docs/office-api/usage-api/document-api/document-api Document API}.
 	 * @global
 	 * @class
 	 * @name Api

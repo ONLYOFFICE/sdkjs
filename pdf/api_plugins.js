@@ -90,8 +90,9 @@
 	 */
 
 	/**
-	 * The PDF API contains the methods and events available to a plugin
-	 * in the ONLYOFFICE PDF editor.
+	 * The PDF API lists the methods and events a plugin can use when working with a PDF file in
+	 * ONLYOFFICE Docs. To create or edit PDF files from a script instead, see the Office API
+	 * {@link /docs/office-api/usage-api/pdf-api/pdf-api PDF API}.
 	 * @global
 	 * @class
 	 * @name Api
