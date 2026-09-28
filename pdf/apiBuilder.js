@@ -1991,10 +1991,12 @@
 	 * Applies added redact.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} [includeForms=true] - specifies whether form fields should be included in the redaction.
+	 * @param {boolean} [includeAnnots=true] - specifies whether annotations should be included in the redaction.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ApplyRedact.js
 	 */
-	ApiDocument.prototype.ApplyRedact = function() {
+	ApiDocument.prototype.ApplyRedact = function(includeForms, includeAnnots) {
 		let hasRedact = !!this.Document.annots.find(function(annot) {
 			return annot.IsRedact() && !annot.GetRedactId();
 		});
@@ -2003,7 +2005,10 @@
 			AscBuilder.throwException("Has no redact to apply");
 		}
 
-		this.Document.ApplyRedact();
+		includeForms = AscBuilder.GetBoolParameter(includeForms, true);
+		includeAnnots = AscBuilder.GetBoolParameter(includeAnnots, true);
+
+		this.Document.ApplyRedact(undefined, undefined, includeForms, includeAnnots);
 		return true;
 	};
 
