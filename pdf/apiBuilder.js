@@ -2342,6 +2342,28 @@
 	};
 
 	/**
+	 * Gets page width
+	 * @memberof ApiPage
+	 * @typeofeditors ["PDFE"]
+	 * @returns {pt}
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetWidth.js
+	 */
+	ApiPage.prototype.GetWidth = function() {
+		return private_GetLogicDocument().GetPageWidth(this.GetIndex());
+	};
+
+	/**
+	 * Gets page height
+	 * @memberof ApiPage
+	 * @typeofeditors ["PDFE"]
+	 * @returns {pt}
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetHeight.js
+	 */
+	ApiPage.prototype.GetHeight = function() {
+		return private_GetLogicDocument().GetPageHeight(this.GetIndex());
+	};
+
+	/**
 	 * Gets page index
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
@@ -12543,6 +12565,8 @@
 	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;
 	ApiPage.prototype["SetRotation"]						= ApiPage.prototype.SetRotation;
 	ApiPage.prototype["GetRotation"]						= ApiPage.prototype.GetRotation;
+	ApiPage.prototype["GetWidth"]							= ApiPage.prototype.GetWidth;
+	ApiPage.prototype["GetHeight"]							= ApiPage.prototype.GetHeight;
 	ApiPage.prototype["GetIndex"]							= ApiPage.prototype.GetIndex;
 	ApiPage.prototype["GetAllWidgets"]						= ApiPage.prototype.GetAllWidgets;
 	ApiPage.prototype["AddObject"]							= ApiPage.prototype.AddObject;
