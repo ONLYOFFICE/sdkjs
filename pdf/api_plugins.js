@@ -71,7 +71,8 @@
 
 	/**
 	 * The PDF API lists the methods and events a plugin can use when working with a PDF file in
-	 * ONLYOFFICE Docs. To create or edit PDF files from a script instead, see the Office API
+	 * ONLYOFFICE Docs. To work with the PDF content directly, such as pages and annotations, run
+	 * Office API code in <code>callCommand</code>. See
 	 * {@link /docs/office-api/usage-api/pdf-api/pdf-api PDF API}.
 	 * @global
 	 * @class
