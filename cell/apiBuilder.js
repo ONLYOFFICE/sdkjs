@@ -45,7 +45,9 @@
 	}
 
 	/**
-	 * Base class.
+	 * The main class of the Spreadsheet API. Use it to get the active workbook, worksheets,
+	 * ranges, and the current selection, and to add worksheets, defined names, and custom
+	 * functions.
 	 * @global
 	 * @class
 	 * @name Api
