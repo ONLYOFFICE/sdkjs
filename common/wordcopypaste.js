@@ -3044,6 +3044,10 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oCurHyperlinkContentPos = 0;
     this.oCur_rPr = new CTextPr();
     this._lastCommitedRunId = null;
+    //last item added to the current paragraph
+    this.oLastAddedItem = null;
+    //last item before a collapsed trailing line break of a text node
+    this.oPendingSpaceItem = null;
 
 	//Br accumulates because there are cases when br should not be output, even though it's present.
     this.nBrCount = 0;
@@ -10957,6 +10961,8 @@ PasteProcessor.prototype =
 				this._CommitRunToParagraph(true);
 				this._CommitElemToParagraph(elem);
 			} else {
+				//hyperlink is only a container of already added items, so it isn't tracked
+				this.oLastAddedItem = elem;
 				if (this.oCurRun.Content.length === Asc.c_dMaxParaRunContentLength) {
 					//create new paraRun and set previous settings to it
 					//done to avoid large amount of data in paraRun
@@ -10980,6 +10986,7 @@ PasteProcessor.prototype =
 		this.oCurParContentPos = this.oCurPar.CurPos.ContentPos;
 		this.oCurRun = new ParaRun(this.oCurPar);
 		this.oCurRunContentPos = 0;
+		this.oLastAddedItem = null;
 		this.aContent.push(this.oCurPar);
 		//reset test settings
 		this.oCur_rPr = new CTextPr();
@@ -12751,8 +12758,12 @@ PasteProcessor.prototype =
 				return resText;
 			};
 
+			//line breaks at the edges of a text node (wrapped html source) are collapsible spaces
+			var hasLeadingBreak = false, hasTrailingBreak = false;
 			//because (e.g. sometimes chrome splits lines with \n during paste)
 			if (!whiteSpacing) {
+				hasLeadingBreak = /^(\r|\t|\n)/.test(value);
+				hasTrailingBreak = /(\r|\t|\n)$/.test(value);
 				value = value.replace(/^(\r|\t|\n)+|(\r|\t|\n)+$/g, '');
 				value = value.replace(/(\r|\t|\n)/g, ' ');
 
@@ -12811,6 +12822,14 @@ PasteProcessor.prototype =
 
 					//Add style element if it changed
 					oThis._commit_rPr(oTargetNode, bUseOnlyInherit);
+
+					//like browser: collapsed space is shown only after inline content of the same line
+					var lastItem = oThis.oLastAddedItem;
+					if (lastItem && (hasLeadingBreak || lastItem === oThis.oPendingSpaceItem) && !/^[ \t\n\r]/.test(value) &&
+						para_Space !== lastItem.Type && para_NewLine !== lastItem.Type && para_Tab !== lastItem.Type) {
+						value = " " + value;
+					}
+					oThis.oPendingSpaceItem = null;
 				}
 
 				//for problem with extra spaces at beginning of new line when copying from MS EXCEL cells with text separated by alt+enter
@@ -12897,6 +12916,9 @@ PasteProcessor.prototype =
 						}
 					}
 				}
+			}
+			if (hasTrailingBreak) {
+				oThis.oPendingSpaceItem = oThis.oLastAddedItem;
 			}
 		};
 		/*var checkEndFootnodeText = function (Item, oThis, Text) {
@@ -13586,6 +13608,8 @@ PasteProcessor.prototype =
 						value = value.replace(/(\r|\t|\n)/g, '');
 					}
 					if ("" == value) {
+						//collapsible space between inline elements
+						oThis.oPendingSpaceItem = oThis.oLastAddedItem;
 						return;
 					}
 				}
