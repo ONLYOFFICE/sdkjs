@@ -1206,17 +1206,19 @@ function (window, undefined) {
 		return this.from !== fromOld || this.to !== toOld;
 	};
 
-	function UndoRedoData_FromTo(from, to, copyRange, sheetIdTo) {
+	function UndoRedoData_FromTo(from, to, copyRange, sheetIdTo, index) {
 		this.from = from;
 		this.to = to;
 		this.copyRange = copyRange;
 		this.sheetIdTo = sheetIdTo;
+		// the 0-based place of a removed external link, so that undo puts it back there
+		this.index = index;
 	}
 	UndoRedoData_FromTo.prototype.CreateReverseChangeSpreadsheet = function () {
-		return new UndoRedoData_FromTo(this.to, this.from, this.copyRange, this.sheetIdTo);
+		return new UndoRedoData_FromTo(this.to, this.from, this.copyRange, this.sheetIdTo, this.index);
 	}
 	UndoRedoData_FromTo.prototype.Properties = {
-		from: 0, to: 1, copyRange: 2, sheetIdTo: 3
+		from: 0, to: 1, copyRange: 2, sheetIdTo: 3, index: 4
 	};
 	UndoRedoData_FromTo.prototype.getType = function () {
 		return UndoRedoDataTypes.FromTo;
@@ -1234,6 +1236,8 @@ function (window, undefined) {
 				return this.copyRange;
 			case this.Properties.sheetIdTo:
 				return this.sheetIdTo;
+			case this.Properties.index:
+				return this.index;
 		}
 		return null;
 	};
@@ -1250,6 +1254,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.sheetIdTo:
 				this.sheetIdTo = value;
+				break;
+			case this.Properties.index:
+				this.index = value;
 				break;
 		}
 	};
@@ -3246,6 +3253,9 @@ function (window, undefined) {
 
 				if (externalReferenceIndex !== null) {
 					wb.externalReferences[externalReferenceIndex - 1] = from;
+				} else if (typeof Data.index === "number" && Data.index >= 0 && Data.index < wb.externalReferences.length) {
+					// the formulas restored after this still name the link by its old number
+					wb._insertExternalReference(Data.index, from);
 				} else {
 					wb.externalReferences.push(from);
 				}

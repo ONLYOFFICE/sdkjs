@@ -6083,7 +6083,8 @@
 			}
 
 			for (let i = res.length - 1; i >= 0; i--) {
-				if (res[i] === lastSlash || res[i] === ":" || (res[i] === "\\" && res.indexOf(":") !== -1)) {
+				// a file link may use either slash, and Excel splits file:///C:/a/b.xlsx as it splits file:///C:\a\b.xlsx
+				if (res[i] === lastSlash || (prefixFile && res[i] === "/") || res[i] === ":" || (res[i] === "\\" && res.indexOf(":") !== -1)) {
 					return {path: prefixFile + res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
 				}
 			}
@@ -6237,33 +6238,28 @@
 				var eRIndex = this.getExternalLinkIndexByName(arr[i].externalReference.Id);
 				if (eRIndex != null) {
 
-					//TODO on undo items are added to array in reverse order - need to always add in same order
+					//TODO need to replace all cells with just values where there are formulas referencing this workbook
+					// the formulas become values while the link still exists, so an undo brings the link back before the formulas that use it
+					var cells = this._getExternalLinkUsers(arr[i].externalReference).cells;
+					for (var k = 0; k < cells.length; k++) {
+						//need to remove the formula from this cell
+						cells[k].ws._getCellNoEmpty(cells[k].row, cells[k].col, function(cell) {
+							if (cell && cell.isFormula()) {
+								var valueData = cell.getValueData();
+								valueData.formula = null;
+								cell.setValueData(valueData);
+							}
+							//cell.setFormulaInternal(null);
+						});
+					}
+
 					this.removeExternalReference(eRIndex, true);
 					isChanged = true;
 
-					//TODO need to replace all cells with just values where there are formulas referencing this workbook
 					for (var j in arr[i].externalReference.worksheets) {
 						var removedSheet = arr[i].externalReference.worksheets[j];
 						if (removedSheet) {
-
-							var removedSheetId = removedSheet.getId();
-							this.dependencyFormulas.forEachSheetListeners(removedSheetId, function (parsed) {
-								if (parsed) {
-									var cell = parsed.parent;
-									if (cell && cell.nCol != null && cell.nRow != null) {
-										//need to remove the formula from this cell
-										parsed.ws._getCellNoEmpty(cell.nRow, cell.nCol, function(cell) {
-											var valueData = cell.getValueData();
-											valueData.formula = null;
-											cell.setValueData(valueData);
-											//cell.setFormulaInternal(null);
-										});
-									}
-								}
-							});
-
-
-							var prepared = this.dependencyFormulas.prepareChangeSheet(removedSheetId, {remove: removedSheetId});
+							var prepared = this.dependencyFormulas.prepareChangeSheet(removedSheet.getId(), {remove: removedSheet.getId()});
 							this.dependencyFormulas.removeSheet(prepared);
 						}
 					}
@@ -6277,6 +6273,46 @@
 		}
 	};
 
+	// all cells are collected before any changes, as a shared or array formula listens once for all its cells
+	Workbook.prototype._getExternalLinkUsers = function (externalReference) {
+		var res = {cells: [], usedOutsideCells: false};
+		for (var j in externalReference.worksheets) {
+			var sheet = externalReference.worksheets[j];
+			sheet && this.dependencyFormulas.forEachSheetListeners(sheet.getId(), function (parsed) {
+				var parent = parsed && parsed.parent;
+				if (!parent) {
+					return;
+				}
+				if (parent.nRow == null || parent.nCol == null) {
+					res.usedOutsideCells = true;
+					return;
+				}
+				var shared = parsed.getShared && parsed.getShared();
+				var ref = shared && shared.ref ? shared.ref : (parsed.getArrayFormulaRef && parsed.getArrayFormulaRef());
+				if (!ref) {
+					res.cells.push({ws: parsed.ws, row: parent.nRow, col: parent.nCol});
+					return;
+				}
+				parsed.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2)._foreachNoEmpty(function (cell) {
+					if (cell.getFormulaParsed() === parsed) {
+						res.cells.push({ws: parsed.ws, row: cell.nRow, col: cell.nCol});
+					}
+				});
+			});
+		}
+		return res;
+	};
+
+	// only cell formulas become values, and a defined name left on the link would point at another workbook once the links are renumbered
+	Workbook.prototype.breakExternalLink = function (path) {
+		var externalReference = this.getExternalLinkByName(path);
+		if (!externalReference || !externalReference.getAscLink || this._getExternalLinkUsers(externalReference).usedOutsideCells) {
+			return false;
+		}
+		this.removeExternalReferences([externalReference.getAscLink()]);
+		return true;
+	};
+
 	Workbook.prototype.removeExternalReference = function (index, addToHistory) {
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
@@ -6284,7 +6320,19 @@
 			this._removeExternalReference(index - 1);
 			if (addToHistory) {
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
-					null, null, new UndoRedoData_FromTo(from, null));
+					null, null, new UndoRedoData_FromTo(from, null, undefined, undefined, index - 1));
+			}
+		}
+	};
+
+	// puts a link back at the 0-based place it was removed from; the links from there on take back their old numbers
+	Workbook.prototype._insertExternalReference = function (index, externalReference) {
+		// the new numbers must exist before the formulas are renumbered, as they are assembled at once
+		this.externalReferences.splice(index, 0, externalReference);
+		for (let i = this.externalReferences.length - 1; i > index; i--) {
+			for (let j in this.externalReferences[i].worksheets) {
+				let prepared = this.dependencyFormulas.prepareChangeSheet(this.externalReferences[i].worksheets[j].getId(), {from: i, to: i + 1});
+				this.dependencyFormulas.changeExternalLink(prepared);
 			}
 		}
 	};

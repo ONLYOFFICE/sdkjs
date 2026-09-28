@@ -8573,6 +8573,39 @@
 			return this.GetTableStyles();
 		}
 	});
+
+	/**
+	 * Returns the paths of the other workbooks registered as external links of the current workbook, including links no formula uses any longer.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {string[]} - An empty array if the workbook has no links to other workbooks.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetLinkSources.js
+	 */
+	ApiWorkbook.prototype.GetLinkSources = function () {
+		let res = [];
+		let links = this.Workbook.getExternalReferences() || [];
+		for (let i = 0; i < links.length; i++) {
+			let path = links[i].asc_getPath();
+			if (path) {
+				res.push(path);
+			}
+		}
+		return res;
+	};
+
+	/**
+	 * Breaks the link to the specified workbook: the formulas that refer to it are replaced with their current values, and the link is removed from the workbook.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - The path of the linked workbook as returned by the {@link ApiWorkbook#GetLinkSources} method.
+	 * @returns {boolean} - Returns false if the workbook has no link with the specified path, or if a defined name refers to that workbook; such a name has to be changed or deleted first.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/BreakLink.js
+	 */
+	ApiWorkbook.prototype.BreakLink = function (sName) {
+		return typeof sName === "string" && this.Workbook.breakExternalLink(sName);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiTableStyles / ApiTableStyle / ApiTableStyleElements / ApiTableStyleElement
@@ -31390,6 +31423,8 @@
 	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
 	ApiWorkbook.prototype["GetDrawingsByName"] = ApiWorkbook.prototype.GetDrawingsByName;
 	ApiWorkbook.prototype["GetTableStyles"] = ApiWorkbook.prototype.GetTableStyles;
+	ApiWorkbook.prototype["GetLinkSources"] = ApiWorkbook.prototype.GetLinkSources;
+	ApiWorkbook.prototype["BreakLink"] = ApiWorkbook.prototype.BreakLink;
 
 	ApiTableStyles.prototype["Add"] = ApiTableStyles.prototype.Add;
 	ApiTableStyles.prototype["GetItem"] = ApiTableStyles.prototype.GetItem;
