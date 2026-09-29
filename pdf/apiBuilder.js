@@ -2318,11 +2318,14 @@
 	 * Sets page rotation angle
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} angle - The rotation angle in degrees. Must be a multiple of 90.
+	 * @param {Degree} angle - The rotation angle in degrees. Must be a multiple of 90.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetRotation.js
 	 */
 	ApiPage.prototype.SetRotation = function(angle) {
+		angle = AscBuilder.GetNumberParameter(angle, 0);
+		angle = private_NormalizeDegree(angle);
+		
 		if (angle % 90 !== 0) {
 			return false;
 		}
@@ -9058,7 +9061,7 @@
 	/**
 	 * Sets the rotation angle to the current drawing object.
 	 * @memberof ApiDrawing
-	 * @param {number} rotAngle - New drawing rotation angle.
+	 * @param {Degree} rotAngle - New drawing rotation angle.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRotation.js
@@ -9067,6 +9070,9 @@
 		if (!this.Drawing.canRotate()) {
 			return false;
 		}
+
+		rotAngle = AscBuilder.GetNumberParameter(rotAngle, 0);
+		rotAngle = private_NormalizeDegree(rotAngle);
 
 		this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
