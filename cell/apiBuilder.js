@@ -10869,6 +10869,11 @@
 	 */
 
 	/**
+	 * Specifies whether the first row of the range contains the header information or it is detected automatically.
+	 * @typedef {("xlNo" | "xlYes" | "xlGuess")} XlYesNoGuess
+	 */
+
+	/**
 	 * Specifies if the sort should be by row or column.
 	 * @typedef {("xlSortColumns" | "xlSortRows")} SortOrientation
 	 * @see office-js-api/Examples/Enumerations/SortOrientation.js
@@ -12604,6 +12609,59 @@
 			}
 		}
 		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, sortRange);
+	};
+
+	/**
+	 * Removes the rows with duplicate values from the range, as the Remove Duplicates command does.
+	 * A range inside a table stands for the whole table, and the autofilter range or one cell of it stands for the filtered range.
+	 * Rows are duplicates when the displayed values of the compared columns are equal, case-insensitively; the first of them is kept.
+	 * The other rows of the range move up in place of the removed ones; the cells outside the range stay in place.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {number | number[]} [aColumns] - The 1-based indexes of the columns to compare, counted from the first column of the range, or of the table or the autofilter that the range stands for. If omitted, all the columns are compared.
+	 * @param {XlYesNoGuess} [sHeader="xlNo"] - Specifies whether the first row is a header row, which is kept and not compared, or "xlGuess" to detect it as the command does. The value may be in any case and without "xl", e.g. "yes"; other values throw an error. The header row of a table or an autofilter is always kept.
+	 * @returns {number | null} - The number of removed rows, or null if the rows cannot be removed: the range has one row only, has merged cells of different sizes, crosses a table, an array formula or a pivot table, is in a table with a totals row, or other users are editing the document.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/RemoveDuplicates.js
+	 */
+	ApiRange.prototype.RemoveDuplicates = function (aColumns, sHeader) {
+		if (!this._checkProtection()) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
+		// the selection of one area comes with that area in the list of areas
+		if (this.areas && this.areas.length > 1) {
+			private_MakeError('The range must be a single area.');
+		}
+		let columns = typeof aColumns === "number" ? [aColumns] : aColumns;
+		if (columns != null && (!Array.isArray(columns) || !columns.length)) {
+			private_MakeError('"aColumns" must be a column index or a non-empty array of 1-based column indexes.');
+		}
+
+		let ws = this.range.worksheet;
+		let wsView = ws.workbook.oApi.wb && ws.workbook.oApi.wb.getWorksheet(ws.getIndex());
+		let header = sHeader == null ? "no" : typeof sHeader === "string" ? sHeader.toLowerCase().replace(/^xl/, "") : "";
+		if ("yes" !== header && "no" !== header && "guess" !== header) {
+			private_MakeError('"sHeader" must be "xlYes", "xlNo" or "xlGuess".');
+		}
+		let props = wsView && wsView.getRemoveDuplicates(false, this.range.bbox.clone(), "guess" === header ? undefined : "yes" === header);
+		if (!props) {
+			return null;
+		}
+
+		let columnList = props.asc_getColumnList();
+		for (let i = 0; columns && i < columnList.length; i++) {
+			columnList[i].asc_setVisible(false);
+		}
+		for (let i = 0; columns && i < columns.length; i++) {
+			if (!Number.isInteger(columns[i]) || !columnList[columns[i] - 1]) {
+				private_MakeError('Column index ' + columns[i] + ' is outside the range, which has ' + columnList.length + ' columns.');
+			}
+			columnList[columns[i] - 1].asc_setVisible(true);
+		}
+
+		wsView.setRemoveDuplicates(props);
+		return props.asc_getDuplicateValues();
 	};
 
 	/*Object.defineProperty(ApiRange.prototype, "Sort", {
@@ -31683,6 +31741,7 @@
 	ApiRange.prototype["SetOrientation"] = ApiRange.prototype.SetOrientation;
 	ApiRange.prototype["GetOrientation"] = ApiRange.prototype.GetOrientation;
 	ApiRange.prototype["SetSort"] = ApiRange.prototype.SetSort;
+	ApiRange.prototype["RemoveDuplicates"] = ApiRange.prototype.RemoveDuplicates;
 	ApiRange.prototype["Delete"] = ApiRange.prototype.Delete;
 	ApiRange.prototype["Insert"] = ApiRange.prototype.Insert;
 	ApiRange.prototype["AutoFit"] = ApiRange.prototype.AutoFit;

@@ -14690,6 +14690,7 @@ function RangeDataManagerElem(bbox, data)
 
 		this.duplicateValues = null;
 		this.uniqueValues = null;
+		this.isForMacros = null;
 
 		return this;
 	}
@@ -14728,7 +14729,8 @@ function RangeDataManagerElem(bbox, data)
 		} else {
 			this.columnList = [];
 			for (j = selection.c1; j <= selection.c2; j++) {
-				if (j - selection.c1 >= maxCount) {
+				// a macro compares columns the dialog would not list
+				if (!this.isForMacros && j - selection.c1 >= maxCount) {
 					break;
 				}
 				elem = new window["AscCommonExcel"].AutoFiltersOptionsElements();
