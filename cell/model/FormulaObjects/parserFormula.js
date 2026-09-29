@@ -5050,9 +5050,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					}
 					var _tailRes = null;
 					if (_composable) {
-						_tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws);
+						_tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws, null, undefined, undefined, _argInfo);
 						if (_tailRes && _tailRes.type === cElementType.array) {
 							_tailRes = _tailRes.getElementRowCol(0, 0);
+						}
+						if (_tailRes && !array.collapsedError && _tailRes.type === cElementType.error && _tailRes.collapsesCall === _argInfo &&
+							(_realSz.row > _headRows || _realSz.col > _headCols)) {
+							array.collapsedError = _tailRes;
 						}
 					}
 					if (_tailRes) {
