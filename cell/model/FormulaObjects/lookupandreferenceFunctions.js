@@ -3415,11 +3415,14 @@ function (window, undefined) {
 		} else if (cElementType.number === _a3.type) {
 			arg3 = 0 !== _a3.value;
 		} else {
-			let _a3Val = cElementType.cell === _a3.type || cElementType.cell3D === _a3.type ? _a3.getValue() : _a3;
+			let _a3Val = (cElementType.cell === _a3.type || cElementType.cell3D === _a3.type ? _a3.getValue() : _a3).tocBool();
+			// only a logical, a number or the text TRUE / FALSE converts: any other text is refused (measured)
 			if (cElementType.error === _a3Val.type) {
 				rangeLookupError = _a3Val;
+			} else if (cElementType.bool !== _a3Val.type) {
+				rangeLookupError = new cError(cErrorType.wrong_value_type);
 			} else {
-				arg3 = _a3Val.tocBool().value;
+				arg3 = _a3Val.value;
 			}
 		}
 		let opt_xlookup = arg[4] !== undefined;
@@ -3442,6 +3445,17 @@ function (window, undefined) {
 			arg0Val = arg0;
 		}
 		let answer = cElementType.error === arg0Val.type ? arg0Val : null;
+		if (!answer && !opt_xlookup) {
+			if (cElementType.string === arg0Val.type && arg0Val.getValue().length > 255) {
+				answer = new cError(cErrorType.wrong_value_type);
+			} else if (cElementType.error === arg1.type) {
+				answer = arg1;
+			} else if (cElementType.string === arg1.type) {
+				answer = new cError(cErrorType.wrong_value_type);
+			} else if (cElementType.number === arg1.type || cElementType.bool === arg1.type) {
+				answer = new cError(cErrorType.not_available);
+			}
+		}
 		if (!answer && !opt_xlookup) {
 			let arg2Type = arg2.type;
 			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
