@@ -2669,7 +2669,7 @@
 		
 		oDoc.EditPage(this.GetIndex());
 
-		return AscBuilder.GetApiDrawings(this.Page.drawings.slice(nCurLength));
+		return AscBuilder.GetApiDrawings(this.Page.drawings.slice(0, this.Page.drawings.length - nCurLength));
 	};
 
 	/**
