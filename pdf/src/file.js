@@ -735,7 +735,7 @@ void main() {\n\
         this.onUpdateOverlay();
     };
     CFile.prototype.updateCursorType = function(pageIndex, x, y) {
-        let ret = this.getNearestPos(pageIndex, x, y);
+        let ret = this.getNearestPos(pageIndex, x, y, undefined, undefined, Asc.editor.canEdit());
         
         if (ret.Glyph < 0 || ret.Line < 0) {
             if (Asc.editor.IsRedactTool() || Asc.editor.IsLinkTool()) {
@@ -820,8 +820,8 @@ void main() {\n\
             }, AscDFH.historydescription_Pdf_AddAnnot);
         }
     };
-    CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos, bSnapToBoundary) {
-        let stream = this.getPageTextStream(pageIndex);
+    CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos, bSnapToBoundary, onlyPageContent) {
+        let stream = this.getPageTextStream(pageIndex, onlyPageContent);
         if (!stream) return { Line : -1, Glyph : -1 };
 
         if (this.type === 2 || this.type === 3)
