@@ -1723,17 +1723,17 @@
 	function OutlineContentInsertManager(outlineView) {
 		this.outlineView = outlineView;
 	}
-	OutlineContentInsertManager.prototype.insertIntoSourceContent = function (content, selectedContent) {
+	OutlineContentInsertManager.prototype.insertIntoSourceContent = function (content, selectedContent, isSelect) {
 		const paragraph = content.Content[content.CurPos.ContentPos];
 		if (!paragraph || !paragraph.IsParagraph()) {
 			return false;
 		}
 		const nearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
 		paragraph.Check_NearestPos(nearPos);
-		selectedContent.Insert(nearPos);
+		selectedContent.Insert(nearPos, isSelect);
 		return true;
 	};
-	OutlineContentInsertManager.prototype.insert = function (selectedContent) {
+	OutlineContentInsertManager.prototype.insert = function (selectedContent, isSelect) {
 		const outlineView = this.outlineView;
 		const oThis = this;
 		const presentation = outlineView.getPresentation();
@@ -1748,7 +1748,7 @@
 				const shape = content.Is_DrawingShape(true);
 				presentation.PrepareInsertedDocContent(selectedContent, content, shape);
 				selectedContent.EndCollect(outlineView.getPresentation());
-				inserted = oThis.insertIntoSourceContent(content, selectedContent);
+				inserted = oThis.insertIntoSourceContent(content, selectedContent, isSelect);
 				outlineView.setSavedRealContentState(content, selectProps.index, selectProps.count, selectProps.direction);
 			}
 			return inserted;
@@ -2809,9 +2809,9 @@
 		this.applySavedPositionToOutline();
 		this.checkCurrentTextObjectExtends();
 	}
-	OutlineView.prototype.insertContent = function (selectedContent) {
+	OutlineView.prototype.insertContent = function (selectedContent, isSelect) {
 		const manager = new OutlineContentInsertManager(this);
-		const inserted = manager.insert(selectedContent);
+		const inserted = manager.insert(selectedContent, isSelect);
 		this.update();
 		this.applySavedPositionToOutline();
 		return inserted;
@@ -2941,6 +2941,9 @@
 	OutlineView.prototype.update = function (savedContentsOnUpdate) {
 		if (!this.isInit) {
 			return;
+		}
+		if (this.dragDropManager) {
+			this.dragDropManager.onOutlineUpdate();
 		}
 		let isRecalculate = this.recalcInfo.recalculateContent;
 
@@ -3294,15 +3297,6 @@
 		const presentation = this.getPresentation();
 		let returnValue = keydownresult_PreventNothing;
 		switch (e.KeyCode) {
-			case Asc.c_oAscKeyCodes.Escape: {
-				if (this.getDragDropManager().cancelTrackText()) {
-					this.updateSelectionState();
-					returnValue = keydownresult_PreventAll;
-				} else {
-					returnValue = null;
-				}
-				break;
-			}
 			case Asc.c_oAscKeyCodes.ArrowLeft: {
 				if (isMacOs && e.CtrlKey) {
 					this.moveCursorToStartOfLine(e.ShiftKey);

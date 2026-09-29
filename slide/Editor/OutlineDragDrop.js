@@ -38,7 +38,8 @@
 	const OutlineDragState = {
 		none: 0,
 		pending: 1,
-		tracking: 2
+		tracking: 2,
+		dropping: 3
 	};
 	const OutlineDragSelectionType = {
 		text: 0,
@@ -51,72 +52,39 @@
 		boundary: 2
 	};
 
-	function getTextLength(paragraph) {
-		return paragraph.GetCharOffsetByContentPos(paragraph.Get_EndPos(false));
-	}
-
-	function getParaContentPosByOffset(paragraph, offset) {
-		if (offset <= 0) {
-			return paragraph.Get_StartPos();
-		}
-		if (offset >= getTextLength(paragraph)) {
-			return paragraph.Get_EndPos(false);
-		}
-		return paragraph.GetContentPosByCharOffset(offset);
-	}
-
-	function getDocPosByOffset(paragraph, offset, isBehindEnd) {
+	function getDocPos(paragraph, contentPos) {
 		const pos = [{Class: paragraph.GetParent(), Position: paragraph.GetIndex()}];
-		if (isBehindEnd && offset >= getTextLength(paragraph)) {
-			paragraph.GetEndContentPosition(pos, true);
-			return pos;
-		}
-		return paragraph.UpdatePosArrayByContentPos(pos, getParaContentPosByOffset(paragraph, offset).Copy());
+		return paragraph.UpdatePosArrayByContentPos(pos, contentPos.Copy());
 	}
 
-	function getOffsetByDocPos(pos) {
-		const paragraph = pos[1].Class;
-		const paraContentPos = new AscWord.CParagraphContentPos();
-		for (let i = 1; i < pos.length; i += 1) {
-			paraContentPos.Update(pos[i].Position, i - 1);
+	function comparePositions(a, b) {
+		if (a.index !== b.index) {
+			return a.index < b.index ? -1 : 1;
 		}
-		return paragraph.GetCharOffsetByContentPos(paraContentPos);
+		return a.pos.Compare(b.pos);
 	}
 
-	function comparePoints(aIndex, aOffset, bIndex, bOffset) {
-		if (aIndex !== bIndex) {
-			return aIndex < bIndex ? -1 : 1;
-		}
-		if (aOffset !== bOffset) {
-			return aOffset < bOffset ? -1 : 1;
-		}
-		return 0;
-	}
-
-	/**
-	 * Selection of the outline normalized for drag'n'drop. All indexes are indexes of outline paragraphs,
-	 * offsets are character offsets inside them. The start is always before the end in document order.
-	 */
-	function OutlineDragSelection(type, startIndex, startOffset, endIndex, endOffset, slides, isEndInTitle) {
+	function OutlineDragSelection(type, startIndex, startPos, endIndex, endPos, slides, isEndInTitle) {
 		this.type = type;
 		this.startIndex = startIndex;
-		this.startOffset = startOffset;
+		this.startPos = startPos;
 		this.endIndex = endIndex;
-		this.endOffset = endOffset;
+		this.endPos = endPos;
 		this.slides = slides;
 		this.isEndInTitle = isEndInTitle;
 	}
-	OutlineDragSelection.prototype.isSame = function (other) {
-		return !!other && this.type === other.type &&
-			this.startIndex === other.startIndex && this.startOffset === other.startOffset &&
-			this.endIndex === other.endIndex && this.endOffset === other.endOffset;
+	OutlineDragSelection.prototype.getStart = function () {
+		return {index: this.startIndex, pos: this.startPos};
+	};
+	OutlineDragSelection.prototype.getEnd = function () {
+		return {index: this.endIndex, pos: this.endPos};
 	};
 
 	function OutlineDropTarget(kind) {
 		this.kind = kind;
 		this.selectionType = null;
 		this.outlineIndex = -1;
-		this.offset = 0;
+		this.contentPos = null;
 		this.boundaryIndex = -1;
 		this.isInsideSelection = false;
 		this.x = 0;
@@ -127,9 +95,6 @@
 		return this.kind === OutlineDropTargetKind.none;
 	};
 
-	/**
-	 * Reads the outline model: which outline paragraphs are titles, which slide they belong to and so on.
-	 */
 	function OutlineModelReader(outlineView) {
 		this.outlineView = outlineView;
 	}
@@ -193,9 +158,6 @@
 		};
 	};
 
-	/**
-	 * Classifies and normalizes the outline selection (FR-000 – FR-004a, FR-009a, FR-014b).
-	 */
 	function OutlineDragSelectionBuilder(outlineView) {
 		this.reader = new OutlineModelReader(outlineView);
 	}
@@ -204,17 +166,23 @@
 		if (!content || !content.IsSelectionUse() || content.IsSelectionEmpty()) {
 			return null;
 		}
-		const firstPos = content.GetContentPosition(true, true);
-		const secondPos = content.GetContentPosition(true, false);
-		const first = {index: firstPos[0].Position, offset: getOffsetByDocPos(firstPos)};
-		const second = {index: secondPos[0].Position, offset: getOffsetByDocPos(secondPos)};
-		if (comparePoints(first.index, first.offset, second.index, second.offset) > 0) {
+		const firstIndex = content.Selection.StartPos;
+		const secondIndex = content.Selection.EndPos;
+		const first = {index: firstIndex, pos: content.Content[firstIndex].Get_ParaContentPos(true, true)};
+		const second = {index: secondIndex, pos: content.Content[secondIndex].Get_ParaContentPos(true, false)};
+		if (comparePositions(first, second) > 0) {
 			return {start: second, end: first};
 		}
 		return {start: first, end: second};
 	};
-	OutlineDragSelectionBuilder.prototype.getLength = function (index) {
-		return getTextLength(this.reader.getParagraphs()[index]);
+	OutlineDragSelectionBuilder.prototype.getParagraph = function (index) {
+		return this.reader.getParagraphs()[index];
+	};
+	OutlineDragSelectionBuilder.prototype.getEndPoint = function (index) {
+		return {index: index, pos: this.getParagraph(index).Get_EndPos(true)};
+	};
+	OutlineDragSelectionBuilder.prototype.isAtBegin = function (point) {
+		return this.getParagraph(point.index).IsCursorAtBegin(point.pos);
 	};
 	OutlineDragSelectionBuilder.prototype.getSlidesBetween = function (startIndex, endIndex) {
 		const paragraphs = this.reader.getParagraphs();
@@ -244,80 +212,72 @@
 		if (!bounds) {
 			return null;
 		}
-		const paragraphs = this.reader.getParagraphs();
 		const start = bounds.start;
-		let end = bounds.end;
-		const startParagraph = paragraphs[start.index];
-		const blockEnd = (end.offset === 0 && end.index > start.index) ?
-			{index: end.index - 1, offset: this.getLength(end.index - 1)} : end;
+		const end = bounds.end;
+		const startParagraph = this.getParagraph(start.index);
+		const blockEnd = (end.index > start.index && this.isAtBegin(end)) ? this.getEndPoint(end.index - 1) : end;
 		if (this.reader.isTitle(startParagraph)) {
 			return this.buildFromTitle(start, end, blockEnd);
 		}
 		if (this.hasTitleBetween(start.index + 1, blockEnd.index)) {
 			return this.buildMixed(start, blockEnd);
 		}
-		return new OutlineDragSelection(OutlineDragSelectionType.text, start.index, start.offset, end.index, end.offset, [], false);
+		return this.buildText(start, blockEnd);
+	};
+	OutlineDragSelectionBuilder.prototype.buildText = function (start, end) {
+		return new OutlineDragSelection(OutlineDragSelectionType.text, start.index, start.pos, end.index, end.pos, [], false);
 	};
 	OutlineDragSelectionBuilder.prototype.buildFromTitle = function (start, end, blockEnd) {
-		const paragraphs = this.reader.getParagraphs();
-		const startSlide = this.reader.getSlide(paragraphs[start.index]);
+		const startSlide = this.reader.getSlide(this.getParagraph(start.index));
 		const titleRange = this.reader.getTitleRange(startSlide);
 		if (end.index <= titleRange.last) {
-			const isWholeTitle = start.index === titleRange.first && start.offset === 0 &&
-				end.index === titleRange.last && end.offset >= this.getLength(titleRange.last);
+			const isWholeTitle = start.index === titleRange.first && end.index === titleRange.last &&
+				this.getParagraph(start.index).IsSelectionFromStart() && this.getParagraph(end.index).IsSelectionToEnd();
 			if (!isWholeTitle) {
-				return new OutlineDragSelection(OutlineDragSelectionType.text, start.index, start.offset, end.index, end.offset, [], false);
+				return this.buildText(start, end);
 			}
-			return this.buildSlides(titleRange.first, titleRange.last, this.getLength(titleRange.last), [startSlide], true);
+			return this.buildSlides(titleRange.first, this.getEndPoint(titleRange.last), [startSlide], true);
 		}
 		end = blockEnd;
 		if (end.index <= titleRange.last) {
-			return this.buildSlides(titleRange.first, titleRange.last, this.getLength(titleRange.last), [startSlide], true);
+			return this.buildSlides(titleRange.first, this.getEndPoint(titleRange.last), [startSlide], true);
 		}
-		const endParagraph = paragraphs[end.index];
-		const endSlide = this.reader.getSlide(endParagraph);
-		let isEndInTitle = false;
-		if (this.reader.isTitle(endParagraph)) {
-			const endTitleRange = this.reader.getTitleRange(endSlide);
-			end = {index: endTitleRange.last, offset: this.getLength(endTitleRange.last)};
-			isEndInTitle = true;
-		}
+		const endParagraph = this.getParagraph(end.index);
+		const isEndInTitle = this.reader.isTitle(endParagraph);
+		const endIndex = isEndInTitle ? this.reader.getTitleRange(this.reader.getSlide(endParagraph)).last : end.index;
+		end = this.getEndPoint(endIndex);
 		const slides = this.getSlidesBetween(titleRange.first, end.index);
-		return this.buildSlides(titleRange.first, end.index, end.offset, slides, isEndInTitle);
+		return this.buildSlides(titleRange.first, end, slides, isEndInTitle);
 	};
-	OutlineDragSelectionBuilder.prototype.buildSlides = function (startIndex, endIndex, endOffset, slides, isEndInTitle) {
+	OutlineDragSelectionBuilder.prototype.buildSlides = function (startIndex, end, slides, isEndInTitle) {
 		const firstSlide = slides[0];
 		const lastSlide = slides[slides.length - 1];
 		if (firstSlide.num === 0) {
-			endIndex = this.reader.getSlideLastIndex(lastSlide);
-			endOffset = this.getLength(endIndex);
-			isEndInTitle = this.reader.isTitle(this.reader.getParagraphs()[endIndex]);
+			end = this.getEndPoint(this.reader.getSlideLastIndex(lastSlide));
+			isEndInTitle = this.reader.isTitle(this.getParagraph(end.index));
 		}
-		return new OutlineDragSelection(OutlineDragSelectionType.slides, startIndex, 0, endIndex, endOffset, slides, isEndInTitle);
-	};
-	OutlineDragSelectionBuilder.prototype.buildMixed = function (start, end) {
-		const paragraphs = this.reader.getParagraphs();
-		const endParagraph = paragraphs[end.index];
-		let isEndInTitle = false;
-		if (this.reader.isTitle(endParagraph)) {
-			const endTitleRange = this.reader.getTitleRange(this.reader.getSlide(endParagraph));
-			end = {index: endTitleRange.last, offset: this.getLength(endTitleRange.last)};
-			isEndInTitle = true;
-		}
-		const slides = this.getSlidesBetween(start.index + 1, end.index);
-		return new OutlineDragSelection(OutlineDragSelectionType.mixed, start.index, start.offset, end.index, end.offset, slides, isEndInTitle);
+		const startPos = this.getParagraph(startIndex).Get_StartPos();
+		return new OutlineDragSelection(OutlineDragSelectionType.slides, startIndex, startPos, end.index, end.pos, slides, isEndInTitle);
 	};
 
-	/**
-	 * Computes drop targets for a drag selection (FR-005, FR-012, FR-016).
-	 */
+	OutlineDragSelectionBuilder.prototype.buildMixed = function (start, end) {
+		const endParagraph = this.getParagraph(end.index);
+		const isEndInTitle = this.reader.isTitle(endParagraph);
+		const endIndex = isEndInTitle ? this.reader.getTitleRange(this.reader.getSlide(endParagraph)).last : end.index;
+		end = this.getEndPoint(endIndex);
+		const startPos = this.getParagraph(start.index).Get_StartPos();
+		const slides = this.getSlidesBetween(start.index + 1, end.index);
+		return new OutlineDragSelection(OutlineDragSelectionType.mixed, start.index, startPos, end.index, end.pos, slides, isEndInTitle);
+	};
+
 	function OutlineDropTargetBuilder(outlineView, selection) {
 		this.outlineView = outlineView;
 		this.reader = new OutlineModelReader(outlineView);
 		this.selection = selection;
 	}
+
 	OutlineDropTargetBuilder.prototype.isBlockSelection = function () {
-		return this.selection.type === OutlineDragSelectionType.slides;
+		return this.selection.type === OutlineDragSelectionType.slides || this.selection.type === OutlineDragSelectionType.mixed;
 	};
 	OutlineDropTargetBuilder.prototype.buildByPoint = function (x, y) {
 		const content = this.reader.getDocContent();
@@ -337,19 +297,18 @@
 			const boundaryIndex = ty < middle ? paragraph.Index : paragraph.Index + 1;
 			return this.buildBoundary(boundaryIndex, ty);
 		}
-		return this.buildText(paragraph.Index, paragraph.GetCharOffsetByContentPos(nearPos.ContentPos), nearPos);
+		return this.buildText(paragraph.Index, nearPos.ContentPos.Copy(), nearPos);
 	};
-	OutlineDropTargetBuilder.prototype.buildByOutlinePos = function (outlineIndex, offset) {
+	OutlineDropTargetBuilder.prototype.buildByOutlinePos = function (outlineIndex, contentPos) {
 		const paragraph = this.reader.getParagraphs()[outlineIndex];
-		if (!paragraph) {
+		if (!paragraph || !contentPos) {
 			return new OutlineDropTarget(OutlineDropTargetKind.none);
 		}
 		if (this.isBlockSelection()) {
-			return this.buildBoundary(offset > 0 ? outlineIndex + 1 : outlineIndex);
+			return this.buildBoundary(paragraph.IsCursorAtBegin(contentPos) ? outlineIndex : outlineIndex + 1);
 		}
-		offset = Math.max(0, Math.min(offset, getTextLength(paragraph)));
 		const nearPos = paragraph.Get_NearestPos(0, 0, 0);
-		const target = this.buildText(outlineIndex, offset, null);
+		const target = this.buildText(outlineIndex, contentPos.Copy(), null);
 		if (nearPos) {
 			target.height = nearPos.Height;
 		}
@@ -361,37 +320,35 @@
 			if (!paragraph) {
 				return new OutlineDropTarget(OutlineDropTargetKind.none);
 			}
-			return this.buildByOutlinePos(outlineIndex, isAfter ? getTextLength(paragraph) : 0);
+			return this.buildByOutlinePos(outlineIndex, isAfter ? paragraph.Get_EndPos(false) : paragraph.Get_StartPos());
 		}
 		return this.buildBoundary(isAfter ? outlineIndex + 1 : outlineIndex);
 	};
-	OutlineDropTargetBuilder.prototype.buildText = function (outlineIndex, offset, nearPos) {
+	OutlineDropTargetBuilder.prototype.buildText = function (outlineIndex, contentPos, nearPos) {
 		const target = new OutlineDropTarget(OutlineDropTargetKind.text);
 		target.selectionType = this.selection.type;
 		target.outlineIndex = outlineIndex;
-		target.offset = offset;
+		target.contentPos = contentPos;
 		if (nearPos) {
 			target.x = nearPos.X;
 			target.y = nearPos.Y;
 			target.height = nearPos.Height;
 		}
-		target.isInsideSelection = this.isTextTargetInside(outlineIndex, offset);
+		target.isInsideSelection = this.isTextTargetInside({index: outlineIndex, pos: contentPos});
 		return target;
 	};
-	OutlineDropTargetBuilder.prototype.isTextTargetInside = function (outlineIndex, offset) {
+	OutlineDropTargetBuilder.prototype.isTextTargetInside = function (point) {
 		const selection = this.selection;
-		const isAfterStart = comparePoints(outlineIndex, offset, selection.startIndex, selection.startOffset) >= 0;
-		const isBeforeEnd = comparePoints(outlineIndex, offset, selection.endIndex, selection.endOffset) <= 0;
-		if (isAfterStart && isBeforeEnd) {
+		if (comparePositions(point, selection.getStart()) < 0) {
+			return false;
+		}
+		if (comparePositions(point, selection.getEnd()) <= 0) {
 			return true;
 		}
-		if (selection.type === OutlineDragSelectionType.mixed) {
-			const paragraphs = this.reader.getParagraphs();
-			const slide = this.reader.getSlide(paragraphs[outlineIndex]);
-			const startSlide = this.reader.getSlide(paragraphs[selection.startIndex]);
-			return slide === startSlide || selection.slides.indexOf(slide) !== -1;
-		}
-		return false;
+		const paragraphs = this.reader.getParagraphs();
+		return point.index === selection.endIndex + 1 &&
+			paragraphs[selection.endIndex].Get_EndPos(true).Compare(selection.endPos) === 0 &&
+			paragraphs[point.index].IsCursorAtBegin(point.pos);
 	};
 	OutlineDropTargetBuilder.prototype.snapBoundary = function (boundaryIndex, ty) {
 		const paragraphs = this.reader.getParagraphs();
@@ -420,6 +377,9 @@
 	OutlineDropTargetBuilder.prototype.buildBoundary = function (boundaryIndex, ty) {
 		const paragraphs = this.reader.getParagraphs();
 		boundaryIndex = this.snapBoundary(boundaryIndex, ty);
+		if (boundaryIndex <= 0 && this.selection.type === OutlineDragSelectionType.mixed) {
+			return new OutlineDropTarget(OutlineDropTargetKind.none);
+		}
 		const target = new OutlineDropTarget(OutlineDropTargetKind.boundary);
 		target.selectionType = this.selection.type;
 		target.boundaryIndex = boundaryIndex;
@@ -434,23 +394,13 @@
 	};
 	OutlineDropTargetBuilder.prototype.isBoundaryInside = function (boundaryIndex) {
 		const selection = this.selection;
-		const endLength = getTextLength(this.reader.getParagraphs()[selection.endIndex]);
-		const lastBoundary = selection.endOffset >= endLength ? selection.endIndex + 1 : selection.endIndex;
+		const endParagraph = this.reader.getParagraphs()[selection.endIndex];
+		const lastBoundary = endParagraph.IsCursorAtEnd(selection.endPos) ? selection.endIndex + 1 : selection.endIndex;
 		return boundaryIndex >= selection.startIndex && boundaryIndex <= lastBoundary;
 	};
 
-	function TrackedPosition(paragraph, offset) {
-		this.paragraph = paragraph;
-		this.offset = offset;
-	}
-
-	/**
-	 * Low level operations on slide paragraphs used by the drop plans: split, copy/move, join.
-	 * Every operation goes to the slides, the outline is refreshed afterwards.
-	 */
 	function OutlineParagraphOperations(outlineView) {
 		this.outlineView = outlineView;
-		this.aliases = {};
 		this.tracked = [];
 		this.touchedContents = {};
 	}
@@ -459,31 +409,17 @@
 			this.touchedContents[content.GetId()] = content;
 		}
 	};
-	OutlineParagraphOperations.prototype.track = function (paragraph, offset) {
-		const position = new TrackedPosition(paragraph, offset);
-		this.tracked.push(position);
-		return position;
+	OutlineParagraphOperations.prototype.track = function (paragraph, contentPos) {
+		const nearPos = {Paragraph: paragraph, ContentPos: contentPos.Copy()};
+		paragraph.Check_NearestPos(nearPos);
+		this.tracked.push(nearPos);
+		return nearPos;
 	};
-	/**
-	 * Splits a paragraph at several character offsets. Returns the segments from left to right,
-	 * the first segment is the original paragraph.
-	 */
-	OutlineParagraphOperations.prototype.split = function (paragraph, offsets) {
-		const sortedOffsets = offsets.slice().sort(function (a, b) {
-			return a - b;
-		}).filter(function (offset, index, array) {
-			return index === 0 || array[index - 1] !== offset;
-		});
-		const content = paragraph.GetParent();
-		const rightSegments = [];
-		for (let i = sortedOffsets.length - 1; i >= 0; i -= 1) {
-			const rightParagraph = new AscWord.Paragraph(content, true);
-			paragraph.Split(rightParagraph, getParaContentPosByOffset(paragraph, sortedOffsets[i]));
-			content.Add_ToContent(paragraph.GetIndex() + 1, rightParagraph);
-			rightSegments.unshift(rightParagraph);
+	OutlineParagraphOperations.prototype.clearTracked = function () {
+		for (let i = 0; i < this.tracked.length; i += 1) {
+			this.tracked[i].Paragraph.Clear_NearestPosArray();
 		}
-		this.touch(content);
-		return {offsets: sortedOffsets, segments: [paragraph].concat(rightSegments)};
+		this.tracked = [];
 	};
 	OutlineParagraphOperations.prototype.copyParagraphs = function (paragraphs) {
 		const copies = [];
@@ -518,54 +454,7 @@
 		}
 		this.insertParagraphs(content, content.Content.length, paragraphs);
 	};
-	OutlineParagraphOperations.prototype.resolve = function (paragraph) {
-		let result = paragraph;
-		while (result && this.aliases[result.GetId()]) {
-			result = this.aliases[result.GetId()];
-		}
-		return result;
-	};
-	/**
-	 * Appends the text of the right paragraph to the left one and removes the right paragraph.
-	 * The joined paragraph keeps the properties of the left one (FR-018).
-	 */
-	OutlineParagraphOperations.prototype.join = function (leftParagraph, rightParagraph) {
-		const left = this.resolve(leftParagraph);
-		const right = this.resolve(rightParagraph);
-		if (!left || !right || left === right) {
-			return left;
-		}
-		const leftLength = getTextLength(left);
-		left.Concat(right);
-		const rightContent = right.GetParent();
-		const rightIndex = right.GetIndex();
-		if (rightContent && rightIndex !== -1 && rightContent.Content[rightIndex] === right) {
-			rightContent.Remove_FromContent(rightIndex, 1);
-			this.touch(rightContent);
-		}
-		this.touch(left.GetParent());
-		this.aliases[right.GetId()] = left;
-		for (let i = 0; i < this.tracked.length; i += 1) {
-			const position = this.tracked[i];
-			if (position.paragraph === right) {
-				position.paragraph = left;
-				position.offset += leftLength;
-			}
-		}
-		return left;
-	};
-	OutlineParagraphOperations.prototype.setLevel = function (paragraphs, level) {
-		for (let i = 0; i < paragraphs.length; i += 1) {
-			paragraphs[i].Set_PresentationLevel(level);
-		}
-	};
-	OutlineParagraphOperations.prototype.isTitleContent = function (content) {
-		const shape = content && content.Is_DrawingShape(true);
-		return !!(shape && shape.isGeneralTitle && shape.isGeneralTitle());
-	};
-	/**
-	 * The content that receives paragraphs added "to the end of a slide" (FR-009c).
-	 */
+
 	OutlineParagraphOperations.prototype.getReceiverContent = function (slide) {
 		const contentShapes = slide.getOutlineSlide().content;
 		for (let i = contentShapes.length - 1; i >= 0; i -= 1) {
@@ -593,9 +482,6 @@
 		}
 	};
 
-	/**
-	 * Maps paragraphs of a slide to the same paragraphs of its duplicate (copy mode).
-	 */
 	function mapParagraphToSlideCopy(paragraph, slide, slideCopy) {
 		const shape = paragraph.GetParentShape();
 		const shapeIndex = slide.cSld.spTree.indexOf(shape);
@@ -604,9 +490,6 @@
 		return content ? content.Content[paragraph.GetIndex()] || null : null;
 	}
 
-	/**
-	 * Executes one drop: split → move → join (research R2). Built once per drop, from the current outline state.
-	 */
 	function OutlineDragDropExecutor(outlineView, selection, target, isCopy) {
 		this.outlineView = outlineView;
 		this.reader = new OutlineModelReader(outlineView);
@@ -634,15 +517,6 @@
 		}
 		return result;
 	};
-	OutlineDragDropExecutor.prototype.getOrCreateSourceParagraph = function (outlineIndex) {
-		const outlineParagraph = this.getOutlineParagraph(outlineIndex);
-		const sourceParagraph = this.reader.getSourceParagraph(outlineParagraph);
-		if (sourceParagraph) {
-			return sourceParagraph;
-		}
-		const titleContent = this.outlineView.createTitleContent(outlineParagraph);
-		return titleContent ? titleContent.Content[0] : null;
-	};
 	OutlineDragDropExecutor.prototype.getLockObjects = function () {
 		const slides = [];
 		const shapes = [];
@@ -667,30 +541,33 @@
 				const firstSlide = selection.slides[0];
 				addSlideShapes(presentation.Slides[presentation.GetSlideIndex(firstSlide) - 1]);
 				addSlideShapes(this.reader.getSlide(this.getOutlineParagraph(selection.startIndex)));
+				addSlideShapes(selection.slides[selection.slides.length - 1]);
 			}
 		}
 		if (this.target.kind === OutlineDropTargetKind.text) {
 			addSlideShapes(this.reader.getSlide(this.getOutlineParagraph(this.target.outlineIndex)));
 		} else {
-			const boundary = this.getBoundarySlide();
-			addSlideShapes(boundary.slide);
+			addSlideShapes(this.getBoundaryAnchor().slide);
 		}
 		return {slides: slides, shapes: shapes, isOnlyAdditional: this.isCopy};
 	};
 	OutlineDragDropExecutor.prototype.execute = function () {
-		switch (this.selection.type) {
-			case OutlineDragSelectionType.text: {
-				return this.executeText();
+		try {
+			switch (this.selection.type) {
+				case OutlineDragSelectionType.text: {
+					return this.executeText();
+				}
+				case OutlineDragSelectionType.slides:
+				case OutlineDragSelectionType.mixed: {
+					return this.executeBlock();
+				}
 			}
-			case OutlineDragSelectionType.slides: {
-				return this.executeSlides();
-			}
-			case OutlineDragSelectionType.mixed: {
-				return this.executeMixed();
-			}
+			return false;
+		} finally {
+			this.operations.clearTracked();
 		}
-		return false;
 	};
+
 	OutlineDragDropExecutor.prototype.finish = function () {
 		const outlineView = this.outlineView;
 		const presentation = this.getPresentation();
@@ -702,222 +579,113 @@
 			outlineView.setSavedPosition(new AscCommonSlide.SavedPosition(startPosition, endPosition));
 		}
 		outlineView.update();
-		if (this.resultSlide) {
-			const slideIndex = presentation.GetSlideIndex(this.resultSlide);
-			if (slideIndex !== -1) {
-				presentation.DrawingDocument.m_oWordControl.GoToPage(slideIndex);
-			}
-		}
 		outlineView.applySavedPositionToOutline();
 	};
-	OutlineDragDropExecutor.prototype.getTrackedContentPosition = function (trackedPosition, isEnd) {
-		const paragraph = this.operations.resolve(trackedPosition.paragraph);
-		return new AscCommonSlide.ContentPosition(getDocPosByOffset(paragraph, trackedPosition.offset, isEnd));
-	};
-	OutlineDragDropExecutor.prototype.getSplitSegments = function (splitResults, paragraph) {
-		return splitResults[paragraph.GetId()];
-	};
-	OutlineDragDropExecutor.prototype.splitAtPoints = function (points) {
-		const groups = {};
-		const order = [];
-		for (let i = 0; i < points.length; i += 1) {
-			const point = points[i];
-			const id = point.paragraph.GetId();
-			if (!groups[id]) {
-				groups[id] = {paragraph: point.paragraph, offsets: []};
-				order.push(id);
-			}
-			groups[id].offsets.push(point.offset);
-		}
-		const results = {};
-		for (let i = 0; i < order.length; i += 1) {
-			const group = groups[order[i]];
-			results[order[i]] = this.operations.split(group.paragraph, group.offsets);
-		}
-		return results;
-	};
-	function getSegmentStartingAt(splitResult, offset) {
-		return splitResult.segments[splitResult.offsets.indexOf(offset) + 1];
-	}
-	function getSegmentEndingAt(splitResult, offset) {
-		return splitResult.segments[splitResult.offsets.indexOf(offset)];
-	}
-	/**
-	 * Source paragraphs of a text range of the outline, in document order (the whole paragraphs between the ends).
-	 */
-	OutlineDragDropExecutor.prototype.getRangeSourceParagraphs = function (startIndex, endIndex) {
-		const paragraphs = this.reader.getParagraphs();
-		return this.getSourceParagraphs(paragraphs.slice(startIndex, endIndex + 1));
-	};
-
-	OutlineDragDropExecutor.prototype.executeText = function () {
-		const selection = this.selection;
-		const operations = this.operations;
-		const sourceParagraphs = this.getRangeSourceParagraphs(selection.startIndex, selection.endIndex);
-		if (!sourceParagraphs.length) {
-			return false;
-		}
-		const targetParagraph = this.getOrCreateSourceParagraph(this.target.outlineIndex);
-		if (!targetParagraph) {
-			return false;
-		}
-		const startParagraph = sourceParagraphs[0];
-		const endParagraph = sourceParagraphs[sourceParagraphs.length - 1];
-		const isTargetTitle = operations.isTitleContent(targetParagraph.GetParent());
-		const isSourceTitle = operations.isTitleContent(startParagraph.GetParent());
-		if (this.isCopy) {
-			return this.executeTextCopy(sourceParagraphs, targetParagraph, isTargetTitle !== isSourceTitle);
-		}
-
-		const points = [
-			{paragraph: startParagraph, offset: selection.startOffset},
-			{paragraph: endParagraph, offset: selection.endOffset},
-			{paragraph: targetParagraph, offset: this.target.offset}
-		];
-		const splitResults = this.splitAtPoints(points);
-		const startSplit = this.getSplitSegments(splitResults, startParagraph);
-		const endSplit = this.getSplitSegments(splitResults, endParagraph);
-		const targetSplit = this.getSplitSegments(splitResults, targetParagraph);
-
-		const sourceLeft = getSegmentEndingAt(startSplit, selection.startOffset);
-		const sourceRight = getSegmentStartingAt(endSplit, selection.endOffset);
-		const targetLeft = getSegmentEndingAt(targetSplit, this.target.offset);
-		const targetRight = getSegmentStartingAt(targetSplit, this.target.offset);
-
-		const pieces = [];
-		const firstPiece = getSegmentStartingAt(startSplit, selection.startOffset);
-		const lastPiece = getSegmentEndingAt(endSplit, selection.endOffset);
-		pieces.push(firstPiece);
-		for (let i = 1; i < sourceParagraphs.length - 1; i += 1) {
-			pieces.push(sourceParagraphs[i]);
-		}
-		if (lastPiece !== firstPiece) {
-			pieces.push(lastPiece);
-		}
-
-		const copies = operations.copyParagraphs(pieces);
-		if (!this.isCopy) {
-			operations.removeParagraphs(pieces);
-		}
-		const targetContent = targetLeft.GetParent();
-		operations.insertParagraphs(targetContent, targetLeft.GetIndex() + 1, copies);
-		if (isTargetTitle !== isSourceTitle) {
-			operations.setLevel(copies, 0);
-		}
-
-		this.resultStart = operations.track(copies[0], 0);
-		const lastCopy = copies[copies.length - 1];
-		this.resultEnd = operations.track(lastCopy, getTextLength(lastCopy));
-
-		operations.join(targetLeft, copies[0]);
-		operations.join(lastCopy, targetRight);
-		if (!this.isCopy) {
-			this.joinSourceEdges(sourceLeft, sourceRight);
-		}
-		this.resultStart = this.getTrackedContentPosition(this.resultStart, false);
-		this.resultEnd = this.getTrackedContentPosition(this.resultEnd, false);
-		this.resultSlide = targetContent.Is_DrawingShape(true).parent;
-		this.finish();
-		return true;
-	};
-	OutlineDragDropExecutor.prototype.executeTextCopy = function (sourceParagraphs, targetParagraph, isLevelReset) {
-		const selection = this.selection;
-		const operations = this.operations;
-		const copiesSource = operations.copyParagraphs(sourceParagraphs);
-		const targetSplit = operations.split(targetParagraph, [this.target.offset]);
-		const targetLeft = targetSplit.segments[0];
-		const targetRight = targetSplit.segments[1];
-		const content = targetLeft.GetParent();
-		operations.insertParagraphs(content, targetLeft.GetIndex() + 1, copiesSource);
-		const pieces = this.trimCopies(copiesSource, selection.startOffset, selection.endOffset);
-		if (isLevelReset) {
-			operations.setLevel(pieces, 0);
-		}
-		const lastPiece = pieces[pieces.length - 1];
-		this.resultStart = operations.track(pieces[0], 0);
-		this.resultEnd = operations.track(lastPiece, getTextLength(lastPiece));
-		operations.join(targetLeft, pieces[0]);
-		operations.join(lastPiece, targetRight);
-		this.resultStart = this.getTrackedContentPosition(this.resultStart, false);
-		this.resultEnd = this.getTrackedContentPosition(this.resultEnd, false);
-		this.resultSlide = content.Is_DrawingShape(true).parent;
-		this.finish();
-		return true;
-	};
-	OutlineDragDropExecutor.prototype.trimCopies = function (copies, startOffset, endOffset) {
-		const operations = this.operations;
-		const firstCopy = copies[0];
-		const lastCopy = copies[copies.length - 1];
-		const extraSegments = [];
-		let firstPiece;
-		let lastPiece;
-		if (firstCopy === lastCopy) {
-			const split = operations.split(firstCopy, typeof endOffset === "number" ? [startOffset, endOffset] : [startOffset]);
-			firstPiece = getSegmentStartingAt(split, startOffset);
-			lastPiece = firstPiece;
-			extraSegments.push(getSegmentEndingAt(split, startOffset));
-			if (typeof endOffset === "number") {
-				lastPiece = getSegmentEndingAt(split, endOffset);
-				extraSegments.push(getSegmentStartingAt(split, endOffset));
-			}
-		} else {
-			lastPiece = lastCopy;
-			if (typeof endOffset === "number") {
-				const endSplit = operations.split(lastCopy, [endOffset]);
-				lastPiece = endSplit.segments[0];
-				extraSegments.push(endSplit.segments[1]);
-			}
-			const startSplit = operations.split(firstCopy, [startOffset]);
-			firstPiece = startSplit.segments[1];
-			extraSegments.push(startSplit.segments[0]);
-		}
-		operations.removeParagraphs(extraSegments);
-		const pieces = [firstPiece].concat(copies.slice(1, copies.length - 1));
-		if (lastPiece !== firstPiece) {
-			pieces.push(lastPiece);
-		}
-		return pieces;
-	};
-	OutlineDragDropExecutor.prototype.joinSourceEdges = function (sourceLeft, sourceRight) {
-		const operations = this.operations;
-		const left = operations.resolve(sourceLeft);
-		const right = operations.resolve(sourceRight);
-		if (left === right) {
+	OutlineDragDropExecutor.prototype.showResult = function () {
+		const presentation = this.getPresentation();
+		const slideIndex = this.resultSlide ? presentation.GetSlideIndex(this.resultSlide) : -1;
+		if (slideIndex === -1) {
 			return;
 		}
-		const isLeftEmpty = getTextLength(left) === 0;
-		const isRightEmpty = getTextLength(right) === 0;
-		if (isLeftEmpty && !isRightEmpty) {
-			operations.removeParagraphs([left]);
-		} else if (isRightEmpty && !isLeftEmpty) {
-			operations.removeParagraphs([right]);
-		} else {
-			operations.join(left, right);
+		presentation.DrawingDocument.m_oWordControl.GoToPage(slideIndex);
+		if (this.resultStart && this.resultEnd) {
+			this.outlineView.setSavedPosition(new AscCommonSlide.SavedPosition(this.resultStart, this.resultEnd));
+			this.outlineView.applySavedPositionToOutline();
 		}
+	};
+	OutlineDragDropExecutor.prototype.getTargetPoint = function () {
+		const outlineParagraph = this.getOutlineParagraph(this.target.outlineIndex);
+		const sourceParagraph = this.reader.getSourceParagraph(outlineParagraph);
+		if (sourceParagraph) {
+			return {nearPos: this.operations.track(sourceParagraph, this.target.contentPos), placeholder: null};
+		}
+		return {nearPos: this.operations.track(outlineParagraph, outlineParagraph.Get_StartPos()), placeholder: outlineParagraph};
+	};
+	OutlineDragDropExecutor.prototype.createTargetTitle = function (placeholder) {
+		const titleContent = this.outlineView.createTitleContent(placeholder);
+		const titleParagraph = titleContent ? titleContent.Content[0] : null;
+		return titleParagraph ? this.operations.track(titleParagraph, titleParagraph.Get_StartPos()) : null;
+	};
+	OutlineDragDropExecutor.prototype.rollback = function () {
+		AscCommon.History.UndoLastPoint();
+		this.outlineView.update();
+	};
+	OutlineDragDropExecutor.prototype.collectSelectedContent = function () {
+		const outlineView = this.outlineView;
+		const presentation = this.getPresentation();
+		return AscFormat.ExecuteNoHistory(function () {
+			const selectedContent = new AscCommonWord.CSelectedContent();
+			outlineView.forEachSelectedContent(function (selectProps) {
+				if (selectProps.content) {
+					selectProps.content.GetSelectedContent(selectedContent);
+				}
+			});
+			selectedContent.EndCollect(presentation);
+			return selectedContent;
+		}, this, []);
+	};
+	OutlineDragDropExecutor.prototype.copySelectedContent = function (collected) {
+		const result = new AscCommonWord.CSelectedContent();
+		for (let i = 0; i < collected.Elements.length; i += 1) {
+			const element = collected.Elements[i];
+			const paragraph = element.Element;
+			const selectedElement = new AscCommonWord.CSelectedElement();
+			selectedElement.SelectedAll = element.SelectedAll;
+			selectedElement.Element = paragraph.Copy(paragraph.Parent, paragraph.DrawingDocument, {});
+			result.Add(selectedElement);
+		}
+		result.EndCollect(this.getPresentation());
+		return result;
+	};
+	OutlineDragDropExecutor.prototype.executeText = function () {
+		const outlineView = this.outlineView;
+		const collected = this.collectSelectedContent();
+		if (!collected.Elements.length) {
+			return false;
+		}
+		const targetPoint = this.getTargetPoint();
+		if (!collected.CanInsert(targetPoint.nearPos)) {
+			return false;
+		}
+		const selectedContent = this.copySelectedContent(collected);
+		const nearPos = targetPoint.placeholder ? this.createTargetTitle(targetPoint.placeholder) : targetPoint.nearPos;
+		if (!nearPos) {
+			this.rollback();
+			return false;
+		}
+		if (!this.isCopy) {
+			outlineView.remove(false, AscWord.Direction.BACKWARD);
+		}
+		const outlineParagraph = nearPos.Paragraph.IsUseInDocument() && outlineView.sourceToOutlineMap[nearPos.Paragraph.Get_Id()];
+		if (!outlineParagraph) {
+			this.rollback();
+			return false;
+		}
+		this.resultSlide = this.reader.getSlide(outlineParagraph);
+		const outlineContent = outlineView.getDocContent();
+		outlineContent.RemoveSelection();
+		outlineContent.SetContentPosition(getDocPos(outlineParagraph, nearPos.ContentPos), 0, 0);
+		outlineView.insertContent(selectedContent, true);
+		this.setResultFromOutlineSelection();
+		this.finish();
+		return true;
+	};
+	OutlineDragDropExecutor.prototype.setResultFromOutlineSelection = function () {
+		const bounds = new OutlineDragSelectionBuilder(this.outlineView).getBounds();
+		if (!bounds) {
+			return;
+		}
+		const startParagraph = this.reader.getSourceParagraph(this.getOutlineParagraph(bounds.start.index));
+		const endParagraph = this.reader.getSourceParagraph(this.getOutlineParagraph(bounds.end.index));
+		if (!startParagraph || !endParagraph) {
+			return;
+		}
+		this.resultStart = new AscCommonSlide.ContentPosition(getDocPos(startParagraph, bounds.start.pos));
+		this.resultEnd = new AscCommonSlide.ContentPosition(getDocPos(endParagraph, bounds.end.pos));
 	};
 
-	/**
-	 * Resolves a boundary target to the slide after whose paragraphs the boundary lies.
-	 * slide === null means "before the first slide".
-	 */
-	OutlineDragDropExecutor.prototype.getBoundarySlide = function () {
-		const paragraphs = this.reader.getParagraphs();
-		const boundaryIndex = this.target.boundaryIndex;
-		if (boundaryIndex <= 0) {
-			return {slide: null, contentIndex: 0};
-		}
-		const previous = paragraphs[boundaryIndex - 1];
-		const slide = this.reader.getSlide(previous);
-		const slideParagraphs = this.reader.getSlideParagraphs(slide);
-		const titleCount = this.reader.getTitleParagraphs(slide).length;
-		const count = previous.Index - slideParagraphs[0].Index + 1;
-		return {slide: slide, contentIndex: Math.max(0, count - titleCount)};
-	};
 	OutlineDragDropExecutor.prototype.getSlideContentSources = function (slide) {
 		return this.getSourceParagraphs(this.reader.getContentParagraphs(slide));
-	};
-	OutlineDragDropExecutor.prototype.getSlideTitleSources = function (slide) {
-		return this.getSourceParagraphs(this.reader.getTitleParagraphs(slide));
 	};
 	OutlineDragDropExecutor.prototype.moveSlides = function (slides, afterSlide) {
 		const presentation = this.getPresentation();
@@ -954,32 +722,21 @@
 		presentation.updateSlideIndexes();
 		return copies;
 	};
-	/**
-	 * Splits the last selected paragraph of a block at the selection end and returns
-	 * {lastSelected, leftover}: the last selected source paragraph and the not selected paragraphs of the slide.
-	 */
-	OutlineDragDropExecutor.prototype.splitBlockEnd = function (lastSlide) {
+	OutlineDragDropExecutor.prototype.getBlockEnd = function (lastSlide) {
 		const selection = this.selection;
-		const operations = this.operations;
 		const contentSources = this.getSlideContentSources(lastSlide);
 		if (selection.isEndInTitle) {
-			const titleSources = this.getSlideTitleSources(lastSlide);
-			return {lastSelected: titleSources[titleSources.length - 1] || null, leftover: contentSources, selectedWholeCount: 0};
+			const titleSources = this.getTitleSourcesOfSlide(lastSlide);
+			return {lastSelected: titleSources[titleSources.length - 1] || null, leftover: contentSources};
 		}
 		const endOutlineParagraph = this.getOutlineParagraph(selection.endIndex);
 		const endSource = this.reader.getSourceParagraph(endOutlineParagraph);
 		const endIndexInContent = contentSources.indexOf(endSource);
 		if (endIndexInContent === -1) {
-			return {lastSelected: endSource, leftover: [], selectedWholeCount: contentSources.length};
+			return {lastSelected: endSource, leftover: []};
 		}
 		const leftover = contentSources.slice(endIndexInContent + 1);
-		let selectedWholeCount = endIndexInContent + 1;
-		if (selection.endOffset < getTextLength(endSource)) {
-			const splitResult = operations.split(endSource, [selection.endOffset]);
-			leftover.unshift(splitResult.segments[1]);
-			selectedWholeCount = endIndexInContent;
-		}
-		return {lastSelected: endSource, leftover: leftover, selectedWholeCount: selectedWholeCount};
+		return {lastSelected: endSource, leftover: leftover};
 	};
 	OutlineDragDropExecutor.prototype.moveParagraphsToSlideEnd = function (paragraphs, slide) {
 		if (!paragraphs.length) {
@@ -992,58 +749,6 @@
 		return copies;
 	};
 
-	OutlineDragDropExecutor.prototype.executeSlides = function () {
-		const presentation = this.getPresentation();
-		const selection = this.selection;
-		const slides = selection.slides;
-		const firstSlide = slides[0];
-		const lastSlide = slides[slides.length - 1];
-		const receiverSlide = presentation.Slides[presentation.GetSlideIndex(firstSlide) - 1] || null;
-		const boundary = this.getBoundarySlide();
-		const targetSlide = boundary.slide;
-
-		let targetTail = [];
-		if (targetSlide && (this.isCopy || targetSlide !== lastSlide)) {
-			targetTail = this.getSlideContentSources(targetSlide).slice(boundary.contentIndex);
-		}
-
-		if (this.isCopy) {
-			return this.executeSlidesCopy(targetSlide, targetTail);
-		}
-
-		const blockEnd = this.splitBlockEnd(lastSlide);
-		let leftoverToReceiver = blockEnd.leftover;
-		let leftoverToEnd = [];
-		let afterSlide = targetSlide;
-		if (targetSlide === lastSlide) {
-			const splitIndex = Math.max(0, boundary.contentIndex - blockEnd.selectedWholeCount);
-			leftoverToReceiver = blockEnd.leftover.slice(0, splitIndex);
-			leftoverToEnd = blockEnd.leftover.slice(splitIndex);
-			afterSlide = receiverSlide;
-		}
-
-		if (receiverSlide) {
-			this.moveParagraphsToSlideEnd(leftoverToReceiver, receiverSlide);
-		}
-		this.moveSlides(slides, afterSlide);
-		this.moveParagraphsToSlideEnd(leftoverToEnd.concat(targetTail), lastSlide);
-
-		this.setBlockResult(firstSlide, lastSlide, blockEnd.lastSelected);
-		this.finish();
-		return true;
-	};
-	OutlineDragDropExecutor.prototype.executeSlidesCopy = function (targetSlide, targetTail) {
-		const selection = this.selection;
-		const slides = selection.slides;
-		const lastSlide = slides[slides.length - 1];
-		const copies = this.copySlides(slides, targetSlide);
-		const lastCopy = copies[copies.length - 1];
-		const lastSelected = this.cutCopyLeftover(lastSlide, lastCopy);
-		this.moveParagraphsToSlideEnd(targetTail, lastCopy);
-		this.setBlockResult(copies[0], lastCopy, lastSelected);
-		this.finish();
-		return true;
-	};
 	OutlineDragDropExecutor.prototype.cutCopyLeftover = function (lastSlide, lastCopy) {
 		const selection = this.selection;
 		const operations = this.operations;
@@ -1057,7 +762,7 @@
 				}
 			}
 			operations.removeParagraphs(copiesToRemove);
-			const titleSources = this.getSlideTitleSources(lastSlide);
+			const titleSources = this.getTitleSourcesOfSlide(lastSlide);
 			const lastTitle = titleSources[titleSources.length - 1];
 			return lastTitle ? mapParagraphToSlideCopy(lastTitle, lastSlide, lastCopy) : null;
 		}
@@ -1074,25 +779,8 @@
 				leftoverCopies.push(paragraph);
 			}
 		}
-		if (selection.endOffset < getTextLength(endCopy)) {
-			leftoverCopies.unshift(operations.split(endCopy, [selection.endOffset]).segments[1]);
-		}
 		operations.removeParagraphs(leftoverCopies);
 		return endCopy;
-	};
-	OutlineDragDropExecutor.prototype.setBlockResult = function (firstSlide, lastSlide, lastSelected) {
-		const titleSources = this.getTitleSourcesOfSlide(firstSlide);
-		if (titleSources.length) {
-			this.resultStart = new AscCommonSlide.ContentPosition(getDocPosByOffset(titleSources[0], 0, false));
-		} else {
-			this.resultStart = new AscCommonSlide.SlidePosition(firstSlide, true);
-		}
-		if (lastSelected && lastSelected.GetParent()) {
-			this.resultEnd = new AscCommonSlide.ContentPosition(getDocPosByOffset(lastSelected, getTextLength(lastSelected), false));
-		} else {
-			this.resultEnd = new AscCommonSlide.SlidePosition(lastSlide, false);
-		}
-		this.resultSlide = firstSlide;
 	};
 	OutlineDragDropExecutor.prototype.getTitleSourcesOfSlide = function (slide) {
 		const outlineSlide = slide.getOutlineSlide();
@@ -1100,113 +788,153 @@
 		return titleContent ? titleContent.Content.slice() : [];
 	};
 
-	OutlineDragDropExecutor.prototype.executeMixed = function () {
-		const selection = this.selection;
+	OutlineDragDropExecutor.prototype.getLiveContentParagraphs = function (slide) {
+		const result = [];
+		const contentShapes = slide.getOutlineSlide().content;
+		for (let i = 0; i < contentShapes.length; i += 1) {
+			const content = contentShapes[i].getDocContent();
+			if (content && !content.Is_Empty()) {
+				for (let j = 0; j < content.Content.length; j += 1) {
+					result.push(content.Content[j]);
+				}
+			}
+		}
+		return result;
+	};
+	OutlineDragDropExecutor.prototype.getBoundaryAnchor = function () {
+		if (this.target.boundaryIndex <= 0) {
+			return {slide: null, paragraph: null};
+		}
+		const previous = this.getOutlineParagraph(this.target.boundaryIndex - 1);
+		const slide = this.reader.getSlide(previous);
+		if (this.reader.isTitle(previous)) {
+			return {slide: slide, paragraph: null};
+		}
+		return {slide: slide, paragraph: this.reader.getSourceParagraph(previous)};
+	};
+	OutlineDragDropExecutor.prototype.insertAtAnchor = function (slide, paragraph, paragraphs) {
 		const operations = this.operations;
-		const slides = selection.slides;
-		const lastSlide = slides[slides.length - 1];
+		if (paragraph) {
+			operations.insertParagraphs(paragraph.GetParent(), paragraph.GetIndex() + 1, paragraphs);
+			return;
+		}
+		const contentParagraphs = this.getLiveContentParagraphs(slide);
+		if (contentParagraphs.length) {
+			const first = contentParagraphs[0];
+			operations.insertParagraphs(first.GetParent(), first.GetIndex(), paragraphs);
+		} else {
+			operations.appendParagraphs(operations.getReceiverContent(slide), paragraphs);
+		}
+	};
+	OutlineDragDropExecutor.prototype.getParagraphsAfterInsertion = function (anchor, leadCopies) {
+		if (!anchor.slide) {
+			return [];
+		}
+		const contentParagraphs = this.getLiveContentParagraphs(anchor.slide);
+		const lastBefore = leadCopies.length ? leadCopies[leadCopies.length - 1] : anchor.paragraph;
+		if (!lastBefore) {
+			return contentParagraphs;
+		}
+		return contentParagraphs.slice(contentParagraphs.indexOf(lastBefore) + 1);
+	};
+	OutlineDragDropExecutor.prototype.getLeadParagraphs = function () {
+		const selection = this.selection;
+		if (selection.type !== OutlineDragSelectionType.mixed) {
+			return [];
+		}
 		const startOutlineParagraph = this.getOutlineParagraph(selection.startIndex);
-		const startSlide = this.reader.getSlide(startOutlineParagraph);
 		const startParagraph = this.reader.getSourceParagraph(startOutlineParagraph);
-		const targetParagraph = this.getOrCreateSourceParagraph(this.target.outlineIndex);
-		if (!startParagraph || !targetParagraph) {
+		if (!startParagraph) {
+			return null;
+		}
+		const startContentSources = this.getSlideContentSources(this.reader.getSlide(startOutlineParagraph));
+		return startContentSources.slice(startContentSources.indexOf(startParagraph));
+	};
+	OutlineDragDropExecutor.prototype.setBlockResult = function (firstSlide, lastSlide, leadCopies, lastSelected) {
+		if (leadCopies.length) {
+			const first = leadCopies[0];
+			this.resultStart = new AscCommonSlide.ContentPosition(getDocPos(first, first.Get_StartPos()));
+		} else {
+			const titleSources = this.getTitleSourcesOfSlide(firstSlide);
+			this.resultStart = titleSources.length ?
+				new AscCommonSlide.ContentPosition(getDocPos(titleSources[0], titleSources[0].Get_StartPos())) :
+				new AscCommonSlide.SlidePosition(firstSlide, true);
+		}
+		if (lastSelected && lastSelected.GetParent()) {
+			this.resultEnd = new AscCommonSlide.ContentPosition(getDocPos(lastSelected, lastSelected.Get_EndPos(true)));
+		} else {
+			this.resultEnd = new AscCommonSlide.SlidePosition(lastSlide, false);
+		}
+	};
+	OutlineDragDropExecutor.prototype.executeBlock = function () {
+		const presentation = this.getPresentation();
+		const operations = this.operations;
+		const slides = this.selection.slides;
+		const firstSlide = slides[0];
+		const lastSlide = slides[slides.length - 1];
+		const lead = this.getLeadParagraphs();
+		if (!lead) {
 			return false;
 		}
-		const targetSlide = targetParagraph.GetParentShape().parent;
-		const startContentSources = this.getSlideContentSources(startSlide);
-		const leadTail = startContentSources.slice(startContentSources.indexOf(startParagraph) + 1);
-		const isTargetTitle = operations.isTitleContent(targetParagraph.GetParent());
-		const targetContentSources = this.getSlideContentSources(targetSlide);
-		const targetTail = isTargetTitle ? targetContentSources : targetContentSources.slice(targetContentSources.indexOf(targetParagraph) + 1);
-
-		let sourceLeft = null;
-		let targetLeft;
-		let targetRight;
-		let leadCopies;
-		let lastSelected;
-		let leftover = [];
-		let lastSlideTarget = lastSlide;
+		const anchor = this.getBoundaryAnchor();
 		if (this.isCopy) {
-			const leadSourceCopies = operations.copyParagraphs([startParagraph].concat(leadTail));
-			const slideCopies = this.copySlides(slides, targetSlide);
-			lastSlideTarget = slideCopies[slideCopies.length - 1];
-			lastSelected = this.cutCopyLeftover(lastSlide, lastSlideTarget);
-			const targetSplit = operations.split(targetParagraph, [this.target.offset]);
-			targetLeft = targetSplit.segments[0];
-			targetRight = targetSplit.segments[1];
-			operations.insertParagraphs(targetLeft.GetParent(), targetLeft.GetIndex() + 1, leadSourceCopies);
-			leadCopies = this.trimCopies(leadSourceCopies, selection.startOffset);
+			return this.executeBlockCopy(lead, anchor);
+		}
+		const receiverSlide = presentation.Slides[presentation.GetSlideIndex(firstSlide) - 1] || null;
+		const blockEnd = this.getBlockEnd(lastSlide);
+		const leadCopies = operations.copyParagraphs(lead);
+		operations.removeParagraphs(lead);
+		const anchorIndexInLeftover = anchor.slide === lastSlide ? blockEnd.leftover.indexOf(anchor.paragraph) : -1;
+		let leadSlide;
+		if (anchorIndexInLeftover !== -1) {
+			const leftoverBefore = this.moveParagraphsToSlideEnd(blockEnd.leftover.slice(0, anchorIndexInLeftover + 1), receiverSlide);
+			if (leadCopies.length) {
+				this.insertAtAnchor(receiverSlide, leftoverBefore[leftoverBefore.length - 1], leadCopies);
+			}
+			this.moveSlides(slides, receiverSlide);
+			leadSlide = receiverSlide;
 		} else {
-			const splitResults = this.splitAtPoints([
-				{paragraph: startParagraph, offset: selection.startOffset},
-				{paragraph: targetParagraph, offset: this.target.offset}
-			]);
-			const startSplit = this.getSplitSegments(splitResults, startParagraph);
-			const targetSplit = this.getSplitSegments(splitResults, targetParagraph);
-			sourceLeft = getSegmentEndingAt(startSplit, selection.startOffset);
-			targetLeft = getSegmentEndingAt(targetSplit, this.target.offset);
-			targetRight = getSegmentStartingAt(targetSplit, this.target.offset);
-			const lead = [getSegmentStartingAt(startSplit, selection.startOffset)].concat(leadTail);
-
-			const blockEnd = this.splitBlockEnd(lastSlide);
-			lastSelected = blockEnd.lastSelected;
-			leftover = blockEnd.leftover;
-
-			leadCopies = operations.copyParagraphs(lead);
-			operations.removeParagraphs(lead);
-			operations.insertParagraphs(targetLeft.GetParent(), targetLeft.GetIndex() + 1, leadCopies);
+			if (receiverSlide) {
+				this.moveParagraphsToSlideEnd(blockEnd.leftover, receiverSlide);
+			}
+			if (leadCopies.length) {
+				this.insertAtAnchor(anchor.slide, anchor.paragraph, leadCopies);
+			}
+			const tail = this.getParagraphsAfterInsertion(anchor, leadCopies);
+			this.moveSlides(slides, anchor.slide);
+			this.moveParagraphsToSlideEnd(tail, lastSlide);
+			leadSlide = anchor.slide;
 		}
-		if (isTargetTitle) {
-			operations.setLevel(leadCopies, 0);
+		this.setBlockResult(firstSlide, lastSlide, leadCopies, blockEnd.lastSelected);
+		this.resultSlide = leadCopies.length ? leadSlide : firstSlide;
+		this.finish();
+		return true;
+	};
+	OutlineDragDropExecutor.prototype.executeBlockCopy = function (lead, anchor) {
+		const slides = this.selection.slides;
+		const lastSlide = slides[slides.length - 1];
+		const slideCopies = this.copySlides(slides, anchor.slide);
+		const lastCopy = slideCopies[slideCopies.length - 1];
+		const lastSelected = this.cutCopyLeftover(lastSlide, lastCopy);
+		const leadCopies = this.operations.copyParagraphs(lead);
+		if (leadCopies.length) {
+			this.insertAtAnchor(anchor.slide, anchor.paragraph, leadCopies);
 		}
-
-		let leftoverCopies = [];
-		if (leftover.length && sourceLeft) {
-			leftoverCopies = operations.copyParagraphs(leftover);
-			operations.removeParagraphs(leftover);
-			const leftContent = sourceLeft.GetParent();
-			operations.insertParagraphs(leftContent, sourceLeft.GetIndex() + 1, leftoverCopies);
-		}
-
-		if (!this.isCopy) {
-			this.moveSlides(slides, targetSlide);
-		}
-
-		const tailCopies = this.moveParagraphsToSlideEnd([targetRight].concat(targetTail), lastSlideTarget);
-		const targetRightCopy = tailCopies[0];
-
-		this.resultStart = operations.track(leadCopies[0], 0);
-		if (lastSelected && lastSelected.GetParent()) {
-			this.resultEnd = operations.track(lastSelected, getTextLength(lastSelected));
-		}
-
-		operations.join(targetLeft, leadCopies[0]);
-		if (lastSelected && targetRightCopy) {
-			operations.join(lastSelected, targetRightCopy);
-		}
-		if (leftoverCopies.length) {
-			operations.join(sourceLeft, leftoverCopies[0]);
-		} else if (sourceLeft && getTextLength(operations.resolve(sourceLeft)) === 0) {
-			operations.removeParagraphs([operations.resolve(sourceLeft)]);
-		}
-
-		this.resultStart = this.getTrackedContentPosition(this.resultStart, false);
-		this.resultEnd = this.resultEnd ? this.getTrackedContentPosition(this.resultEnd, false) : new AscCommonSlide.SlidePosition(lastSlideTarget, false);
-		this.resultSlide = targetSlide;
+		const tail = this.getParagraphsAfterInsertion(anchor, leadCopies);
+		this.moveParagraphsToSlideEnd(tail, lastCopy);
+		this.setBlockResult(slideCopies[0], lastCopy, leadCopies, lastSelected);
+		this.resultSlide = leadCopies.length ? anchor.slide : slideCopies[0];
 		this.finish();
 		return true;
 	};
 
-	/**
-	 * Drag'n'drop in the outline view: the gesture state machine (StartTrackText / EndTrackText analogue)
-	 * and the entry points for the model-level API.
-	 */
 	function COutlineDragDropManager(outlineView) {
 		this.outlineView = outlineView;
 		this.state = OutlineDragState.none;
 		this.startX = 0;
 		this.startY = 0;
 		this.target = null;
+		this.selection = null;
 	}
 	COutlineDragDropManager.prototype.getPresentation = function () {
 		return this.outlineView.getPresentation();
@@ -1228,10 +956,7 @@
 		this.getPresentation().updateSlideIndexes();
 		return new OutlineDragSelectionBuilder(this.outlineView).build();
 	};
-	/**
-	 * Expands the visible selection: whole titles, the whole first slide (FR-002, FR-009a, FR-014b).
-	 * Called only when a drag starts.
-	 */
+
 	COutlineDragDropManager.prototype.normalizeSelection = function () {
 		const selection = this.getDragSelection();
 		const content = this.outlineView.getDocContent();
@@ -1239,33 +964,40 @@
 			return false;
 		}
 		const bounds = new OutlineDragSelectionBuilder(this.outlineView).getBounds();
-		if (bounds && bounds.start.index === selection.startIndex && bounds.start.offset === selection.startOffset &&
-			bounds.end.index === selection.endIndex && bounds.end.offset === selection.endOffset) {
+		if (bounds && comparePositions(bounds.start, selection.getStart()) === 0 &&
+			comparePositions(bounds.end, selection.getEnd()) === 0) {
 			return false;
 		}
-		const startParagraph = content.Content[selection.startIndex];
-		const endParagraph = content.Content[selection.endIndex];
-		const startPos = getDocPosByOffset(startParagraph, selection.startOffset, false);
-		const endPos = getDocPosByOffset(endParagraph, selection.endOffset, false);
+		const startPos = getDocPos(content.Content[selection.startIndex], selection.startPos);
+		const endPos = getDocPos(content.Content[selection.endIndex], selection.endPos);
 		content.RemoveSelection();
 		content.SetContentPosition(endPos, 0, 0);
 		content.SetContentSelection(startPos, endPos, 0, 0, 0);
 		this.outlineView.updateSelectionState();
 		return true;
 	};
+	COutlineDragDropManager.prototype.getTrackedSelection = function () {
+		if (!this.selection) {
+			this.selection = this.getDragSelection();
+		}
+		return this.selection;
+	};
+	COutlineDragDropManager.prototype.onOutlineUpdate = function () {
+		this.selection = null;
+	};
 	COutlineDragDropManager.prototype.getDropTarget = function (x, y) {
-		const selection = this.getDragSelection();
+		const selection = this.isTrackText() ? this.getTrackedSelection() : this.getDragSelection();
 		if (!selection) {
 			return new OutlineDropTarget(OutlineDropTargetKind.none);
 		}
 		return new OutlineDropTargetBuilder(this.outlineView, selection).buildByPoint(x, y);
 	};
-	COutlineDragDropManager.prototype.getDropTargetByOutlinePos = function (outlineIndex, offset) {
+	COutlineDragDropManager.prototype.getDropTargetByOutlinePos = function (outlineIndex, contentPos) {
 		const selection = this.getDragSelection();
 		if (!selection) {
 			return new OutlineDropTarget(OutlineDropTargetKind.none);
 		}
-		return new OutlineDropTargetBuilder(this.outlineView, selection).buildByOutlinePos(outlineIndex, offset);
+		return new OutlineDropTargetBuilder(this.outlineView, selection).buildByOutlinePos(outlineIndex, contentPos);
 	};
 	COutlineDragDropManager.prototype.getDropTargetByBoundary = function (outlineIndex, isAfter) {
 		const selection = this.getDragSelection();
@@ -1274,31 +1006,33 @@
 		}
 		return new OutlineDropTargetBuilder(this.outlineView, selection).buildByBoundary(outlineIndex, isAfter);
 	};
-	COutlineDragDropManager.prototype.canDrop = function (target) {
+	COutlineDragDropManager.prototype.canDrop = function (target, selection) {
 		if (!target || target.isNone() || target.isInsideSelection) {
 			return false;
 		}
-		const selection = this.getDragSelection();
+		if (!selection) {
+			selection = this.getDragSelection();
+		}
 		if (!selection || selection.type !== target.selectionType) {
 			return false;
 		}
 		return this.canEdit();
 	};
-	/**
-	 * Executes a drop as one history point. Locks are checked here only, at drop (FR-019a).
-	 * @returns {boolean} true if the document was changed
-	 */
+
 	COutlineDragDropManager.prototype.drop = function (target, isCopy) {
-		if (!this.canDrop(target)) {
+		const selection = this.getDragSelection();
+		if (!this.canDrop(target, selection)) {
 			return false;
 		}
-		const selection = this.getDragSelection();
 		const executor = new OutlineDragDropExecutor(this.outlineView, selection, target, isCopy);
 		const lockObjects = executor.getLockObjects();
 		let isDone = false;
 		this.outlineView.checkSelectedObjectsAndCallback(function () {
 			isDone = executor.execute();
 		}, AscDFH.historydescription_Document_DragText, true, true, !isCopy, undefined, lockObjects);
+		if (isDone) {
+			executor.showResult();
+		}
 		return isDone;
 	};
 
@@ -1330,6 +1064,7 @@
 		this.normalizeSelection();
 		this.state = OutlineDragState.tracking;
 		this.target = null;
+		this.selection = this.getDragSelection();
 	};
 	COutlineDragDropManager.prototype.checkMouseMove = function (e, x, y) {
 		if (this.state !== OutlineDragState.tracking) {
@@ -1346,19 +1081,24 @@
 		}
 		if (this.state === OutlineDragState.tracking) {
 			this.target = this.getDropTarget(x, y);
-			this.endTrackText(false);
+			this.endTrackText();
 			return true;
 		}
 		return false;
 	};
-	COutlineDragDropManager.prototype.endTrackText = function (isOnlyMoveTarget) {
+	COutlineDragDropManager.prototype.endTrackText = function () {
 		const target = this.target;
 		const isCopy = AscCommon.global_mouseEvent.CtrlKey;
 		this.reset();
-		if (isOnlyMoveTarget || !target) {
+		if (!target) {
 			return false;
 		}
-		return this.drop(target, isCopy);
+		this.state = OutlineDragState.dropping;
+		try {
+			return this.drop(target, isCopy);
+		} finally {
+			this.reset();
+		}
 	};
 	COutlineDragDropManager.prototype.cancelTrackText = function () {
 		const isActive = this.isActive();
@@ -1368,6 +1108,7 @@
 	COutlineDragDropManager.prototype.reset = function () {
 		this.state = OutlineDragState.none;
 		this.target = null;
+		this.selection = null;
 	};
 	COutlineDragDropManager.prototype.placeCursor = function (x, y) {
 		const outlineView = this.outlineView;
