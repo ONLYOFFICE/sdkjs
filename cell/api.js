@@ -7926,6 +7926,8 @@ var editor;
 		// Check global lock
 
 		var t = this;
+		// the lock of a single user is answered before the return, so the result is known then
+		var isDone = false;
 		var pivotTables = pivot.getPivotTablesConnectedByPivotCache();
 		this._isLockedPivotAndConnectedByPivotCache(pivotTables, function(res) {
 			if (!res) {
@@ -7943,7 +7945,9 @@ var editor;
 				//todo pivot
 				t.updateWorksheetByPivotTable(pivot, changeRes, true, updateSelection);
 			}
+			isDone = success;
 		});
+		return isDone;
 	};
 	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, fitColumnsWidth, onAction, doNotCheckUnderlyingData) {
 		if (!doNotCheckUnderlyingData && !pivot.checkPivotUnderlyingData()) {

@@ -157,7 +157,7 @@
 	 * @property {number} Count - Returns the rows or columns count.
 	 * @property {string} Address - Returns the range address.
 	 * @property {string} Value - Returns a value from the first cell of the specified range or sets it to this cell.
-	 * @property {string} Formula - Returns a formula from the first cell of the specified range or sets it to this cell.
+	 * @property {string | string[][]} Formula - Returns a formula from the cell of the specified range or an array of formulas by rows from a range of several cells, or sets it to this cell.
 	 * @property {string | null} FormulaArray - Returns the array formula of the specified range or sets it to this range.
 	 * @property {string} Value2 - Returns the value2 (value without format) from the first cell of the specified range or sets it to this cell.
 	 * @property {string} Text - Returns the text from the first cell of the specified range or sets it to this cell.
@@ -11501,10 +11501,23 @@
 	 * Returns a formula of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @returns {string | string[][]} - return Value2 property (value without format) if formula doesn't exist.
+	 * @returns {string | string[][]} - return Value2 property (value without format) if formula doesn't exist; a range of several cells returns an array of them by rows, as GetValue2 does.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormula.js
 	 */
 	ApiRange.prototype.GetFormula = function () {
+		if (!this.range.isOneCell()) {
+			let bbox = this.range.bbox;
+			let res = [];
+			for (let row = bbox.r1; row <= bbox.r2; row++) {
+				let rowFormulas = [];
+				for (let col = bbox.c1; col <= bbox.c2; col++) {
+					let cell = this.range.worksheet.getRange3(row, col, row, col);
+					rowFormulas.push(cell.isFormula() ? "=" + cell.getFormula() : cell.getValueWithoutFormat());
+				}
+				res.push(rowFormulas);
+			}
+			return res;
+		}
 		if (this.range.isFormula())
 			return "=" + this.range.getFormula();
 		else
@@ -22016,6 +22029,80 @@
 	});
 
 	/**
+	 * Groups the dates of the pivot table field by periods or its numbers by intervals, as VBA Range.Group does for a cell of the field.
+	 * The field must be in the rows or columns; grouping again replaces the previous grouping of the field.
+	 * For dates, the field shows the shortest period, and a new field is added next to it for every longer one.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean | number | Date} [start=true] - The first value to group, or true for the first value of the field. A date is a Date object or its serial number.
+	 * @param {boolean | number | Date} [end=true] - The last value to group, or true for the last value of the field.
+	 * @param {number} [by] - The size of each group of numbers, or the number of days in each group when the dates are grouped by days alone. If omitted, the size of the number groups is chosen automatically and each day is a group.
+	 * @param {boolean[]} [periods] - Seven values which specify whether the dates are grouped by seconds, minutes, hours, days, months, quarters and years. If omitted, the dates are grouped by months. The numbers ignore it.
+	 * @returns {boolean} - Returns true if the field is grouped, or false if it is not in the rows or columns, has values that are neither dates nor numbers, the pivot table has no source records, the grouped report would cover other cells, or other users are editing the document.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/Group.js
+	 */
+	ApiPivotField.prototype.Group = function (start, end, by, periods) {
+		const pivot = this.table.pivot;
+		// a field that an earlier grouping removed is no longer in the pivot table
+		if (!pivot.asc_getPivotFields()[this.index]) {
+			return false;
+		}
+		const groupType = pivot.getGroupFieldType(this.index);
+		if (null === groupType) {
+			return false;
+		}
+		const isDate = Asc.c_oAscGroupType.Date === groupType;
+		const groupBy = Asc.c_oAscGroupBy;
+		// the order of the periods of VBA
+		const periodTypes = [groupBy.Seconds, groupBy.Minutes, groupBy.Hours, groupBy.Days, groupBy.Months, groupBy.Quarters, groupBy.Years];
+		let dateTypes = isDate ? [groupBy.Months] : null;
+		if (isDate && periods !== undefined) {
+			if (!Array.isArray(periods) || periods.length !== periodTypes.length) {
+				private_MakeError('"periods" must be an array of 7 booleans for seconds, minutes, hours, days, months, quarters and years.');
+			}
+			dateTypes = [];
+			for (let i = 0; i < periodTypes.length; i++) {
+				if (typeof periods[i] !== "boolean") {
+					private_MakeError('"periods" must be an array of 7 booleans for seconds, minutes, hours, days, months, quarters and years.');
+				}
+				if (periods[i]) {
+					dateTypes.push(periodTypes[i]);
+				}
+			}
+			if (!dateTypes.length) {
+				private_MakeError('At least one of the "periods" must be true.');
+			}
+		}
+		// VBA ignores the size of a group of dates unless they are grouped by days alone
+		let interval = null;
+		if (by !== undefined && (!isDate || (1 === dateTypes.length && groupBy.Days === dateTypes[0]))) {
+			if (typeof by !== "number" || !(by > 0) || (isDate ? !Number.isInteger(by) || by > 32767 : !isFinite(by))) {
+				private_MakeError(isDate ? '"by" must be a whole number of days from 1 to 32767.' : '"by" must be a positive number.');
+			}
+			interval = by;
+		}
+		const toValue = function (bound, name) {
+			if (bound === undefined || bound === true) {
+				return null;
+			}
+			const value = bound instanceof Date ? new Asc.cDate(bound.getTime()).getExcelDateWithTime(true) : bound;
+			// a date is a serial number from 0 to the last day of the year 9999, which the 1904 date system counts 1462 days less
+			if (typeof value !== "number" || !isFinite(value) || (isDate && (value < 0 || value >= (AscCommon.bDate1904 ? 2957004 : 2958466)))) {
+				private_MakeError('"' + name + '" must be true, a number or a valid date.');
+			}
+			return value;
+		};
+		const startValue = toValue(start, "start");
+		const endValue = toValue(end, "end");
+		if (null !== startValue && null !== endValue && endValue < startValue) {
+			private_MakeError('"end" must not be less than "start".');
+		}
+		const rangePr = pivot.createGroupRangePrByBounds(this.index, startValue, endValue, interval);
+		return !!rangePr && true === pivot.groupPivot(this.table.api, {fld: this.index}, false, null, rangePr, dateTypes, true);
+	};
+
+	/**
 	 * The layout type of the pivot table report.
 	 * @typedef {"Tabular" | "Outline"} PivotLayoutType
 	 */
@@ -32450,6 +32537,7 @@
 	ApiPivotField.prototype["GetParent"]                 = ApiPivotField.prototype.GetParent;
 	ApiPivotField.prototype["GetLayoutCompactRow"]       = ApiPivotField.prototype.GetLayoutCompactRow;
 	ApiPivotField.prototype["SetLayoutCompactRow"]       = ApiPivotField.prototype.SetLayoutCompactRow;
+	ApiPivotField.prototype["Group"]                     = ApiPivotField.prototype.Group;
 	ApiPivotField.prototype["GetLayoutForm"]             = ApiPivotField.prototype.GetLayoutForm;
 	ApiPivotField.prototype["SetLayoutForm"]             = ApiPivotField.prototype.SetLayoutForm;
 	ApiPivotField.prototype["GetLayoutPageBreak"]        = ApiPivotField.prototype.GetLayoutPageBreak;
