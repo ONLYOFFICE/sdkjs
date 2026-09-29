@@ -321,7 +321,7 @@
 		}
 	};
     CPdfGraphicFrame.prototype.draw = function (graphics) {
-        if (graphics.isBoundsChecker() === true) {
+		if (graphics.isBoundsChecker() === true) {
             graphics.transform3(this.transform);
             graphics._s();
             graphics._m(0, 0);
@@ -335,6 +335,12 @@
             graphics.animationDrawer.drawObject(this, graphics);
             return;
         }
+
+		let oldIsShowTableEmptyLine = Asc.editor.isShowTableEmptyLine;
+		if (false == Asc.editor.canEdit()) {
+			Asc.editor.isShowTableEmptyLine = false;
+		}
+		
         if (this.graphicObject) {
             graphics.SaveGrState();
             graphics.transform3(this.transform);
@@ -361,6 +367,8 @@
         }
         graphics.SetIntegerGrid(true);
         graphics.reset();
+
+		Asc.editor.isShowTableEmptyLine = oldIsShowTableEmptyLine;
     };
     CPdfGraphicFrame.prototype.select = function (drawingObjectsController, pageIndex) {
         if (!AscFormat.canSelectDrawing(this)) {
