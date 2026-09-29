@@ -23813,6 +23813,7 @@
 
 	/**
 	 * Sets the fill to the specified chart series.
+	 * <note>The fill is not applied to 2D line and scatter series. Use the SetSeriesOutLine method to change their line and the SetMarkerFill method to change their markers.</note>
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
