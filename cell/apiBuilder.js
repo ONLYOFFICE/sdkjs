@@ -10869,6 +10869,11 @@
 	 */
 
 	/**
+	 * Specifies whether the first row of the range contains the header information or it is detected automatically.
+	 * @typedef {("xlNo" | "xlYes" | "xlGuess")} XlYesNoGuess
+	 */
+
+	/**
 	 * Specifies if the sort should be by row or column.
 	 * @typedef {("xlSortColumns" | "xlSortRows")} SortOrientation
 	 * @see office-js-api/Examples/Enumerations/SortOrientation.js
@@ -12614,7 +12619,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number | number[]} [aColumns] - The 1-based indexes of the columns to compare, counted from the first column of the range, or of the table or the autofilter that the range stands for. If omitted, all the columns are compared.
-	 * @param {SortHeader | "xlGuess"} [sHeader="xlNo"] - Specifies whether the first row is a header row, which is kept and not compared, or "xlGuess" to detect it as the command does. The value may be in any case and without "xl", e.g. "yes"; other values throw an error. The header row of a table or an autofilter is always kept.
+	 * @param {XlYesNoGuess} [sHeader="xlNo"] - Specifies whether the first row is a header row, which is kept and not compared, or "xlGuess" to detect it as the command does. The value may be in any case and without "xl", e.g. "yes"; other values throw an error. The header row of a table or an autofilter is always kept.
 	 * @returns {number | null} - The number of removed rows, or null if the rows cannot be removed: the range has one row only, has merged cells of different sizes, crosses a table, an array formula or a pivot table, is in a table with a totals row, or other users are editing the document.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/RemoveDuplicates.js
