@@ -1711,7 +1711,7 @@ void main() {\n\
     CFile.prototype.copyPageTextWithQuads = function(pageIndex)
     {
         let stream = this.getPageTextStream(pageIndex);
-        if (!stream || this.pages[pageIndex].isRecognized)
+        if (!stream)
             return [];
 
         let result = [];
