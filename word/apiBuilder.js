@@ -2726,13 +2726,16 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string | null} fontFamily - The font family or families used for the current text Range. Pass <em>null</em> to remove the font family.
+	 * @param {string | null} [fontFamily] - The font family or families used for the current text Range. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {ApiRange | null} - returns null if can't set font family.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontFamily.js
 	 */
 	ApiRange.prototype.SetFontFamily = function(fontFamily)
 	{
 		private_RefreshRangesPosition();
+
+		if (undefined === fontFamily)
+			fontFamily = null;
 
 		if (null !== fontFamily && typeof fontFamily !== "string")
 			return null;
@@ -11717,12 +11720,15 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string | null} fontFamily - The font family or families used for the current paragraph. Pass <em>null</em> to remove the font family.
+	 * @param {string | null} [fontFamily] - The font family or families used for the current paragraph. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {?ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontFamily.js
 	 */
 	ApiParagraph.prototype.SetFontFamily = function(fontFamily)
 	{
+		if (undefined === fontFamily)
+			fontFamily = null;
+
 		if (null !== fontFamily && typeof fontFamily !== "string")
 			return null;
 		
@@ -12226,13 +12232,24 @@
 	 * Sets the font family of the drop cap letter.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
-	 * @param {string} fontFamily - The font family name used for the drop cap letter.
+	 * @param {string | null} [fontFamily] - The font family name used for the drop cap letter. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {ApiDropCap}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetFontFamily.js
 	 */
 	ApiDropCap.prototype.SetFontFamily = function(fontFamily)
 	{
+		if (null === fontFamily || undefined === fontFamily)
+		{
+			if (!this.private_GetLogicDocument() || !this.private_IsValid())
+				return this;
+
+			this.Paragraph.SetApplyToAll(true);
+			this.Paragraph.Add(private_GetRemoveFontFamilyTextPr());
+			this.Paragraph.SetApplyToAll(false);
+			return this;
+		}
+
 		fontFamily = AscBuilder.GetStringParameter(fontFamily, null);
 		if (null === fontFamily)
 			throwException(new Error('Invalid type of parameter "fontFamily".'));
@@ -17405,12 +17422,19 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sFontFamily - The font family or families used for the current text run.
+	 * @param {string | null} [sFontFamily] - The font family or families used for the current text run. Pass <em>null</em> or omit it to remove the font family.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetFontFamily.js
 	 */
 	ApiTextPr.prototype.SetFontFamily = function(sFontFamily)
 	{
+		if (null === sFontFamily || undefined === sFontFamily)
+		{
+			this.TextPr.RFonts = new CRFonts();
+			this.private_OnChange();
+			return this;
+		}
+
 		LoadFont(sFontFamily);
 		this.TextPr.RFonts.SetAll(sFontFamily, -1);
 		this.private_OnChange();
@@ -34117,13 +34141,13 @@
 	 * Sets the font family for the current TextRange.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string | null} fontFamily - The font family or families used for the current text Range. Pass <em>null</em> to remove the font family.
+	 * @param {string | null} [fontFamily] - The font family or families used for the current text Range. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
 	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
-		if (null === fontFamily)
+		if (null === fontFamily || undefined === fontFamily)
 			return this.private_ApplyTextPr(private_GetRemoveFontFamilyTextPr());
 
 		fontFamily = AscBuilder.GetStringParameter(fontFamily, null, false);
