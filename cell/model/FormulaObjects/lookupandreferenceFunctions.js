@@ -3514,33 +3514,39 @@ function (window, undefined) {
 			}
 
 			if (arrayToSearch) {
+				let isText = cElementType.string === arg0ValType;
+				let searchValue = isText ? arg0Val.getValue().toLowerCase() : arg0Val.getValue();
 				if (arg3) {
-					// approximate(binary) search
-					res = _func.lookupBinarySearch(arg0Val, arrayToSearch, false);
-				} else {
-					let searchValue = arg0Val.getValue();
-					if (arg0Val.type === cElementType.string) {
-						searchValue = searchValue.toLowerCase();
+					// approximate: the same search as over a range, over the text lowercased the same way
+					let typed = [], elems = isText ? [] : arrayToSearch;
+					for (let i = 0; i < arrayToSearch.length; i++) {
+						let elem = arrayToSearch[i];
+						if (elem.type === arg0ValType) {
+							typed.push(i);
+						}
+						if (isText) {
+							elems.push(elem.type === arg0ValType ? new cString(elem.getValue().toLowerCase()) : elem);
+						}
 					}
-					// exact (simple) search
+					if (typed.length) {
+						res = this._defaultBinarySearch(isText ? new cString(searchValue) : arg0Val, 0, elems.length - 1,
+							null, null, typed, elems);
+					}
+				} else {
+					// a text key with * ? or ~ is a wildcard pattern
+					let isMask = isText && /[*?~]/.test(searchValue);
 					for (let i = 0; i < arrayToSearch.length; i++) {
 						let elem = arrayToSearch[i];
 						if (elem.type !== arg0ValType) {
 							continue;
 						}
-						let elemValue = elem.getValue();
-	
-						if (elem.type === cElementType.string) {
-							elemValue = elemValue.toLowerCase();
-						}
-	
-						if (elemValue === searchValue) {
+						let elemValue = isText ? elem.getValue().toLowerCase() : elem.getValue();
+						if (isMask ? AscCommonExcel.searchRegExp2(elemValue, searchValue) : elemValue === searchValue) {
 							res = i;
 							break
 						}
 					}
 				}
-
 			}
 
 			let _ldim = arg1.getDimensions();
@@ -3855,11 +3861,9 @@ function (window, undefined) {
 		return foundCurrent;
 	};
 	/**
-	 * Finds the last occurrence of the same value in a sorted typed array.
-	 * This function is crucial for Excel's VLOOKUP/HLOOKUP approximate match behavior,
-	 * which requires returning the position of the LAST duplicate value when exact matches exist.
-	 * 
-	 * Uses binary search via sortedCache Map to efficiently locate the rightmost occurrence of a value
+	 * Finds the end of the run of values equal to an exact hit of the approximate VLOOKUP/HLOOKUP search.
+	 *
+	 * Uses binary search via sortedCache Map to efficiently locate the end of the run
 	 * within the specified range boundaries.
 	 * 
 	 * @private
@@ -3908,26 +3912,39 @@ function (window, undefined) {
 			return currentIndex;
 		}
 		
-		// Binary search in sameValueIndices for last index in range [currentIndex, maxIndex]
+		// Excel stops at the end of the run of equal values next to the hit, not at a later equal value (measured):
+		// find the hit in sameValueIndices, then the last index that still continues the run without a gap
 		lo = 0;
 		hi = sameValueIndices.length - 1;
-		let result = currentIndex;
-		
+		let first = -1;
 		while (lo <= hi) {
 			const mid = Math.floor((lo + hi) / 2);
-			const midValue = sameValueIndices[mid];
-			
-			if (midValue > maxIndex) {
-				hi = mid - 1;
-			} else if (midValue < currentIndex) {
+			if (sameValueIndices[mid] < currentIndex) {
 				lo = mid + 1;
 			} else {
-				result = midValue;
-				lo = mid + 1;
+				if (sameValueIndices[mid] === currentIndex) {
+					first = mid;
+				}
+				hi = mid - 1;
 			}
 		}
-		
-		return result;
+		if (-1 === first) {
+			return currentIndex;
+		}
+		let last = first;
+		lo = first + 1;
+		hi = sameValueIndices.length - 1;
+		while (lo <= hi) {
+			const mid = Math.floor((lo + hi) / 2);
+			if (sameValueIndices[mid] - mid === currentIndex - first && sameValueIndices[mid] <= maxIndex) {
+				last = mid;
+				lo = mid + 1;
+			} else {
+				hi = mid - 1;
+			}
+		}
+
+		return sameValueIndices[last];
 	};
 	/**
 	 * Performs a binary search to find the position of a value in a sorted range or array.
@@ -3935,7 +3952,7 @@ function (window, undefined) {
 	 * in VLOOKUP and HLOOKUP functions when the range_lookup parameter is TRUE.
 	 * 
 	 * The function searches for the largest value that is less than or equal to the lookup value.
-	 * If an exact match is found, it returns the position of the last occurrence of that value.
+	 * If an exact match is found, it returns the end of the run of equal values next to it.
 	 * The search is optimized using typed arrays for better performance with large datasets.
 	 * 
 	 * @private
@@ -3947,11 +3964,14 @@ function (window, undefined) {
 	 * @param {Uint32Array} typed - Pre-sorted typed array containing indices of cells with matching data types
 	 * @return {number} The index of the found element (0-based), or -1 if no suitable match is found. For approximate matches, returns the index of the largest value that is less than or equal to the search value.
 	 */
-	VHLOOKUPCache.prototype._defaultBinarySearch = function (valueForSearching, startIndex, endIndex, ws, rowCol, typed) {
+	VHLOOKUPCache.prototype._defaultBinarySearch = function (valueForSearching, startIndex, endIndex, ws, rowCol, typed, opt_array) {
 		let i = startIndex;
 		let j = endIndex;
 		const t = this;
 		const getValue = function (index) {
+			if (opt_array) {
+				return opt_array[index];
+			}
 			const cell = ws.getCell3(t.bHor ? rowCol : index, t.bHor ? index : rowCol);
 			return checkTypeCell(cell, true);
 		}
@@ -3983,13 +4003,20 @@ function (window, undefined) {
 				// remember it as potential result
 				resultIndex = k;
 				
-				// KEY FEATURE: if exact match is found,
-				// search for the LAST occurrence of this value in the range
+				// an exact hit answers with the end of its run of equal values
 				if (this._compareValues(val, valueForSearching, "=")) {
+					if (opt_array) {
+						while (k < endIndex && opt_array[k + 1].type === val.type &&
+							this._compareValues(opt_array[k + 1], valueForSearching, "=")) {
+							k++;
+						}
+						resultIndex = k;
+						break;
+					}
 					// Find position in typed array
 					let currentIndexInTyped = this._findIndexInTyped(k, typed);
 					if (currentIndexInTyped !== -1) {
-						// Search for last occurrence of the same value
+						// Search for the end of the run of the same value
 						resultIndex = this._findLastSame(currentIndexInTyped, typed, endIndex, ws, rowCol, valueForSearching);
 					}
 					break;
@@ -4109,6 +4136,15 @@ function (window, undefined) {
 		} else {
 			if (opt_array) {
 				res = this._simpleSearch(valueForSearching, false, ws, startIndex, endIndex, rowCol,opt_arg4, opt_array);
+			} else if (cElementType.string === valueForSearching.type && /[*?~]/.test(valueForSearching.value)) {
+				const typed = this.typedCache.getData(ws, rowCol, cElementType.string, startIndex, endIndex, this.bHor);
+				for (let i = 0; typed && i < typed.length; i++) {
+					const cell = ws.getCell3(t.bHor ? rowCol : typed[i], t.bHor ? typed[i] : rowCol);
+					if (AscCommonExcel.searchRegExp2(checkTypeCell(cell, true).getValue(), valueForSearching.value)) {
+						res = typed[i];
+						break;
+					}
+				}
 			} else {
 				const sorted = this.sortedCache.getData(ws, rowCol, valueForSearching.type, startIndex, endIndex, this.bHor);
 				if (sorted) {

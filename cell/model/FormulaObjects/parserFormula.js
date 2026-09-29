@@ -13869,6 +13869,15 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					nSLastIndex = nSIndex + 1;
 					nMaskLastIndex = nMaskIndex;
+				} else if ('~' === cCurMask && nMaskIndex + 1 < nMaskLength) {
+					// after a * too, a tilde makes the next character match only itself
+					if (mask[nMaskIndex + 1] === s[nSIndex]) {
+						nSIndex++;
+						nMaskIndex += 2;
+					} else {
+						nMaskIndex = nMaskLastIndex;
+						nSIndex = nSLastIndex++;
+					}
 				} else if (cCurMask !== s[nSIndex] && '?' !== cCurMask) {
 					nMaskIndex = nMaskLastIndex;
 					nSIndex = nSLastIndex++;
