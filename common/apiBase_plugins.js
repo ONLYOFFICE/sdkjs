@@ -355,6 +355,10 @@
 		}, options);
 	};
 	Api.prototype._pluginMethod_PasteHtml = function(htmlText, callback, options) {
+		// the native engine: used only by the slide SetParagraphHtml / SetParagraphRangeHtml
+		if (window["NATIVE_EDITOR_ENJINE"] && this.editorId === AscCommon.c_oEditorId.Presentation)
+			return this._pluginMethod_PasteHtmlNative(htmlText, callback);
+
 		if (!AscCommon.g_clipboardBase
 			|| !this.canEdit()
 			|| document.getElementById("pmpastehtml"))
@@ -450,6 +454,44 @@
 				}
 			}
 		);
+	};
+
+	Api.prototype._pluginMethod_PasteHtmlNative = function(htmlText, callback) {
+		if (!this.canEdit())
+		{
+			if (callback)
+				callback();
+
+			return null;
+		}
+
+		let style  = "color:rgb(0,0,0);";
+		let textPr = this.get_TextProps();
+		if (textPr && textPr.TextPr) {
+			if (undefined !== textPr.TextPr.FontSize)
+				style += "font-size:" + textPr.TextPr.FontSize + "pt;";
+
+			style += "font-weight:" + ((true === textPr.TextPr.Bold) ? "bold" : "normal") + ";";
+			style += "font-style:" + ((true === textPr.TextPr.Italic) ? "italic" : "normal") + ";";
+
+			let _color = textPr.TextPr.Color;
+			if (_color)
+				style += "color:rgb(" + _color.r + "," + _color.g + "," + _color.b + ");";
+		}
+
+		let result = null;
+		this.executeGroupActionsStart();
+		this.asc_PasteHtmlAsText('<div style="' + style + '">' + htmlText + '</div>', function() {
+			if (callback)
+				result = callback();
+		}, undefined, true);
+
+		// the paste helper has no api here, so it does not end the paste
+		AscCommon.g_specialPasteHelper.pasteStart = false;
+		AscFonts.IsCheckSymbols = false;
+
+		this.executeGroupActionsEnd();
+		return result;
 	};
 
     /**
