@@ -3045,9 +3045,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//used when the tail is not a constant (e.g. ROW()/COLUMN() over a clamped full-column/row reference).
 		//takes priority over missedValue. signature: (row, col) -> cElement
 		this.missedValueFn = null;
-		//the error that answers for the whole call this array came out of, rather than being one element's
-		//value: set when an element comes back with an error whose collapsesCall is this very call.
-		//The next function receives this error instead of the array.
 		this.collapsedError = null;
 	}
 
@@ -4152,6 +4149,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.excludeErrorsVal = false;
 	cBaseFunction.prototype.excludeNestedStAg = false;
 	cBaseFunction.prototype.bArrayFormula = null;
+	//argument positions: broadcasting takes the shape of the first one that is an array or a range, not the largest
+	cBaseFunction.prototype.resultShapeArgs = null;
 	//necessary for array formulas
 	//arrayIndexes - map, where key is the argument that is passed to the function as array,area,area3d (i.e. unchanged)
 	//and value is either boolean or object
@@ -4163,9 +4162,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.inheritFormat = null;
 	cBaseFunction.prototype.name = null;
 	cBaseFunction.prototype.argumentsType = null;
-	//Calculate(arg, opt_bbox, opt_defName, ws, bIsSpecialFunction, opt_row, opt_col, opt_argInfo) -
-	//the last four are filled in only by the array-broadcast loop. opt_argInfo[i].mode is non-zero for
-	//every argument that loop is feeding element by element.
+	//Calculate(arg, opt_bbox, opt_defName, ws, bIsSpecialFunction, opt_row, opt_col, opt_argInfo): the array
+	//broadcast passes opt_argInfo, where a non-zero opt_argInfo[i].mode marks an argument fed element by element
 	cBaseFunction.prototype.Calculate = function () {
 		return new cError(cErrorType.wrong_name);
 	};
@@ -4738,7 +4736,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			//first iterate over all arguments and convert from cellsRange to array or value depending on how the function should work
-			var tempArgs = [], tempArg, firstArray, _checkArrayIndex, maxArrayRows = 1, maxArrayCols = 1;
+			var tempArgs = [], tempArg, firstArray, _checkArrayIndex, maxArrayRows = 1, maxArrayCols = 1, _arrayArgs = 0;
 			//stored extent of the same arguments - the head that has to be computed cell by cell
 			var headRows = 0, headCols = 0;
 			for (var j = 0; j < argumentsCount; j++) {
@@ -4779,6 +4777,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						} else {
 							//use LOGICAL dims (realSize) so a full-column arg drives the result shape even when it has no data
 							var _taR = tempArg.getRowCount(), _taC = tempArg.getCountElementInRow();
+							_arrayArgs++;
 							maxArrayRows = Math.max(maxArrayRows, _taR);
 							maxArrayCols = Math.max(maxArrayCols, _taC);
 							headRows = Math.max(headRows, tempArg.rowCount);
@@ -4800,6 +4799,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				tempArgs.push(tempArg);
 			}
 
+			if (this.resultShapeArgs && _arrayArgs > 1) {
+				for (var _si = 0; _si < this.resultShapeArgs.length; _si++) {
+					var _shapeArg = tempArgs[this.resultShapeArgs[_si]];
+					if (_shapeArg && cElementType.array === _shapeArg.type) {
+						maxArrayRows = _shapeArg.getRowCount();
+						maxArrayCols = _shapeArg.getCountElementInRow();
+						headRows = _shapeArg.rowCount;
+						headCols = _shapeArg.countElementInRow.length ? _shapeArg.countElementInRow[0] : 0;
+						firstArray = _shapeArg;
+						break;
+					}
+				}
+			}
 
 			//for row/column functions with zero arguments, need to calculate
 			//the value for each cell of the array, changing opt_bbox
@@ -5150,6 +5162,17 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		let width = 1, height = 1;
+		if (this.resultShapeArgs) {
+			for (let i = 0; i < this.resultShapeArgs.length; i++) {
+				let shapeArg = arg[this.resultShapeArgs[i]];
+				if (shapeArg && (cElementType.array === shapeArg.type || cElementType.cellsRange === shapeArg.type ||
+					cElementType.cellsRange3D === shapeArg.type)) {
+					let objSize = shapeArg.getDimensions(true);
+					return objSize && (objSize.row !== 1 || objSize.col !== 1) ? {width: objSize.col, height: objSize.row} : null;
+				}
+			}
+			return null;
+		}
 		for (let i = 0; i < arg.length; i++) {
 			if (!this.arrayIndexes || !this.getArrayIndex(i, arg[i].type)) {
 				let objSize = arg[i].getDimensions(true);
@@ -5674,9 +5697,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			if (_arg1 instanceof cError) {
 				return _arg1;
 			}
-			// Excel caps a string at the cell limit and keeps the beginning. Capping here, where the string
-			// is produced, means every function reading the result already sees the capped one; cutting the
-			// pieces rather than the joined string keeps the oversized one from being built at all.
+			// Excel keeps the beginning of a string past the cell limit; the pieces are cut so the long one is never built
 			var s0 = _arg0.toString(), s1 = _arg1.toString();
 			var maxLen = Asc.c_oAscMaxCellOrCommentLength;
 			if (s0.length + s1.length > maxLen) {
@@ -10703,8 +10724,7 @@ function parserFormula( formula, parent, _ws ) {
 							elemArr.pop();
 						}
 						let _elem = elemArr.pop();
-						//a call that collapsed reaches the next function as its error, not as an array:
-						//IFERROR over one answers its own second argument, ROWS over one answers the error
+						//a call that collapsed reaches the next function as its error, not as an array
 						if (_elem && cElementType.array === _elem.type && _elem.collapsedError) {
 							_elem = _elem.collapsedError;
 						}

@@ -300,24 +300,6 @@ function (window, undefined) {
 		return arg.getMatrix ? arg.getMatrix() : arg.toArray();
 	}
 
-	//The error a lookup answers with. When the result's shape comes from index_num alone it answers for
-	//the whole call - neither a bad index nor a missing key depends on the element - and records which
-	//call that is (see cArray.collapsedError), so another lookup that passes it on does not collapse.
-	function lookupError(type, collapsesCall) {
-		let err = new cError(type);
-		if (collapsesCall) {
-			err.collapsesCall = collapsesCall;
-		}
-		return err;
-	}
-
-	//ROWS/COLUMNS/INDEX treat a bare value as a 1x1 array, the way Excel does. An omitted argument is
-	//not a value and is deliberately left out - it keeps #VALUE! there.
-	function isScalarElement(elem) {
-		let t = elem && elem.type;
-		return cElementType.number === t || cElementType.string === t || cElementType.bool === t;
-	}
-
 	// these functions are made and used specifically for SORT & SORTBY functions
 	function sortArray (array, by_array1, sortOrder, isByCol, sortIndex) {
 		let resultArr = new cArray(),
@@ -1082,7 +1064,8 @@ function (window, undefined) {
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
-		} else if (isScalarElement(arg0)) {
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type) {
 			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().c1 - range.getBBox0().c2) + 1) :
@@ -1510,13 +1493,11 @@ function (window, undefined) {
 	cHLOOKUP.prototype.arrayIndexes = {1: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
+	cHLOOKUP.prototype.resultShapeArgs = [0, 3, 2];
 	cHLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
-		//opt_argInfo (see cBaseFunction.prototype.Calculate): a non-zero mode means the engine feeds this
-		//argument element by element, and an index_num element is read like a reference
 		let _argInfo = arguments[7];
-		let _idxInfo = _argInfo && _argInfo[2];
-		let indexIsElement = !!(_idxInfo && _idxInfo.mode);
+		let indexIsElement = !!(_argInfo && _argInfo[2].mode);
 		let collapsesCall = indexIsElement && !_argInfo[0].mode && !(_argInfo[3] && _argInfo[3].mode) ? _argInfo : null;
 		if (arg[0].type === cElementType.array) {
 			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
@@ -1820,8 +1801,8 @@ function (window, undefined) {
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
 					res = arg0.getValue();
 				}
-			} else if (isScalarElement(arg0)) {
-				//a scalar is a 1x1 array: INDEX(x,1,1) is x; anything past it stays #REF! (res left null)
+			} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+				cElementType.bool === arg0.type) {
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
 					res = arg0;
 				}
@@ -2188,7 +2169,8 @@ function (window, undefined) {
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
-		} else if (isScalarElement(arg0)) {
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type) {
 			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().r1 - range.getBBox0().r2) + 1) :
@@ -3410,7 +3392,7 @@ function (window, undefined) {
 		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
 		// cBool.tocBool() returns `this` (same .value read), cNumber.tocBool() is new cBool(value !== 0)
 		// whose .value is exactly (value !== 0). Other types keep the original tocBool() path.
-		let _a3 = arg[3], arg3;
+		let _a3 = arg[3], arg3, rangeLookupError = null;
 		if (!_a3) {
 			arg3 = true;
 		} else if (cElementType.bool === _a3.type) {
@@ -3418,7 +3400,12 @@ function (window, undefined) {
 		} else if (cElementType.number === _a3.type) {
 			arg3 = 0 !== _a3.value;
 		} else {
-			arg3 = _a3.tocBool().value;
+			let _a3Val = cElementType.cell === _a3.type || cElementType.cell3D === _a3.type ? _a3.getValue() : _a3;
+			if (cElementType.error === _a3Val.type) {
+				rangeLookupError = _a3Val;
+			} else {
+				arg3 = _a3Val.tocBool().value;
+			}
 		}
 		let opt_xlookup = arg[4] !== undefined;
 		let opt_arg4, opt_arg5;
@@ -3428,10 +3415,20 @@ function (window, undefined) {
 		}
 		let t = this, number, r, c, res = -1, count;
 
-		if (!opt_xlookup) {
-			//kept for the text case below, where what index_num came from decides the answer
+		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
+			arg0 = arg0.getValue();
+		}
+		let arg0Val;
+		if (cElementType.array === arg0.type) {
+			arg0Val = arg0.getElementRowCol(0, 0);
+		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			arg0Val = arg0.cross(argument1);
+		} else {
+			arg0Val = arg0;
+		}
+		let answer = cElementType.error === arg0Val.type ? arg0Val : null;
+		if (!answer && !opt_xlookup) {
 			let arg2Type = arg2.type;
-
 			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
 				arg2 = arg2.getValue();
 			} else if (cElementType.array === arg2.type) {
@@ -3440,60 +3437,38 @@ function (window, undefined) {
 				arg2 = arg2.cross(argument1);
 			}
 
-			if (cElementType.error === arg2.type) {
-				return arg2;
-			}
-
-			// index_num converts in kind: a logical reads as 1 / 0 and a numeric string as its number.
 			let indexNum = arg2.tocNumber();
-			if (cElementType.number !== indexNum.type) {
-				// Text standing in the slot itself is refused outright, while text READ from a reference, an
-				// array element or a range behaves like an index past the table - answered after the lookup,
-				// so a miss outranks it (measured). A substituted element no longer looks like a reference
-				// here, hence opt_indexIsElement.
-				let byReference = opt_indexIsElement ||
-					cElementType.cell === arg2Type || cElementType.cell3D === arg2Type ||
-					cElementType.cellsRange === arg2Type || cElementType.cellsRange3D === arg2Type ||
-					cElementType.array === arg2Type;
-				if (!byReference) {
-					return lookupError(cErrorType.wrong_value_type, opt_collapsesCall);
+			if (cElementType.error === arg2.type) {
+				// an error element of an array is an unusable index
+				if (!opt_indexIsElement) {
+					return arg2;
 				}
-				// unusable: the check below the lookup answers it
+				number = NaN;
+			} else if (cElementType.number !== indexNum.type) {
+				// typed text is refused, text read from a reference or an array is unusable like an index past the table
+				if (cElementType.string === arg2Type && !opt_indexIsElement) {
+					answer = new cError(cErrorType.wrong_value_type);
+				}
 				number = NaN;
 			} else {
 				let indexVal = indexNum.getValue();
-				// Excel truncates toward zero - 2.7 and 2.999 both address row 2 - unless the value is near
-				// enough to an integer, and that distance is ABSOLUTE: 2.9999998 and 999.9999998 both round
-				// up, 2.99999976 and 999.9999997 truncate (measured). 2^-22 sits inside that window.
+				// truncated toward zero, unless within 2^-22 of an integer - an absolute distance (measured)
 				number = (Math.abs(indexVal - Math.round(indexVal)) < 2.384185791015625e-7 ?
 					Math.round(indexVal) : Math.trunc(indexVal)) - 1;
 			}
-			// every check on the index waits until after the lookup, because a miss outranks it
-		}
-
-		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
-			arg0 = arg0.getValue();
-		}
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-
-		let arg0Val;
-		if (cElementType.array === arg0.type) {
-			arg0Val = arg0.getElementRowCol(0, 0);
-		} else {
-			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				arg0Val = arg0.cross(argument1);
-			} else {
-				arg0Val = arg0;
+			if (!answer) {
+				answer = rangeLookupError;
 			}
 		}
-
-
-		if (cElementType.error === arg0Val.type) {
-			return arg0Val;
+		if (answer) {
+			// a call answering as a whole gets an error of its own, never another call's
+			if (opt_collapsesCall) {
+				answer = new cError(answer.errorType);
+				answer.collapsesCall = opt_collapsesCall;
+			}
+			return answer;
 		}
+
 		if (cElementType.empty === arg0Val.type) {
 			if (!opt_xlookup) {
 				arg0Val = arg0Val.tocNumber();
@@ -3539,23 +3514,13 @@ function (window, undefined) {
 
 			}
 
-			if (-1 === res) {
-				//finding the key does not depend on index_num, so a miss answers for the whole call: with
-				//an array index_num Excel collapses the result to #N/A instead of a per-element shape
-				return lookupError(cErrorType.not_available, opt_collapsesCall);
-			}
-
-			if (isNaN(number)) {
-				//text from a reference: answered like an index past the table
-				return lookupError(cErrorType.bad_reference, opt_collapsesCall);
-			}
-			if (number < 0) {
-				return lookupError(cErrorType.wrong_value_type, opt_collapsesCall);
-			}
 			let _ldim = arg1.getDimensions();
 			count = this.bHor ? _ldim.row : _ldim.col;
-			if (number > count - 1) {
-				return lookupError(cErrorType.bad_reference, opt_collapsesCall);
+			if (-1 === res || isNaN(number) || number < 0 || number > count - 1) {
+				let err = new cError(-1 === res ? cErrorType.not_available :
+					number < 0 ? cErrorType.wrong_value_type : cErrorType.bad_reference);
+				err.collapsesCall = opt_collapsesCall;
+				return err;
 			}
 
 			r = this.bHor ? number : res;
@@ -3614,19 +3579,11 @@ function (window, undefined) {
 			return res;
 		}
 
-		// #REF! is right only when the key was found, so every index check stays BELOW the -1 test -
-		// in step with the array-table branch above.
-		if (-1 === res) {
-			return lookupError(cErrorType.not_available, opt_collapsesCall);
-		}
-		if (isNaN(number)) {
-			return lookupError(cErrorType.bad_reference, opt_collapsesCall);
-		}
-		if (number < 0) {
-			return lookupError(cErrorType.wrong_value_type, opt_collapsesCall);
-		}
-		if (number > count) {
-			return lookupError(cErrorType.bad_reference, opt_collapsesCall);
+		if (-1 === res || isNaN(number) || number < 0 || number > count) {
+			let err = new cError(-1 === res ? cErrorType.not_available :
+				number < 0 ? cErrorType.wrong_value_type : cErrorType.bad_reference);
+			err.collapsesCall = opt_collapsesCall;
+			return err;
 		}
 
 		r = this.bHor ? bb.r1 + number : res;
@@ -4969,14 +4926,12 @@ function (window, undefined) {
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cVLOOKUP.prototype.enabledToSingle = {"1": true};
+	//the result takes the shape of lookup_value, else of range_lookup, else of index_num (measured)
+	cVLOOKUP.prototype.resultShapeArgs = [0, 3, 2];
 	cVLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
-		//opt_argInfo (see cBaseFunction.prototype.Calculate): a non-zero mode means the engine feeds this
-		//argument element by element, and an index_num element is read like a reference
 		let _argInfo = arguments[7];
-		let _idxInfo = _argInfo && _argInfo[2];
-		let indexIsElement = !!(_idxInfo && _idxInfo.mode);
-
+		let indexIsElement = !!(_argInfo && _argInfo[2].mode);
 		let collapsesCall = indexIsElement && !_argInfo[0].mode && !(_argInfo[3] && _argInfo[3].mode) ? _argInfo : null;
 
 		if (arg[0].type === cElementType.array) {
