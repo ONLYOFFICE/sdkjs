@@ -6094,7 +6094,7 @@
 	 * Sets annotation fill color.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {?ApiColor} color - color to set fill (omit the argument to set no fill)
+	 * @param {?ApiColor} [color] - color to set fill (omit the argument to set no fill)
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetFillColor.js
 	 */
