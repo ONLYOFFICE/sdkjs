@@ -2391,7 +2391,7 @@
 
 	/**
 	 * Sets the text field character limit.
-	 * <note> Character limit 0 means the field doesn't have a character limit.
+	 * <note>If the character limit is 0, the field has no character limit.</note>
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} charLimit - The maximum number of characters allowed in the field.
@@ -2404,7 +2404,7 @@
 
 	/**
 	 * Gets the text field character limit.
-	 * <note> Char limit 0 means field doesn't have char limit
+	 * <note>If the character limit is 0, the field has no character limit.</note>
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
