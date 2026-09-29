@@ -3300,7 +3300,7 @@
 	 */
 	ApiBaseWidget.prototype.GetParent = function() {
 		let oParent = this.Field.GetParent();
-		if (oParent && oParent.IsAllKidsWidgets()) {
+		if (oParent && oParent.IsLogicalRoot()) {
 			return GetFieldApi(oParent);
 		}
 
