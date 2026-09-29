@@ -1495,52 +1495,7 @@ function (window, undefined) {
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
 	cHLOOKUP.prototype.resultShapeArgs = [0, 3, 2];
 	cHLOOKUP.prototype.Calculate = function (arg) {
-		let retArr = new cArray();
-		let _argInfo = arguments[7];
-		let indexIsElement = !!(_argInfo && _argInfo[2].mode);
-		let collapsesCall = indexIsElement && !_argInfo[0].mode && !(_argInfo[3] && _argInfo[3].mode) ? _argInfo : null;
-		if (arg[0].type === cElementType.array) {
-			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
-				arg[2] = arg[2].getValue2(0,0);
-				indexIsElement = true;
-			}
-			let dimension = arg[0].getDimensions(true);
-			let ctx = {};
-			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
-			// never stores or mutates the array, so only the varying slot needs a write per element.
-			let callArgs = [null, arg[1], arg[2], arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[0] = arg[0].getValue2(r, c);
-					retArr.addElement(g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx, indexIsElement));
-				}
-			}
-
-			return retArr;
-		}
-
-		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions(true);
-			let ctx = {};
-			// see above: one shared args array, only the varying slot is rewritten per element
-			let callArgs = [arg[0], arg[1], null, arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[2] = arg[2].getValue2(r, c);
-					let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx, true);
-					if (res.type === cElementType.error) {
-						// the whole result collapses to one error anyway - stop calculating and
-						// building rows for the discarded array right here
-						return res;
-					}
-					retArr.addElement(res);
-				}
-			}
-			return retArr;
-		}
-		return g_oHLOOKUPCache.calculate(arg, arguments[1], null, indexIsElement, collapsesCall);
+		return g_oHLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
 
 	/**
@@ -3387,6 +3342,66 @@ function (window, undefined) {
 		this.sortedCache = new TypedMapCache();
 	}
 
+	// The whole H/VLOOKUP call. Excel lifts lookup_value and range_lookup together, the result taking the shape
+	// of lookup_value, else of range_lookup; index_num is lifted only when both are scalars, otherwise its first
+	// element answers everywhere. Lifted alone, index_num lets a failure answer for the whole call (measured).
+	VHLOOKUPCache.prototype.calculateCall = function (arg, argument1, opt_argInfo) {
+		let key = arg[0], index = arg[2], rangeLookup = arg[3];
+		if (opt_argInfo) {
+			let keyLifted = opt_argInfo[0].mode || (opt_argInfo[3] && opt_argInfo[3].mode);
+			let indexInfo = opt_argInfo[2];
+			if (indexInfo.mode && keyLifted) {
+				arg[2] = indexInfo.arg.getValue2(0, 0);
+			}
+			return this.calculate(arg, argument1, null, !!indexInfo.mode, indexInfo.mode && !keyLifted ? opt_argInfo : null);
+		}
+
+		let shape = cElementType.array === key.type ? key : rangeLookup && cElementType.array === rangeLookup.type ?
+			rangeLookup : cElementType.array === index.type ? index : null;
+		if (!shape) {
+			return this.calculate(arg, argument1);
+		}
+		let indexIsElement = shape === index;
+		if (!indexIsElement) {
+			if (cElementType.array === index.type) {
+				index = index.getValue2(0, 0);
+				indexIsElement = true;
+			} else if (cElementType.cellsRange === index.type || cElementType.cellsRange3D === index.type) {
+				index = index.getValueByRowCol(0, 0, true);
+				indexIsElement = true;
+			}
+		}
+		let pairedDims = shape === key && rangeLookup && cElementType.array === rangeLookup.type ?
+			rangeLookup.getDimensions(true) : null;
+		let dims = shape.getDimensions(true);
+		let res = new cArray(), ctx = {};
+		let collapsesCall = shape === index ? res : null;
+		let callArgs = [key, arg[1], index, rangeLookup];
+		for (let r = 0; r < dims.row; r++) {
+			res.addRow();
+			for (let c = 0; c < dims.col; c++) {
+				if (shape === key) {
+					callArgs[0] = key.getValue2(r, c);
+				} else if (shape === rangeLookup) {
+					callArgs[3] = rangeLookup.getValue2(r, c);
+				} else {
+					callArgs[2] = index.getValue2(r, c);
+				}
+				if (pairedDims) {
+					let pr = 1 === pairedDims.row ? 0 : r, pc = 1 === pairedDims.col ? 0 : c;
+					callArgs[3] = pr < pairedDims.row && pc < pairedDims.col ? rangeLookup.getValue2(pr, pc) :
+						new cError(cErrorType.not_available);
+				}
+				let elem = this.calculate(callArgs, argument1, ctx, indexIsElement, collapsesCall);
+				if (collapsesCall && elem.collapsesCall === collapsesCall) {
+					return elem;
+				}
+				res.addElement(elem);
+			}
+		}
+		return res;
+	};
+
 	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx, opt_indexIsElement, opt_collapsesCall) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
@@ -4929,54 +4944,7 @@ function (window, undefined) {
 	//the result takes the shape of lookup_value, else of range_lookup, else of index_num (measured)
 	cVLOOKUP.prototype.resultShapeArgs = [0, 3, 2];
 	cVLOOKUP.prototype.Calculate = function (arg) {
-		let retArr = new cArray();
-		let _argInfo = arguments[7];
-		let indexIsElement = !!(_argInfo && _argInfo[2].mode);
-		let collapsesCall = indexIsElement && !_argInfo[0].mode && !(_argInfo[3] && _argInfo[3].mode) ? _argInfo : null;
-
-		if (arg[0].type === cElementType.array) {
-			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
-				arg[2] = arg[2].getValue2(0,0);
-				indexIsElement = true;
-			}
-			let dimension = arg[0].getDimensions(true);
-			let ctx = {};
-			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
-			// never stores or mutates the array, so only the varying slot needs a write per element.
-			let callArgs = [null, arg[1], arg[2], arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[0] = arg[0].getValue2(r, c);
-					retArr.addElement(g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx, indexIsElement));
-				}
-			}
-
-			return retArr;
-		}
-
-		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions(true);
-			let ctx = {};
-			// see above: one shared args array, only the varying slot is rewritten per element
-			let callArgs = [arg[0], arg[1], null, arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[2] = arg[2].getValue2(r, c);
-					let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx, true);
-					if (res.type === cElementType.error) {
-						// the whole result collapses to one error anyway - stop calculating and
-						// building rows for the discarded array right here
-						return res;
-					}
-					retArr.addElement(res);
-				}
-			}
-			return retArr;
-		}
-
-		return g_oVLOOKUPCache.calculate(arg, arguments[1], null, indexIsElement, collapsesCall);
+		return g_oVLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
 
 	/**

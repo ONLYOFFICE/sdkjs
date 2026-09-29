@@ -4877,6 +4877,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
 						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
 						dimensions: _isRange ? _ta.getDimensions() : null,
+						//the argument itself, for a function that reads another element of it
+						arg: _ta,
 						mode: 0
 					};
 					// 0=scalar; 1..4=array shapes; 5..8=range shapes.
