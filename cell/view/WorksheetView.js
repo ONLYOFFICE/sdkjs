@@ -27219,7 +27219,8 @@ function isAllowPasteLink(pastedWb) {
 		var aSortElems = [];
 		for (i = selection.r1; i <= selection.r2; i++) {
 			var cell = t.model.getCell3(i, startSortCol);
-			var value = cell.getValueWithFormat();
+			// case-insensitive
+			var value = cell.getValueWithFormat().toLowerCase();
 			aSortElems.push({index: i});
 			if (oRepeatMap[value]) {
 				for (var n = 0; n < oRepeatMap[value].length; n++) {
@@ -27232,7 +27233,7 @@ function isAllowPasteLink(pastedWb) {
 						var cell2 = t.model.getCell3(oRepeatMap[value][n], j);
 						var val1 = cell1.getValueWithFormat();
 						var val2 = cell2.getValueWithFormat();
-						if (val1 !== val2) {
+						if (val1 !== val2 && val1.toLowerCase() !== val2.toLowerCase()) {
 							_notEqual = true;
 							break;
 						}

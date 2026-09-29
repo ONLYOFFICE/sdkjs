@@ -12609,7 +12609,7 @@
 	/**
 	 * Removes the rows with duplicate values from the range, as the Remove Duplicates command does.
 	 * A range inside a table stands for the whole table, and the autofilter range or one cell of it stands for the filtered range.
-	 * Rows are duplicates when the displayed values of the compared columns are equal, case-sensitively; the first of them is kept.
+	 * Rows are duplicates when the displayed values of the compared columns are equal, case-insensitively; the first of them is kept.
 	 * The other rows of the range move up in place of the removed ones; the cells outside the range stay in place.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
