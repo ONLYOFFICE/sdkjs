@@ -1014,7 +1014,7 @@
      * :::
      * @memberof Api
      * @typeofeditors ["CPE"]
-     * @param {ChartType} [sType="bar"] - The chart type used for the chart display.
+     * @param {ChartType} [sType="ColumnClustered"] - The chart type used for the chart display.
      * @param {number[][]} aSeries - The array of the data used to build the chart from.
      * @param {number[] | string[]} aSeriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
      * @param {number[] | string[]} aCatNames - The array of the names (the source table row names) used for the data which the chart will be build from.

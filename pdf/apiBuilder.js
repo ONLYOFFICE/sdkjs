@@ -1696,7 +1696,7 @@
 	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {ChartType} [chartType="bar"] - The chart type used for the chart display.
+	 * @param {ChartType} [chartType="ColumnClustered"] - The chart type used for the chart display.
 	 * @param {number[][]} series - The array of the data used to build the chart from.
 	 * @param {number[] | string[]} seriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
 	 * @param {number[] | string[]} categoryNames - The array of the names (the source table row names) used for the data which the chart will be build from.
