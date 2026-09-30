@@ -160,8 +160,9 @@
 	 * Axis-aligned rectangle represented as a tuple.
 	 *
 	 * Invariants:
-	 *  - rect[0] < rect[2] (x1 < x2)
-	 *  - rect[1] < rect[3] (y1 < y2)
+	 *
+	 * - <code>rect[0] < rect[2]</code> (x1 < x2)
+	 * - <code>rect[1] < rect[3]</code> (y1 < y2)
 	 *
 	 * @typedef {pt[]} Rect
 	 * @property {pt} 0 - x1 (left)
@@ -175,10 +176,11 @@
 	 * Describes coordinate-wise deltas between two rectangles (B - A).
 	 *
 	 * Invariants:
-	 *  - diff[0] = x1B - x1A
-	 *  - diff[1] = y1B - y1A
-	 *  - diff[2] = x2B - x2A
-	 *  - diff[3] = y2B - y2A
+	 *
+	 * - <code>diff[0] = x1B - x1A</code>
+	 * - <code>diff[1] = y1B - y1A</code>
+	 * - <code>diff[2] = x2B - x2A</code>
+	 * - <code>diff[3] = y2B - y2A</code>
 	 *
 	 * @typedef {pt[]} RectDiff
 	 * @property {pt} 0 - dx1 (left delta)
