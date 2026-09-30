@@ -366,6 +366,7 @@ window.startPluginApi = function() {
 	 * @alias executeCommand
 	 * @deprecated Please use callCommand method.
 	 * @description Defines the method used to send the data back to the editor.
+	 *
 	 * :::note
 	 * This method is deprecated, please use the {@link Plugin#callCommand callCommand} method which runs the code from the *data* string parameter.
 	 * :::
@@ -377,6 +378,7 @@ window.startPluginApi = function() {
 	 * 
 	 * The second parameter is the JavaScript code for working with <b>ONLYOFFICE Document Builder</b> API 
 	 * that allows the plugin to send structured data inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
+	 *
 	 * :::note
 	 * <b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor
 	 * (using the *Api.GetDocument().InsertContent(...)*). This limitation exists due to the co-editing feature in the online editors.
@@ -474,6 +476,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias resizeWindow
 	 * @description Defines the method used to change the window size updating the minimum/maximum sizes.
+	 *
 	 * :::note
 	 * This method is used for visual modal plugins only.
 	 * :::
@@ -521,6 +524,7 @@ window.startPluginApi = function() {
 	 * It allows the plugin to send structured data that can be inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
 	 * 
 	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the {@link Plugin#onCommandCallback window.Asc.plugin.onCommandCallback} function will be used to return the result of the command execution.
+     *
      * :::note
      * <b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor (using the *Api.GetDocument().InsertContent(...)*).
 	 * This limitation exists due to the co-editing feature in the online editors. If it is necessary to create a plugin for desktop editors to work with local files, no such limitation is applied.

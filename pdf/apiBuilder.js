@@ -1303,6 +1303,7 @@
 
 	/**
 	 * Creates a chart with the parameters specified.
+	 *
 	 * :::note
 	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -1399,6 +1400,7 @@
 
 	/**
 	 * Removes a page from the document by its index.
+	 *
 	 * :::note
 	 * If the document has only one page, it cannot be removed, and the method returns <b>false</b>.
 	 * :::
@@ -2276,6 +2278,7 @@
 
 	/**
 	 * Sets widget text size.
+	 *
 	 * :::note
 	 * Text size === 0 means autofit.
 	 * :::
@@ -2296,6 +2299,7 @@
 
 	/**
 	 * Gets widget text size.
+	 *
 	 * :::note
 	 * Text size === 0 means autofit.
 	 * :::
@@ -2398,6 +2402,7 @@
 
 	/**
 	 * Sets the text field character limit.
+	 *
 	 * :::note
 	 * If the character limit is 0, the field has no character limit.
 	 * :::
@@ -2413,6 +2418,7 @@
 
 	/**
 	 * Gets the text field character limit.
+	 *
 	 * :::note
 	 * If the character limit is 0, the field has no character limit.
 	 * :::
@@ -2427,6 +2433,7 @@
 
 	/**
 	 * Sets whether the text field uses comb formatting.
+	 *
 	 * :::note
 	 * The character limit must be greater than 0.
 	 * :::
@@ -2664,6 +2671,7 @@
 
 	/**
 	 * Sets validate range for field.
+	 *
 	 * :::note
 	 * Can only be applied to fields with a percentage or number format.
 	 * :::
@@ -3157,6 +3165,7 @@
 
 	/**
 	 * Sets validate range for field.
+	 *
 	 * :::note
 	 * Can only be applied to fields with a percentage or number format.
 	 * :::
@@ -4339,6 +4348,7 @@
 
 	/**
 	 * Sets annotation dash pattern.
+	 *
 	 * :::note
 	 * The border style property must be set to "dashed".
 	 * :::
@@ -4370,6 +4380,7 @@
 
 	/**
 	 * Sets annotation border effect style.
+	 *
 	 * :::note
 	 * Can be applied to circle, square, freeText and polygon annotations.
 	 * :::
@@ -4412,6 +4423,7 @@
 
 	/**
 	 * Sets annotation border effect intensity.
+	 *
 	 * :::note
 	 * Can be applied to circle, square, freeText and polygon annotations.
 	 * :::
@@ -5833,6 +5845,7 @@
 
 	/**
 	 * Removes all the elements from the current rich content.
+	 *
 	 * :::note
 	 * When all elements are removed, a new empty rich paragraph is automatically created.
 	 * :::
@@ -6115,6 +6128,7 @@
 
 	/**
 	 * Removes an element using the position specified.
+	 *
 	 * :::note
 	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
 	 * a new empty run is automatically created.
@@ -6129,6 +6143,7 @@
 
 	/**
 	 * Removes all the elements from the current paragraph.
+	 *
 	 * :::note
 	 * When all the elements are removed from the paragraph, a new empty run is automatically created.
 	 * :::

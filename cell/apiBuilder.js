@@ -74,6 +74,7 @@
 
 	/**
 	 * The callback function which is called when the specified range of the current sheet changes.
+	 *
 	 * :::note
 	 * The event is not called for the undo/redo operations.
 	 * :::
@@ -8658,6 +8659,7 @@
 
 	/**
 	 * Formats the selected range of cells from the current sheet as a table (with the first row formatted as a header).
+	 *
 	 * :::note
 	 * As the first row is always formatted as a table header, you need to select at least two rows for the table to be formed correctly.
 	 * :::
@@ -9146,10 +9148,12 @@
 
 	/**
 	 * Creates a chart of the specified type from the selected data range of the current sheet.
+	 *
 	 * :::note
 	 * The horizontal and vertical offsets are calculated within the limits of the specified column and
 	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
 	 * :::
+	 *
 	 * :::note
 	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -9197,6 +9201,7 @@
 
 	/**
 	 * Adds a shape to the current sheet with the parameters specified.
+	 *
 	 * :::note
 	 * The horizontal and vertical offsets are
 	 * calculated within the limits of the specified column and row cells
@@ -13095,6 +13100,7 @@
 
 	/**
 	 * Changes the position for the drawing object.
+	 *
 	 * :::note
 	 * The horizontal and vertical offsets are calculated within the limits of
 	 * the specified column and row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
@@ -15060,6 +15066,7 @@
 
 	/**
 	 * Sets the bold property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15161,6 +15168,7 @@
 
 	/**
 	 * Sets the italic property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15263,6 +15271,7 @@
 
 	/**
 	 * Sets the font size property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15364,6 +15373,7 @@
 
 	/**
 	 * Sets the strikethrough property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15510,6 +15520,7 @@
 
 	/**
 	 * Sets an underline of the type specified in the request to the current font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15634,6 +15645,7 @@
 
 	/**
 	 * Sets the subscript property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15736,6 +15748,7 @@
 
 	/**
 	 * Sets the superscript property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15838,6 +15851,7 @@
 
 	/**
 	 * Sets the font name property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -15940,6 +15954,7 @@
 
 	/**
 	 * Sets the font color property to the specified font.
+	 *
 	 * :::note
 	 * This method will work only with the text format of the cell.
 	 * :::
@@ -19871,6 +19886,7 @@
 
 	/**
 	 * Sets the visibility of the pivot item.
+	 *
 	 * :::note
 	 * At least one item must remain visible when hiding others.
 	 * :::

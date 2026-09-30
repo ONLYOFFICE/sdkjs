@@ -899,6 +899,7 @@
     
     /**
      * Creates a chart with the parameters specified.
+     *
      * :::note
      * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
      * :::
@@ -957,6 +958,7 @@
 
     /**
      * Creates a table.
+	 *
 	 * :::danger[Breaking Change]
 	 * Starting from version 9.4.0, the parameter order has been changed from `Api.CreateTable(cols, rows)` to `Api.CreateTable(rows, cols)`.
 	 * :::

@@ -488,6 +488,7 @@
 
     /**
      * Specifies the start action for long operations.
+	 *
 	 * :::note
 	 * GroupActions are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -518,6 +519,7 @@
 
     /**
      * Specifies the end action for long operations.
+	 *
 	 * :::note
 	 * GroupActions are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::

@@ -3107,6 +3107,7 @@
 
 	/**
 	 * Adds a field to the specified range by the field instruction code.
+	 *
 	 * :::note
 	 * This method removes text within a range.
 	 * :::
@@ -4877,6 +4878,7 @@
 
 	/**
 	 * Creates a chart with the parameters specified.
+	 *
 	 * :::note
 	 * Values of <em>styleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -6273,6 +6275,7 @@
 	};
 	/**
 	 * Removes all the elements from the current document or from the current document element.
+	 *
 	 * :::note
 	 * When all elements are removed, a new empty paragraph is automatically created. If you want to add
 	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.
@@ -8464,6 +8467,7 @@
 	};
 	/**
 	 * Returns a collection of tables on a given absolute page.
+	 *
 	 * :::note
 	 * This method can be a little bit slow, because it runs the document calculation
 	 * process to arrange tables on the specified page.
@@ -8490,6 +8494,7 @@
 	};
 	/**
 	 * Adds a drawing to the specified page.
+	 *
 	 * :::note
 	 * This method can be a little bit slow, because it runs the document calculation
 	 * process to arrange tables on the specified page.
@@ -9437,6 +9442,7 @@
 
 	/**
 	 * Adds a table of content to the current document.
+	 *
 	 * :::note
 	 * The new table of contents replaces the existing table of contents.
 	 * :::
@@ -9704,6 +9710,7 @@
 	};
 	/**
 	 * Returns a number of pages in the current document.
+	 *
 	 * :::note
 	 * This method can be slow for large documents because it runs the document calculation
 	 * process before the full recalculation.
@@ -10680,6 +10687,7 @@
 	};
 	/**
 	 * Removes an element using the position specified.
+	 *
 	 * :::note
 	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
      * a new empty run is automatically created. If you want to add
@@ -10702,6 +10710,7 @@
 	};
 	/**
 	 * Removes all the elements from the current paragraph.
+	 *
 	 * :::note
 	 * When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
 	 * content to this run, use the {@link ApiParagraph#GetElement} method.
@@ -10895,6 +10904,7 @@
 	};
 	/**
 	 * Adds a comment to the current paragraph.
+	 *
 	 * :::note
 	 * This paragraph must be in the document.
 	 * :::
@@ -11867,6 +11877,7 @@
 
 	/**
 	 * Adds a numbered cross-reference to the current paragraph.
+	 *
 	 * :::note
 	 * This paragraph must be in the document.
 	 * :::
@@ -11935,6 +11946,7 @@
 
 	/**
 	 * Adds a heading cross-reference to the current paragraph.
+	 *
 	 * :::note
 	 * This paragraph must be in the document.
 	 * :::
@@ -11994,6 +12006,7 @@
 
 	/**
 	 * Adds a bookmark cross-reference to the current paragraph.
+	 *
 	 * :::note
 	 * This paragraph must be in the document.
 	 * :::
@@ -12059,6 +12072,7 @@
 
 	/**
 	 * Adds a footnote cross-reference to the current paragraph.
+	 *
 	 * :::note
 	 * This paragraph must be in the document.
 	 * :::
@@ -12118,6 +12132,7 @@
 
 	/**
 	 * Adds an endnote cross-reference to the current paragraph.
+	 *
 	 * :::note
 	 * This paragraph must be in the document.
 	 * :::
@@ -12177,6 +12192,7 @@
 
 	/**
 	 * Adds a caption cross-reference to the current paragraph.
+	 *
 	 * :::note
 	 * This paragraph must be in the document.
 	 * :::
@@ -12307,6 +12323,7 @@
 
 	/**
      * Adds a caption paragraph after (or before) the current paragraph.
+	 *
 	 * :::note
 	 * The current paragraph must be in the document (not in the footer/header).
 	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.
@@ -13267,6 +13284,7 @@
 
 	/**
 	 * Adds a comment to the current run.
+	 *
 	 * :::note
 	 * This run must be in the document.
 	 * :::
@@ -14100,6 +14118,7 @@
 	};
 	/**
 	 * Merges an array of cells. If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
+	 *
 	 * :::note
 	 * The number of cells in any row and the number of rows in the current table may be changed.
 	 * :::
@@ -14884,6 +14903,7 @@
 
 	/**
 	 * Adds a comment to all contents of the current table.
+	 *
 	 * :::note
 	 * This table must be in the document.
 	 * :::
@@ -14924,6 +14944,7 @@
 
 	/**
      * Adds a caption paragraph after (or before) the current table.
+	 *
 	 * :::note
 	 * The current table must be in the document (not in the footer/header).
 	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.
@@ -16248,6 +16269,7 @@
 	};
 	/**
 	 * The text style base method.
+	 *
 	 * :::note
 	 * This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
 	 * the selected or created style to the text.
@@ -17108,6 +17130,7 @@
 	};
 	/**
 	 * The paragraph style base method.
+	 *
 	 * :::note
 	 * This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.
 	 * :::
@@ -17622,6 +17645,7 @@
 	};
 	/**
 	 * Specifies the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
+	 *
 	 * :::note
 	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added
 	 * to the whole block rather than to every paragraph in this block.
@@ -17722,6 +17746,7 @@
 	};
 	/**
 	 * Specifies the border which will be displayed above a set of paragraphs which have the same set of paragraph border settings.
+	 *
 	 * :::note
 	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.
 	 * :::
@@ -18100,6 +18125,7 @@
 	};
 	/**
 	 * Returns the text properties which will be applied to the text in the current numbering level itself, not to the text in the subsequent paragraph.
+	 *
 	 * :::note
 	 * To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.
 	 * :::
@@ -18605,6 +18631,7 @@
 	};
 	/**
 	 * Sets the preferred width to the current table.
+	 *
 	 * :::note
 	 * Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.
 	 * :::
@@ -23751,6 +23778,7 @@
 
 	/**
 	 * Adds a comment to the current inline content control.
+	 *
 	 * :::note
 	 * This inline content control must be in the document.
 	 * :::
@@ -25184,6 +25212,7 @@
 
 	/**
 	 * Returns a collection of tables on a given absolute page.
+	 *
 	 * :::note
 	 * This method can be a little bit slow, because it runs the document calculation
 	 * process to arrange tables on the specified page.
@@ -25607,6 +25636,7 @@
 
 	/**
 	 * Adds a comment to the current block content control.
+	 *
 	 * :::note
 	 * The current block content control must be in the document.
 	 * :::
@@ -25647,6 +25677,7 @@
 	
 	/**
 	 * Adds a caption paragraph after (or before) the current content control.
+	 *
 	 * :::note
 	 * The current content control must be in the document (not in the footer/header).
 	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.
