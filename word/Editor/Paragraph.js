@@ -17398,22 +17398,16 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 				nStartPos = this.Selection.EndPos;
 				nEndPos   = this.Selection.StartPos;
 			}
-
-			for (var nIndex = nStartPos; nIndex <= nEndPos; ++nIndex)
-			{
-				if (para_Run !== this.Content[nIndex].Type)
-				{
-					// TODO: Вывести сообщение, что в данном месте нельзя добавить Plain text content control
-					return null;
-				}
-			}
-
+			
 			// TODO: ParaEnd
 			if (nEndPos === this.Content.length - 1)
 			{
 				nEndPos--;
 				this.Content[this.Content.length - 1].RemoveSelection();
 			}
+			
+			if (para_Run !== this.Content[nStartPos].Type || para_Run !== this.Content[nEndPos].Type)
+				return null;
 
 			var oContentControl = new CInlineLevelSdt();
 			oContentControl.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);

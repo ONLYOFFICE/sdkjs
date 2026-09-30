@@ -158,6 +158,13 @@ CInlineLevelSdt.prototype.Add = function(Item)
 			}
 		}
 	}
+	else if (this.IsContentControlText())
+	{
+		if (!(Item instanceof AscWord.CRunElementBase) || (!Item.IsText() && !Item.IsSpace() && !Item.IsTab()))
+			return;
+
+		this.MakeSingleRunElement(false);
+	}
 
 	CParagraphContentWithParagraphLikeContent.prototype.Add.apply(this, arguments);
 
@@ -1593,7 +1600,7 @@ CInlineLevelSdt.prototype.SetParagraph = function(oParagraph)
 };
 CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 {
-	if (this.IsPlaceHolder() || ApplyToAll || this.IsSelectedAll() || this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker() || this.IsTextForm())
+	if (this.IsPlaceHolder() || ApplyToAll || this.IsSelectedAll() || this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker() || this.IsTextForm() || this.IsContentControlText())
 	{
 		if (undefined !== IncFontSize)
 		{
@@ -1617,7 +1624,7 @@ CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAl
 		}
 	}
 
-	if (this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker() || this.IsTextForm())
+	if (this.IsDropDownList() || this.IsComboBox() || this.IsCheckBox() || this.IsDatePicker() || this.IsTextForm() || this.IsContentControlText())
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, true);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, ApplyToAll);
@@ -3055,7 +3062,7 @@ CInlineLevelSdt.prototype.Get_ParentTextTransform = function()
 };
 CInlineLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 {
-	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker() || this.IsTextForm())
+	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker() || this.IsTextForm() || this.IsContentControlText())
 	{
 		Type = undefined;
 		bAll = true;
@@ -3068,7 +3075,7 @@ CInlineLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 };
 CInlineLevelSdt.prototype.RejectRevisionChanges = function(Type, bAll)
 {
-	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker() || this.IsTextForm())
+	if (this.IsCheckBox() || this.IsDropDownList() || this.IsComboBox() || this.IsPicture() || this.IsDatePicker() || this.IsTextForm() || this.IsContentControlText())
 	{
 		Type = undefined;
 		bAll = true;
@@ -4308,6 +4315,26 @@ CInlineLevelSdt.prototype.OnDetach = function()
 		logicDocument.OnDetachContentControl(this);
 	
 	CParagraphContentWithParagraphLikeContent.prototype.OnDetach.apply(this, arguments);
+};
+CInlineLevelSdt.prototype.ApplyPlainText = function(isPlain)
+{
+	if (this.Pr.Text === isPlain)
+		return;
+	
+	this.SetContentControlText(isPlain);
+	if (!isPlain)
+		return;
+	
+	let run = this.MakeSingleRunElement(false);
+	for (let index = run.GetElementsCount() - 1; index >= 0; --index)
+	{
+		let item = run.GetElement(index);
+		if (!item.IsText() && !item.IsSpace() && !item.IsTab())
+			run.RemoveFromContent(index, 1, true);
+	}
+
+	this.RemoveSelection();
+	this.MoveCursorToEndPos();
 };
 
 
