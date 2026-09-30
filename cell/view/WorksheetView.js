@@ -27226,7 +27226,10 @@ function isAllowPasteLink(pastedWb) {
 						key = val.type + "_" + val.value + "_" + cell.getValue().toLowerCase();
 						break;
 					case AscCommonExcel.cElementType.bool:
-						key = AscCommonExcel.cElementType.string + "_" + cell.getValueWithoutFormat().toLowerCase();
+						key = AscCommonExcel.cElementType.string + "_" + cell.getValueWithoutFormat().toUpperCase();
+						break;
+					case AscCommonExcel.cElementType.string:
+						key = val.type + "_" + val.value.toUpperCase();
 						break;
 					default:
 						key = val.type + "_" + val.value;
