@@ -33304,26 +33304,40 @@
 	 * Adds a hyperlink to the current text range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string} link - The link address.
+	 * @param {string} link - The link address. Accepts an external URL (http, https, mailto, ftp) or an internal link. In the presentation and PDF editors, the internal link is one of the slide actions: "ppaction://hlinkshowjump?jump=firstslide", "ppaction://hlinkshowjump?jump=lastslide", "ppaction://hlinkshowjump?jump=nextslide", "ppaction://hlinkshowjump?jump=previousslide", "ppaction://hlinksldjumpslide{N}" (N is the zero-based slide index), "ppaction://hlinkfile?file={path}" (opens an external file). In the spreadsheet editor, the internal link is "#" followed by a cell range or a defined name, for example, "#Sheet1!A1" or "#MyName".
 	 * @param {string} screenTipText - The screen tip text.
-	 * @param {string} bookmarkName - Name of a bookmark
-	 * @return {?ApiHyperlink} - returns null if the range spans more than one paragraph or params are invalid.
+	 * @return {?ApiHyperlink} - returns null if the range spans more than one paragraph or the link is invalid.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/AddHyperlink.js
 	 */
-	ApiTextRange.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
+	ApiTextRange.prototype.AddHyperlink = function(link, screenTipText)
 	{
-		let hyperlinkPr = AscBuilder.private_GetHyperlinkProps(link, screenTipText, bookmarkName);
-		if (!hyperlinkPr)
+		link = AscBuilder.GetStringParameter(link, "");
+		if (!link || link.length > Asc.c_nMaxHyperlinkLength)
 			return null;
 
 		let docContent = this.DocContent;
 		if (!docContent)
 			return null;
 
+		let shape      = docContent.Is_DrawingShape(true);
+		let isInternal = (shape instanceof AscFormat.CShape && shape.getWorksheet()) ? (link.length > 1 && "#" === link[0]) : AscCommon.IsLinkPPAction(link);
+		if (!isInternal)
+		{
+			let urlType = AscCommon.getUrlType(link);
+			if (!AscCommon.rx_allowedProtocols.test(link) && AscCommon.c_oAscUrlType.Invalid === urlType)
+				return null;
+
+			link = AscCommon.prepareUrl(link, urlType);
+		}
+
 		let paragraphs = this.GetAllParagraphs();
 		if (paragraphs.length !== 1)
 			return null;
+
+		let hyperlinkPr = new Asc.CHyperlinkProperty();
+		hyperlinkPr.put_Value(link);
+		hyperlinkPr.put_ToolTip(AscBuilder.GetStringParameter(screenTipText, ""));
 
 		let start = this.private_GetEffectiveStart();
 		let end   = this.private_GetEffectiveEnd();
