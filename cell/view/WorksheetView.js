@@ -27196,8 +27196,9 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		var i, startSortCol, colMap = [];
-		for (i = 0; i < props.columnList.length; i++) {
-			if (props.columnList[i].asc_getVisible()) {
+		var colCount = selection.c2 - selection.c1 + 1;
+		for (i = 0; i < colCount; i++) {
+			if (i >= props.columnList.length || props.columnList[i].asc_getVisible()) {
 				var _colIndex = i + selection.c1;
 				colMap[_colIndex] = 1;
 				if(undefined === startSortCol) {
