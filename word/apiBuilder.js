@@ -14155,7 +14155,7 @@
 	 *
 	 * If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
 	 *
-	 * :::note
+	 * :::warning
 	 * The number of cells in any row and the number of rows in the current table may be changed.
 	 * :::
 	 * @memberof ApiTable
@@ -17889,7 +17889,10 @@
 	};
 	/**
 	 * Specifies a sequence of custom tab stops which will be used for any tab characters in the current paragraph.
-	 * <b>Warning</b>: The lengths of aPos array and aVal array <b>MUST BE</b> equal to each other.
+	 *
+	 * :::warning
+	 * The lengths of the aPos and aVal arrays must be equal to each other.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips[]} aPos - An array of the positions of custom tab stops with respect to the current page margins

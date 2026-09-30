@@ -7165,7 +7165,10 @@
 	 * Merges an array of cells.
 	 *
 	 * If merge is successful, it will return merged cell, otherwise "null".
-	 * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
+	 *
+	 * :::warning
+	 * The number of cells in any row and the number of rows in the current table may be changed.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableCell[]} cells - The cells to merge.
