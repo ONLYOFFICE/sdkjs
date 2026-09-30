@@ -2603,11 +2603,12 @@
 
 	/**
 	 * Replaces the current sentence or a part of the current sentence at the cursor with the specified text.
+	 * If there is no sentence at the cursor, for example, in an empty paragraph, the specified text is inserted at the cursor position.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @param {string} text - The text to replace the current sentence with.
 	 * @param {undefined | "before" | "after"} part - The part of the sentence to replace. If omitted, the whole sentence is replaced.
-	 * @returns {boolean} - returns false if there is no sentence at the cursor or some text is selected.
+	 * @returns {boolean} - returns false if the cursor is not in the text or some text is selected.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ReplaceCurrentSentence.js
 	 */
