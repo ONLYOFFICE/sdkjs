@@ -4375,6 +4375,9 @@
 		}
 		return this.dragDropManager;
 	};
+	OutlineView.prototype.isDragDropActive = function () {
+		return !!this.dragDropManager && this.dragDropManager.isActive();
+	};
 	OutlineView.prototype.paraApplyCallback = function (props) {
 		AscFormat.paraApplyCallback(props, this);
 	};

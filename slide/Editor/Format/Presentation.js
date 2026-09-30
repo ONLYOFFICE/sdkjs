@@ -2228,6 +2228,10 @@ CPresentation.prototype.Continue_FastCollaborativeEditing = function () {
 			return;
 		}
 	}
+	const outlineView = this.GetOutlineView();
+	if (outlineView && outlineView.isDragDropActive()) {
+		return;
+	}
 
 	var bHaveChanges = History.Have_Changes(true);
 	if (true !== bHaveChanges && (true === AscCommon.CollaborativeEditing.Have_OtherChanges() || 0 !== AscCommon.CollaborativeEditing.getOwnLocksLength())) {
