@@ -1014,8 +1014,10 @@
 		return this.canEdit();
 	};
 
-	COutlineDragDropManager.prototype.drop = function (target, isCopy) {
-		const selection = this.getDragSelection();
+	COutlineDragDropManager.prototype.drop = function (target, isCopy, selection) {
+		if (!selection) {
+			selection = this.getDragSelection();
+		}
 		if (!this.canDrop(target, selection)) {
 			return false;
 		}
@@ -1083,17 +1085,15 @@
 	};
 	COutlineDragDropManager.prototype.endTrackText = function () {
 		const target = this.target;
+		const selection = this.selection;
 		const isCopy = AscCommon.global_mouseEvent.CtrlKey;
-		this.reset();
 		if (!target) {
 			return false;
 		}
 		this.state = OutlineDragState.dropping;
-		try {
-			return this.drop(target, isCopy);
-		} finally {
-			this.reset();
-		}
+		const res = this.drop(target, isCopy, selection);
+		this.reset();
+		return res;
 	};
 	COutlineDragDropManager.prototype.cancelTrackText = function () {
 		const isActive = this.isActive();
