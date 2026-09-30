@@ -564,26 +564,12 @@
 		}
 	};
 
-	OutlineDragDropExecutor.prototype.finish = function () {
-		const outlineView = this.outlineView;
-		const presentation = this.getPresentation();
-		this.operations.checkShapesExtents();
-		presentation.updateSlideIndexes();
-		const startPosition = this.resultStart;
-		const endPosition = this.resultEnd;
-		if (startPosition && endPosition) {
-			outlineView.setSavedPosition(new AscCommonSlide.SavedPosition(startPosition, endPosition));
-		}
-		outlineView.update();
-		outlineView.applySavedPositionToOutline();
-	};
 	OutlineDragDropExecutor.prototype.showResult = function () {
 		const presentation = this.getPresentation();
 		const slideIndex = this.resultSlide ? presentation.GetSlideIndex(this.resultSlide) : -1;
-		if (slideIndex === -1) {
-			return;
+		if (slideIndex !== -1) {
+			presentation.DrawingDocument.m_oWordControl.GoToPage(slideIndex);
 		}
-		presentation.DrawingDocument.m_oWordControl.GoToPage(slideIndex);
 		if (this.resultStart && this.resultEnd) {
 			this.outlineView.setSavedPosition(new AscCommonSlide.SavedPosition(this.resultStart, this.resultEnd));
 			this.outlineView.applySavedPositionToOutline();
@@ -663,7 +649,7 @@
 		outlineContent.SetContentPosition(getDocPos(outlineParagraph, nearPos.ContentPos), 0, 0);
 		outlineView.insertContent(selectedContent, true);
 		this.setResultFromOutlineSelection();
-		this.finish();
+		this.operations.checkShapesExtents();
 		return true;
 	};
 	OutlineDragDropExecutor.prototype.setResultFromOutlineSelection = function () {
@@ -903,7 +889,7 @@
 		}
 		this.setBlockResult(firstSlide, lastSlide, leadCopies, blockEnd.lastSelected);
 		this.resultSlide = leadCopies.length ? leadSlide : firstSlide;
-		this.finish();
+		this.operations.checkShapesExtents();
 		return true;
 	};
 	OutlineDragDropExecutor.prototype.executeBlockCopy = function (lead, anchor) {
@@ -920,7 +906,7 @@
 		this.moveParagraphsToSlideEnd(tail, lastCopy);
 		this.setBlockResult(slideCopies[0], lastCopy, leadCopies, lastSelected);
 		this.resultSlide = leadCopies.length ? anchor.slide : slideCopies[0];
-		this.finish();
+		this.operations.checkShapesExtents();
 		return true;
 	};
 
