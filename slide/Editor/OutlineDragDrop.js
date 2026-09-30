@@ -1088,6 +1088,7 @@
 		const selection = this.selection;
 		const isCopy = AscCommon.global_mouseEvent.CtrlKey;
 		if (!target) {
+			this.reset();
 			return false;
 		}
 		this.state = OutlineDragState.dropping;
