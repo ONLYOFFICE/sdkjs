@@ -7049,6 +7049,7 @@
 		this.workbook = wb;
 		this.sName = this.workbook.getUniqueSheetNameFrom(g_sNewSheetNamePattern, false);
 		this.bHidden = false;
+		this.bVeryHidden = false;
 		this.oSheetFormatPr = new AscCommonExcel.SheetFormatPr();
 		this.index = _index;
 		this.Id = null != sId ? sId : AscCommon.g_oIdCounter.Get_NewId();//todo AscCommon.g_oTableId.Add
@@ -7316,6 +7317,7 @@
 		var t = this;
 		this.sName = this.workbook.checkValidSheetName(sName) ? sName : this.workbook.getUniqueSheetNameFrom(wsFrom.sName, true);
 		this.bHidden = wsFrom.bHidden;
+		this.bVeryHidden = !!wsFrom.bVeryHidden;
 		this.oSheetFormatPr = wsFrom.oSheetFormatPr.clone();
 		//this.index = wsFrom.index;
 		this.nRowsCount = wsFrom.nRowsCount;
@@ -8215,6 +8217,9 @@
 	Worksheet.prototype.setHidden = function (hidden) {
 		var bOldHidden = this.bHidden, wb = this.workbook, wsActive = wb.getActiveWs(), oVisibleWs = null;
 		this.bHidden = hidden;
+		// hiding a shown sheet again makes it a normal hidden sheet, while an undo of the show keeps it very hidden
+		if (hidden && !bOldHidden && !wb.bUndoChanges)
+			this.bVeryHidden = false;
 		if (bOldHidden != hidden) {
 			if (true == this.bHidden && this.getIndex() == wsActive.getIndex()) {
 				oVisibleWs = wb.findSheetNoHidden(this.getIndex());

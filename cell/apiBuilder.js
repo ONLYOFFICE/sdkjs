@@ -11484,7 +11484,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string | boolean | number | Array<string | boolean | number> | Array<Array<string | boolean | number>>} data - The general value for the cell or cell range.
-	 * @returns {boolean} - returns false if such a range does not exist.
+	 * @returns {boolean} - returns false if such a range does not exist or a formula was not accepted (the cell keeps its content).
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetValue.js
 	 */
 	ApiRange.prototype.SetValue = function (data) {
@@ -11494,6 +11494,12 @@
 				return false;
 
 			let worksheet = oThis.range.worksheet;
+			// the model calls back with false when it drops a formula it cannot parse, the cell keeps its content
+			let rejected = false;
+			let onParsed = function (isOk) {
+				if (isOk === false)
+					rejected = true;
+			};
 
 			if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([oThis.range.bbox])) {
 				//throwException(new Error('Cannot modify protected sheet'));
@@ -11524,14 +11530,14 @@
 									cell = oThis.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
 								value = checkFormat(value.toString());
-								cell.setValue(value.toString());
+								cell.setValue(value.toString(), onParsed);
 								if (value.type === AscCommonExcel.cElementType.number)
 									cell.setNumFormat(AscCommon.getShortDateFormat());
 							}
 						}
 						worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [oThis.range.bbox], true);
 						worksheet.workbook.oApi.onWorksheetChange(oThis.range.bbox);
-						return true;
+						return !rejected;
 					}
 				}
 			}
@@ -11549,17 +11555,17 @@
 			if (bOffsetFormula) {
 				let anchor = new AscCommon.CellBase(range.bbox.r1, range.bbox.c1);
 				AscCommonExcel.executeInR1C1Mode(false, function () {
-					range.setValue(sValue, null, null, null, undefined, undefined, anchor);
+					range.setValue(sValue, onParsed, null, null, undefined, undefined, anchor);
 				});
 			} else {
-				range.setValue(sValue);
+				range.setValue(sValue, onParsed);
 			}
 			if (data.type === AscCommonExcel.cElementType.number)
 				range.setNumFormat(AscCommon.getShortDateFormat());
 
 			worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
 			worksheet.workbook.oApi.onWorksheetChange(range.bbox);
-			return true;
+			return !rejected;
 		});
 	};
 

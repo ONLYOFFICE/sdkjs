@@ -5831,7 +5831,7 @@
                 this.memory.WriteByte(c_oSerWorksheetPropTypes.State);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 if(true == ws.bHidden)
-                    this.memory.WriteByte(EVisibleType.visibleHidden);
+                    this.memory.WriteByte(ws.bVeryHidden ? EVisibleType.visibleVeryHidden : EVisibleType.visibleHidden);
                 else
                     this.memory.WriteByte(EVisibleType.visibleVisible);
             }
@@ -12087,7 +12087,7 @@
                 switch(this.stream.GetUChar())
                 {
                     case EVisibleType.visibleHidden: oWorksheet.bHidden = true;break;
-                    case EVisibleType.visibleVeryHidden: oWorksheet.bHidden = true;break;
+                    case EVisibleType.visibleVeryHidden: oWorksheet.bHidden = true; oWorksheet.bVeryHidden = true; break;
                     case EVisibleType.visibleVisible: oWorksheet.bHidden = false;break;
                 }
             }
