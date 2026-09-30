@@ -153,6 +153,9 @@
 		let advance = g_oTextMeasurer.MeasureCode(codePoint);
 		this.tg(0, x, y, [codePoint], advance.Width, advance.Height);
 	};
+	CPdfTextMetafile.prototype.DrawSpace = function(x, y, width, codePoint) {
+		this.tg(0, x, y, [undefined !== codePoint ? codePoint : 0x20], width, 0);
+	};
 	CPdfTextMetafile.prototype.tg = function(gid, x, y, codepoints, advX, advY) {
 		let unicode = (Array.isArray(codepoints)) ? codepoints[0] : codepoints;
 		
@@ -162,19 +165,7 @@
 		this.updateFontMetrics();
 		
 		if (this._charCountInLine)
-		{
-			if ((x - this._x) > 0.1)
-			{
-				this._memory.WriteLong((this._x - this._prevX) * 10000);
-				this._memory.WriteLong(0xFFFF);
-				this._memory.WriteLong((x - this._x) * 10000);
-				this._charCountInLine++;
-				this._prevX = this._x;
-				this._x = x;
-			}
-			
 			this._memory.WriteLong((x - this._prevX) * 10000);
-		}
 		
 		this._memory.WriteLong(unicode);
 		this._memory.WriteLong(advX * 10000);

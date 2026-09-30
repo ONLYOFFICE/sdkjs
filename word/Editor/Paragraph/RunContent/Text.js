@@ -410,7 +410,10 @@
 	CRunText.prototype.DrawNonBreakingSpace = function(Context, X, Y, nFontSize)
 	{
 		if (!editor || !editor.ShowParaMarks)
+		{
+			Context.DrawSpace(X, Y, this.GetWidthVisible(), this.Value);
 			return;
+		}
 
 		let nbspWidth = AscFonts.GetGraphemeWidth(this.Grapheme) * nFontSize;
 		let width     = this.Width / AscWord.TEXTWIDTH_DIVIDER;
