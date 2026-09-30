@@ -417,14 +417,15 @@
 
 		return this.asc_addComment(new window['Asc'].asc_CCommentDataWord(oCD));
 	};
-    /**
-     * Moves a cursor to the beginning of the current editing area (document body, footer/header, footnote, or autoshape).
+	/**
+	 * Moves a cursor to the beginning of the current editing area (document body, footer/header, footnote, or autoshape).
+	 *
 	 * This method is similar to pressing the <b>Ctrl + Home</b> keyboard shortcut.
-     * @memberof Api
-     * @typeofeditors ["CDE"]
-     * @alias MoveCursorToStart
-     * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the beginning of the document body.
-     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToStart.js
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias MoveCursorToStart
+	 * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the beginning of the document body.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToStart.js
 	 */
     Api.prototype["pluginMethod_MoveCursorToStart"] = function(isMoveToMainContent)
     {
@@ -437,14 +438,15 @@
                 oLogicDocument.MoveCursorToStartPos(false);
         }
     };
-    /**
-     * Moves a cursor to the end of the current editing area (document body, footer/header, footnote, or autoshape).
+	/**
+	 * Moves a cursor to the end of the current editing area (document body, footer/header, footnote, or autoshape).
+	 *
 	 * This method is similar to pressing the <b>Ctrl + End</b> keyboard shortcut.
-     * @memberof Api
-     * @typeofeditors ["CDE"]
-     * @alias MoveCursorToEnd
-     * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the end of the document body.
-     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToEnd.js
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias MoveCursorToEnd
+	 * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the end of the document body.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToEnd.js
 	 */
     Api.prototype["pluginMethod_MoveCursorToEnd"] = function(isMoveToMainContent)
     {
