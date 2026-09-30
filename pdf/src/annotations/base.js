@@ -1217,7 +1217,7 @@
 		}
 
 		// draws using the basic drawings draw method.
-		if (this.IsStamp() && !this.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Signature == this.GetIconType()) {
+		if (this.IsStamp() && !this.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Image == this.GetIconType()) {
 			return;
 		}
 
@@ -1783,7 +1783,7 @@
                     if (this.GetRenderStructure()) {
                         oMeta["InRect"] = this.GetInRect();
                     }
-					if (this.GetIconType() == AscPDF.STAMP_TYPES.Signature) {
+					if (this.GetIconType() == AscPDF.STAMP_TYPES.Image) {
 						let aImages = [];
 						this.getAllRasterImages(aImages);
 						

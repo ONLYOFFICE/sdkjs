@@ -1862,7 +1862,7 @@
 			drawing.getAllRasterImages(result);
 		});
 		page.annots.forEach(function(annot) {
-			if (annot.IsStamp() && !annot.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Signature == annot.GetIconType()) {
+			if (annot.IsStamp() && !annot.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Image == annot.GetIconType()) {
 				annot.getAllRasterImages(result);
 			}
 		});

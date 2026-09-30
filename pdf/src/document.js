@@ -7340,7 +7340,7 @@ var CPresentation = CPresentation || function(){};
         let nCurTime = new Date().getTime();
         let sAuthor = AscCommon.UserInfoParser.getCurrentName();
 
-        if (sType == AscPDF.STAMP_TYPES.Signature) {
+        if (sType == AscPDF.STAMP_TYPES.Image) {
             if (oImage) {
                 nExtX   = Math.max(1, oImage.Image.width * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
                 nExtY   = Math.max(1, oImage.Image.height * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
@@ -7408,7 +7408,7 @@ var CPresentation = CPresentation || function(){};
             oStamp.SetRenderStructure(oStampRender.m_aStack[0]);
         }
 
-        if (sType == AscPDF.STAMP_TYPES.Signature) {
+        if (sType == AscPDF.STAMP_TYPES.Image) {
             if (oImage) {
                 let oUniFill = new AscFormat.CUniFill();
                 let oBlipFill = new AscFormat.CBlipFill();
@@ -9413,6 +9413,12 @@ var CPresentation = CPresentation || function(){};
             }
         });
 
+		this.annots.forEach(function(annot) {
+            if (annot.IsStamp() && AscPDF.STAMP_TYPES.Image == annot.GetIconType() && !annot.IsNeedDrawFromStream()) {
+				annot.getAllRasterImages(aImages);
+			}
+        });
+
         return aImages;
     };
     CPDFDoc.prototype.Reassign_ImageUrls = function(oImages) {
@@ -10084,7 +10090,7 @@ var CPresentation = CPresentation || function(){};
 
         if (oMeta && oMeta["isOO"]) {
             if (oAnnot.IsStamp() && !oAnnot.IsNeedDrawFromStream()) {
-				if (oAnnot.GetIconType() !== AscPDF.STAMP_TYPES.Signature) {
+				if (oAnnot.GetIconType() !== AscPDF.STAMP_TYPES.Image) {
 					let oStampRender = oDoc.CreateStampRender(oAnnot.GetIconType(), oAnnot.GetAuthor(), oAnnot.GetCreationDate());
                 	oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
 				}

@@ -1473,7 +1473,7 @@
 			}, AscDFH.historydescription_Pdf_AddAnnot, this);
 		}
 		
-		if (sType == AscPDF.STAMP_TYPES.Signature) {
+		if (sType == AscPDF.STAMP_TYPES.Image) {
 			addStamp();
 		}
 		else {
@@ -1489,11 +1489,11 @@
 		let fApplyCallback = function() {
 			let _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
 			if (null != _img) {
-				oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+				oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Image, _img);
 			}
 			else {
 				oApi.asyncImageEndLoaded2 = function(_img) {
-					oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+					oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Image, _img);
 				};
 			}
 		}

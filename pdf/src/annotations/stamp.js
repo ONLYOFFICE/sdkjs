@@ -68,7 +68,7 @@
         Expired:                  'Expired',
 
         // onlyoffice
-        Signature:                 'Signature'
+        Image:                    'Image'
     }
 
     /**
@@ -220,7 +220,7 @@
 		}
 
 		this.Recalculate();
-		if (AscPDF.STAMP_TYPES.Signature == sType) {
+		if (AscPDF.STAMP_TYPES.Image == sType) {
 			let oTr;
 
 			// draw without rotate and scale for saving
@@ -329,6 +329,11 @@
         AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationStamp.prototype.GetInRect = function() {
+		if (this.GetIconType() == AscPDF.STAMP_TYPES.Image && !this.IsNeedDrawFromStream()) {
+			let aRect = this.GetRect();
+			return [aRect[0], aRect[3], aRect[0], aRect[1], aRect[2], aRect[1], aRect[2], aRect[3]];
+		}
+
         return this._inRect;
     };
     CAnnotationStamp.prototype.GetDrawing = function() {
@@ -469,7 +474,7 @@
         let boundsChecker = new AscFormat.CSlideBoundsChecker();
         
         boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
-        if (AscPDF.STAMP_TYPES.Signature == sType || !this.GetRenderStructure()) {
+        if (AscPDF.STAMP_TYPES.Image == sType || !this.GetRenderStructure()) {
             this.draw(boundsChecker);
         } else {
             this._draw(boundsChecker);
@@ -637,7 +642,7 @@
     };
     
     CAnnotationStamp.prototype.getNoChangeAspect = function() {
-        return true;
+		return !(false == this.IsNeedDrawFromStream() && this.GetIconType() === AscPDF.STAMP_TYPES.Image);
     };
     CAnnotationStamp.prototype.hitInPath = function(x, y) {
         return this.hitInInnerArea(x, y);

@@ -1124,11 +1124,11 @@
 			AscBuilder.throwException("The rect parameter must be a valid rect");
 		}
 
-		if (!Object.values(AscPDF.STAMP_TYPES).includes(type)) {
+		if (!Object.values(AscPDF.STAMP_TYPES).includes(type) || type === AscPDF.STAMP_TYPES.Image) {
 			AscBuilder.throwException("The type parameter must be one of available");
 		}
 
-		if (author != null) {
+		if (author != undefined) {
 			author = AscBuilder.GetStringParameter(author, null);
 			if (!author) {
 				AscBuilder.throwException("The author parameter must be a non emptry string");
@@ -1138,11 +1138,14 @@
 			author = AscCommon.UserInfoParser.getCurrentName();
 		}
 
-		if (creationDate != null) {
+		if (creationDate != undefined) {
 			creationDate = AscBuilder.GetNumberParameter(creationDate, null);
 			if (creationDate === null) {
 				AscBuilder.throwException("The creationDate parameter must be a number");
 			}
+		}
+		else {
+			creationDate = new Date().getTime();
 		}
 		
 		let oStampRender = oDoc.CreateStampRender(type, author, creationDate);
@@ -1159,8 +1162,8 @@
 			rect:			[X1, Y1, X2, Y2],
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
-			creationDate:   creationDate ? creationDate : new Date().getTime(),
-			modDate:        creationDate ? creationDate : new Date().getTime(),
+			creationDate:   creationDate,
+			modDate:        creationDate,
 			author:			author,
 			hidden:         false
 		}
@@ -1174,6 +1177,78 @@
 		oAnnot.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
 		let oXfrm = oAnnot.getXfrm();
 		oXfrm.setRot(0);
+
+		return new ApiStampAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates stamp annotation from an image.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect
+	 * @param {string} imageSrc - The image source where the image should be taken from (currently,
+	 * only internet URL or Base64 encoded images are supported).
+	 * @param {string} [author] - name of the author
+	 * @param {number} [creationDate] - creation date (timeStamp)
+	 * @returns {ApiStampAnnotation}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImageStampAnnot.js
+	 */
+	Api.CreateImageStampAnnot = function(rect, imageSrc, author, creationDate) {
+		let oDoc = private_GetLogicDocument();
+
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		imageSrc = AscBuilder.GetStringParameter(imageSrc, null);
+		if (!imageSrc) {
+			AscBuilder.throwException("The imageSrc parameter must be a non empty string");
+		}
+
+		if (author != undefined) {
+			author = AscBuilder.GetStringParameter(author, null);
+			if (!author) {
+				AscBuilder.throwException("The author parameter must be a non emptry string");
+			}
+		}
+		else {
+			author = AscCommon.UserInfoParser.getCurrentName();
+		}
+
+		if (creationDate != undefined) {
+			creationDate = AscBuilder.GetNumberParameter(creationDate, null);
+			if (creationDate === null) {
+				AscBuilder.throwException("The creationDate parameter must be a number");
+			}
+		}
+		else {
+			creationDate = new Date().getTime();
+		}
+
+		let nDate = creationDate != null ? creationDate : new Date().getTime();
+		let oProps = {
+			rect:           rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
+			creationDate:   nDate,
+			modDate:        nDate,
+			author:         author,
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+		let oUniFill = new AscFormat.CUniFill();
+		let oBlipFill = new AscFormat.CBlipFill();
+
+		oUniFill.setFill(oBlipFill);
+		oBlipFill.setRasterImageId(AscFormat.checkRasterImageId(imageSrc));
+		oBlipFill.setStretch(new AscFormat.CBlipFillStretch());
+
+		oAnnot.SetIconType(AscPDF.STAMP_TYPES.Image);
+		oAnnot.SetBorderWidth(0);
+		oAnnot.setFill(oUniFill);
+		oAnnot.getXfrm().setRot(0);
 
 		return new ApiStampAnnotation(oAnnot);
 	};
@@ -12534,6 +12609,7 @@
 	Api["CreatePolygonAnnot"]		= Api.CreatePolygonAnnot;
 	Api["CreatePolyLineAnnot"]		= Api.CreatePolyLineAnnot;
 	Api["CreateStampAnnot"]			= Api.CreateStampAnnot;
+	Api["CreateImageStampAnnot"]	= Api.CreateImageStampAnnot;
 	Api["CreateHighlightAnnot"]		= Api.CreateHighlightAnnot;
 	Api["CreateStrikeoutAnnot"]		= Api.CreateStrikeoutAnnot;
 	Api["CreateUnderlineAnnot"]		= Api.CreateUnderlineAnnot;
