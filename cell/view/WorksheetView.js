@@ -23783,7 +23783,7 @@ function isAllowPasteLink(pastedWb) {
         t._isLockedDefNames(callBackLockedDefNames, defNameId);
     };
 
-	WorksheetView.prototype.af_changeTableRange = function (tableName, range, callbackAfterChange, doNotUpdate) {
+	WorksheetView.prototype.af_changeTableRange = function (tableName, range, callbackAfterChange, doNotUpdate, callbackBeforeChange) {
 		var t = this;
 		if (typeof range === "string") {
 			range = AscCommonExcel.g_oRangeCache.getAscRange(range);
@@ -23807,6 +23807,10 @@ function isAllowPasteLink(pastedWb) {
 
 			History.Create_NewPoint();
 			History.StartTransaction();
+
+			if (callbackBeforeChange) {
+				callbackBeforeChange();
+			}
 
 			var tablePart = t.model.autoFilters._getFilterByDisplayName(tableName);
 			var oldRange = tablePart && tablePart.Ref.clone();
@@ -27274,20 +27278,10 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		var _removeDuplicates = function(success) {
-			if (!success) {
-				if (isStartTransaction) {
-					History.EndTransaction();
-				}
-				return;
-			}
-			if(!isStartTransaction) {
-				History.Create_NewPoint();
-				History.StartTransaction();
-			}
-
-			var tableIntersection;
-			var filterIntersection = t.model.AutoFilter && t.model.AutoFilter.Ref.intersection(selection);
+		var tableIntersection, filterIntersection, isRowsRemoved = false;
+		var removeRows = function() {
+			isRowsRemoved = true;
+			filterIntersection = t.model.AutoFilter && t.model.AutoFilter.Ref.intersection(selection);
 			if (filterIntersection) {
 				//unhide
 				t.model.setRowHidden(false, filterIntersection.r1, filterIntersection.r2);
@@ -27343,6 +27337,22 @@ function isAllowPasteLink(pastedWb) {
 					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem);
 				}
 			}
+		};
+
+		var _removeDuplicates = function(success) {
+			if (!success) {
+				if (isStartTransaction) {
+					History.EndTransaction();
+				}
+				return;
+			}
+			if(!isStartTransaction) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+			}
+			if (!isRowsRemoved) {
+				removeRows();
+			}
 
 			if (filterIntersection) {
 				t.model.autoFilters.reapplyAutoFilter(null);
@@ -27384,12 +27394,7 @@ function isAllowPasteLink(pastedWb) {
 			var tableContains = this.model.autoFilters.getTablesIntersectionRange(selection);
 			var isStartTransaction = false;
 			if (tableContains && tableContains.length) {
-				// shrinking a table first writes its totals row over one of the kept rows
-				if (tableContains.length === 1 && tableContains[0].isTotalsRow()) {
-					if (!isForMacros) {
-						this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
-					}
-				} else if (tableContains.length === 1) {
+				if (tableContains.length === 1) {
 					var name = tableContains[0].DisplayName;
 					var ref = tableContains[0].Ref;
 					var newRef = new Asc.Range(ref.c1, ref.r1, ref.c2, ref.r2 - deleteIndexes.length);
@@ -27397,7 +27402,8 @@ function isAllowPasteLink(pastedWb) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					isStartTransaction = true;
-					this.af_changeTableRange(name, newRef, _removeDuplicates, true);
+					// the rows move up before the table shrinks, as it writes its totals row over the last of its rows
+					this.af_changeTableRange(name, newRef, _removeDuplicates, true, removeRows);
 				}
 			} else {
 				this._isLockedCells(lockRange, /*subType*/null, _removeDuplicates);
