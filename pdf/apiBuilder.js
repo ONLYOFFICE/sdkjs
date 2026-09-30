@@ -251,7 +251,6 @@
 	 * @property {pt} 7 - y4 (right bottom)
 	 */
 
-
 	/**
 	 * The available free text annot intent.
 	 * @typedef {("freeText" | "freeTextCallout")} FreeTextIntent

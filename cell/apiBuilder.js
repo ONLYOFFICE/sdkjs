@@ -294,7 +294,6 @@
 	 * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
 	 */
 
-
 	/**
 	 * Standard numeric format.
 	 * @typedef {("General" | "0" | "0.00" | "#,##0" | "#,##0.00" | "0%" | "0.00%" |
@@ -328,10 +327,10 @@
 	 */
 
 	/**
-	* Specifies how to shift cells to replace deleted cells.
-	* @typedef {("up" | "left")} DeleteShiftDirection
-	* @see office-js-api/Examples/Enumerations/DeleteShiftDirection.js
-	*/
+	 * Specifies how to shift cells to replace deleted cells.
+	 * @typedef {("up" | "left")} DeleteShiftDirection
+	 * @see office-js-api/Examples/Enumerations/DeleteShiftDirection.js
+	 */
 
 	/**
      * Any valid drawing element.
@@ -16199,7 +16198,6 @@
 	 * @typedef {("CanEdit" | "CanView" | "NotView")} ProtectedRangeUserType
 	 * @see office-js-api/Examples/Enumerations/ProtectedRangeUserType.js
 	 */
-
 
 	/**
 	 * Sets a user to the current protected range.

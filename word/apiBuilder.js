@@ -202,8 +202,7 @@
 	 *   "storeItemID": "testXmlPart"
 	 * }
 	 */
-	
-	
+
 	/**
 	 * Class representing a bookmark in the document.
 	 * @constructor
@@ -4207,9 +4206,6 @@
 	 * @see office-js-api/Examples/Enumerations/GeometryFormulaType.js
 	 */
 
-
-
-
 	/**
 	 * This type specifies the available chart types which can be used to create a new chart.
 	 * @typedef {(
@@ -4234,22 +4230,17 @@
 	 * @see office-js-api/Examples/Enumerations/DrawingLockType.js
 	 */
 
-
-
-
 	/**
 	 * The path fill type.
 	 * @typedef {("none" | "norm" | "lighten" | "lightenLess" | "darken" | "darkenLess")} PathFillType
 	 * @see office-js-api/Examples/Enumerations/PathFillType.js
 	 */
 
-
 	/**
 	 * The path command types.
 	 * @typedef {("moveTo" | "lineTo" | "bezier3" | "bezier4" | "arcTo" | "close")} PathCommandType
 	 * @see office-js-api/Examples/Enumerations/PathCommandType.js
 	 */
-
 
 	/**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
@@ -4268,7 +4259,7 @@
 	 */
 	
 	/**
-	* The available color scheme identifiers.
+	 * The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
 	 *     | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
 	 * @see office-js-api/Examples/Enumerations/SchemeColorId.js
@@ -4289,7 +4280,6 @@
 	 *     "greenYellow" | "grey" | "honeydew" | "hotPink" | "indianRed" | "indigo" | "ivory" | "khaki" | "lavender" | "lavenderBlush" | "lawnGreen" | "lemonChiffon" | "lightBlue" | "lightCoral" | "lightCyan" | "lightGoldenrodYellow" | "lightGray" | "lightGreen" | "lightGrey" | "lightPink" | "lightSalmon" | "lightSeaGreen" | "lightSkyBlue" | "lightSlateGray" | "lightSlateGrey" | "lightSteelBlue" | "lightYellow" | "lime" | "limeGreen" | "linen" | "ltBlue" | "ltCoral" | "ltCyan" | "ltGoldenrodYellow" | "ltGray" | "ltGreen" | "ltGrey" | "ltPink" | "ltSalmon" | "ltSeaGreen" | "ltSkyBlue" | "ltSlateGray" | "ltSlateGrey" | "ltSteelBlue" | "ltYellow" | "magenta" | "maroon" | "medAquamarine" | "medBlue" | "mediumAquamarine" | "mediumBlue" | "mediumOrchid" | "mediumPurple" | "mediumSeaGreen" | "mediumSlateBlue" | "mediumSpringGreen" | "mediumTurquoise" | "mediumVioletRed" | "medOrchid" | "medPurple" | "medSeaGreen" | "medSlateBlue" | "medSpringGreen" | "medTurquoise" | "medVioletRed" | "midnightBlue" | "mintCream" | "mistyRose" | "moccasin" | "navajoWhite" | "navy" | "oldLace" | "olive" | "oliveDrab" | "orange" | "orangeRed" | "orchid" | "paleGoldenrod" | "paleGreen" | "paleTurquoise" | "paleVioletRed" | "papayaWhip" | "peachPuff" | "peru" | "pink" | "plum" | "powderBlue" | "purple" | "red" | "rosyBrown" | "royalBlue" | "saddleBrown" | "salmon" | "sandyBrown" | "seaGreen" | "seaShell" | "sienna" | "silver" | "skyBlue" | "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" | "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" | "yellowGreen")} PresetColor
 	 * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
-
 
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
@@ -7649,8 +7639,6 @@
 	 * }
 	 */
 
-	
-	
 	/**
 	 * Returns a report about all the comments added to the document.
 	 * @memberof ApiDocument
@@ -7744,7 +7732,6 @@
 	 * }
 	 */
 
-	
 	/**
 	 * Returns a report about every change which was made to the document in the review mode.
 	 * @memberof ApiDocument
@@ -13402,9 +13389,8 @@
 	 *   However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
 	 * - <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
 	 * @typedef {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} SectionBreakType
-	* @see office-js-api/Examples/Enumerations/SectionBreakType.js
-	*/
-
+	 * @see office-js-api/Examples/Enumerations/SectionBreakType.js
+	 */
 
 	/**
 	 * The coordinate value for the geometry paths.
