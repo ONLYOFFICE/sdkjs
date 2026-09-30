@@ -4149,7 +4149,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.excludeErrorsVal = false;
 	cBaseFunction.prototype.excludeNestedStAg = false;
 	cBaseFunction.prototype.bArrayFormula = null;
-	//argument positions: broadcasting takes the shape of the first one that is an array or a range, not the largest
+	//argument positions that shape the broadcast together: when one of them is an array or a range, the others do not count
 	cBaseFunction.prototype.resultShapeArgs = null;
 	//necessary for array formulas
 	//arrayIndexes - map, where key is the argument that is passed to the function as array,area,area3d (i.e. unchanged)
@@ -4800,16 +4800,27 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			if (this.resultShapeArgs && _arrayArgs > 1) {
+				var _shapeArray = null, _shapeRows = 1, _shapeCols = 1, _shapeHeadRows = 0, _shapeHeadCols = 0;
 				for (var _si = 0; _si < this.resultShapeArgs.length; _si++) {
 					var _shapeArg = tempArgs[this.resultShapeArgs[_si]];
 					if (_shapeArg && cElementType.array === _shapeArg.type) {
-						maxArrayRows = _shapeArg.getRowCount();
-						maxArrayCols = _shapeArg.getCountElementInRow();
-						headRows = _shapeArg.rowCount;
-						headCols = _shapeArg.countElementInRow.length ? _shapeArg.countElementInRow[0] : 0;
-						firstArray = _shapeArg;
-						break;
+						var _sR = _shapeArg.getRowCount(), _sC = _shapeArg.getCountElementInRow();
+						_shapeRows = Math.max(_shapeRows, _sR);
+						_shapeCols = Math.max(_shapeCols, _sC);
+						_shapeHeadRows = Math.max(_shapeHeadRows, _shapeArg.rowCount);
+						_shapeHeadCols = Math.max(_shapeHeadCols, _shapeArg.countElementInRow.length ? _shapeArg.countElementInRow[0] : 0);
+						//the largest one is iterated; when none covers the broadcast, a dense target is built below
+						if (!_shapeArray || _sR * _sC > _shapeArray.getRowCount() * _shapeArray.getCountElementInRow()) {
+							_shapeArray = _shapeArg;
+						}
 					}
+				}
+				if (_shapeArray) {
+					maxArrayRows = _shapeRows;
+					maxArrayCols = _shapeCols;
+					headRows = _shapeHeadRows;
+					headCols = _shapeHeadCols;
+					firstArray = _shapeArray;
 				}
 			}
 
@@ -5169,15 +5180,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let width = 1, height = 1;
 		if (this.resultShapeArgs) {
+			let shaped = false;
 			for (let i = 0; i < this.resultShapeArgs.length; i++) {
 				let shapeArg = arg[this.resultShapeArgs[i]];
 				if (shapeArg && (cElementType.array === shapeArg.type || cElementType.cellsRange === shapeArg.type ||
 					cElementType.cellsRange3D === shapeArg.type)) {
 					let objSize = shapeArg.getDimensions(true);
-					return objSize && (objSize.row !== 1 || objSize.col !== 1) ? {width: objSize.col, height: objSize.row} : null;
+					if (objSize) {
+						height = Math.max(objSize.row, height);
+						width = Math.max(objSize.col, width);
+						shaped = true;
+					}
 				}
 			}
-			return null;
+			if (shaped) {
+				return width !== 1 || height !== 1 ? {width: width, height: height} : null;
+			}
 		}
 		for (let i = 0; i < arg.length; i++) {
 			if (!this.arrayIndexes || !this.getArrayIndex(i, arg[i].type)) {

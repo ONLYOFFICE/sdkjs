@@ -1493,7 +1493,7 @@ function (window, undefined) {
 	cHLOOKUP.prototype.arrayIndexes = {1: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
-	cHLOOKUP.prototype.resultShapeArgs = [0, 3, 2];
+	cHLOOKUP.prototype.resultShapeArgs = [0, 3];
 	cHLOOKUP.prototype.Calculate = function (arg) {
 		return g_oHLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
@@ -3342,9 +3342,9 @@ function (window, undefined) {
 		this.sortedCache = new TypedMapCache();
 	}
 
-	// The whole H/VLOOKUP call. Excel lifts lookup_value and range_lookup together, the result taking the shape
-	// of lookup_value, else of range_lookup; index_num is lifted only when both are scalars, otherwise its first
-	// element answers everywhere. Lifted alone, index_num lets a failure answer for the whole call (measured).
+	// The whole H/VLOOKUP call. Excel lifts lookup_value and range_lookup together, the result being their
+	// broadcast; index_num is lifted only when both are scalars, otherwise its first element answers everywhere.
+	// Lifted alone, index_num lets a failure answer for the whole call (measured).
 	VHLOOKUPCache.prototype.calculateCall = function (arg, argument1, opt_argInfo) {
 		let key = arg[0], index = arg[2], rangeLookup = arg[3];
 		if (opt_argInfo) {
@@ -3356,13 +3356,18 @@ function (window, undefined) {
 			return this.calculate(arg, argument1, null, !!indexInfo.mode, indexInfo.mode && !keyLifted ? opt_argInfo : null);
 		}
 
-		let shape = cElementType.array === key.type ? key : rangeLookup && cElementType.array === rangeLookup.type ?
-			rangeLookup : cElementType.array === index.type ? index : null;
-		if (!shape) {
+		let keyDims = cElementType.array === key.type ? key.getDimensions(true) : null;
+		let rangeLookupDims = rangeLookup && cElementType.array === rangeLookup.type ? rangeLookup.getDimensions(true) : null;
+		let indexAlone = !keyDims && !rangeLookupDims;
+		if (indexAlone && cElementType.array !== index.type) {
 			return this.calculate(arg, argument1);
 		}
-		let indexIsElement = shape === index;
-		if (!indexIsElement) {
+		let indexIsElement = indexAlone, dims;
+		if (indexAlone) {
+			dims = index.getDimensions(true);
+		} else {
+			dims = {row: Math.max(keyDims ? keyDims.row : 1, rangeLookupDims ? rangeLookupDims.row : 1),
+				col: Math.max(keyDims ? keyDims.col : 1, rangeLookupDims ? rangeLookupDims.col : 1)};
 			if (cElementType.array === index.type) {
 				index = index.getValue2(0, 0);
 				indexIsElement = true;
@@ -3371,25 +3376,24 @@ function (window, undefined) {
 				indexIsElement = true;
 			}
 		}
-		let pairedDims = shape === key && rangeLookup && cElementType.array === rangeLookup.type ?
-			rangeLookup.getDimensions(true) : null;
-		let dims = shape.getDimensions(true);
 		let res = new cArray(), ctx = {};
-		let collapsesCall = shape === index ? res : null;
+		let collapsesCall = indexAlone ? res : null;
 		let callArgs = [key, arg[1], index, rangeLookup];
 		for (let r = 0; r < dims.row; r++) {
 			res.addRow();
 			for (let c = 0; c < dims.col; c++) {
-				if (shape === key) {
-					callArgs[0] = key.getValue2(r, c);
-				} else if (shape === rangeLookup) {
-					callArgs[3] = rangeLookup.getValue2(r, c);
-				} else {
+				if (indexAlone) {
 					callArgs[2] = index.getValue2(r, c);
 				}
-				if (pairedDims) {
-					let pr = 1 === pairedDims.row ? 0 : r, pc = 1 === pairedDims.col ? 0 : c;
-					callArgs[3] = pr < pairedDims.row && pc < pairedDims.col ? rangeLookup.getValue2(pr, pc) :
+				// a single row or column stretches, and past the end of the shorter array stands #N/A
+				if (keyDims) {
+					let kr = 1 === keyDims.row ? 0 : r, kc = 1 === keyDims.col ? 0 : c;
+					callArgs[0] = kr < keyDims.row && kc < keyDims.col ? key.getValue2(kr, kc) :
+						new cError(cErrorType.not_available);
+				}
+				if (rangeLookupDims) {
+					let lr = 1 === rangeLookupDims.row ? 0 : r, lc = 1 === rangeLookupDims.col ? 0 : c;
+					callArgs[3] = lr < rangeLookupDims.row && lc < rangeLookupDims.col ? rangeLookup.getValue2(lr, lc) :
 						new cError(cErrorType.not_available);
 				}
 				let elem = this.calculate(callArgs, argument1, ctx, indexIsElement, collapsesCall);
@@ -4991,8 +4995,8 @@ function (window, undefined) {
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cVLOOKUP.prototype.enabledToSingle = {"1": true};
-	//the result takes the shape of lookup_value, else of range_lookup, else of index_num (measured)
-	cVLOOKUP.prototype.resultShapeArgs = [0, 3, 2];
+	//lookup_value and range_lookup shape the result together, index_num only when both are scalars (measured)
+	cVLOOKUP.prototype.resultShapeArgs = [0, 3];
 	cVLOOKUP.prototype.Calculate = function (arg) {
 		return g_oVLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
