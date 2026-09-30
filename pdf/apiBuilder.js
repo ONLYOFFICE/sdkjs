@@ -115,6 +115,7 @@
 
 	/**
 	 * NumberSepStyle — defines number formatting style:
+	 *
 	 * - "us"        — 1,234.56   (English style)
 	 * - "plain"     — 1234.56    (No separators)
 	 * - "euro"      — 1.234,56   (European style)
@@ -148,6 +149,7 @@
 	/**
 	 * @typedef {'HH:MM' | 'h:MM tt' | 'HH:MM:ss' | 'h:MM:ss tt'} TimeFormat
 	 * Time format options:
+	 *
 	 * - "HH:MM" — 24-hour format, hours and minutes (e.g., "14:30")
 	 * - "h:MM tt" — 12-hour format with AM/PM, hours and minutes (e.g., "2:30 PM")
 	 * - "HH:MM:ss" — 24-hour format, hours, minutes, and seconds (e.g., "14:30:15")
@@ -163,8 +165,9 @@
 	 * Axis-aligned rectangle represented as a tuple.
 	 *
 	 * Invariants:
-	 *  - rect[0] < rect[2] (x1 < x2)
-	 *  - rect[1] < rect[3] (y1 < y2)
+	 *
+	 * - <code>rect[0] < rect[2]</code> (x1 < x2)
+	 * - <code>rect[1] < rect[3]</code> (y1 < y2)
 	 *
 	 * @typedef {pt[]} Rect
 	 * @property {pt} 0 - x1 (left)
@@ -175,13 +178,15 @@
 
 	/**
 	 * Axis-aligned rectangle difference represented as a tuple.
+	 *
 	 * Describes coordinate-wise deltas between two rectangles (B - A).
 	 *
 	 * Invariants:
-	 *  - diff[0] = x1B - x1A
-	 *  - diff[1] = y1B - y1A
-	 *  - diff[2] = x2B - x2A
-	 *  - diff[3] = y2B - y2A
+	 *
+	 * - <code>diff[0] = x1B - x1A</code>
+	 * - <code>diff[1] = y1B - y1A</code>
+	 * - <code>diff[2] = x2B - x2A</code>
+	 * - <code>diff[3] = y2B - y2A</code>
 	 *
 	 * @typedef {pt[]} RectDiff
 	 * @property {pt} 0 - dx1 (left delta)
@@ -234,6 +239,7 @@
 
 	/**
 	 * Quadrilateral represented as a flat tuple of vertices.
+	 *
 	 * Vertices order is fixed:
 	 *  · left-top → right-top → left-bottom → right-bottom
 	 *
@@ -279,6 +285,7 @@
 
 	/**
 	 * Degree defines an angle in degrees.
+	 *
 	 * Can be any finite number (positive or negative).
 	 *
 	 * @typedef {number} Degree
@@ -1683,6 +1690,7 @@
 
 	/**
 	 * Creates a chart with the parameters specified.
+	 *
 	 * :::note
 	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -1920,11 +1928,14 @@
 	};
 
 	/**
-	 * Removes page by index from document
-	 * <note> You can't delete last page </note>
+	 * Removes a page from the document by its index.
+	 *
+	 * :::note
+	 * If the document has only one page, it cannot be removed, and the method returns <b>false</b>.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} index - page index
+	 * @param {number} index - The index of the page to remove.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RemovePage.js
 	 */
@@ -3306,7 +3317,10 @@
 
 	/**
 	 * Sets widget text size.
-	 * <note> Text size === 0 means autofit </note>
+	 *
+	 * :::note
+	 * Text size === 0 means autofit.
+	 * :::
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @param {hps} size - The font size measured in half-points (1/144 of an inch).
@@ -3324,7 +3338,10 @@
 
 	/**
 	 * Gets widget text size.
-	 * <note> Text size === 0 means autofit </note>
+	 *
+	 * :::note
+	 * Text size === 0 means autofit.
+	 * :::
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @returns {hps}
@@ -3451,7 +3468,10 @@
 
 	/**
 	 * Sets the text field character limit.
-	 * <note> Character limit 0 means the field doesn't have a character limit.
+	 *
+	 * :::note
+	 * If the character limit is 0, the field has no character limit.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} charLimit - The maximum number of characters allowed in the field.
@@ -3464,7 +3484,10 @@
 
 	/**
 	 * Gets the text field character limit.
-	 * <note> Char limit 0 means field doesn't have char limit
+	 *
+	 * :::note
+	 * If the character limit is 0, the field has no character limit.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
@@ -3476,7 +3499,10 @@
 
 	/**
 	 * Sets whether the text field uses comb formatting.
-	 * <note>The character limit must be greater than 0.</note>
+	 *
+	 * :::note
+	 * The character limit must be greater than 0.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} comb - Specifies whether comb formatting is enabled.
@@ -3754,7 +3780,10 @@
 
 	/**
 	 * Sets validate range for field.
-	 * <note> Can only be applied to fields with a percentage or number format. </note>
+	 *
+	 * :::note
+	 * Can only be applied to fields with a percentage or number format.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
@@ -4231,7 +4260,10 @@
 
 	/**
 	 * Sets validate range for field.
-	 * <note> Can only be applied to fields with a percentage or number format. </note>
+	 *
+	 * :::note
+	 * Can only be applied to fields with a percentage or number format.
+	 * :::
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
@@ -6518,7 +6550,10 @@
 
 	/**
 	 * Sets annotation dash pattern.
-	 * <note> The border style property must be set to "dashed". </note>
+	 *
+	 * :::note
+	 * The border style property must be set to "dashed".
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {number[]} pattern - A dash array defining a pattern of dashes and gaps to be used in drawing a dashed border. For example, a value of [3, 2] specifies a border drawn with 3-point dashes alternating with 2-point gaps.
@@ -6547,7 +6582,10 @@
 
 	/**
 	 * Sets annotation border effect style.
-	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 *
+	 * :::note
+	 * Can be applied to circle, square, freeText and polygon annotations.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {AnnotBorderEffectStyle} style - The border effect style: <b>"none"</b> or <b>"cloud"</b>.
@@ -6590,7 +6628,10 @@
 
 	/**
 	 * Sets annotation border effect intensity.
-	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 *
+	 * :::note
+	 * Can be applied to circle, square, freeText and polygon annotations.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} value - The border effect intensity. Must be greater than or equal to 0.
@@ -8093,7 +8134,10 @@
 
 	/**
 	 * Removes all the elements from the current rich content.
-	 * <note>When all elements are removed, a new empty rich paragraph is automatically created.</note>
+	 *
+	 * :::note
+	 * When all elements are removed, a new empty rich paragraph is automatically created.
+	 * :::
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8390,8 +8434,11 @@
 
 	/**
 	 * Removes an element using the position specified.
-	 * <note>If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
-	 * a new empty run is automatically created.</note>
+	 *
+	 * :::note
+	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
+	 * a new empty run is automatically created.
+	 * :::
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} pos - The element position which we want to remove from the paragraph.
@@ -8402,7 +8449,10 @@
 
 	/**
 	 * Removes all the elements from the current paragraph.
-	 * <note>When all the elements are removed from the paragraph, a new empty run is automatically created.</note>
+	 *
+	 * :::note
+	 * When all the elements are removed from the paragraph, a new empty run is automatically created.
+	 * :::
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8480,10 +8530,12 @@
 	
 	/**
 	 * Specifies the reading order for the current paragraph.
+	 *
 	 * Possible values are:
-	 * <b>null</b> - use the standart direction parameter;
-	 * <b>"ltr"</b> - left-to-right text direction;
-	 * <b>"rtl"</b> - right-to-left text direction.
+	 *
+	 * - <b>null</b> - use the standart direction parameter;
+	 * - <b>"ltr"</b> - left-to-right text direction;
+	 * - <b>"rtl"</b> - right-to-left text direction.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ReadingOrder} [readingOrder = undefined] - The reading order.
@@ -8638,6 +8690,7 @@
 
 	/**
 	 * Returns the font family from the current text properties.
+	 *
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
@@ -10063,8 +10116,13 @@
 	};
 
 	/**
-	 * Merges an array of cells. If merge is successful, it will return merged cell, otherwise "null".
-	 * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
+	 * Merges an array of cells.
+	 *
+	 * If merge is successful, it will return merged cell, otherwise "null".
+	 *
+	 * :::warning
+	 * The number of cells in any row and the number of rows in the current table may be changed.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableCell[]} cells - The cells to merge.

@@ -381,7 +381,6 @@
      * @see office-js-api/Examples/Enumerations/pt.js
 	 */
 
-
     /**
      * English measure unit. 1 mm = 36000 EMUs, 1 inch = 914400 EMUs.
      * @typedef {number} EMU
@@ -399,7 +398,6 @@
     * @typedef {("None" | "ArabicPeriod"  | "ArabicParenR"  | "RomanUcPeriod" | "RomanLcPeriod" | "AlphaLcParenR" | "AlphaLcPeriod" | "AlphaUcParenR" | "AlphaUcPeriod")} BulletType
     * @see office-js-api/Examples/Enumerations/BulletType.js
 	 */
-
 
     /**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
@@ -436,21 +434,22 @@
      * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
-
     /**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * <b>"none"</b> - not display the selected tick labels.
-     * <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
-     * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
-     * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
+     *
+     * - <b>"none"</b> - not display the selected tick labels.
+     * - <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
+     * - <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
+     * - <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
      * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
     /**
      * The type of a fill which uses an image as a background.
-     * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     *
+     * - <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * - <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
@@ -460,8 +459,6 @@
      * @typedef {"cross" | "dashDnDiag" | "dashHorz" | "dashUpDiag" | "dashVert" | "diagBrick" | "diagCross" | "divot" | "dkDnDiag" | "dkHorz" | "dkUpDiag" | "dkVert" | "dnDiag" | "dotDmnd" | "dotGrid" | "horz" | "horzBrick" | "lgCheck" | "lgConfetti" | "lgGrid" | "ltDnDiag" | "ltHorz" | "ltUpDiag" | "ltVert" | "narHorz" | "narVert" | "openDmnd" | "pct10" | "pct20" | "pct25" | "pct30" | "pct40" | "pct5" | "pct50" | "pct60" | "pct70" | "pct75" | "pct80" | "pct90" | "plaid" | "shingle" | "smCheck" | "smConfetti" | "smGrid" | "solidDmnd" | "sphere" | "trellis" | "upDiag" | "vert" | "wave" | "wdDnDiag" | "wdUpDiag" | "weave" | "zigZag"} PatternType
      * @see office-js-api/Examples/Enumerations/PatternType.js
 	 */
-
-
 
     /**
      * The available types of tick mark appearance.
@@ -606,7 +603,7 @@
 	 * "effectSwivel" |
 	 * "effectZoomBottom" | "effectZoomCenter" | "effectZoomIn" | "effectZoomInSlightly" | "effectZoomOut" | "effectZoomOutSlightly"
 	 * )}
-	*/
+	 */
 
 	/**
 	 * @typedef {Object} TableLook
@@ -1011,6 +1008,7 @@
     
     /**
      * Creates a chart with the parameters specified.
+     *
      * :::note
      * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
      * :::
@@ -1076,6 +1074,7 @@
 
     /**
      * Creates a table.
+	 *
 	 * :::danger[Breaking Change]
 	 * Starting from version 9.4.0, the parameter order has been changed from `Api.CreateTable(cols, rows)` to `Api.CreateTable(rows, cols)`.
 	 * :::
@@ -1138,6 +1137,7 @@
 
     /**
 	 * Checks for duplicate placeholders and sets indexes.
+	 *
      * Called when a placeholder is added to a shape.
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
@@ -1780,6 +1780,7 @@
     };
     /**
 	 * Removes a range of slides from the presentation.
+	 *
      * Deletes all the slides from the presentation if no parameters are specified.
 	 * @memberof ApiPresentation
      * @param {Number} [nStart=0] - The starting position for the deletion range.
@@ -2077,17 +2078,18 @@
 
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document has been created with.
-	 * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * <b>Created</b> - the parsed date and time when the file was created.
-	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Authors</b> - the persons who has created the file.
-	 * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 *
+	 * - <b>Application</b> - the application the document has been created with.
+	 * - <b>CreatedRaw</b> - the date and time when the file was created.
+	 * - <b>Created</b> - the parsed date and time when the file was created.
+	 * - <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * - <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * - <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * - <b>Authors</b> - the persons who has created the file.
+	 * - <b>Title</b> - this property allows you to simplify your documents classification.
+	 * - <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * - <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * - <b>Comment</b> - this property allows you to simplify your documents classification.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {object}
@@ -2161,6 +2163,7 @@
 
 	/**
 	 * Returns the core properties interface for the current presentation.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof ApiPresentation
 	 * @returns {ApiCore}
@@ -2185,15 +2188,15 @@
 	};
 
 	/**
-	* Adds a math equation to the current presentation.
-	* @memberof ApiPresentation
-	* @typeofeditors ["CPE"]
-	* @param {string} sText - The math equation text.
-	* @param {string} sFormat - The math equation format. Possible values are "unicode", "latex", and "mathml".
-	* @returns {boolean}
-	* @since 9.0.0
-	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
-	*/
+	 * Adds a math equation to the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {string} sText - The math equation text.
+	 * @param {string} sFormat - The math equation format. Possible values are "unicode", "latex", and "mathml".
+	 * @returns {boolean}
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
+	 */
 	ApiPresentation.prototype.AddMathEquation = function (sText, sFormat) {
 		if (!Asc.editor) {
 			return false;
@@ -2259,6 +2262,7 @@
 
     /**
 	 * Retrieves the custom XML manager associated with the presentation.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the presentation.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
@@ -3086,7 +3090,10 @@
 
 	/**
 	 * Deletes the specified object from the parent if it exists.
-	 * Note: Master can't be deleted if it's the last one in the presentation.
+	 *
+	 * :::note
+	 * Master can't be deleted if it's the last one in the presentation.
+	 * :::
 	 *
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
@@ -3138,6 +3145,7 @@
 
     /**
      * Sets a theme to the slide master.
+     *
      * Sets a copy of the theme object.
      * @memberof ApiMaster
      * @typeofeditors ["CPE"]
@@ -3515,6 +3523,7 @@
 
     /**
      * Creates a copy of the specified slide layout object.
+     *
      * Copies without master slide.
      * @memberof ApiLayout
      * @typeofeditors ["CPE"]
@@ -4761,6 +4770,7 @@
 
     /**
      * Applies the specified layout to the current slide.
+     *
      * The layout must be in slide master.
      * @memberof ApiSlide
      * @typeofeditors ["CPE"]
@@ -5901,7 +5911,9 @@
 
 	/**
 	 * Returns the transition speed.
+	 *
 	 * Maps duration to speed based on OOXML spd attribute logic:
+	 *
 	 * - fast: duration <= 500ms
 	 * - medium: 500ms < duration <= 750ms
 	 * - slow: duration > 750ms
@@ -5920,7 +5932,9 @@
 
 	/**
 	 * Sets the transition speed.
+	 *
 	 * Converts speed to duration based on standard values:
+	 *
 	 * - fast = 500ms
 	 * - medium = 750ms
 	 * - slow = 1000ms
@@ -7401,6 +7415,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
@@ -7870,6 +7885,7 @@
 
 	/**
 	 * Sets a hyperlink to the current drawing object (shape or image).
+	 *
 	 * Pass null to remove the hyperlink.
 	 *
 	 * @memberof ApiDrawing
@@ -8735,8 +8751,13 @@
     };
 
     /**
-     * Merges an array of cells. If merge is successful, it will return merged cell, otherwise "null".
-     * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
+     * Merges an array of cells.
+     *
+     * If merge is successful, it will return merged cell, otherwise "null".
+     *
+     * :::warning
+     * The number of cells in any row and the number of rows in the current table may be changed.
+     * :::
      * @memberof ApiTable
      * @typeofeditors ["CPE"]
      * @param {ApiTableCell[]} aCells - The array of cells.

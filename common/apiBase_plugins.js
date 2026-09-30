@@ -59,23 +59,25 @@
 
     /**
      * The editors which the plugin is available for:
-	 * <b>word</b> - text document editor,
-	 * <b>cell</b> - spreadsheet editor,
-	 * <b>slide</b> - presentation editor,
-	 * <b>pdf</b> - pdf editor.
+	 *
+	 * - <b>word</b> - text document editor,
+	 * - <b>cell</b> - spreadsheet editor,
+	 * - <b>slide</b> - presentation editor,
+	 * - <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
     /**
 	 * The data type selected in the editor and sent to the plugin:
-     * <b>text</b> - the text data,
-	 * <b>html</b> - HTML formatted code,
-	 * <b>ole</b> - OLE object data,
-     * <b>desktop</b> - the desktop editor data,
-     * <b>desktop-external</b> - the main page data of the desktop app (system messages),
-     * <b>none</b> - no data will be send to the plugin from the editor,
-	 * <b>sign</b> - the sign for the keychain plugin.
+     *
+     * - <b>text</b> - the text data,
+	 * - <b>html</b> - HTML formatted code,
+	 * - <b>ole</b> - OLE object data,
+     * - <b>desktop</b> - the desktop editor data,
+     * - <b>desktop-external</b> - the main page data of the desktop app (system messages),
+     * - <b>none</b> - no data will be send to the plugin from the editor,
+	 * - <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "desktop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
@@ -997,8 +999,13 @@
 	 */
 	
 	/**
-	 * Configures plugins from an external source. The settings can be set for all plugins or for a specific plugin.
-	 * For example, this method can be used to pass an authorization token to the plugin. This method can be used only with the connector class.
+	 * Configures plugins from an external source.
+	 *
+	 * The settings can be set for all plugins or for a specific plugin. For example, this method can be used to pass an authorization token to the plugin.
+	 *
+	 * :::note
+	 * This method can be used only with the {@link /docs/docs-api/usage-api/automation-api/connector-class connector class}.
+	 * :::
 	 * @memberof Api
 	 * @alias SetPluginsOptions
 	 * @param {PluginOptions} options - Plugin options.
@@ -1424,7 +1431,9 @@
 	 */
 
 	/**
-     * Returns the image data from the first of the selected drawings. If there are no drawings selected, the method returns a white rectangle.
+     * Returns the image data from the first of the selected drawings.
+     *
+     * If there are no drawings selected, the method returns a white rectangle.
      * @memberof Api
      * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
      * @alias GetImageDataFromSelection
@@ -1437,14 +1446,15 @@
 		return this.getImageDataFromSelection();
 	};
 	/**
-     * Replaces the first selected drawing with the image specified in the parameters.
-     * If there are no drawings selected, the method inserts the image at the current position.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
-     * @alias PutImageDataToSelection
-     * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
-     * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
+	 * Replaces the first selected drawing with the image specified in the parameters.
+	 *
+	 * If there are no drawings selected, the method inserts the image at the current position.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
+	 * @alias PutImageDataToSelection
+	 * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
+	 * @since 7.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
 	 */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{

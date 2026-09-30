@@ -58,20 +58,22 @@
 	/**
 	 * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
 	 * A value that defines if it is possible to delete and/or edit the content control or not:
-	 * <b>0</b> - only deleting
-	 * <b>1</b> - disable deleting or editing
-	 * <b>2</b> - only editing
-	 * <b>3</b> - full access
+	 *
+	 * - <b>0</b> - only deleting
+	 * - <b>1</b> - disable deleting or editing
+	 * - <b>2</b> - only editing
+	 * - <b>3</b> - full access
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlLock.js
 	 */
 
     /**
      * @typedef {(1 | 2 | 3 | 4)} ContentControlType
      * A numeric value that specifies the content control type:
-	 * <b>1</b> - block content control
-	 * <b>2</b> - inline content control
-	 * <b>3</b> - row content control
-	 * <b>4</b> - cell content control
+	 *
+	 * - <b>1</b> - block content control
+	 * - <b>2</b> - inline content control
+	 * - <b>3</b> - row content control
+	 * - <b>4</b> - cell content control
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlType.js
 	 */
 
@@ -114,19 +116,21 @@
 	/**
 	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
 	 * The document editing restrictions:
-	 * <b>none</b> - no editing restrictions,
-	 * <b>comments</b> - allows editing comments,
-	 * <b>forms</b> - allows editing form fields,
-	 * <b>readOnly</b> - does not allow editing.
+	 *
+	 * - <b>none</b> - no editing restrictions,
+	 * - <b>comments</b> - allows editing comments,
+	 * - <b>forms</b> - allows editing form fields,
+	 * - <b>readOnly</b> - does not allow editing.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/DocumentEditingRestrictions.js
 	 */
 	
 	/**
 	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
 	 * Specifies if the whole text or only its part will be returned or replaced:
-	 * <b>entirely</b> - replaces/returns the whole text,
-	 * <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
-	 * <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
+	 *
+	 * - <b>entirely</b> - replaces/returns the whole text,
+	 * - <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
+	 * - <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/TextPartType.js
 	 */
 
@@ -184,7 +188,9 @@
         return this.asc_GetBlockChainData();
     };
     /**
-     * Inserts the content control containing data. The data is specified by the JS code for {@link /docs/office-api/usage-api/document-api/ Document Builder}, or by a link to the shared document.
+     * Inserts the content control containing data.
+     *
+     * The data is specified by the JS code for {@link /docs/office-api/usage-api/document-api/ Document Builder}, or by a link to the shared document.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias InsertAndReplaceContentControls
@@ -241,7 +247,9 @@
 	 */
 
     /**
-     * Removes the currently selected content control retaining all its contents. The content control where the mouse cursor is currently positioned will be removed.
+     * Removes the currently selected content control retaining all its contents.
+     *
+     * The content control where the mouse cursor is currently positioned will be removed.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias RemoveContentControl
@@ -409,14 +417,15 @@
 
 		return this.asc_addComment(new window['Asc'].asc_CCommentDataWord(oCD));
 	};
-    /**
-     * Moves a cursor to the beginning of the current editing area (document body, footer/header, footnote, or autoshape).
+	/**
+	 * Moves a cursor to the beginning of the current editing area (document body, footer/header, footnote, or autoshape).
+	 *
 	 * This method is similar to pressing the <b>Ctrl + Home</b> keyboard shortcut.
-     * @memberof Api
-     * @typeofeditors ["CDE"]
-     * @alias MoveCursorToStart
-     * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the beginning of the document body.
-     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToStart.js
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias MoveCursorToStart
+	 * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the beginning of the document body.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToStart.js
 	 */
     Api.prototype["pluginMethod_MoveCursorToStart"] = function(isMoveToMainContent)
     {
@@ -429,14 +438,15 @@
                 oLogicDocument.MoveCursorToStartPos(false);
         }
     };
-    /**
-     * Moves a cursor to the end of the current editing area (document body, footer/header, footnote, or autoshape).
+	/**
+	 * Moves a cursor to the end of the current editing area (document body, footer/header, footnote, or autoshape).
+	 *
 	 * This method is similar to pressing the <b>Ctrl + End</b> keyboard shortcut.
-     * @memberof Api
-     * @typeofeditors ["CDE"]
-     * @alias MoveCursorToEnd
-     * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the end of the document body.
-     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToEnd.js
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias MoveCursorToEnd
+	 * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the end of the document body.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToEnd.js
 	 */
     Api.prototype["pluginMethod_MoveCursorToEnd"] = function(isMoveToMainContent)
     {
@@ -791,7 +801,8 @@
 
 	/**
 	 * Returns all OLE object data for objects which can be opened by the specified plugin.
-	 * If *sPluginId* is not defined, this method returns all OLE objects contained in the currrent document.
+	 *
+	 * If *sPluginId* is not defined, this method returns all OLE objects contained in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetAllOleObjects

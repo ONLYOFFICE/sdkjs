@@ -202,8 +202,7 @@
 	 *   "storeItemID": "testXmlPart"
 	 * }
 	 */
-	
-	
+
 	/**
 	 * Class representing a bookmark in the document.
 	 * @constructor
@@ -1897,7 +1896,9 @@
 	};
 
 	/**
-	 * Returns a new range that goes beyond the specified range in any direction and spans a different range. The current range has not changed.
+	 * Returns a new range that goes beyond the specified range in any direction and spans a different range.
+	 *
+	 * The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be expanded.
@@ -1927,7 +1928,9 @@
 	};
 
 	/**
-	 * Returns a new range as the intersection of the current range with another range. The current range has not changed.
+	 * Returns a new range as the intersection of the current range with another range.
+	 *
+	 * The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be intersected with the current range.
@@ -2595,9 +2598,10 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the Range contents in relation to the default appearance of the Range text:
-	 * <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
+	 *
+	 * - <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
+	 * - <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
+	 * - <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
@@ -3243,6 +3247,7 @@
 
 	/**
 	 * Moves a cursor to a specified position of the current range object.
+	 *
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRange
 	 * @param {number} [nPos=0] - The desired cursor position.
@@ -3264,7 +3269,10 @@
 
 	/**
 	 * Adds a field to the specified range by the field instruction code.
-	 * <note> This method removes text within a range. </note>
+	 *
+	 * :::note
+	 * This method removes text within a range.
+	 * :::
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sCode - The field instruction code.
@@ -4307,8 +4315,9 @@
 
 	/**
 	 * A border type which will be added to the document element.
-     * <b>"none"</b> - no border will be added to the created element or the selected element side.
-     * <b>"single"</b> - a single border will be added to the created element or the selected element side.
+     *
+     * - <b>"none"</b> - no border will be added to the created element or the selected element side.
+     * - <b>"single"</b> - a single border will be added to the created element or the selected element side.
 	 * @typedef {("none" | "single")} BorderType
 	 * @see office-js-api/Examples/Enumerations/BorderType.js
 	 */
@@ -4365,38 +4374,41 @@
 
 	/**
 	 * Header and footer types which can be applied to the document sections.
-     * <b>"default"</b> - a header or footer which can be applied to any default page.
-     * <b>"title"</b> - a header or footer which is applied to the title page.
-     * <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
+     *
+     * - <b>"default"</b> - a header or footer which can be applied to any default page.
+     * - <b>"title"</b> - a header or footer which is applied to the title page.
+     * - <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
 	 * @typedef {("default" | "title" | "even")} HdrFtrType
 	 * @see office-js-api/Examples/Enumerations/HdrFtrType.js
 	 */
 
 	/**
 	 * The possible values for the units of the width property are defined by a specific table or table cell width property.
-     * <b>"auto"</b> - sets the table or table cell width to auto width.
-     * <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
-     * <b>"nul"</b> - sets the table or table cell width to be of a zero value.
-     * <b>"percent"</b> - sets the table or table cell width to be measured in percent to the parent container.
+     *
+     * - <b>"auto"</b> - sets the table or table cell width to auto width.
+     * - <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
+     * - <b>"nul"</b> - sets the table or table cell width to be of a zero value.
+     * - <b>"percent"</b> - sets the table or table cell width to be measured in percent to the parent container.
 	 * @typedef {("auto" | "twips" | "nul" | "percent")} TableWidth
 	 * @see office-js-api/Examples/Enumerations/TableWidth.js
 	 */
 
 	/**
 	 * This simple type specifies possible values for the table sections to which the current conditional formatting properties will be applied when this selected table style is used.
-	 * <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
-	 * <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
-	 * <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
-	 * <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
-	 * <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
-	 * <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
-	 * <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
-	 * <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
-	 * <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
-	 * <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
-	 * <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
-	 * <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
-	 * <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
+	 *
+	 * - <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
+	 * - <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
+	 * - <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
+	 * - <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
+	 * - <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
+	 * - <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
+	 * - <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
+	 * - <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
+	 * - <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
+	 * - <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
+	 * - <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
+	 * - <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
+	 * - <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
 	 * @typedef {("topLeftCell" | "topRightCell" | "bottomLeftCell" | "bottomRightCell" | "firstRow" | "lastRow" |
 	 *     "firstColumn" | "lastColumn" | "bandedColumn" | "bandedColumnEven" | "bandedRow" | "bandedRowEven" |
 	 *     "wholeTable")} TableStyleOverrideType
@@ -4473,9 +4485,6 @@
 	 * @see office-js-api/Examples/Enumerations/GeometryFormulaType.js
 	 */
 
-
-
-
 	/**
 	 * This type specifies the available chart types which can be used to create a new chart.
 	 * @typedef {(
@@ -4517,22 +4526,17 @@
 	 * @see office-js-api/Examples/Enumerations/DrawingLockType.js
 	 */
 
-
-
-
 	/**
 	 * The path fill type.
 	 * @typedef {("none" | "norm" | "lighten" | "lightenLess" | "darken" | "darkenLess")} PathFillType
 	 * @see office-js-api/Examples/Enumerations/PathFillType.js
 	 */
 
-
 	/**
 	 * The path command types.
 	 * @typedef {("moveTo" | "lineTo" | "bezier3" | "bezier4" | "arcTo" | "close")} PathCommandType
 	 * @see office-js-api/Examples/Enumerations/PathCommandType.js
 	 */
-
 
 	/**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
@@ -4561,7 +4565,7 @@
 	 */
 
 	/**
-	* The available color scheme identifiers.
+	 * The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
 	 *     | "folHlink" | "hlink" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
 	 * @see office-js-api/Examples/Enumerations/SchemeColorId.js
@@ -4583,21 +4587,22 @@
 	 * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
-
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * <b>"none"</b> - not display the selected tick labels.
-     * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
-     * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
-     * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
+     *
+     * - <b>"none"</b> - not display the selected tick labels.
+     * - <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+     * - <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+     * - <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
 	/**
      * The type of a fill which uses an image as a background.
-     * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     *
+     * - <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * - <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
 	 * @typedef {"tile" | "stretch"} BlipFillType
 	 * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
@@ -4634,6 +4639,7 @@
 
 	/**
 	 * Form type.
+	 *
 	 * The available form types.
 	 * @typedef {"textForm" | "comboBoxForm" | "dropDownForm" | "checkBoxForm" | "radioButtonForm" | "pictureForm" | "complexForm" | "dateForm" | "signatureForm"} FormType
 	 * @see office-js-api/Examples/Enumerations/FormType.js
@@ -4686,67 +4692,73 @@
 
 	/**
 	 * Available values of the "numbered" reference type:
-	 * <b>"pageNum"</b> - the numbered item page number;
-     * <b>"paraNum"</b> - the numbered item paragraph number;
-	 * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
-     * <b>"fullCtxParaNum"</b> - the full paragraph number, e.g. "4.1.1";
-	 * <b>"text"</b> - the paragraph text value, e.g. if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"pageNum"</b> - the numbered item page number;
+     * - <b>"paraNum"</b> - the numbered item paragraph number;
+	 * - <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * - <b>"fullCtxParaNum"</b> - the full paragraph number, e.g. "4.1.1";
+	 * - <b>"text"</b> - the paragraph text value, e.g. if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "text" | "aboveBelow"} numberedRefTo
 	 * @see office-js-api/Examples/Enumerations/numberedRefTo.js
 	 */
 
 	/**
 	 * Available values of the "heading" reference type:
-	 * <b>"text"</b> - the entire heading text;
-	 * <b>"pageNum"</b> - the heading page number;
-     * <b>"headingNum"</b> - the heading sequence number;
-	 * <b>"noCtxHeadingNum"</b> - the abbreviated heading number. Make sure the cursor pointer is in the section you are referencing to, e.g. you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
-     * <b>"fullCtxHeadingNum"</b> - the full heading number even if the cursor pointer is in the same section;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"text"</b> - the entire heading text;
+	 * - <b>"pageNum"</b> - the heading page number;
+     * - <b>"headingNum"</b> - the heading sequence number;
+	 * - <b>"noCtxHeadingNum"</b> - the abbreviated heading number. Make sure the cursor pointer is in the section you are referencing to, e.g. you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
+     * - <b>"fullCtxHeadingNum"</b> - the full heading number even if the cursor pointer is in the same section;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "headingNum" | "noCtxHeadingNum" | "fullCtxHeadingNum" | "aboveBelow"} headingRefTo
 	 * @see office-js-api/Examples/Enumerations/headingRefTo.js
 	 */
 
 	/**
 	 * Available values of the "bookmark" reference type:
-	 * <b>"text"</b> - the entire bookmark text;
-	 * <b>"pageNum"</b> - the bookmark page number;
-     * <b>"paraNum"</b> - the bookmark paragraph number;
-	 * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
-     * <b>"fullCtxParaNum</b> - the full paragraph number, e.g. "4.1.1";
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"text"</b> - the entire bookmark text;
+	 * - <b>"pageNum"</b> - the bookmark page number;
+     * - <b>"paraNum"</b> - the bookmark paragraph number;
+	 * - <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * - <b>"fullCtxParaNum</b> - the full paragraph number, e.g. "4.1.1";
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "aboveBelow"} bookmarkRefTo
 	 * @see office-js-api/Examples/Enumerations/bookmarkRefTo.js
 	 */
 
 	/**
 	 * Available values of the "footnote" reference type:
-	 * <b>"footnoteNum"</b> - the footnote number;
-	 * <b>"pageNum"</b> - the page number of the footnote;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
-	 * <b>"formFootnoteNum"</b> - the form number formatted as a footnote. The numbering of the actual footnotes is not affected.
+	 *
+	 * - <b>"footnoteNum"</b> - the footnote number;
+	 * - <b>"pageNum"</b> - the page number of the footnote;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
+	 * - <b>"formFootnoteNum"</b> - the form number formatted as a footnote. The numbering of the actual footnotes is not affected.
 	 * @typedef {"footnoteNum" | "pageNum" | "aboveBelow" | "formFootnoteNum"} footnoteRefTo
 	 * @see office-js-api/Examples/Enumerations/footnoteRefTo.js
 	 */
 
 	/**
 	 * Available values of the "endnote" reference type:
-	 * <b>"endnoteNum"</b> - the endnote number;
-	 * <b>"pageNum"</b> - the endnote page number;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
-	 * <b>"formEndnoteNum"</b> - the form number formatted as an endnote. The numbering of the actual endnotes is not affected.
+	 *
+	 * - <b>"endnoteNum"</b> - the endnote number;
+	 * - <b>"pageNum"</b> - the endnote page number;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
+	 * - <b>"formEndnoteNum"</b> - the form number formatted as an endnote. The numbering of the actual endnotes is not affected.
 	 * @typedef {"endnoteNum" | "pageNum" | "aboveBelow" | "formEndnoteNum"} endnoteRefTo
 	 * @see office-js-api/Examples/Enumerations/endnoteRefTo.js
 	 */
 
 	/**
 	 * Available values of the "equation"/"figure"/"table" reference type:
-	 * <b>"entireCaption"</b>- the entire caption text;
-	 * <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
-     * <b>"captionText"</b> - the caption text only;
-	 * <b>"pageNum"</b> - the page number containing the referenced object;
-	 * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"entireCaption"</b>- the entire caption text;
+	 * - <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
+     * - <b>"captionText"</b> - the caption text only;
+	 * - <b>"pageNum"</b> - the page number containing the referenced object;
+	 * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
 	 * @see office-js-api/Examples/Enumerations/captionRefTo.js
 	 */
@@ -4776,22 +4788,24 @@
 
 	/**
      * Possible values for the caption numbering format.
-     * <b>"ALPHABETIC"</b> - upper letter.
-     * <b>"alphabetic"</b> - lower letter.
-     * <b>"Roman"</b> - upper Roman.
-     * <b>"roman"</b> - lower Roman.
-	 * <b>"Arabic"</b> - arabic.
+     *
+     * - <b>"ALPHABETIC"</b> - upper letter.
+     * - <b>"alphabetic"</b> - lower letter.
+     * - <b>"Roman"</b> - upper Roman.
+     * - <b>"roman"</b> - lower Roman.
+	 * - <b>"Arabic"</b> - arabic.
 	 * @typedef {("ALPHABETIC" | "alphabetic" | "Roman" | "roman" | "Arabic")} CaptionNumberingFormat
 	 * @see office-js-api/Examples/Enumerations/CaptionNumberingFormat.js
 	 */
 
 	/**
      * Possible values for the caption separator.
-     * <b>"hyphen"</b> - the "-" punctuation mark.
-     * <b>"period"</b> - the "." punctuation mark.
-     * <b>"colon"</b> - the ":" punctuation mark.
-     * <b>"longDash"</b> - the "—" punctuation mark.
-	 * <b>"dash"</b> - the "-" punctuation mark.
+     *
+     * - <b>"hyphen"</b> - the "-" punctuation mark.
+     * - <b>"period"</b> - the "." punctuation mark.
+     * - <b>"colon"</b> - the ":" punctuation mark.
+     * - <b>"longDash"</b> - the "—" punctuation mark.
+	 * - <b>"dash"</b> - the "-" punctuation mark.
 	 * @typedef {("hyphen" | "period" | "colon" | "longDash" | "dash")} CaptionSep
 	 * @see office-js-api/Examples/Enumerations/CaptionSep.js
 	 */
@@ -4832,8 +4846,7 @@
 	 * @typedef {Object} TocBuildFromPr
 	 * @property {number} [OutlineLvlStart=1] - The highest heading level included in the table of contents (the start of the outline range).
 	 * @property {number} [OutlineLvls=9] - The lowest heading level included in the table of contents (the end of the outline range).
-	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
-	 * <note>If StylesLvls.length > 0, then the OutlineLvls property will be ignored.</note>
+	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]). If <em>StylesLvls.length</em> is greater than 0, the <em>OutlineLvls</em> property is ignored.
 	 * @see office-js-api/Examples/Enumerations/TocBuildFromPr.js
 	 */
 
@@ -4847,9 +4860,10 @@
 
 	/**
 	 * Possible values for the table of contents leader:
-	 * <b>"dot"</b> - "......."
-	 * <b>"dash"</b> - "-------"
-	 * <b>"underline"</b> - "_______"
+	 *
+	 * - <b>"dot"</b> - "......."
+	 * - <b>"dash"</b> - "-------"
+	 * - <b>"underline"</b> - "_______"
      * @typedef {("dot" | "dash" | "underline" | "none")} TocLeader
 	 * @see office-js-api/Examples/Enumerations/TocLeader.js
 	 */
@@ -4985,6 +4999,7 @@
 	};
 	/**
 	 * Creates an element range.
+	 *
 	 * If you do not specify the start and end positions, the range will be taken from the entire element.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -5244,6 +5259,7 @@
 
 	/**
 	 * Creates a chart with the parameters specified.
+	 *
 	 * :::note
 	 * Values of <em>styleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -5467,15 +5483,20 @@
 	}
 
 	/**
-	 * Creates an ApiColor from a universal input. The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
-	 * <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
-	 * <b>Packed integer</b>: "Api.Color(0xRRGGBB)" creates an RGB color from a 24-bit integer.
-	 * <b>Full HEX string</b>: "Api.Color('#RRGGBB')" or "Api.Color('RRGGBB')" creates a HEX color; the leading "#" is optional.
-	 * <b>Short HEX string</b>: "Api.Color('#RGB')" expands each digit by duplication, so "#F0A" becomes "#FF00AA".
-	 * <b>Theme color name</b>: "Api.Color('accent1')" creates a theme color; any value of SchemeColorId is accepted.
-	 * <b>Preset color name</b>: "Api.Color('aliceBlue')" resolves any value of PresetColor to its RGB equivalent.
-	 * <b>Auto color</b>: "Api.Color('auto')" creates an auto color.
+	 * Creates an ApiColor from a universal input.
+	 *
+	 * The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
+	 *
+	 * - <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
+	 * - <b>Packed integer</b>: "Api.Color(0xRRGGBB)" creates an RGB color from a 24-bit integer.
+	 * - <b>Full HEX string</b>: "Api.Color('#RRGGBB')" or "Api.Color('RRGGBB')" creates a HEX color; the leading "#" is optional.
+	 * - <b>Short HEX string</b>: "Api.Color('#RGB')" expands each digit by duplication, so "#F0A" becomes "#FF00AA".
+	 * - <b>Theme color name</b>: "Api.Color('accent1')" creates a theme color; any value of SchemeColorId is accepted.
+	 * - <b>Preset color name</b>: "Api.Color('aliceBlue')" resolves any value of PresetColor to its RGB equivalent.
+	 * - <b>Auto color</b>: "Api.Color('auto')" creates an auto color.
+	 *
 	 * For a single string argument, the resolution priority is: "auto", a string starting with "#", a theme name, a preset name, a bare 6-digit HEX. Theme and preset palettes do not overlap. A 3-digit shorthand is accepted only with the leading "#".
+	 *
 	 * Unsupported inputs (objects, arrays, an existing ApiColor, unknown strings, no arguments) return a black color (#000000).
 	 *
 	 * @memberof Api
@@ -6687,8 +6708,11 @@
 	};
 	/**
 	 * Removes all the elements from the current document or from the current document element.
-	 * <note>When all elements are removed, a new empty paragraph is automatically created. If you want to add
-	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.</note>
+	 *
+	 * :::note
+	 * When all elements are removed, a new empty paragraph is automatically created. If you want to add
+	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.
+	 * :::
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
@@ -7043,7 +7067,9 @@
 		return (docContent === this.Document && docContent.IsEndnote());
 	};
 	/**
-	 * Select the reference to this footnote/endnote. If this document content is not a footnote/endnote, do nothing.
+	 * Selects the reference to this footnote/endnote.
+	 *
+	 * If this document content is not a footnote/endnote, do nothing.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @since 9.3.0
@@ -7059,7 +7085,9 @@
 		return ref && ref.SelectThisElement();
 	};
 	/**
-	 * Moves the cursor to the reference of this footnote/endnote in the main document. If this document content is not a footnote/endnote, does nothing.
+	 * Moves the cursor to the reference of this footnote/endnote in the main document.
+	 *
+	 * If this document content is not a footnote/endnote, does nothing.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @since 9.4.0
@@ -7519,6 +7547,7 @@
 
 	/**
 	 * Returns the inner text of the current node and its child nodes.
+	 *
 	 * For example: `<text>123<one>4</one></text>` returns `"1234"`.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7660,6 +7689,7 @@
 
 	/**
 	 * Sets an attribute for the custom XML node.
+	 *
 	 * If the attribute already exists, it will not be modified.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7684,6 +7714,7 @@
 
 	/**
 	 * Updates the value of an existing attribute in the custom XML node.
+	 *
 	 * If the attribute doesn't exist, the update will not occur.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7707,6 +7738,7 @@
 
 	/**
 	 * Deletes an attribute from the custom XML node.
+	 *
 	 * If the attribute exists, it will be removed.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7729,6 +7761,7 @@
 
 	/**
 	 * Retrieves the attribute value from the custom XML node.
+	 *
 	 * If the attribute doesn't exist, it returns `false`.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7789,7 +7822,9 @@
 		return new ApiStyle(styles.Get(styleId));
 	};
 	/**
-	 * Creates a new style with the specified type and name. If a style with the specified name already exists, it will be returned without creating a new one.
+	 * Creates a new style with the specified type and name.
+	 *
+	 * If a style with the specified name already exists, it will be returned without creating a new one.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} styleName - The name of the style which will be created.
@@ -7884,7 +7919,9 @@
 		return new ApiSection(this.Document.SectPr);
 	};
 	/**
-	 * Creates a new document section which ends at the specified paragraph. Allows to set local parameters to the current
+	 * Creates a new document section which ends at the specified paragraph.
+	 *
+	 * Allows to set local parameters to the current
 	 * section - page size, footer, header, columns, etc.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -8111,8 +8148,6 @@
 	 * }
 	 */
 
-	
-	
 	/**
 	 * Returns a report about all the comments added to the document.
 	 * @memberof ApiDocument
@@ -8206,7 +8241,6 @@
 	 * }
 	 */
 
-	
 	/**
 	 * Returns a report about every change which was made to the document in the review mode.
 	 * @memberof ApiDocument
@@ -8582,7 +8616,9 @@
 		return Object.keys(keys);
 	};
 	/**
-	 * Returns the form value for the specified key. For a group of radio buttons returns Choice, i.e. the name of the selected item.
+	 * Returns the form value for the specified key.
+	 *
+	 * For a group of radio buttons returns Choice, i.e. the name of the selected item.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param key {string} - The form key.
@@ -8684,6 +8720,7 @@
 	 */
 	/**
 	 * Returns the data from all forms present in the current document.
+	 *
 	 * If a form was created and not assigned to any part of the document, it won't appear in this list.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
@@ -8939,8 +8976,11 @@
 	};
 	/**
 	 * Returns a collection of tables on a given absolute page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 *
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nPage - The page index.
@@ -8963,8 +9003,11 @@
 	};
 	/**
 	 * Adds a drawing to the specified page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 *
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiDrawing} oDrawing - A drawing to add to the page.
@@ -9012,7 +9055,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a document object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -10008,8 +10053,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @deprecated since 10.0.0 version.
-	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
-	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
+	 * @param {TofPr} [oTofPr={}] - Table of figures properties. Undefined properties are filled with the default values.
 	 * @param {boolean} [bReplace=true] - Specifies whether to replace the selected table of figures instead of adding a new one.
 	 * @returns {ApiTableOfFigures}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
@@ -10032,11 +10076,12 @@
 	};
 	/**
 	 * Returns the document statistics represented as an object with the following parameters:
-	 * <b>PageCount</b> - number of pages;
-	 * <b>WordsCount</b> - number of words;
-	 * <b>ParagraphCount</b> - number of paragraphs;
-	 * <b>SymbolsCount</b> - number of symbols;
-	 * <b>SymbolsWSCount</b> - number of symbols with spaces.
+	 *
+	 * - <b>PageCount</b> - number of pages;
+	 * - <b>WordsCount</b> - number of words;
+	 * - <b>ParagraphCount</b> - number of paragraphs;
+	 * - <b>SymbolsCount</b> - number of symbols;
+	 * - <b>SymbolsWSCount</b> - number of symbols with spaces.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
@@ -10078,8 +10123,11 @@
 	};
 	/**
 	 * Returns a number of pages in the current document.
-	 * <note>This method can be slow for large documents because it runs the document calculation
-	 * process before the full recalculation.</note>
+	 *
+	 * :::note
+	 * This method can be slow for large documents because it runs the document calculation
+	 * process before the full recalculation.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @return {number}
@@ -10134,17 +10182,18 @@
 	};
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document was created with.
-	 * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * <b>Created</b> - the parsed date and time when the file was created.
-	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who made the latest change to the document.
-	 * <b>Authors</b> - the persons who created the file.
-	 * <b>Title</b> - the document title (this property allows you to simplify your documents classification).
-	 * <b>Tags</b> - the document tags (this property allows you to simplify your documents classification).
-	 * <b>Subject</b> - the document subject (this property allows you to simplify your documents classification).
-	 * <b>Comment</b> - the comment to the document (this property allows you to simplify your documents classification).
+	 *
+	 * - <b>Application</b> - the application the document was created with.
+	 * - <b>CreatedRaw</b> - the date and time when the file was created.
+	 * - <b>Created</b> - the parsed date and time when the file was created.
+	 * - <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * - <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * - <b>LastModifiedBy</b> - the name of the user who made the latest change to the document.
+	 * - <b>Authors</b> - the persons who created the file.
+	 * - <b>Title</b> - the document title (this property allows you to simplify your documents classification).
+	 * - <b>Tags</b> - the document tags (this property allows you to simplify your documents classification).
+	 * - <b>Subject</b> - the document subject (this property allows you to simplify your documents classification).
+	 * - <b>Comment</b> - the comment to the document (this property allows you to simplify your documents classification).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
@@ -10444,6 +10493,7 @@
 
 	/**
 	 * Moves a cursor to a specified position of the current document.
+	 *
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiDocument
 	 * @param {number} [nPos=0] - The desired cursor position.
@@ -10553,6 +10603,7 @@
 	
 	/**
 	 * Retrieves the custom XML manager associated with the document.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -10567,6 +10618,7 @@
 
 	/**
 	 * Retrieves the core properties interface for the current document.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof ApiDocument
 	 * @returns {ApiCore} - The core document properties object.
@@ -11101,7 +11153,9 @@
 		return new ApiRun(oRun);
 	};
 	/**
-	 * Returns the text properties of the paragraph mark which is used to mark the paragraph end. The mark can also acquire
+	 * Returns the text properties of the paragraph mark which is used to mark the paragraph end.
+	 *
+	 * The mark can also acquire
 	 * common text properties like bold, italic, underline, etc.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
@@ -11206,9 +11260,12 @@
 	};
 	/**
 	 * Removes an element using the position specified.
-	 * <note>If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
+	 *
+	 * :::note
+	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
      * a new empty run is automatically created. If you want to add
-	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The element position which we want to remove from the paragraph.
@@ -11226,8 +11283,11 @@
 	};
 	/**
 	 * Removes all the elements from the current paragraph.
-	 * <note>When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
-	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
+	 *
+	 * :::note
+	 * When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
@@ -11307,7 +11367,9 @@
         return null;
 	};
 	/**
-	 * Creates a paragraph copy. Ingnore comments, footnote references, complex fields.
+	 * Creates a paragraph copy.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiParagraph}
@@ -11417,7 +11479,10 @@
 	};
 	/**
 	 * Adds a comment to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -11486,6 +11551,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
+	 *
 	 * The paragraph must be attached to the document before calling this method.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
@@ -11920,9 +11986,10 @@
 	};
 	/**
 	 * Specifies the alignment which will be applied to the contents of this paragraph in relation to the default appearance of the paragraph text:
-	 * <b>"baseline"</b> - the characters in the current paragraph will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current paragraph will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
+	 *
+	 * - <b>"baseline"</b> - the characters in the current paragraph will be aligned by the default text baseline.
+	 * - <b>"subscript"</b> - the characters in the current paragraph will be aligned below the default text baseline.
+	 * - <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
@@ -11975,10 +12042,12 @@
 	};
 	/**
 	 * Specifies the reading order for the current paragraph.
+	 *
 	 * Possible values are:
-	 * <b>null</b> - use the standart direction parameter;
-	 * <b>"ltr"</b> - left-to-right text direction;
-	 * <b>"rtl"</b> - right-to-left text direction.
+	 *
+	 * - <b>null</b> - use the standart direction parameter;
+	 * - <b>"ltr"</b> - left-to-right text direction;
+	 * - <b>"rtl"</b> - right-to-left text direction.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {?ReadingOrder} [readingOrder = undefined] - The reading order.
@@ -12702,7 +12771,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a paragraph object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a paragraph object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -12772,7 +12843,10 @@
 
 	/**
 	 * Adds a numbered cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {numberedRefTo} sRefType - The text or numeric value of a numbered reference you want to insert.
@@ -12838,7 +12912,10 @@
 
 	/**
 	 * Adds a heading cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {headingRefTo} sRefType - The text or numeric value of a heading reference you want to insert.
@@ -12895,7 +12972,10 @@
 
 	/**
 	 * Adds a bookmark cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {bookmarkRefTo} sRefTo - The text or numeric value of a bookmark reference you want to insert.
@@ -12958,7 +13038,10 @@
 
 	/**
 	 * Adds a footnote cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {footnoteRefTo} sRefType - The text or numeric value of a footnote reference you want to insert.
@@ -13015,7 +13098,10 @@
 
 	/**
 	 * Adds an endnote cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {endnoteRefTo} sRefType - The text or numeric value of an endnote reference you want to insert.
@@ -13072,7 +13158,10 @@
 
 	/**
 	 * Adds a caption cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {CaptionLabel | string} sCaption - The caption label ("Equation", "Figure", "Table", or another caption label).
@@ -13200,8 +13289,11 @@
 
 	/**
      * Adds a caption paragraph after (or before) the current paragraph.
-	 * <note>Please note that the current paragraph must be in the document (not in the footer/header).
-	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 *
+	 * :::note
+	 * The current paragraph must be in the document (not in the footer/header).
+	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
      * @param {string} sAdditional - The additional text.
@@ -13209,8 +13301,7 @@
 	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current paragraph (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddCaption.js
@@ -13629,6 +13720,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified run.
+	 *
 	 * The run must be attached to the document before calling this method.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
@@ -13873,7 +13965,10 @@
 
 	/**
 	 * Adds a comment to the current run.
-	 * <note>Please note that this run must be in the document.</note>
+	 *
+	 * :::note
+	 * This run must be in the document.
+	 * :::
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -13931,6 +14026,7 @@
 	
 	/**
 	 * Moves a cursor to a specified position of the current text run.
+	 *
 	 * If the current run is not assigned to any document part, then <b>false</b> is returned. Otherwise, this method returns <b>true</b>.
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRun
@@ -14046,29 +14142,33 @@
 
 	/**
 	 * The section break type which defines how the contents of the current section are placed relative to the previous section.
+	 *
 	 * WordprocessingML supports five distinct types of section breaks:
-	 * <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
-	 * <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
-	 * <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
-	 * <b>Continuous</b> ("continuous") - starts a new section in the next paragraph.
-	 * This means that continuous section breaks might not specify certain page-level section properties,
-	 * since they shall be inherited from the following section.
-	 * However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
-	 * <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
+	 *
+	 * - <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
+	 * - <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
+	 * - <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
+	 * - <b>Continuous</b> ("continuous") - starts a new section in the next paragraph.
+	 *   This means that continuous section breaks might not specify certain page-level section properties,
+	 *   since they shall be inherited from the following section.
+	 *   However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
+	 * - <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
 	 * @typedef {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} SectionBreakType
-	* @see office-js-api/Examples/Enumerations/SectionBreakType.js
-	*/
-
+	 * @see office-js-api/Examples/Enumerations/SectionBreakType.js
+	 */
 
 	/**
 	 * The coordinate value for the geometry paths.
+	 *
 	 * Can be a guide name from "gdLst", a numeric value, or a string representation of a number.
 	 * @typedef {string | number} GeometryCoordinate
 	 * @see office-js-api/Examples/Enumerations/GeometryCoordinate.js
 	 */
 
 	/**
-	 * Specifies a type of the current section. The section type defines how the contents of the current 
+	 * Specifies a type of the current section.
+	 *
+	 * The section type defines how the contents of the current
 	 * section are placed relative to the previous section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14145,7 +14245,9 @@
 		return true;
 	};
 	/**
-	 * Specifies that all the columns in the current section have the different widths. Number of columns is equal 
+	 * Specifies that all the columns in the current section have the different widths.
+	 *
+	 * Number of columns is equal
 	 * to the length of the aWidth array. The length of the aSpaces array MUST BE equal to (aWidth.length - 1).
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14418,7 +14520,9 @@
 		return new ApiDocumentContent(oHeader.Get_DocumentContent());
 	};
 	/**
-	 * Removes the header of the specified type from the current section. After removal, the header will be inherited from
+	 * Removes the header of the specified type from the current section.
+	 *
+	 * After removal, the header will be inherited from
 	 * the previous section, or if this is the first section in the document, no header of the specified type will be presented.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14480,7 +14584,9 @@
 		return null;
 	};
 	/**
-	 * Removes the footer of the specified type from the current section. After removal, the footer will be inherited from 
+	 * Removes the footer of the specified type from the current section.
+	 *
+	 * After removal, the footer will be inherited from
 	 * the previous section, or if this is the first section in the document, no footer of the specified type will be presented.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14625,7 +14731,9 @@
 		return this.Section.GetPageNumStart();
 	};
 	/**
-	 * Specifies the page margins for all the pages in this section. Alias for {@link ApiSection#SetPageMargins}.
+	 * Specifies the page margins for all the pages in this section.
+	 *
+	 * Alias for {@link ApiSection#SetPageMargins}.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} left - The left margin width measured in twentieths of a point (1/1440 of an inch).
@@ -14780,8 +14888,13 @@
 		return new ApiTableCell(row.GetCell(cellIndex));
 	};
 	/**
-	 * Merges an array of cells. If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
-	 * <note>The number of cells in any row and the number of rows in the current table may be changed.</note>
+	 * Merges an array of cells.
+	 *
+	 * If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
+	 *
+	 * :::warning
+	 * The number of cells in any row and the number of rows in the current table may be changed.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell[]} aCells - The array of cells to be merged.
@@ -15244,6 +15357,7 @@
 	};
 	/**
      * Sets the table paddings.
+     *
 	 * If table is inline, then only left padding is applied.
      * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
@@ -15442,7 +15556,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a table object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -15622,7 +15738,10 @@
 
 	/**
 	 * Adds a comment to all contents of the current table.
-	 * <note>Please note that this table must be in the document.</note>
+	 *
+	 * :::note
+	 * This table must be in the document.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -15852,8 +15971,11 @@
 	};
 	/**
      * Adds a caption paragraph after (or before) the current table.
-	 * <note>Please note that the current table must be in the document (not in the footer/header).
-	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 *
+	 * :::note
+	 * The current table must be in the document (not in the footer/header).
+	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
      * @memberof ApiTable
      * @typeofeditors ["CDE"]
      * @param {string} sAdditional - The additional text.
@@ -15861,8 +15983,7 @@
 	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current table (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddCaption.js
@@ -16325,7 +16446,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a table row object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table row object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -16591,7 +16714,9 @@
 		return oTable.RemoveRow(this);
 	};
 	/**
-	 * Searches for a scope of a table cell object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table cell object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -17233,8 +17358,11 @@
 	};
 	/**
 	 * The text style base method.
-	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
-	 * the selected or created style to the text.</note>
+	 *
+	 * :::note
+	 * This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
+	 * the selected or created style to the text.
+	 * :::
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @param {?(ApiStyle | string)} style - The style which must be applied to the text character, or the name of an existing style, or <em>undefined</em>/<em>null</em> to remove the style.
@@ -17443,6 +17571,7 @@
 
 	/**
 	 * Returns the font family from the current text properties.
+	 *
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
@@ -17608,9 +17737,10 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the contents of the run in relation to the default appearance of the run text:
-	 * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
+	 *
+	 * - <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
+	 * - <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
+	 * - <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
@@ -18160,7 +18290,10 @@
 	};
 	/**
 	 * The paragraph style base method.
-	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.</note>
+	 *
+	 * :::note
+	 * This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {?(ApiStyle | string)} style - The style of the paragraph to be set, or the name of an existing style, or <em>undefined</em>/<em>null</em> to remove the style.
@@ -18435,7 +18568,9 @@
 		return this.GetEffectiveParaPr().PageBreakBefore;
 	};
 	/**
-	 * Sets the paragraph line spacing. If the value of the sLineRule parameter is either 
+	 * Sets the paragraph line spacing.
+	 *
+	 * If the value of the sLineRule parameter is either
 	 * "atLeast" or "exact", then the value of nLine will be interpreted as twentieths of a point. If 
 	 * the value of the sLineRule parameter is "auto", then the value of the 
 	 * nLine parameter will be interpreted as 240ths of a line.
@@ -18528,7 +18663,9 @@
 		return spacing ? GetRule(spacing.LineRule) : undefined;
 	};
 	/**
-	 * Sets the spacing before the current paragraph. If the value of the isBeforeAuto parameter is true, then 
+	 * Sets the spacing before the current paragraph.
+	 *
+	 * If the value of the isBeforeAuto parameter is true, then
 	 * any value of the nBefore is ignored. If isBeforeAuto parameter is not specified, then 
 	 * it will be interpreted as false.
 	 * @memberof ApiParaPr
@@ -18562,7 +18699,9 @@
 		return undefined !== before ? private_MM2Twips(before) : undefined;
 	};
 	/**
-	 * Sets the spacing after the current paragraph. If the value of the isAfterAuto parameter is true, then 
+	 * Sets the spacing after the current paragraph.
+	 *
+	 * If the value of the isAfterAuto parameter is true, then
 	 * any value of the nAfter is ignored. If isAfterAuto parameter is not specified, then it 
 	 * will be interpreted as false.
 	 * @memberof ApiParaPr
@@ -18711,8 +18850,11 @@
 	};
 	/**
 	 * Specifies the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added
-	 * to the whole block rather than to every paragraph in this block.</note>
+	 *
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added
+	 * to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @deprecated since 10.0.0 version.
@@ -18850,7 +18992,10 @@
 	};
 	/**
 	 * Specifies the border which will be displayed above a set of paragraphs which have the same set of paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.</note>
+	 *
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @deprecated since 10.0.0 version.
@@ -18969,7 +19114,10 @@
 	};
 	/**
 	 * Specifies a sequence of custom tab stops which will be used for any tab characters in the current paragraph.
-	 * <b>Warning</b>: The lengths of aPos array and aVal array <b>MUST BE</b> equal to each other.
+	 *
+	 * :::warning
+	 * The lengths of the aPos and aVal arrays must be equal to each other.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips[]} aPos - An array of the positions of custom tab stops with respect to the current page margins
@@ -19260,7 +19408,10 @@
 	};
 	/**
 	 * Returns the text properties which will be applied to the text in the current numbering level itself, not to the text in the subsequent paragraph.
-	 * <note>To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.</note>
+	 *
+	 * :::note
+	 * To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.
+	 * :::
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTextPr}
@@ -19374,7 +19525,9 @@
 		return true;
 	};
 	/**
-	 * Specifies a one-based index which determines when a numbering level should restart to its starting value. A numbering level restarts when an instance of the specified numbering level which is higher (earlier than this level) is used in the given document contents. By default this value is true.
+	 * Specifies a one-based index which determines when a numbering level should restart to its starting value.
+	 *
+	 * A numbering level restarts when an instance of the specified numbering level which is higher (earlier than this level) is used in the given document contents. By default this value is true.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isRestart - The true value means that a numbering level will be restarted to its starting value.
@@ -19387,7 +19540,9 @@
 		return true;
 	};
 	/**
-	 * Specifies the starting value for the numbering used by the parent numbering level within a given numbering level definition. By default this value is 1.
+	 * Specifies the starting value for the numbering used by the parent numbering level within a given numbering level definition.
+	 *
+	 * By default this value is 1.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nStart - The starting value for the numbering used by the parent numbering level.
@@ -19400,7 +19555,9 @@
 		return true;
 	};
 	/**
-	 * Specifies the content which will be added between the given numbering level text and the text of every numbered paragraph which references that numbering level. By default this value is "tab".
+	 * Specifies the content which will be added between the given numbering level text and the text of every numbered paragraph which references that numbering level.
+	 *
+	 * By default this value is "tab".
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {("space" | "tab" | "none")} sType - The content added between the numbering level text and the text in the numbered paragraph.
@@ -19868,7 +20025,10 @@
 	};
 	/**
 	 * Sets the preferred width to the current table.
-	 * <note>Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.</note>
+	 *
+	 * :::note
+	 * Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.
+	 * :::
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {TableWidth} sType - Type of the width value from one of the available width values types.
@@ -20404,7 +20564,9 @@
 		return true;
 	};
 	/**
-	 * Specifies how the current table cell is laid out when the parent table is displayed in a document. This setting
+	 * Specifies how the current table cell is laid out when the parent table is displayed in a document.
+	 *
+	 * This setting
 	 * only affects the behavior of the cell when the {@link ApiTablePr#SetTableLayout} table layout for this table is set to use the <code>"autofit"</code> algorithm.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
@@ -20742,15 +20904,20 @@
 		return true;
 	};
 	/**
-	 * Sets the wrapping type of the current object (image, shape, chart). One of the following wrapping style types can be set:
-	 * <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
+	 * Sets the wrapping type of the current object (image, shape, chart).
+	 *
+	 * One of the following wrapping style types can be set:
+	 *
+	 * - <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
+	 *
 	 * If one of the following styles is selected, the object can be moved independently of the text and positioned on the page exactly:
-	 * <b>"square"</b> - the text wraps the rectangular box that bounds the object.
-	 * <b>"tight"</b> - the text wraps the actual object edges.
-	 * <b>"through"</b> - the text wraps around the object edges and fills in the open white space within the object.
-	 * <b>"topAndBottom"</b> - the text is only above and below the object.
-	 * <b>"behind"</b> - the text overlaps the object.
-	 * <b>"inFront"</b> - the object overlaps the text.
+	 *
+	 * - <b>"square"</b> - the text wraps the rectangular box that bounds the object.
+	 * - <b>"tight"</b> - the text wraps the actual object edges.
+	 * - <b>"through"</b> - the text wraps around the object edges and fills in the open white space within the object.
+	 * - <b>"topAndBottom"</b> - the text is only above and below the object.
+	 * - <b>"behind"</b> - the text overlaps the object.
+	 * - <b>"inFront"</b> - the object overlaps the text.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {"inline" | "square" | "tight" | "through" | "topAndBottom" | "behind" | "inFront"} sType - The wrapping style type available for the object.
@@ -21793,6 +21960,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
@@ -21861,6 +22029,7 @@
 
 	/**
      * Sets the properties from another drawing to the current drawing.
+     *
 	 * The following properties will be copied: horizontal and vertical alignment, distance between the edges of the current drawing object and any subsequent text, wrapping style, drawing name, title and description.
      * @memberof ApiDrawing
      * @param {ApiDrawing} oAnotherDrawing - The drawing which properties will be set to the current drawing.
@@ -23734,7 +23903,9 @@
 	};
 
 	/**
-	 * Sets the x-axis values to all chart series. It is used with the scatter charts only.
+	 * Sets the x-axis values to all chart series.
+	 *
+	 * It is used with the scatter charts only.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {string[]} aValues - The array of the data which will be set to the x-axis data points.
@@ -24137,7 +24308,9 @@
 	};
 
 	/**
-	 * Tries to change the series type. Returns true if successful.
+	 * Tries to change the series type.
+	 *
+	 * Returns true if successful.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ChartType} sType - Chart type.
@@ -25385,10 +25558,11 @@
 	
 	/**
 	 * Sets the lock to the current inline text content control:
-	 * <b>"unlocked"</b> - content can be edited and the container can be deleted.
-	 * <b>"contentLocked"</b> - content cannot be edited.
-	 * <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
-	 * <b>"sdtLocked"</b> - the container cannot be deleted.
+	 *
+	 * - <b>"unlocked"</b> - content can be edited and the container can be deleted.
+	 * - <b>"contentLocked"</b> - content cannot be edited.
+	 * - <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
+	 * - <b>"sdtLocked"</b> - the container cannot be deleted.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {"unlocked" | "contentLocked" | "sdtContentLocked" | "sdtLocked"} lockType - The lock type applied to the inline text content control.
@@ -25521,7 +25695,9 @@
 	};
 
 	/**
-	 * Returns a number of elements in the current inline text content control. The text content 
+	 * Returns a number of elements in the current inline text content control.
+	 *
+	 * The text content
      * control is created with one text run present in it by default, so even without any 
      * element added this method will return the value of '1'.
 	 * @memberof ApiInlineLvlSdt
@@ -25702,7 +25878,9 @@
 	};
 
 	/**
-	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
+	 * Removes a content control and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
@@ -25901,7 +26079,9 @@
 	};
 
 	/**
-	 * Creates a copy of an inline content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of an inline content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiInlineLvlSdt}
@@ -25950,6 +26130,7 @@
 
 	/**
 	 * Sets the placeholder text to the current inline content control.
+	 *
 	 * *Can't be set to checkbox or radio button*
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText - The text that will be set to the current inline content control.
@@ -25983,7 +26164,10 @@
 
 	/**
 	 * Adds a comment to the current inline content control.
-	 * <note>Please note that this inline content control must be in the document.</note>
+	 *
+	 * :::note
+	 * This inline content control must be in the document.
+	 * :::
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -26286,6 +26470,7 @@
 
 	/**
 	 * Sets the checkbox value for the content control.
+	 *
 	 * This method updates the checkbox state of the content control to either checked or unchecked.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -26328,6 +26513,7 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
+	 *
 	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -26342,6 +26528,7 @@
 
 	/**
 	 * Sets the size for the picture in a content control.
+	 *
 	 * This method adjusts the width and height of the image if the content control is a picture.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -26375,6 +26562,7 @@
 
 	/**
 	 * Sets the content (image) for the picture content control.
+	 *
 	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiInlineLvlSdt
@@ -26586,6 +26774,7 @@
 
 	/**
 	 * Sets the date format for the datepicker content control.
+	 *
 	 * This method allows setting the format in which the date should be displayed in the datepicker content control.
 	 * The format string should be specified using common date format patterns (e.g., "mm.dd.yyyy").
 	 * @memberof ApiInlineLvlSdt
@@ -27098,10 +27287,11 @@
 	};
 	/**
 	 * Sets the lock to the current block text content control:
-	 * <b>"unlocked"</b> - content can be edited and the container can be deleted.
-	 * <b>"contentLocked"</b> - content cannot be edited.
-	 * <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
-	 * <b>"sdtLocked"</b> - the container cannot be deleted.
+	 *
+	 * - <b>"unlocked"</b> - content can be edited and the container can be deleted.
+	 * - <b>"contentLocked"</b> - content cannot be edited.
+	 * - <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
+	 * - <b>"sdtLocked"</b> - the container cannot be deleted.
 	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -27220,6 +27410,7 @@
 
 	/**
 	 * Sets the content (image) for the picture content control.
+	 *
 	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiBlockLvlSdt
@@ -27273,6 +27464,7 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
+	 *
 	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -27413,8 +27605,11 @@
 
 	/**
 	 * Returns a collection of tables on a given absolute page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 *
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param page - Page number. If it is not specified, an empty array will be returned.
@@ -27452,7 +27647,9 @@
 	};
 
 	/**
-	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
+	 * Removes a content control and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
@@ -27692,7 +27889,9 @@
 	};
 	
 	/**
-	 * Creates a copy of a block content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of a block content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt}
@@ -27711,7 +27910,9 @@
 		return new ApiBlockLvlSdt(oBlockSdt);
 	};
 	/**
-	 * Searches for a scope of a content control object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a content control object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} text - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -27854,7 +28055,10 @@
 
 	/**
 	 * Adds a comment to the current block content control.
-	 * <note>Please note that the current block content control must be in the document.</note>
+	 *
+	 * :::note
+	 * The current block content control must be in the document.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} text - The comment text.
@@ -27892,8 +28096,11 @@
 	
 	/**
 	 * Adds a caption paragraph after (or before) the current content control.
-	 * <note>Please note that the current content control must be in the document (not in the footer/header).
-	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 *
+	 * :::note
+	 * The current content control must be in the document (not in the footer/header).
+	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} additionalText - The additional text.
@@ -27901,8 +28108,7 @@
 	 * @param {boolean} [excludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [numFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [isBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [headingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [headingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [captionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddCaption.js
@@ -28016,7 +28222,9 @@
 	};
 
 	/**
-	 * Creates a copy of an block content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of a block content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt}
@@ -28367,6 +28575,7 @@
 	};
 	/**
 	 * Converts the current form to an inline form.
+	 *
 	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -28617,6 +28826,7 @@
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
+	 *
 	 * The null value will be returned for the inline forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -28634,6 +28844,7 @@
     };
 	/**
 	 * Sets the placeholder text to the current form.
+	 *
 	 * *Can't be set to checkbox or radio button.*
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
@@ -28667,6 +28878,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
+	 *
 	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -28684,6 +28896,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
+	 *
 	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -28805,7 +29018,9 @@
 	};
 	
 	/**
-	 * Removes a form and its content. If keepContent is true, the content is not deleted.
+	 * Removes a form and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @since 9.2.0
@@ -29048,6 +29263,7 @@
 	};
 	/**
 	 * Specifies if the text field should be a comb of characters with the same cell width.
+	 *
 	 * The maximum number of characters must be set to a positive value.
 	 * @memberof ApiTextForm
 	 * @param {boolean} bComb - Defines if the text field is a comb of characters (true) or not (false).
@@ -29148,7 +29364,9 @@
 		return this.Sdt.GetTextFormPr().GetFormatSymbols();
 	};
 	/**
-	 * Sets the allowed symbols for the current text field. Only the specified characters will be accepted as input.
+	 * Sets the allowed symbols for the current text field.
+	 *
+	 * Only the specified characters will be accepted as input.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {string} symbols - A string of allowed characters.
@@ -29339,9 +29557,10 @@
 	};
 	/**
 	 * Sets the picture position inside the current form:
-	 * <b>0</b> - the picture is placed on the left/top;
-	 * <b>50</b> - the picture is placed in the center;
-	 * <b>100</b> - the picture is placed on the right/bottom.
+	 *
+	 * - <b>0</b> - the picture is placed on the left/top;
+	 * - <b>50</b> - the picture is placed in the center;
+	 * - <b>100</b> - the picture is placed on the right/bottom.
 	 * @memberof ApiPictureForm
 	 * @param {percentage} nShiftX - Horizontal position measured in percent.
 	 * @param {percentage} nShiftY - Vertical position measured in percent.
@@ -29654,6 +29873,7 @@
 	};
 	/**
 	 * Sets the text to the current combo box.
+	 *
 	 * *Available only for editable combo box forms.*
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
@@ -29682,7 +29902,9 @@
 		}, this);
 	};
 	/**
-	 * Checks if the combo box text can be edited. If it is not editable, then this form is a drop-down list.
+	 * Checks if the combo box text can be edited.
+	 *
+	 * If it is not editable, then this form is a drop-down list.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -29705,7 +29927,9 @@
 		return this.Sdt.GetInnerText();
 	};
 	/**
-	 * Sets the value of the combo box form. Selects a list item if the value matches one,
+	 * Sets the value of the combo box form.
+	 *
+	 * Selects a list item if the value matches one,
 	 * otherwise sets it as free text (only for editable combo boxes).
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
@@ -29943,6 +30167,7 @@
 	});
 	/**
 	 * Returns the choice name of the currently selected radio button in the group.
+	 *
 	 * Returns an empty string if the current form is not a radio button or nothing is selected.
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
@@ -31360,6 +31585,7 @@
 
 	/**
 	 * Converts millimeters to English Metric Units (EMUs).
+	 *
 	 * The result is an integer value.
 	 *
 	 * @memberof Api
@@ -31404,7 +31630,9 @@
 	 */
 
 	/**
-	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
+	 * Compares the current document with another document opened via builderJS.OpenTmpFile.
+	 *
+	 * Tracked changes between the two documents are produced in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
@@ -31416,7 +31644,9 @@
 	};
 
 	/**
-	 * Merges the current document with another document opened via builderJS.OpenTmpFile. Its contents are merged into the current document.
+	 * Merges the current document with another document opened via builderJS.OpenTmpFile.
+	 *
+	 * Its contents are merged into the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
@@ -31446,7 +31676,9 @@
 	};
 	
 	/**
-	 * Returns the current comment ID. If the comment doesn't have an ID, null is returned.
+	 * Returns the current comment ID.
+	 *
+	 * If the comment doesn't have an ID, null is returned.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {?string}
