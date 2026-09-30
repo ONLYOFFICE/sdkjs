@@ -42,7 +42,9 @@ window.startPluginApi = function() {
 	 */
 
 	/**
-	 * Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
+	 * Translations for the text field.
+	 *
+	 * The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 * Example: { "en" : "name", "ru" : "имя" }
 	 * @typedef { Object.<string, string> } localeTranslate
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/localeTranslate.js
@@ -50,23 +52,25 @@ window.startPluginApi = function() {
 
 	/**
 	 * The editors which the plugin is available for:
-	 * <b>word</b> - text document editor,
-	 * <b>cell</b> - spreadsheet editor,
-	 * <b>slide</b> - presentation editor,
-	 * <b>pdf</b> - pdf editor.
+	 *
+	 * - <b>word</b> - text document editor,
+	 * - <b>cell</b> - spreadsheet editor,
+	 * - <b>slide</b> - presentation editor,
+	 * - <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
 	/**
 	 * The data type selected in the editor and sent to the plugin:
-     * <b>text</b> - the text data,
-	 * <b>html</b> - HTML formatted code,
-	 * <b>ole</b> - OLE object data,
-     * <b>desktop</b> - the desktop editor data,
-     * <b>desktop-external</b> - the main page data of the desktop app (system messages),
-     * <b>none</b> - no data will be send to the plugin from the editor,
-	 * <b>sign</b> - the sign for the keychain plugin.
+     *
+     * - <b>text</b> - the text data,
+	 * - <b>html</b> - HTML formatted code,
+	 * - <b>ole</b> - OLE object data,
+     * - <b>desktop</b> - the desktop editor data,
+     * - <b>desktop-external</b> - the main page data of the desktop app (system messages),
+     * - <b>none</b> - no data will be send to the plugin from the editor,
+	 * - <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "desktop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
@@ -236,12 +240,13 @@ window.startPluginApi = function() {
 
 	/**
 	 * The context menu type:
-	 * <b>None</b> - not used,
-	 * <b>Target</b> - nothing is selected,
-	 * <b>Selection</b> - text is selected,
-	 * <b>Image</b> - image is selected,
-	 * <b>Shape</b> - shape is selected,
-	 * <b>OleObject</b> - OLE object is selected.
+	 *
+	 * - <b>None</b> - not used,
+	 * - <b>Target</b> - nothing is selected,
+	 * - <b>Selection</b> - text is selected,
+	 * - <b>Image</b> - image is selected,
+	 * - <b>Shape</b> - shape is selected,
+	 * - <b>OleObject</b> - OLE object is selected.
 	 * @typedef {("None" | "Target" | "Selection" | "Image" | "Shape" | "OleObject")} ContextMenuType
 	 */
 
@@ -363,6 +368,7 @@ window.startPluginApi = function() {
 	 * @alias executeCommand
 	 * @deprecated Please use callCommand method.
 	 * @description Defines the method used to send the data back to the editor.
+	 *
 	 * :::note
 	 * This method is deprecated, please use the {@link Plugin#callCommand callCommand} method which runs the code from the *data* string parameter.
 	 * :::
@@ -374,6 +380,7 @@ window.startPluginApi = function() {
 	 * 
 	 * The second parameter is the JavaScript code for working with <b>ONLYOFFICE Document Builder</b> API 
 	 * that allows the plugin to send structured data inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
+	 *
 	 * :::note
 	 * <b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor
 	 * (using the *Api.GetDocument().InsertContent(...)*). This limitation exists due to the co-editing feature in the online editors.
@@ -471,6 +478,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias resizeWindow
 	 * @description Defines the method used to change the window size updating the minimum/maximum sizes.
+	 *
 	 * :::note
 	 * This method is used for visual modal plugins only.
 	 * :::
@@ -518,6 +526,7 @@ window.startPluginApi = function() {
 	 * It allows the plugin to send structured data that can be inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
 	 * 
 	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the {@link Plugin#onCommandCallback window.Asc.plugin.onCommandCallback} function will be used to return the result of the command execution.
+     *
      * :::note
      * <b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor (using the *Api.GetDocument().InsertContent(...)*).
 	 * This limitation exists due to the co-editing feature in the online editors. If it is necessary to create a plugin for desktop editors to work with local files, no such limitation is applied.
