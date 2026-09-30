@@ -126,7 +126,6 @@
 	 * - "red-minus"   — "-1,234.56" (red minus sign)
 	 * - "black-parens" — "(1,234.56)"" (black parentheses)
 	 * - "red-parens"   — "(1,234.56)"" (red parentheses)
-	 *
 	 * @typedef {"black-minus" | "red-minus" | "black-parens" | "red-parens"} NumberNegStyle
 	 */
 
@@ -137,7 +136,6 @@
 	 * - "zip+4"     — ZIP+4 (e.g., 12345-6789)
 	 * - "phone"     — Phone number (e.g., (123) 456-7890)
 	 * - "ssn"       — Social Security Number (e.g., 123-45-6789)
-	 *
 	 * @typedef {"zip" | "zip+4" | "phone" | "ssn"} PsfFormat
 	 */
 
@@ -163,7 +161,6 @@
 	 *
 	 * - <code>rect[0] < rect[2]</code> (x1 < x2)
 	 * - <code>rect[1] < rect[3]</code> (y1 < y2)
-	 *
 	 * @typedef {pt[]} Rect
 	 * @property {pt} 0 - x1 (left)
 	 * @property {pt} 1 - y1 (top)
@@ -182,7 +179,6 @@
 	 * - <code>diff[1] = y1B - y1A</code>
 	 * - <code>diff[2] = x2B - x2A</code>
 	 * - <code>diff[3] = y2B - y2A</code>
-	 *
 	 * @typedef {pt[]} RectDiff
 	 * @property {pt} 0 - dx1 (left delta)
 	 * @property {pt} 1 - dy1 (top delta)
@@ -243,7 +239,6 @@
 	 *  · x3 <= x4 (bottom edge goes left → right)
 	 *  · y1 <= y3 (left edge goes top → bottom)
 	 *  · y2 <= y4 (right edge goes top → bottom)
-	 *
 	 * @typedef {pt[]} Quad
 	 * @property {pt} 0 - x1 (left top)
 	 * @property {pt} 1 - y1 (left top)
@@ -272,7 +267,6 @@
 	 * Degree defines an angle in degrees.
 	 *
 	 * Can be any finite number (positive or negative).
-	 *
 	 * @typedef {number} Degree
 	 */
 
