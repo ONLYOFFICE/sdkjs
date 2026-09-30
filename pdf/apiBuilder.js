@@ -7529,11 +7529,16 @@
 	 * Sets stamp size scale.
 	 * @memberof ApiStampAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} scale - size scale
+	 * @param {number} scale - The size scale.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiStampAnnotation/Methods/SetScale.js
 	 */
 	ApiStampAnnotation.prototype.SetScale = function(scale) {
+		scale = AscBuilder.GetNumberParameter(scale, null);
+		if (scale <= 0) {
+			AscBuilder.throwException("The scale parameter must be a number greater than 0");
+		}
+
 		let aInRect = this.Annot.GetInRect();
 		let nInRectRot = AscPDF.getQuadsRot([aInRect[0], aInRect[3], aInRect[4], aInRect[3], aInRect[4], aInRect[1], aInRect[0], aInRect[1]]);
 		let aInRectNoRot = AscPDF.rotateRect([aInRect[0], aInRect[3], aInRect[4], aInRect[3], aInRect[4], aInRect[1], aInRect[0], aInRect[1]], -nInRectRot);
@@ -7575,10 +7580,12 @@
 		AscCommon.History.EndNoHistoryMode();
 		
 		let oGrBounds = this.Annot.bounds;
-		aNewRect[0] = oGrBounds.l * g_dKoef_mm_to_pt;
-		aNewRect[1] = oGrBounds.t * g_dKoef_mm_to_pt;
-		aNewRect[2] = oGrBounds.r * g_dKoef_mm_to_pt;
-		aNewRect[3] = oGrBounds.b * g_dKoef_mm_to_pt;
+		let nNewWidth = (oGrBounds.r - oGrBounds.l) * g_dKoef_mm_to_pt;
+		let nNewHeight = (oGrBounds.b - oGrBounds.t) * g_dKoef_mm_to_pt;
+		aNewRect[0] = aCurRect[0];
+		aNewRect[1] = aCurRect[1];
+		aNewRect[2] = aCurRect[0] + nNewWidth;
+		aNewRect[3] = aCurRect[1] + nNewHeight;
 
 		this.Annot._rect = aCurRect;
 		oCurXfrm.extX = nCurExtX;
