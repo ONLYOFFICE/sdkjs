@@ -264,8 +264,10 @@ window.startPluginApi = function() {
 	 * @alias onContextMenuShow
 	 * @description The function called when the context menu has been shown.
 	 * 
-	 * <note>If a plugin is listening for this event, it must call the {@link /plugin/executeMethod/common/addcontextmenuitem AddContextMenuItem} method (synchronously or not),
-	 * because the editor waits for responses from all plugins before filling the context menu.</note>
+	 * :::note
+	 * If a plugin is listening for this event, it must call the {@link /plugin/executeMethod/common/addcontextmenuitem AddContextMenuItem} method (synchronously or not),
+	 * because the editor waits for responses from all plugins before filling the context menu.
+	 * :::
 	 * @param {ContextMenuOptions} options - Defines the context menu information.
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onContextMenuShow.js
@@ -361,7 +363,9 @@ window.startPluginApi = function() {
 	 * @alias executeCommand
 	 * @deprecated Please use callCommand method.
 	 * @description Defines the method used to send the data back to the editor.
-	 * <note>This method is deprecated, please use the {@link Plugin#callCommand callCommand} method which runs the code from the *data* string parameter.</note>
+	 * :::note
+	 * This method is deprecated, please use the {@link Plugin#callCommand callCommand} method which runs the code from the *data* string parameter.
+	 * :::
 	 * 
 	 * Now this method is mainly used to work with the OLE objects or close the plugin without any other commands.
 	 * It is also retained for using with text so that the previous versions of the plugin remain compatible.
@@ -370,9 +374,11 @@ window.startPluginApi = function() {
 	 * 
 	 * The second parameter is the JavaScript code for working with <b>ONLYOFFICE Document Builder</b> API 
 	 * that allows the plugin to send structured data inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
-	 * <note><b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor
+	 * :::note
+	 * <b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor
 	 * (using the *Api.GetDocument().InsertContent(...)*). This limitation exists due to the co-editing feature in the online editors.
-	 * If it is necessary to create a plugin for the desktop editors to work with local files, no such limitation is applied.</note>
+	 * If it is necessary to create a plugin for the desktop editors to work with local files, no such limitation is applied.
+	 * :::
 	 * 
 	 * When creating/editing OLE objects, two extensions are used to work with them:
 	 * Api.asc_addOleObject (window.Asc.plugin.info)* - used to create an OLE object in the document;
@@ -465,7 +471,9 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias resizeWindow
 	 * @description Defines the method used to change the window size updating the minimum/maximum sizes.
-	 * <note>This method is used for visual modal plugins only.</note>
+	 * :::note
+	 * This method is used for visual modal plugins only.
+	 * :::
 	 * @param {number} width - The window width.
      * @param {number} height - The window height.
      * @param {number} minW - The window minimum width.
@@ -510,8 +518,10 @@ window.startPluginApi = function() {
 	 * It allows the plugin to send structured data that can be inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
 	 * 
 	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the {@link Plugin#onCommandCallback window.Asc.plugin.onCommandCallback} function will be used to return the result of the command execution.
-     * <note><b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor (using the *Api.GetDocument().InsertContent(...)*).
-	 * This limitation exists due to the co-editing feature in the online editors. If it is necessary to create a plugin for desktop editors to work with local files, no such limitation is applied.</note>
+     * :::note
+     * <b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor (using the *Api.GetDocument().InsertContent(...)*).
+	 * This limitation exists due to the co-editing feature in the online editors. If it is necessary to create a plugin for desktop editors to work with local files, no such limitation is applied.
+     * :::
      * 
 	 * This method is executed in its own context isolated from other JavaScript data. If some parameters or other data need to be passed to this method, use {@link /plugin/scope Asc.scope} object.
 	 * @param {Function} func - Defines the command written in JavaScript which purpose is to form structured data which can be inserted to the resulting document file

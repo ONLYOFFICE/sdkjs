@@ -74,7 +74,9 @@
 
 	/**
 	 * The callback function which is called when the specified range of the current sheet changes.
-	 * <note>Please note that the event is not called for the undo/redo operations.</note>
+	 * :::note
+	 * The event is not called for the undo/redo operations.
+	 * :::
 	 * @event Api#onWorksheetChange
 	 * @param {ApiRange} range - The modified range represented as the ApiRange object.
 	 */
@@ -8653,7 +8655,9 @@
 
 	/**
 	 * Formats the selected range of cells from the current sheet as a table (with the first row formatted as a header).
-	 * <note>As the first row is always formatted as a table header, you need to select at least two rows for the table to be formed correctly.</note>
+	 * :::note
+	 * As the first row is always formatted as a table header, you need to select at least two rows for the table to be formed correctly.
+	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range of cells from the current sheet which will be formatted as a table.
@@ -9139,8 +9143,10 @@
 
 	/**
 	 * Creates a chart of the specified type from the selected data range of the current sheet.
-	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of the specified column and
-	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * :::note
+	 * The horizontal and vertical offsets are calculated within the limits of the specified column and
+	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
+	 * :::
 	 * :::note
 	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -9188,9 +9194,11 @@
 
 	/**
 	 * Adds a shape to the current sheet with the parameters specified.
-	 * <note>Please note that the horizontal and vertical offsets are
+	 * :::note
+	 * The horizontal and vertical offsets are
 	 * calculated within the limits of the specified column and row cells
-	 * only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
+	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
@@ -13084,8 +13092,10 @@
 
 	/**
 	 * Changes the position for the drawing object.
-	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of
-	 * the specified column and row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * :::note
+	 * The horizontal and vertical offsets are calculated within the limits of
+	 * the specified column and row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
+	 * :::
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nFromCol - The number of the column where the beginning of the drawing object will be placed.
@@ -15047,7 +15057,9 @@
 
 	/**
 	 * Sets the bold property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the text characters are displayed bold.
@@ -15146,7 +15158,9 @@
 
 	/**
 	 * Sets the italic property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the text characters are displayed italic.
@@ -15246,7 +15260,9 @@
 
 	/**
 	 * Sets the font size property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Size - The font size value measured in points.
@@ -15345,7 +15361,9 @@
 
 	/**
 	 * Sets the strikethrough property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikethrough - Specifies that the text characters are displayed strikethrough.
@@ -15489,7 +15507,9 @@
 
 	/**
 	 * Sets an underline of the type specified in the request to the current font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {XlUnderlineStyle} Underline - Underline type.
@@ -15611,7 +15631,9 @@
 
 	/**
 	 * Sets the subscript property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSubscript - Specifies that the text characters are displayed subscript.
@@ -15711,7 +15733,9 @@
 
 	/**
 	 * Sets the superscript property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSuperscript - Specifies that the text characters are displayed superscript.
@@ -15811,7 +15835,9 @@
 
 	/**
 	 * Sets the font name property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {string} FontName - Font name.
@@ -15911,7 +15937,9 @@
 
 	/**
 	 * Sets the font color property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} Color - Font color.
@@ -19841,7 +19869,9 @@
 
 	/**
 	 * Sets the visibility of the pivot item.
-	 * <note> At least one item must remain visible when hiding others. </note>
+	 * :::note
+	 * At least one item must remain visible when hiding others.
+	 * :::
 	 * @memberof ApiPivotItem
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} visible - Specifies whether the pivot item is visible.

@@ -1397,11 +1397,13 @@
 	};
 
 	/**
-	 * Removes page by index from document
-	 * <note> You can't delete last page </note>
+	 * Removes a page from the document by its index.
+	 * :::note
+	 * If the document has only one page, it cannot be removed, and the method returns <b>false</b>.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} index - page index
+	 * @param {number} index - The index of the page to remove.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RemovePage.js
 	 */
@@ -2273,7 +2275,9 @@
 
 	/**
 	 * Sets widget text size.
-	 * <note> Text size === 0 means autofit </note>
+	 * :::note
+	 * Text size === 0 means autofit.
+	 * :::
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @param {hps} size - The font size measured in half-points (1/144 of an inch).
@@ -2291,7 +2295,9 @@
 
 	/**
 	 * Gets widget text size.
-	 * <note> Text size === 0 means autofit </note>
+	 * :::note
+	 * Text size === 0 means autofit.
+	 * :::
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @returns {hps}
@@ -2391,7 +2397,9 @@
 
 	/**
 	 * Sets the text field character limit.
-	 * <note>If the character limit is 0, the field has no character limit.</note>
+	 * :::note
+	 * If the character limit is 0, the field has no character limit.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} charLimit - The maximum number of characters allowed in the field.
@@ -2404,7 +2412,9 @@
 
 	/**
 	 * Gets the text field character limit.
-	 * <note>If the character limit is 0, the field has no character limit.</note>
+	 * :::note
+	 * If the character limit is 0, the field has no character limit.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
@@ -2416,7 +2426,9 @@
 
 	/**
 	 * Sets whether the text field uses comb formatting.
-	 * <note>The character limit must be greater than 0.</note>
+	 * :::note
+	 * The character limit must be greater than 0.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} comb - Specifies whether comb formatting is enabled.
@@ -2651,7 +2663,9 @@
 
 	/**
 	 * Sets validate range for field.
-	 * <note> Can only be applied to fields with a percentage or number format. </note>
+	 * :::note
+	 * Can only be applied to fields with a percentage or number format.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
@@ -3142,7 +3156,9 @@
 
 	/**
 	 * Sets validate range for field.
-	 * <note> Can only be applied to fields with a percentage or number format. </note>
+	 * :::note
+	 * Can only be applied to fields with a percentage or number format.
+	 * :::
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
@@ -4322,7 +4338,9 @@
 
 	/**
 	 * Sets annotation dash pattern.
-	 * <note> The border style property must be set to "dashed". </note>
+	 * :::note
+	 * The border style property must be set to "dashed".
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {number[]} pattern - A dash array defining a pattern of dashes and gaps to be used in drawing a dashed border. For example, a value of [3, 2] specifies a border drawn with 3-point dashes alternating with 2-point gaps.
@@ -4351,7 +4369,9 @@
 
 	/**
 	 * Sets annotation border effect style.
-	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 * :::note
+	 * Can be applied to circle, square, freeText and polygon annotations.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {AnnotBorderEffectStyle} style - The border effect style: <b>"none"</b> or <b>"cloud"</b>.
@@ -4391,7 +4411,9 @@
 
 	/**
 	 * Sets annotation border effect intensity.
-	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 * :::note
+	 * Can be applied to circle, square, freeText and polygon annotations.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} value - The border effect intensity. Must be greater than or equal to 0.
@@ -5810,7 +5832,9 @@
 
 	/**
 	 * Removes all the elements from the current rich content.
-	 * <note>When all elements are removed, a new empty rich paragraph is automatically created.</note>
+	 * :::note
+	 * When all elements are removed, a new empty rich paragraph is automatically created.
+	 * :::
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -6090,8 +6114,10 @@
 
 	/**
 	 * Removes an element using the position specified.
-	 * <note>If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
-	 * a new empty run is automatically created.</note>
+	 * :::note
+	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
+	 * a new empty run is automatically created.
+	 * :::
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} pos - The element position which we want to remove from the paragraph.
@@ -6102,7 +6128,9 @@
 
 	/**
 	 * Removes all the elements from the current paragraph.
-	 * <note>When all the elements are removed from the paragraph, a new empty run is automatically created.</note>
+	 * :::note
+	 * When all the elements are removed from the paragraph, a new empty run is automatically created.
+	 * :::
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
