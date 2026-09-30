@@ -23839,7 +23839,9 @@
 	/**
 	 * Sets the placeholder text to the current inline content control.
 	 *
-	 * *Can't be set to checkbox or radio button*
+	 * :::note
+	 * The placeholder text can't be set for checkbox or radio button content controls.
+	 * :::
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText - The text that will be set to the current inline content control.
 	 * @typeofeditors ["CDE"]
@@ -26236,7 +26238,9 @@
 	/**
 	 * Converts the current form to an inline form.
 	 *
-	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
+	 * :::note
+	 * A picture form can't be converted to an inline form, as it's always a fixed-size object.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -26505,7 +26509,9 @@
 	/**
 	 * Sets the placeholder text to the current form.
 	 *
-	 * *Can't be set to checkbox or radio button.*
+	 * :::note
+	 * The placeholder text can't be set for checkbox or radio button forms.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -26539,7 +26545,9 @@
 	/**
 	 * Sets the text properties to the current form.
 	 *
-	 * *Used if possible for this type of form*
+	 * :::note
+	 * Used if possible for this type of form.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} textPr - The text properties that will be set to the current form.
@@ -26557,7 +26565,9 @@
 	/**
 	 * Returns the text properties from the current form.
 	 *
-	 * *Used if possible for this type of form*
+	 * :::note
+	 * Used if possible for this type of form.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -27534,7 +27544,9 @@
 	/**
 	 * Sets the text to the current combo box.
 	 *
-	 * *Available only for editable combo box forms.*
+	 * :::note
+	 * Available only for editable combo box forms.
+	 * :::
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
 	 * @typeofeditors ["CDE", "CFE"]
