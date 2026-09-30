@@ -17428,232 +17428,288 @@
 			return oShape;
 		}
 
-		function ChartBuilderTypeToInternal(sType) {
-			switch (sType) {
-				case "ColumnClustered":
-				case "bar": {
-					return Asc.c_oAscChartTypeSettings.barNormal;
-				}
-				case "ColumnStacked":
-				case "barStacked": {
-					return Asc.c_oAscChartTypeSettings.barStacked;
-				}
-				case "ColumnStacked100":
-				case "barStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.barStackedPer;
-				}
-				case "3DColumnClustered":
-				case "bar3D": {
-					return Asc.c_oAscChartTypeSettings.barNormal3d;
-				}
-				case "3DColumnStacked":
-				case "barStacked3D": {
-					return Asc.c_oAscChartTypeSettings.barStacked3d;
-				}
-				case "3DColumnStacked100":
-				case "barStackedPercent3D": {
-					return Asc.c_oAscChartTypeSettings.barStackedPer3d;
-				}
-				case "3DColumn":
-				case "barStackedPercent3DPerspective": {
-					return Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
-				}
-				case "BarClustered":
-				case "horizontalBar": {
-					return Asc.c_oAscChartTypeSettings.hBarNormal;
-				}
-				case "BarStacked":
-				case "horizontalBarStacked": {
-					return Asc.c_oAscChartTypeSettings.hBarStacked;
-				}
-				case "BarStacked100":
-				case "horizontalBarStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.hBarStackedPer;
-				}
-				case "3DBarClustered":
-				case "horizontalBar3D": {
-					return Asc.c_oAscChartTypeSettings.hBarNormal3d;
-				}
-				case "3DBarStacked":
-				case "horizontalBarStacked3D": {
-					return Asc.c_oAscChartTypeSettings.hBarStacked3d;
-				}
-				case "3DBarStacked100":
-				case "horizontalBarStackedPercent3D": {
-					return Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
-				}
-				case "Line":
-				case "lineNormal": {
-					return Asc.c_oAscChartTypeSettings.lineNormal;
-				}
-				case "LineStacked":
-				case "lineStacked": {
-					return Asc.c_oAscChartTypeSettings.lineStacked;
-				}
-				case "LineStacked100":
-				case "lineStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.lineStackedPer;
-				}
-				case "LineMarkers":
-				case "lineNormalMarker": {
-					return Asc.c_oAscChartTypeSettings.lineNormalMarker;
-				}
-				case "LineMarkersStacked":
-				case "lineStackedMarker": {
-					return Asc.c_oAscChartTypeSettings.lineStackedMarker;
-				}
-				case "LineMarkersStacked100":
-				case "lineStackedPerMarker": {
-					return Asc.c_oAscChartTypeSettings.lineStackedPerMarker;
-				}
-				case "3DLine":
-				case "line3D": {
-					return Asc.c_oAscChartTypeSettings.line3d;
-				}
-				case "Pie":
-				case "pie": {
-					return Asc.c_oAscChartTypeSettings.pie;
-				}
-				case "3DPie":
-				case "pie3D": {
-					return Asc.c_oAscChartTypeSettings.pie3d;
-				}
-				case "Doughnut":
-				case "doughnut": {
-					return Asc.c_oAscChartTypeSettings.doughnut;
-				}
-				case "XYScatter":
-				case "scatter": {
-					return Asc.c_oAscChartTypeSettings.scatter;
-				}
-				case "XYScatterLinesNoMarkers":
-				case "scatterLine": {
-					return Asc.c_oAscChartTypeSettings.scatterLine;
-				}
-				case "XYScatterLines":
-				case "scatterLineMarker": {
-					return Asc.c_oAscChartTypeSettings.scatterLineMarker;
-				}
-				case "XYScatterSmoothNoMarkers":
-				case "scatterSmooth": {
-					return Asc.c_oAscChartTypeSettings.scatterSmooth;
-				}
-				case "XYScatterSmooth":
-				case "scatterSmoothMarker": {
-					return Asc.c_oAscChartTypeSettings.scatterSmoothMarker;
-				}
-				case "StockHLC":
-				case "StockOHLC":
-				case "StockVHLC":
-				case "StockVOHLC":
-				case "stock": {
-					return Asc.c_oAscChartTypeSettings.stock;
-				}
-				case "Area":
-				case "area": {
-					return Asc.c_oAscChartTypeSettings.areaNormal;
-				}
-				case "AreaStacked":
-				case "areaStacked": {
-					return Asc.c_oAscChartTypeSettings.areaStacked;
-				}
-				case "AreaStacked100":
-				case "areaStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.areaStackedPer;
-				}
-				case "Combo":
-				case "comboCustom": {
-					return Asc.c_oAscChartTypeSettings.comboCustom;
-				}
-				case "ComboColumnClusteredLine":
-				case "comboBarLine": {
-					return Asc.c_oAscChartTypeSettings.comboBarLine;
-				}
-				case "ComboColumnClusteredLineSecondaryAxis":
-				case "comboBarLineSecondary": {
-					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
-				}
-				case "Radar":
-				case "radar": {
-					return Asc.c_oAscChartTypeSettings.radar;
-				}
-				case "RadarMarkers":
-				case "radarMarker": {
-					return Asc.c_oAscChartTypeSettings.radarMarker;
-				}
-				case "RadarFilled":
-				case "radarFilled": {
-					return Asc.c_oAscChartTypeSettings.radarFilled;
-				}
+		let chartBuilderTypes = null;
 
-				case "3DArea":
-				case "3DAreaStacked":
-				case "3DAreaStacked100":
-				case "AreaEx":
-				case "AreaStackedEx":
-				case "AreaStacked100Ex":
-				case "ColumnClusteredEx":
-				case "ColumnStackedEx":
-				case "ColumnStacked100Ex":
-				case "BarClusteredEx":
-				case "BarStackedEx":
-				case "BarStacked100Ex":
-				case "LineEx":
-				case "LineStackedEx":
-				case "LineStacked100Ex":
-				case "PieEx":
-				case "PieExploded":
-				case "3DPieExploded":
-				case "PieOfPie":
-				case "BarOfPie":
-				case "DoughnutEx":
-				case "DoughnutExploded":
-				case "XYScatterEx":
-				case "Bubble":
-				case "Bubble3DEffect":
-				case "BubbleEx":
-				case "Boxwhisker":
-				case "Funnel":
-				case "Histogram":
-				case "Pareto":
-				case "RegionMap":
-				case "Sunburst":
-				case "Treemap":
-				case "Waterfall":
-				case "SuggestedChart":
-				case "OtherCombinations":
-				case "ComboAreaStackedColumnClustered":
-				case "ConeBarClustered":
-				case "ConeBarStacked":
-				case "ConeBarStacked100":
-				case "ConeCol":
-				case "ConeColClustered":
-				case "ConeColStacked":
-				case "ConeColStacked100":
-				case "CylinderBarClustered":
-				case "CylinderBarStacked":
-				case "CylinderBarStacked100":
-				case "CylinderCol":
-				case "CylinderColClustered":
-				case "CylinderColStacked":
-				case "CylinderColStacked100":
-				case "PyramidBarClustered":
-				case "PyramidBarStacked":
-				case "PyramidBarStacked100":
-				case "PyramidCol":
-				case "PyramidColClustered":
-				case "PyramidColStacked":
-				case "PyramidColStacked100":
-				case "Surface":
-				case "SurfaceWireframe":
-				case "SurfaceTopView":
-				case "SurfaceTopViewWireframe": {
-					return null;
-				}
+		let chartBuilderTypesByLowerCase = null;
 
-				default: return null;
+
+
+		function getChartBuilderTypes() {
+
+			if (chartBuilderTypes)
+
+				return chartBuilderTypes;
+
+
+
+			let types = Asc.c_oAscChartTypeSettings;
+
+			chartBuilderTypes = {
+
+				"ColumnClustered"                      : types.barNormal,
+
+				"ColumnStacked"                        : types.barStacked,
+
+				"ColumnStacked100"                     : types.barStackedPer,
+
+				"3DColumnClustered"                    : types.barNormal3d,
+
+				"3DColumnStacked"                      : types.barStacked3d,
+
+				"3DColumnStacked100"                   : types.barStackedPer3d,
+
+				"3DColumn"                             : types.barNormal3dPerspective,
+
+				"BarClustered"                         : types.hBarNormal,
+
+				"BarStacked"                           : types.hBarStacked,
+
+				"BarStacked100"                        : types.hBarStackedPer,
+
+				"3DBarClustered"                       : types.hBarNormal3d,
+
+				"3DBarStacked"                         : types.hBarStacked3d,
+
+				"3DBarStacked100"                      : types.hBarStackedPer3d,
+
+				"Line"                                 : types.lineNormal,
+
+				"LineStacked"                          : types.lineStacked,
+
+				"LineStacked100"                       : types.lineStackedPer,
+
+				"LineMarkers"                          : types.lineNormalMarker,
+
+				"LineMarkersStacked"                   : types.lineStackedMarker,
+
+				"LineMarkersStacked100"                : types.lineStackedPerMarker,
+
+				"3DLine"                               : types.line3d,
+
+				"Pie"                                  : types.pie,
+
+				"3DPie"                                : types.pie3d,
+
+				"Doughnut"                             : types.doughnut,
+
+				"XYScatter"                            : types.scatter,
+
+				"XYScatterLinesNoMarkers"              : types.scatterLine,
+
+				"XYScatterLines"                       : types.scatterLineMarker,
+
+				"XYScatterSmoothNoMarkers"             : types.scatterSmooth,
+
+				"XYScatterSmooth"                      : types.scatterSmoothMarker,
+
+				"StockHLC"                             : types.stock,
+
+				"StockOHLC"                            : types.stock,
+
+				"StockVHLC"                            : types.stock,
+
+				"StockVOHLC"                           : types.stock,
+
+				"Area"                                 : types.areaNormal,
+
+				"AreaStacked"                          : types.areaStacked,
+
+				"AreaStacked100"                       : types.areaStackedPer,
+
+				"Combo"                                : types.comboCustom,
+
+				"ComboColumnClusteredLine"             : types.comboBarLine,
+
+				"ComboColumnClusteredLineSecondaryAxis": types.comboBarLineSecondary,
+
+				"Radar"                                : types.radar,
+
+				"RadarMarkers"                         : types.radarMarker,
+
+				"RadarFilled"                          : types.radarFilled,
+
+
+
+				"bar"                                  : types.barNormal,
+
+				"barStacked"                           : types.barStacked,
+
+				"barStackedPercent"                    : types.barStackedPer,
+
+				"bar3D"                                : types.barNormal3d,
+
+				"barStacked3D"                         : types.barStacked3d,
+
+				"barStackedPercent3D"                  : types.barStackedPer3d,
+
+				"barStackedPercent3DPerspective"       : types.barNormal3dPerspective,
+
+				"horizontalBar"                        : types.hBarNormal,
+
+				"horizontalBarStacked"                 : types.hBarStacked,
+
+				"horizontalBarStackedPercent"          : types.hBarStackedPer,
+
+				"horizontalBar3D"                      : types.hBarNormal3d,
+
+				"horizontalBarStacked3D"               : types.hBarStacked3d,
+
+				"horizontalBarStackedPercent3D"        : types.hBarStackedPer3d,
+
+				"lineNormal"                           : types.lineNormal,
+
+				"lineStacked"                          : types.lineStacked,
+
+				"lineStackedPercent"                   : types.lineStackedPer,
+
+				"lineNormalMarker"                     : types.lineNormalMarker,
+
+				"lineStackedMarker"                    : types.lineStackedMarker,
+
+				"lineStackedPerMarker"                 : types.lineStackedPerMarker,
+
+				"line3D"                               : types.line3d,
+
+				"pie"                                  : types.pie,
+
+				"pie3D"                                : types.pie3d,
+
+				"doughnut"                             : types.doughnut,
+
+				"scatter"                              : types.scatter,
+
+				"scatterLine"                          : types.scatterLine,
+
+				"scatterLineMarker"                    : types.scatterLineMarker,
+
+				"scatterSmooth"                        : types.scatterSmooth,
+
+				"scatterSmoothMarker"                  : types.scatterSmoothMarker,
+
+				"stock"                                : types.stock,
+
+				"area"                                 : types.areaNormal,
+
+				"areaStacked"                          : types.areaStacked,
+
+				"areaStackedPercent"                   : types.areaStackedPer,
+
+				"comboCustom"                          : types.comboCustom,
+
+				"comboBarLine"                         : types.comboBarLine,
+
+				"comboBarLineSecondary"                : types.comboBarLineSecondary,
+
+				"radar"                                : types.radar,
+
+				"radarMarker"                          : types.radarMarker,
+
+				"radarFilled"                          : types.radarFilled,
+
+				"3DArea"                               : null,
+				"3DAreaStacked"                        : null,
+				"3DAreaStacked100"                     : null,
+				"AreaEx"                               : null,
+				"AreaStackedEx"                        : null,
+				"AreaStacked100Ex"                     : null,
+				"ColumnClusteredEx"                    : null,
+				"ColumnStackedEx"                      : null,
+				"ColumnStacked100Ex"                   : null,
+				"BarClusteredEx"                       : null,
+				"BarStackedEx"                         : null,
+				"BarStacked100Ex"                      : null,
+				"LineEx"                               : null,
+				"LineStackedEx"                        : null,
+				"LineStacked100Ex"                     : null,
+				"PieEx"                                : null,
+				"PieExploded"                          : null,
+				"3DPieExploded"                        : null,
+				"PieOfPie"                             : null,
+				"BarOfPie"                             : null,
+				"DoughnutEx"                           : null,
+				"DoughnutExploded"                     : null,
+				"XYScatterEx"                          : null,
+				"Bubble"                               : null,
+				"Bubble3DEffect"                       : null,
+				"BubbleEx"                             : null,
+				"Boxwhisker"                           : null,
+				"Funnel"                               : null,
+				"Histogram"                            : null,
+				"Pareto"                               : null,
+				"RegionMap"                            : null,
+				"Sunburst"                             : null,
+				"Treemap"                              : null,
+				"Waterfall"                            : null,
+				"SuggestedChart"                       : null,
+				"OtherCombinations"                    : null,
+				"ComboAreaStackedColumnClustered"      : null,
+				"ConeBarClustered"                     : null,
+				"ConeBarStacked"                       : null,
+				"ConeBarStacked100"                    : null,
+				"ConeCol"                              : null,
+				"ConeColClustered"                     : null,
+				"ConeColStacked"                       : null,
+				"ConeColStacked100"                    : null,
+				"CylinderBarClustered"                 : null,
+				"CylinderBarStacked"                   : null,
+				"CylinderBarStacked100"                : null,
+				"CylinderCol"                          : null,
+				"CylinderColClustered"                 : null,
+				"CylinderColStacked"                   : null,
+				"CylinderColStacked100"                : null,
+				"PyramidBarClustered"                  : null,
+				"PyramidBarStacked"                    : null,
+				"PyramidBarStacked100"                 : null,
+				"PyramidCol"                           : null,
+				"PyramidColClustered"                  : null,
+				"PyramidColStacked"                    : null,
+				"PyramidColStacked100"                 : null,
+				"Surface"                              : null,
+				"SurfaceWireframe"                     : null,
+				"SurfaceTopView"                       : null,
+				"SurfaceTopViewWireframe"              : null
+
+			};
+
+			chartBuilderTypesByLowerCase = {};
+
+			for (let name in chartBuilderTypes) {
+
+				let lowerName = name.toLowerCase();
+
+				if (!chartBuilderTypesByLowerCase.hasOwnProperty(lowerName))
+
+					chartBuilderTypesByLowerCase[lowerName] = chartBuilderTypes[name];
+
 			}
+
+			return chartBuilderTypes;
+
 		}
+
+
+
+		function ChartBuilderTypeToInternal(type) {
+
+			let types = getChartBuilderTypes();
+
+			if (typeof type !== "string")
+
+				return null;
+
+			if (types.hasOwnProperty(type))
+
+				return types[type];
+
+
+
+			let lowerType = type.toLowerCase();
+
+			return chartBuilderTypesByLowerCase.hasOwnProperty(lowerType) ? chartBuilderTypesByLowerCase[lowerType] : null;
+
+		}
+
+
 
 		function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats) {
 			let settings = new Asc.asc_ChartSettings();

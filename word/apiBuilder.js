@@ -24311,6 +24311,9 @@
 	 * Tries to change the series type.
 	 *
 	 * Returns true if successful.
+	 *
+	 * Throws: Error if the chart type is not supported.
+	 *
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ChartType} sType - Chart type.
@@ -24325,6 +24328,10 @@
 			return false;
 		}
 		let nType = AscFormat.ChartBuilderTypeToInternal(sType);
+		if(!AscFormat.isRealNumber(nType))
+		{
+			throwException(new Error('Unsupported chart type "' + sType + '"'));
+		}
 		let nResult = oSeries.tryChangeChartType(nType);
 		return nResult === Asc.c_oAscError.ID.No;
 	};
