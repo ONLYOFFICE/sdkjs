@@ -59,23 +59,23 @@
 
     /**
      * The editors which the plugin is available for:
-	 * <b>word</b> - text document editor,
-	 * <b>cell</b> - spreadsheet editor,
-	 * <b>slide</b> - presentation editor,
-	 * <b>pdf</b> - pdf editor.
+	 * - <b>word</b> - text document editor,
+	 * - <b>cell</b> - spreadsheet editor,
+	 * - <b>slide</b> - presentation editor,
+	 * - <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
     /**
 	 * The data type selected in the editor and sent to the plugin:
-     * <b>text</b> - the text data,
-	 * <b>html</b> - HTML formatted code,
-	 * <b>ole</b> - OLE object data,
-     * <b>desktop</b> - the desktop editor data,
-     * <b>desktop-external</b> - the main page data of the desktop app (system messages),
-     * <b>none</b> - no data will be send to the plugin from the editor,
-	 * <b>sign</b> - the sign for the keychain plugin.
+     * - <b>text</b> - the text data,
+	 * - <b>html</b> - HTML formatted code,
+	 * - <b>ole</b> - OLE object data,
+     * - <b>desktop</b> - the desktop editor data,
+     * - <b>desktop-external</b> - the main page data of the desktop app (system messages),
+     * - <b>none</b> - no data will be send to the plugin from the editor,
+	 * - <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "desktop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */

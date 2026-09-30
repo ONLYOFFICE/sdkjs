@@ -250,10 +250,10 @@
 
 	/**
 	 * Possible values for the position of chart tick labels (either horizontal or vertical).
-	 * <b>"none"</b> - does not display the selected tick labels.
-	 * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
-	 * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
-	 * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
+	 * - <b>"none"</b> - does not display the selected tick labels.
+	 * - <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+	 * - <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+	 * - <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
@@ -2872,13 +2872,13 @@
 	// };
 	/**
 	 * A numeric value that specifies which function should be used to aggregate identical time values in the timeline data range.
-	 * <b>1</b> (or omitted) - AVERAGE.
-	 * <b>2</b> - COUNT.
-	 * <b>3</b> - COUNTA.
-	 * <b>4</b> - MAX.
-	 * <b>5</b> - MEDIAN.
-	 * <b>6</b> - MIN.
-	 * <b>7</b> - SUM.
+	 * - <b>1</b> (or omitted) - AVERAGE.
+	 * - <b>2</b> - COUNT.
+	 * - <b>3</b> - COUNTA.
+	 * - <b>4</b> - MAX.
+	 * - <b>5</b> - MEDIAN.
+	 * - <b>6</b> - MIN.
+	 * - <b>7</b> - SUM.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7)} Aggregation
 	 * @see office-js-api/Examples/Enumerations/Aggregation.js
 	 */
@@ -2938,14 +2938,14 @@
 
 	/**
 	 * A numeric value between 1 and 8 that specifies which statistic will be returned.
-	 * <b>1</b> - Alpha parameter of ETS algorithm - the base value parameter.
-	 * <b>2</b> - Beta parameter of ETS algorithm - the trend value parameter.
-	 * <b>3</b> - Gamma parameter of ETS algorithm - the seasonality value parameter.
-	 * <b>4</b> - MASE (mean absolute scaled error) metric - a measure of the accuracy of forecasts.
-	 * <b>5</b> - SMAPE (symmetric mean absolute percentage error) metric - a measure of the accuracy based on percentage errors.
-	 * <b>6</b> - MAE (mean absolute error) metric - a measure of the accuracy of forecasts.
-	 * <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
-	 * <b>8</b> - Step size detected in the timeline.
+	 * - <b>1</b> - Alpha parameter of ETS algorithm - the base value parameter.
+	 * - <b>2</b> - Beta parameter of ETS algorithm - the trend value parameter.
+	 * - <b>3</b> - Gamma parameter of ETS algorithm - the seasonality value parameter.
+	 * - <b>4</b> - MASE (mean absolute scaled error) metric - a measure of the accuracy of forecasts.
+	 * - <b>5</b> - SMAPE (symmetric mean absolute percentage error) metric - a measure of the accuracy based on percentage errors.
+	 * - <b>6</b> - MAE (mean absolute error) metric - a measure of the accuracy of forecasts.
+	 * - <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
+	 * - <b>8</b> - Step size detected in the timeline.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)} StatisticType
 	 * @see office-js-api/Examples/Enumerations/StatisticType.js
 	 */
@@ -8041,17 +8041,17 @@
 
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document has been created with.
-	 * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * <b>Created</b> - the parsed date and time when the file was created.
-	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Authors</b> - the persons who has created the file.
-	 * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * - <b>Application</b> - the application the document has been created with.
+	 * - <b>CreatedRaw</b> - the date and time when the file was created.
+	 * - <b>Created</b> - the parsed date and time when the file was created.
+	 * - <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * - <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * - <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * - <b>Authors</b> - the persons who has created the file.
+	 * - <b>Title</b> - this property allows you to simplify your documents classification.
+	 * - <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * - <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * - <b>Comment</b> - this property allows you to simplify your documents classification.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {object}

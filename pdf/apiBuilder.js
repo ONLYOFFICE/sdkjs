@@ -6209,9 +6209,9 @@
 	/**
 	 * Specifies the reading order for the current paragraph.
 	 * Possible values are:
-	 * <b>null</b> - use the standart direction parameter;
-	 * <b>"ltr"</b> - left-to-right text direction;
-	 * <b>"rtl"</b> - right-to-left text direction.
+	 * - <b>null</b> - use the standart direction parameter;
+	 * - <b>"ltr"</b> - left-to-right text direction;
+	 * - <b>"rtl"</b> - right-to-left text direction.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ReadingOrder} [readingOrder = undefined] - The reading order.

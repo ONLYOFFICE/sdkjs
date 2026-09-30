@@ -343,18 +343,18 @@
 
     /**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * <b>"none"</b> - not display the selected tick labels.
-     * <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
-     * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
-     * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
+     * - <b>"none"</b> - not display the selected tick labels.
+     * - <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
+     * - <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
+     * - <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
      * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
     /**
      * The type of a fill which uses an image as a background.
-     * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     * - <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * - <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
@@ -1838,17 +1838,17 @@
 
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document has been created with.
-	 * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * <b>Created</b> - the parsed date and time when the file was created.
-	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Authors</b> - the persons who has created the file.
-	 * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * - <b>Application</b> - the application the document has been created with.
+	 * - <b>CreatedRaw</b> - the date and time when the file was created.
+	 * - <b>Created</b> - the parsed date and time when the file was created.
+	 * - <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * - <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * - <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * - <b>Authors</b> - the persons who has created the file.
+	 * - <b>Title</b> - this property allows you to simplify your documents classification.
+	 * - <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * - <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * - <b>Comment</b> - this property allows you to simplify your documents classification.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {object}
