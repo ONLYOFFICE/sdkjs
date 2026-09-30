@@ -13372,9 +13372,9 @@
 	 * - <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
 	 * - <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
 	 * - <b>Continuous</b> ("continuous") - starts a new section in the next paragraph.
-	 * This means that continuous section breaks might not specify certain page-level section properties,
-	 * since they shall be inherited from the following section.
-	 * However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
+	 *   This means that continuous section breaks might not specify certain page-level section properties,
+	 *   since they shall be inherited from the following section.
+	 *   However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
 	 * - <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
 	 * @typedef {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} SectionBreakType
 	* @see office-js-api/Examples/Enumerations/SectionBreakType.js
