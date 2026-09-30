@@ -33304,7 +33304,7 @@
 	 * Adds a hyperlink to the current text range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string} link - The link address. Accepts an external URL (http, https, mailto, ftp) or an internal link. In the presentation and PDF editors, the internal link is one of the slide actions: "ppaction://hlinkshowjump?jump=firstslide", "ppaction://hlinkshowjump?jump=lastslide", "ppaction://hlinkshowjump?jump=nextslide", "ppaction://hlinkshowjump?jump=previousslide", "ppaction://hlinksldjumpslide{N}" (N is the zero-based slide index), "ppaction://hlinkfile?file={path}" (opens an external file). In the spreadsheet editor, the internal link is "#" followed by a cell range or a defined name, for example, "#Sheet1!A1" or "#MyName".
+	 * @param {string} link - The link address. Accepts an external URL (http, https, mailto, ftp) or an internal link. In the presentation editor, the internal link is one of the slide actions: "ppaction://hlinkshowjump?jump=firstslide", "ppaction://hlinkshowjump?jump=lastslide", "ppaction://hlinkshowjump?jump=nextslide", "ppaction://hlinkshowjump?jump=previousslide", "ppaction://hlinksldjumpslide{N}" (N is the zero-based slide index), "ppaction://hlinkfile?file={path}" (opens an external file). In the spreadsheet editor, the internal link is "#" followed by a cell range or a defined name, for example, "#Sheet1!A1" or "#MyName".
 	 * @param {string} screenTipText - The screen tip text.
 	 * @return {?ApiHyperlink} - returns null if the range spans more than one paragraph or the link is invalid.
 	 * @since 10.0.0
