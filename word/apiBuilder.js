@@ -2486,6 +2486,7 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the Range contents in relation to the default appearance of the Range text:
+	 *
 	 * - <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
 	 * - <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
 	 * - <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
@@ -4035,6 +4036,7 @@
 
 	/**
 	 * A border type which will be added to the document element.
+     *
      * - <b>"none"</b> - no border will be added to the created element or the selected element side.
      * - <b>"single"</b> - a single border will be added to the created element or the selected element side.
 	 * @typedef {("none" | "single")} BorderType
@@ -4100,6 +4102,7 @@
 
 	/**
 	 * Header and footer types which can be applied to the document sections.
+     *
      * - <b>"default"</b> - a header or footer which can be applied to any default page.
      * - <b>"title"</b> - a header or footer which is applied to the title page.
      * - <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
@@ -4109,6 +4112,7 @@
 
 	/**
 	 * The possible values for the units of the width property are defined by a specific table or table cell width property.
+     *
      * - <b>"auto"</b> - sets the table or table cell width to auto width.
      * - <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
      * - <b>"nul"</b> - sets the table or table cell width to be of a zero value.
@@ -4119,6 +4123,7 @@
 
 	/**
 	 * This simple type specifies possible values for the table sections to which the current conditional formatting properties will be applied when this selected table style is used.
+	 *
 	 * - <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
 	 * - <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
 	 * - <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
@@ -4288,6 +4293,7 @@
 
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
+     *
      * - <b>"none"</b> - not display the selected tick labels.
      * - <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
      * - <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
@@ -4298,6 +4304,7 @@
 
 	/**
      * The type of a fill which uses an image as a background.
+     *
      * - <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
      * - <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
 	 * @typedef {"tile" | "stretch"} BlipFillType
@@ -4388,6 +4395,7 @@
 
 	/**
 	 * Available values of the "numbered" reference type:
+	 *
 	 * - <b>"pageNum"</b> - the numbered item page number;
      * - <b>"paraNum"</b> - the numbered item paragraph number;
 	 * - <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
@@ -4400,6 +4408,7 @@
 
 	/**
 	 * Available values of the "heading" reference type:
+	 *
 	 * - <b>"text"</b> - the entire heading text;
 	 * - <b>"pageNum"</b> - the heading page number;
      * - <b>"headingNum"</b> - the heading sequence number;
@@ -4412,6 +4421,7 @@
 
 	/**
 	 * Available values of the "bookmark" reference type:
+	 *
 	 * - <b>"text"</b> - the entire bookmark text;
 	 * - <b>"pageNum"</b> - the bookmark page number;
      * - <b>"paraNum"</b> - the bookmark paragraph number;
@@ -4424,6 +4434,7 @@
 
 	/**
 	 * Available values of the "footnote" reference type:
+	 *
 	 * - <b>"footnoteNum"</b> - the footnote number;
 	 * - <b>"pageNum"</b> - the page number of the footnote;
      * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
@@ -4434,6 +4445,7 @@
 
 	/**
 	 * Available values of the "endnote" reference type:
+	 *
 	 * - <b>"endnoteNum"</b> - the endnote number;
 	 * - <b>"pageNum"</b> - the endnote page number;
      * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
@@ -4444,6 +4456,7 @@
 
 	/**
 	 * Available values of the "equation"/"figure"/"table" reference type:
+	 *
 	 * - <b>"entireCaption"</b>- the entire caption text;
 	 * - <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
      * - <b>"captionText"</b> - the caption text only;
@@ -4478,6 +4491,7 @@
 
 	/**
      * Possible values for the caption numbering format.
+     *
      * - <b>"ALPHABETIC"</b> - upper letter.
      * - <b>"alphabetic"</b> - lower letter.
      * - <b>"Roman"</b> - upper Roman.
@@ -4489,6 +4503,7 @@
 
 	/**
      * Possible values for the caption separator.
+     *
      * - <b>"hyphen"</b> - the "-" punctuation mark.
      * - <b>"period"</b> - the "." punctuation mark.
      * - <b>"colon"</b> - the ":" punctuation mark.
@@ -4547,6 +4562,7 @@
 
 	/**
 	 * Possible values for the table of contents leader:
+	 *
 	 * - <b>"dot"</b> - "......."
 	 * - <b>"dash"</b> - "-------"
 	 * - <b>"underline"</b> - "_______"
@@ -5096,6 +5112,7 @@
 
 	/**
 	 * Creates an ApiColor from a universal input. The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
+	 *
 	 * - <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
 	 * - <b>Packed integer</b>: "Api.Color(0xRRGGBB)" creates an RGB color from a 24-bit integer.
 	 * - <b>Full HEX string</b>: "Api.Color('#RRGGBB')" or "Api.Color('RRGGBB')" creates a HEX color; the leading "#" is optional.
@@ -5103,7 +5120,9 @@
 	 * - <b>Theme color name</b>: "Api.Color('accent1')" creates a theme color; any value of SchemeColorId is accepted.
 	 * - <b>Preset color name</b>: "Api.Color('aliceBlue')" resolves any value of PresetColor to its RGB equivalent.
 	 * - <b>Auto color</b>: "Api.Color('auto')" creates an auto color.
+	 *
 	 * For a single string argument, the resolution priority is: "auto", a string starting with "#", a theme name, a preset name, a bare 6-digit HEX. Theme and preset palettes do not overlap. A 3-digit shorthand is accepted only with the leading "#".
+	 *
 	 * Unsupported inputs (objects, arrays, an existing ApiColor, unknown strings, no arguments) return a black color (#000000).
 	 *
 	 * @memberof Api
@@ -9651,6 +9670,7 @@
 
 	/**
 	 * Returns the document statistics represented as an object with the following parameters:
+	 *
 	 * - <b>PageCount</b> - number of pages;
 	 * - <b>WordsCount</b> - number of words;
 	 * - <b>ParagraphCount</b> - number of paragraphs;
@@ -9755,6 +9775,7 @@
 	};
 	/**
 	 * Returns the document information:
+	 *
 	 * - <b>Application</b> - the application the document was created with.
 	 * - <b>CreatedRaw</b> - the date and time when the file was created.
 	 * - <b>Created</b> - the parsed date and time when the file was created.
@@ -11394,6 +11415,7 @@
 	};
 	/**
 	 * Specifies the alignment which will be applied to the contents of this paragraph in relation to the default appearance of the paragraph text:
+	 *
 	 * - <b>"baseline"</b> - the characters in the current paragraph will be aligned by the default text baseline.
 	 * - <b>"subscript"</b> - the characters in the current paragraph will be aligned below the default text baseline.
 	 * - <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
@@ -11425,6 +11447,7 @@
 	/**
 	 * Specifies the reading order for the current paragraph.
 	 * Possible values are:
+	 *
 	 * - <b>null</b> - use the standart direction parameter;
 	 * - <b>"ltr"</b> - left-to-right text direction;
 	 * - <b>"rtl"</b> - right-to-left text direction.
@@ -13187,6 +13210,7 @@
 	};
 	/**
 	 * Specifies the alignment which will be applied to the contents of the current run in relation to the default appearance of the text run:
+	 *
 	 * - <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
 	 * - <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
 	 * - <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
@@ -13368,6 +13392,7 @@
 	/**
 	 * The section break type which defines how the contents of the current section are placed relative to the previous section.
 	 * WordprocessingML supports five distinct types of section breaks:
+	 *
 	 * - <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
 	 * - <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
 	 * - <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
@@ -16564,6 +16589,7 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the contents of the run in relation to the default appearance of the run text:
+	 *
 	 * - <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
 	 * - <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
 	 * - <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
@@ -19370,8 +19396,11 @@
 	};
 	/**
 	 * Sets the wrapping type of the current object (image, shape, chart). One of the following wrapping style types can be set:
+	 *
 	 * - <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
+	 *
 	 * If one of the following styles is selected, the object can be moved independently of the text and positioned on the page exactly:
+	 *
 	 * - <b>"square"</b> - the text wraps the rectangular box that bounds the object.
 	 * - <b>"tight"</b> - the text wraps the actual object edges.
 	 * - <b>"through"</b> - the text wraps around the object edges and fills in the open white space within the object.
@@ -23180,6 +23209,7 @@
 	
 	/**
 	 * Sets the lock to the current inline text content control:
+	 *
 	 * - <b>"unlocked"</b> - content can be edited and the container can be deleted.
 	 * - <b>"contentLocked"</b> - content cannot be edited.
 	 * - <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
@@ -24852,6 +24882,7 @@
 	};
 	/**
 	 * Sets the lock to the current block text content control:
+	 *
 	 * - <b>"unlocked"</b> - content can be edited and the container can be deleted.
 	 * - <b>"contentLocked"</b> - content cannot be edited.
 	 * - <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
@@ -27050,6 +27081,7 @@
 	};
 	/**
 	 * Sets the picture position inside the current form:
+	 *
 	 * - <b>0</b> - the picture is placed on the left/top;
 	 * - <b>50</b> - the picture is placed in the center;
 	 * - <b>100</b> - the picture is placed on the right/bottom.

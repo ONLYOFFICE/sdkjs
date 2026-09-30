@@ -250,6 +250,7 @@
 
 	/**
 	 * Possible values for the position of chart tick labels (either horizontal or vertical).
+	 *
 	 * - <b>"none"</b> - does not display the selected tick labels.
 	 * - <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
 	 * - <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
@@ -2872,6 +2873,7 @@
 	// };
 	/**
 	 * A numeric value that specifies which function should be used to aggregate identical time values in the timeline data range.
+	 *
 	 * - <b>1</b> (or omitted) - AVERAGE.
 	 * - <b>2</b> - COUNT.
 	 * - <b>3</b> - COUNTA.
@@ -2938,6 +2940,7 @@
 
 	/**
 	 * A numeric value between 1 and 8 that specifies which statistic will be returned.
+	 *
 	 * - <b>1</b> - Alpha parameter of ETS algorithm - the base value parameter.
 	 * - <b>2</b> - Beta parameter of ETS algorithm - the trend value parameter.
 	 * - <b>3</b> - Gamma parameter of ETS algorithm - the seasonality value parameter.
@@ -8041,6 +8044,7 @@
 
 	/**
 	 * Returns the document information:
+	 *
 	 * - <b>Application</b> - the application the document has been created with.
 	 * - <b>CreatedRaw</b> - the date and time when the file was created.
 	 * - <b>Created</b> - the parsed date and time when the file was created.
@@ -27976,6 +27980,7 @@
      *
      * The property is true when at least one of the following underlying
      * structures is present for the column:
+     *
      * - Filters
      * - CustomFiltersObj
      * - DynamicFilter

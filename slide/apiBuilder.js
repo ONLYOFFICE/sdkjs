@@ -343,6 +343,7 @@
 
     /**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
+     *
      * - <b>"none"</b> - not display the selected tick labels.
      * - <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
      * - <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
@@ -353,6 +354,7 @@
 
     /**
      * The type of a fill which uses an image as a background.
+     *
      * - <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
      * - <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
@@ -1838,6 +1840,7 @@
 
 	/**
 	 * Returns the document information:
+	 *
 	 * - <b>Application</b> - the application the document has been created with.
 	 * - <b>CreatedRaw</b> - the date and time when the file was created.
 	 * - <b>Created</b> - the parsed date and time when the file was created.
@@ -5005,6 +5008,7 @@
 	/**
 	 * Returns the transition speed (similar to PowerPoint VBA Speed property).
 	 * Maps duration to speed based on OOXML spd attribute logic:
+	 *
 	 * - fast: duration <= 500ms
 	 * - medium: 500ms < duration <= 750ms
 	 * - slow: duration > 750ms
@@ -5024,6 +5028,7 @@
 	/**
 	 * Sets the transition speed (similar to PowerPoint VBA Speed property).
 	 * Converts speed to duration based on standard values:
+	 *
 	 * - fast = 500ms
 	 * - medium = 750ms
 	 * - slow = 1000ms

@@ -110,6 +110,7 @@
 
 	/**
 	 * NumberSepStyle — defines number formatting style:
+	 *
 	 * - "us"        — 1,234.56   (English style)
 	 * - "plain"     — 1234.56    (No separators)
 	 * - "euro"      — 1.234,56   (European style)
@@ -143,6 +144,7 @@
 	/**
 	 * @typedef {'HH:MM' | 'h:MM tt' | 'HH:MM:ss' | 'h:MM:ss tt'} TimeFormat
 	 * Time format options:
+	 *
 	 * - "HH:MM" — 24-hour format, hours and minutes (e.g., "14:30")
 	 * - "h:MM tt" — 12-hour format with AM/PM, hours and minutes (e.g., "2:30 PM")
 	 * - "HH:MM:ss" — 24-hour format, hours, minutes, and seconds (e.g., "14:30:15")
@@ -6209,6 +6211,7 @@
 	/**
 	 * Specifies the reading order for the current paragraph.
 	 * Possible values are:
+	 *
 	 * - <b>null</b> - use the standart direction parameter;
 	 * - <b>"ltr"</b> - left-to-right text direction;
 	 * - <b>"rtl"</b> - right-to-left text direction.

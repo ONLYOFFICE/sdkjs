@@ -50,6 +50,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * The editors which the plugin is available for:
+	 *
 	 * - <b>word</b> - text document editor,
 	 * - <b>cell</b> - spreadsheet editor,
 	 * - <b>slide</b> - presentation editor,
@@ -60,6 +61,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * The data type selected in the editor and sent to the plugin:
+     *
      * - <b>text</b> - the text data,
 	 * - <b>html</b> - HTML formatted code,
 	 * - <b>ole</b> - OLE object data,
@@ -236,6 +238,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * The context menu type:
+	 *
 	 * - <b>None</b> - not used,
 	 * - <b>Target</b> - nothing is selected,
 	 * - <b>Selection</b> - text is selected,

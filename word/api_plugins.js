@@ -58,6 +58,7 @@
 	/**
 	 * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
 	 * A value that defines if it is possible to delete and/or edit the content control or not:
+	 *
 	 * - <b>0</b> - only deleting
 	 * - <b>1</b> - disable deleting or editing
 	 * - <b>2</b> - only editing
@@ -68,6 +69,7 @@
     /**
      * @typedef {(1 | 2 | 3 | 4)} ContentControlType
      * A numeric value that specifies the content control type:
+	 *
 	 * - <b>1</b> - block content control
 	 * - <b>2</b> - inline content control
 	 * - <b>3</b> - row content control
@@ -114,6 +116,7 @@
 	/**
 	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
 	 * The document editing restrictions:
+	 *
 	 * - <b>none</b> - no editing restrictions,
 	 * - <b>comments</b> - allows editing comments,
 	 * - <b>forms</b> - allows editing form fields,
@@ -124,6 +127,7 @@
 	/**
 	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
 	 * Specifies if the whole text or only its part will be returned or replaced:
+	 *
 	 * - <b>entirely</b> - replaces/returns the whole text,
 	 * - <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
 	 * - <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
