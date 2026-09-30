@@ -24180,8 +24180,6 @@
 
 	/**
 	 * Sets the checkbox value for the content control.
-	 *
-	 * This method updates the checkbox state of the content control to either checked or unchecked.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -24223,8 +24221,6 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
-	 *
-	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -24238,8 +24234,6 @@
 
 	/**
 	 * Sets the size for the picture in a content control.
-	 *
-	 * This method adjusts the width and height of the image if the content control is a picture.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -24273,7 +24267,6 @@
 	/**
 	 * Sets the content (image) for the picture content control.
 	 *
-	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -24485,7 +24478,6 @@
 	/**
 	 * Sets the date format for the datepicker content control.
 	 *
-	 * This method allows setting the format in which the date should be displayed in the datepicker content control.
 	 * The format string should be specified using common date format patterns (e.g., "mm.dd.yyyy").
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -25121,7 +25113,6 @@
 	/**
 	 * Sets the content (image) for the picture content control.
 	 *
-	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -25174,8 +25165,6 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
-	 *
-	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
