@@ -10162,12 +10162,12 @@
 		let oTableLook = this.Table.Get_TableLook();
 
 		return {
-			firstCol:	oTableLook.IsFirstCol(),
-			firstRow:	oTableLook.IsFirstRow(),
-			lastCol:	oTableLook.IsLastCol(),
-			lastRow:	oTableLook.IsLastRow(),
-			bandHor:	oTableLook.IsBandHor(),
-			bandVer:	oTableLook.IsBandVer()
+			"firstCol":	oTableLook.IsFirstCol(),
+			"firstRow":	oTableLook.IsFirstRow(),
+			"lastCol":	oTableLook.IsLastCol(),
+			"lastRow":	oTableLook.IsLastRow(),
+			"bandHor":	oTableLook.IsBandHor(),
+			"bandVer":	oTableLook.IsBandVer()
 		}
 	};
 

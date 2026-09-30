@@ -6396,7 +6396,7 @@
 				oResult = new ApiStyle(oStyle);
 				break;
 			case "tableStylePr":
-				oResult = new ApiTableStylePr(oParsedObj.styleType, null, oReader.TableStylePrFromJSON(oParsedObj));
+				oResult = new ApiTableStylePr(oParsedObj["styleType"], null, oReader.TableStylePrFromJSON(oParsedObj));
 				break;
 		}
 
@@ -14896,12 +14896,12 @@
 		let oTableLook = this.Table.Get_TableLook();
 
 		return {
-			firstCol:	oTableLook.IsFirstCol(),
-			firstRow:	oTableLook.IsFirstRow(),
-			lastCol:	oTableLook.IsLastCol(),
-			lastRow:	oTableLook.IsLastRow(),
-			bandHor:	oTableLook.IsBandHor(),
-			bandVer:	oTableLook.IsBandVer()
+			"firstCol":	oTableLook.IsFirstCol(),
+			"firstRow":	oTableLook.IsFirstRow(),
+			"lastCol":	oTableLook.IsLastCol(),
+			"lastRow":	oTableLook.IsLastRow(),
+			"bandHor":	oTableLook.IsBandHor(),
+			"bandVer":	oTableLook.IsBandVer()
 		}
 	};
 
@@ -25185,12 +25185,13 @@
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/FromJSON.js
 	 */
 	ApiColor.prototype.FromJSON = function (jsonObject) {
-		if (!jsonObject || jsonObject.type !== 'color' || !jsonObject.color) {
+		if (!jsonObject || jsonObject['type'] !== 'color' || !jsonObject['color']) {
 			return null;
 		}
 
+		const color = jsonObject['color'];
 		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
-		const colorType = jsonObject.color.type;
+		const colorType = color['type'];
 		
 		if (typeof colorType !== 'string' || allowedTypes.indexOf(colorType) === -1) {
 			return null;
@@ -25200,11 +25201,11 @@
 			return new ApiColor('auto');
 		}
 
-		const value = jsonObject.color.value;
+		const value = color['value'];
 
 		if (colorType === 'theme') {
 			if (AscFormat.isRealNumber(value)) {
-				return new ApiColor('theme', value, jsonObject.color.tintAndShade);
+				return new ApiColor('theme', value, color['tintAndShade']);
 			}
 		}
 
@@ -25220,9 +25221,9 @@
 
 		if (colorType === 'rgb' || colorType === 'rgba') {
 			if (value && typeof value === 'object') {
-				const r = value.red;
-				const g = value.green;
-				const b = value.blue;
+				const r = value['red'];
+				const g = value['green'];
+				const b = value['blue'];
 
 				if (AscFormat.isRealNumber(r) && AscFormat.isRealNumber(g) && AscFormat.isRealNumber(b)) {
 
@@ -25232,7 +25233,7 @@
 					}
 
 					if (colorType === 'rgba') {
-						const a = value.alpha;
+						const a = value['alpha'];
 						if (AscFormat.isRealNumber(a)) {
 							const rgbaValue = ((r & 0xFF) << 24) | ((g & 0xFF) << 16) | ((b & 0xFF) << 8) | (a & 0xFF);
 							return new ApiColor('rgba', rgbaValue);
