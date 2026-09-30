@@ -652,6 +652,7 @@
 
 	/**
 	 * Creates a new custom function.
+	 *
 	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
 	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
@@ -760,6 +761,7 @@
 
 	/**
 	 * Registers a new custom functions library (see the <b>SetCustomFunctions</b> plugin method).
+	 *
 	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
 	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
@@ -3929,6 +3931,7 @@
 	};
 	/**
 	 * Calculates standard deviation based on the entire population, including logical values and text.
+	 *
 	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
@@ -6552,6 +6555,7 @@
 	};
 	/**
 	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance regardless of the sign of the number.
+	 *
 	 * The number is always rounded up regardless of its sign.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
@@ -7155,11 +7159,12 @@
 
 	/**
 	 * The match type.
-	 * * <b>-1</b> - The values must be sorted in descending order. If the exact match is not found, the function will return the smallest value that is greater than the searched value.
-	 * * <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the *#N/A* error.
-	 * * <b>1</b> (or omitted) - The values must be sorted in ascending order. If the exact match is not found, the function will return the largest value that is less than the searched value.
+	 *
+	 * - <b>-1</b> - The values must be sorted in descending order. If the exact match is not found, the function will return the smallest value that is greater than the searched value.
+	 * - <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the *#N/A* error.
+	 * - <b>1</b> (or omitted) - The values must be sorted in ascending order. If the exact match is not found, the function will return the largest value that is less than the searched value.
 	 * @typedef {("-1" | "0" | "1")} MatchType
-	 * */
+	 */
 
 	/**
 	 * Returns the relative position of an item in a range that matches the specified value in the specified order.
@@ -7216,15 +7221,16 @@
 
 	/**
 	 * The error value.
-	 * * <b>"#NULL!"</b> - 1
-	 * * <b>"#DIV/0!"</b> - 2
-	 * * <b>"#VALUE!"</b> - 3
-	 * * <b>"#REF!"</b> - 4
-	 * * <b>"#NAME?"</b> - 5
-	 * * <b>"#NUM!"</b> - 6
-	 * * <b>"#N/A"</b> - 7
-	 * * <b>"#GETTING_DATA"</b> - 8
-	 * * <b>"Other"</b> - "#N/A"
+	 *
+	 * - <b>"#NULL!"</b> - 1
+	 * - <b>"#DIV/0!"</b> - 2
+	 * - <b>"#VALUE!"</b> - 3
+	 * - <b>"#REF!"</b> - 4
+	 * - <b>"#NAME?"</b> - 5
+	 * - <b>"#NUM!"</b> - 6
+	 * - <b>"#N/A"</b> - 7
+	 * - <b>"#GETTING_DATA"</b> - 8
+	 * - <b>"Other"</b> - "#N/A"
 	 * @typedef {("#NULL!" | "#DIV/0!" | "#VALUE!" | "#REF!" | "#NAME?" | "#NUM!" | "#N/A" | "#GETTING_DATA")} ErrorValue
 	 * */
 
@@ -8165,6 +8171,7 @@
 
 	/**
 	 * Returns the core properties interface for the workbook.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof Api
 	 * @returns {ApiCore}
@@ -8721,6 +8728,7 @@
 
 	/**
 	 * Sets the width of the specified column.
+	 *
 	 * One unit of column width is equal to the width of one character in the Normal style.
 	 * For proportional fonts, the width of the character 0 (zero) is used.
 	 * @memberof ApiWorksheet
@@ -8762,6 +8770,7 @@
 
 	/**
 	 * Sets the height of the specified row measured in points.
+	 *
 	 * A point is 1/72 inch.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9734,6 +9743,7 @@
 
 	/**
 	 * Retrieves the custom XML manager associated with the current sheet.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -10568,6 +10578,7 @@
 	};
 	/**
 	 * Sets the width of all the columns in the current range.
+	 *
 	 * One unit of column width is equal to the width of one character in the Normal style.
 	 * For proportional fonts, the width of the character 0 (zero) is used.
 	 * @memberof ApiRange
@@ -10953,6 +10964,7 @@
 
 	/**
 	 * Sets the background color to the current cell range with the previously created color object.
+	 *
 	 * Sets 'No Fill' when previously created color object is null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -12994,6 +13006,7 @@
 
 	/**
 	 * Returns a Range object that represents a cell or a range of cells.
+	 *
 	 * When applied to a Range object, the property is relative to that Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -13226,6 +13239,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
@@ -23291,6 +23305,7 @@
 
 	/**
 	 * Sets the background color to the format condition with the previously created color object.
+	 *
 	 * Sets 'No Fill' when previously created color object is null.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
@@ -23611,6 +23626,7 @@
 
 	/**
 	 * Sets the background color to the format condition with the previously created color object.
+	 *
 	 * Sets 'No Fill' when previously created color object is null.
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]

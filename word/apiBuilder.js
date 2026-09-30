@@ -3090,6 +3090,7 @@
 
 	/**
 	 * Moves a cursor to a specified position of the current range object.
+	 *
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRange
 	 * @param {number} [nPos=0] - The desired cursor position.
@@ -4338,6 +4339,7 @@
 
 	/**
 	 * Form type.
+	 *
 	 * The available form types.
 	 * @typedef {"textForm" | "comboBoxForm" | "dropDownForm" | "checkBoxForm" | "radioButtonForm" | "pictureForm" | "complexForm" | "dateForm" | "signatureForm"} FormType
 	 * @see office-js-api/Examples/Enumerations/FormType.js
@@ -4686,6 +4688,7 @@
 	};
 	/**
 	 * Creates an element range.
+	 *
 	 * If you do not specify the start and end positions, the range will be taken from the entire element.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -7103,6 +7106,7 @@
 
 	/**
 	 * Returns the inner text of the current node and its child nodes.
+	 *
 	 * For example: `<text>123<one>4</one></text>` returns `"1234"`.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7244,6 +7248,7 @@
 
 	/**
 	 * Sets an attribute for the custom XML node.
+	 *
 	 * If the attribute already exists, it will not be modified.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7268,6 +7273,7 @@
 
 	/**
 	 * Updates the value of an existing attribute in the custom XML node.
+	 *
 	 * If the attribute doesn't exist, the update will not occur.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7291,6 +7297,7 @@
 
 	/**
 	 * Deletes an attribute from the custom XML node.
+	 *
 	 * If the attribute exists, it will be removed.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7313,6 +7320,7 @@
 
 	/**
 	 * Retrieves the attribute value from the custom XML node.
+	 *
 	 * If the attribute doesn't exist, it returns `false`.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -8228,6 +8236,7 @@
 	 */
 	/**
 	 * Returns the data from all forms present in the current document.
+	 *
 	 * If a form was created and not assigned to any part of the document, it won't appear in this list.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
@@ -10084,6 +10093,7 @@
 
 	/**
 	 * Moves a cursor to a specified position of the current document.
+	 *
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiDocument
 	 * @param {number} [nPos=0] - The desired cursor position.
@@ -10193,6 +10203,7 @@
 	
 	/**
 	 * Retrieves the custom XML manager associated with the document.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -10207,6 +10218,7 @@
 
 	/**
 	 * Retrieves the core properties interface for the current document.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof ApiDocument
 	 * @returns {ApiCore} - The core document properties object.
@@ -11015,6 +11027,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
+	 *
 	 * The paragraph must be attached to the document before calling this method.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
@@ -11465,6 +11478,7 @@
 	};
 	/**
 	 * Specifies the reading order for the current paragraph.
+	 *
 	 * Possible values are:
 	 *
 	 * - <b>null</b> - use the standart direction parameter;
@@ -12802,6 +12816,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified run.
+	 *
 	 * The run must be attached to the document before calling this method.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
@@ -13369,6 +13384,7 @@
 	
 	/**
 	 * Moves a cursor to a specified position of the current text run.
+	 *
 	 * If the current run is not assigned to any document part, then <b>false</b> is returned. Otherwise, this method returns <b>true</b>.
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRun
@@ -13420,6 +13436,7 @@
 
 	/**
 	 * The section break type which defines how the contents of the current section are placed relative to the previous section.
+	 *
 	 * WordprocessingML supports five distinct types of section breaks:
 	 *
 	 * - <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
@@ -13436,6 +13453,7 @@
 
 	/**
 	 * The coordinate value for the geometry paths.
+	 *
 	 * Can be a guide name from "gdLst", a numeric value, or a string representation of a number.
 	 * @typedef {string | number} GeometryCoordinate
 	 * @see office-js-api/Examples/Enumerations/GeometryCoordinate.js
@@ -14587,6 +14605,7 @@
 	};
 	/**
      * Sets the table paddings.
+     *
 	 * If table is inline, then only left padding is applied.
      * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
@@ -16484,6 +16503,7 @@
 
 	/**
 	 * Returns the font family from the current text properties.
+	 *
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
@@ -20251,6 +20271,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
@@ -20315,6 +20336,7 @@
 
 	/**
      * Sets the properties from another drawing to the current drawing.
+     *
 	 * The following properties will be copied: horizontal and vertical alignment, distance between the edges of the current drawing object and any subsequent text, wrapping style, drawing name, title and description.
      * @memberof ApiDrawing
      * @param {ApiDrawing} oAnotherDrawing - The drawing which properties will be set to the current drawing.
@@ -23816,6 +23838,7 @@
 
 	/**
 	 * Sets the placeholder text to the current inline content control.
+	 *
 	 * *Can't be set to checkbox or radio button*
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText - The text that will be set to the current inline content control.
@@ -24155,6 +24178,7 @@
 
 	/**
 	 * Sets the checkbox value for the content control.
+	 *
 	 * This method updates the checkbox state of the content control to either checked or unchecked.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -24197,6 +24221,7 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
+	 *
 	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -24211,6 +24236,7 @@
 
 	/**
 	 * Sets the size for the picture in a content control.
+	 *
 	 * This method adjusts the width and height of the image if the content control is a picture.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -24244,6 +24270,7 @@
 
 	/**
 	 * Sets the content (image) for the picture content control.
+	 *
 	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiInlineLvlSdt
@@ -24455,6 +24482,7 @@
 
 	/**
 	 * Sets the date format for the datepicker content control.
+	 *
 	 * This method allows setting the format in which the date should be displayed in the datepicker content control.
 	 * The format string should be specified using common date format patterns (e.g., "mm.dd.yyyy").
 	 * @memberof ApiInlineLvlSdt
@@ -25090,6 +25118,7 @@
 
 	/**
 	 * Sets the content (image) for the picture content control.
+	 *
 	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiBlockLvlSdt
@@ -25143,6 +25172,7 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
+	 *
 	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -26205,6 +26235,7 @@
 	};
 	/**
 	 * Converts the current form to an inline form.
+	 *
 	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -26455,6 +26486,7 @@
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
+	 *
 	 * The null value will be returned for the inline forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -26472,6 +26504,7 @@
     };
 	/**
 	 * Sets the placeholder text to the current form.
+	 *
 	 * *Can't be set to checkbox or radio button.*
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
@@ -26505,6 +26538,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
+	 *
 	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -26522,6 +26556,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
+	 *
 	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -26888,6 +26923,7 @@
 	};
 	/**
 	 * Specifies if the text field should be a comb of characters with the same cell width.
+	 *
 	 * The maximum number of characters must be set to a positive value.
 	 * @memberof ApiTextForm
 	 * @param {boolean} bComb - Defines if the text field is a comb of characters (true) or not (false).
@@ -27497,6 +27533,7 @@
 	};
 	/**
 	 * Sets the text to the current combo box.
+	 *
 	 * *Available only for editable combo box forms.*
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
@@ -27790,6 +27827,7 @@
 	});
 	/**
 	 * Returns the choice name of the currently selected radio button in the group.
+	 *
 	 * Returns an empty string if the current form is not a radio button or nothing is selected.
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
@@ -29207,6 +29245,7 @@
 
 	/**
 	 * Converts millimeters to English Metric Units (EMUs).
+	 *
 	 * The result is an integer value.
 	 *
 	 * @memberof Api

@@ -1008,6 +1008,7 @@
 
     /**
 	 * Checks for duplicate placeholders and sets indexes.
+	 *
      * Called when a placeholder is added to a shape.
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
@@ -1560,6 +1561,7 @@
     };
     /**
 	 * Removes a range of slides from the presentation.
+	 *
      * Deletes all the slides from the presentation if no parameters are specified.
 	 * @memberof ApiPresentation
      * @param {Number} [nStart=0] - The starting position for the deletion range.
@@ -1922,6 +1924,7 @@
 
 	/**
 	 * Returns the core properties interface for the current presentation.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof ApiPresentation
 	 * @returns {ApiCore}
@@ -2020,6 +2023,7 @@
 
     /**
 	 * Retrieves the custom XML manager associated with the presentation.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the presentation.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
@@ -2327,7 +2331,10 @@
 
 	/**
 	 * Deletes the specified object from the parent if it exists.
-	 * Note: Master can't be deleted if it's the last one in the presentation.
+	 *
+	 * :::note
+	 * Master can't be deleted if it's the last one in the presentation.
+	 * :::
 	 *
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
@@ -2379,6 +2386,7 @@
 
     /**
      * Sets a theme to the slide master.
+     *
      * Sets a copy of the theme object.
      * @memberof ApiMaster
      * @typeofeditors ["CPE"]
@@ -2741,6 +2749,7 @@
 
     /**
      * Creates a copy of the specified slide layout object.
+     *
      * Copies without master slide.
      * @memberof ApiLayout
      * @typeofeditors ["CPE"]
@@ -3883,6 +3892,7 @@
 
     /**
      * Applies the specified layout to the current slide.
+     *
      * The layout must be in slide master.
      * @memberof ApiSlide
      * @typeofeditors ["CPE"]
@@ -5004,6 +5014,7 @@
 
 	/**
 	 * Returns the transition speed (similar to PowerPoint VBA Speed property).
+	 *
 	 * Maps duration to speed based on OOXML spd attribute logic:
 	 *
 	 * - fast: duration <= 500ms
@@ -5024,6 +5035,7 @@
 
 	/**
 	 * Sets the transition speed (similar to PowerPoint VBA Speed property).
+	 *
 	 * Converts speed to duration based on standard values:
 	 *
 	 * - fast = 500ms
@@ -6437,6 +6449,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
@@ -6799,6 +6812,7 @@
 
 	/**
 	 * Sets a hyperlink to the current drawing object (shape or image).
+	 *
 	 * Pass null to remove the hyperlink.
 	 *
 	 * @memberof ApiDrawing

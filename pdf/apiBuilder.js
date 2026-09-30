@@ -173,6 +173,7 @@
 
 	/**
 	 * Axis-aligned rectangle difference represented as a tuple.
+	 *
 	 * Describes coordinate-wise deltas between two rectangles (B - A).
 	 *
 	 * Invariants:
@@ -233,6 +234,7 @@
 
 	/**
 	 * Quadrilateral represented as a flat tuple of vertices.
+	 *
 	 * Vertices order is fixed:
 	 *  · left-top → right-top → left-bottom → right-bottom
 	 *
@@ -268,6 +270,7 @@
 
 	/**
 	 * Degree defines an angle in degrees.
+	 *
 	 * Can be any finite number (positive or negative).
 	 *
 	 * @typedef {number} Degree
@@ -6226,6 +6229,7 @@
 	
 	/**
 	 * Specifies the reading order for the current paragraph.
+	 *
 	 * Possible values are:
 	 *
 	 * - <b>null</b> - use the standart direction parameter;
@@ -6385,6 +6389,7 @@
 
 	/**
 	 * Returns the font family from the current text properties.
+	 *
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
