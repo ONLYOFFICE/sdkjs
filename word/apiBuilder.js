@@ -3107,7 +3107,9 @@
 
 	/**
 	 * Adds a field to the specified range by the field instruction code.
-	 * <note> This method removes text within a range. </note>
+	 * :::note
+	 * This method removes text within a range.
+	 * :::
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sCode - The field instruction code.
@@ -4531,8 +4533,7 @@
 	 * Table of contents properties which specify whether to generate the table of contents from the outline levels or the specified styles.
 	 * @typedef {Object} TocBuildFromPr
 	 * @property {number} [OutlineLvls=9] - Maximum number of levels in the table of contents.
-	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
-	 * <note>If StylesLvls.length > 0, then the OutlineLvls property will be ignored.</note>
+	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]). If <em>StylesLvls.length</em> is greater than 0, the <em>OutlineLvls</em> property is ignored.
 	 * @see office-js-api/Examples/Enumerations/TocBuildFromPr.js
 	 */
 
@@ -6263,8 +6264,10 @@
 	};
 	/**
 	 * Removes all the elements from the current document or from the current document element.
-	 * <note>When all elements are removed, a new empty paragraph is automatically created. If you want to add
-	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.</note>
+	 * :::note
+	 * When all elements are removed, a new empty paragraph is automatically created. If you want to add
+	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.
+	 * :::
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
@@ -8455,8 +8458,10 @@
 	};
 	/**
 	 * Returns a collection of tables on a given absolute page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nPage - The page index.
@@ -8479,8 +8484,10 @@
 	};
 	/**
 	 * Adds a drawing to the specified page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiDrawing} oDrawing - A drawing to add to the page.
@@ -9424,7 +9431,9 @@
 
 	/**
 	 * Adds a table of content to the current document.
-	 * <note>Please note that the new table of contents replaces the existing table of contents.</note>
+	 * :::note
+	 * The new table of contents replaces the existing table of contents.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {TocPr} [oTocPr={}] - Table of contents properties.
@@ -9528,8 +9537,7 @@
 	 * Adds a table of figures to the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
-	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
+	 * @param {TofPr} [oTofPr={}] - Table of figures properties. Undefined properties are filled with the default values.
 	 * @param {boolean} [bReplace=true] - Specifies whether to replace the selected table of figures instead of adding a new one.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
@@ -9689,8 +9697,10 @@
 	};
 	/**
 	 * Returns a number of pages in the current document.
-	 * <note>This method can be slow for large documents because it runs the document calculation
-	 * process before the full recalculation.</note>
+	 * :::note
+	 * This method can be slow for large documents because it runs the document calculation
+	 * process before the full recalculation.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @return {number}
@@ -10662,9 +10672,11 @@
 	};
 	/**
 	 * Removes an element using the position specified.
-	 * <note>If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
+	 * :::note
+	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
      * a new empty run is automatically created. If you want to add
-	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The element position which we want to remove from the paragraph.
@@ -10682,8 +10694,10 @@
 	};
 	/**
 	 * Removes all the elements from the current paragraph.
-	 * <note>When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
-	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
+	 * :::note
+	 * When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
@@ -10873,7 +10887,9 @@
 	};
 	/**
 	 * Adds a comment to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -11841,7 +11857,9 @@
 
 	/**
 	 * Adds a numbered cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {numberedRefTo} sRefType - The text or numeric value of a numbered reference you want to insert.
@@ -11907,7 +11925,9 @@
 
 	/**
 	 * Adds a heading cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {headingRefTo} sRefType - The text or numeric value of a heading reference you want to insert.
@@ -11964,7 +11984,9 @@
 
 	/**
 	 * Adds a bookmark cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {bookmarkRefTo} sRefTo - The text or numeric value of a bookmark reference you want to insert.
@@ -12027,7 +12049,9 @@
 
 	/**
 	 * Adds a footnote cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {footnoteRefTo} sRefType - The text or numeric value of a footnote reference you want to insert.
@@ -12084,7 +12108,9 @@
 
 	/**
 	 * Adds an endnote cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {endnoteRefTo} sRefType - The text or numeric value of an endnote reference you want to insert.
@@ -12141,7 +12167,9 @@
 
 	/**
 	 * Adds a caption cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {CaptionLabel | string} sCaption - The caption label ("Equation", "Figure", "Table", or another caption label).
@@ -12269,8 +12297,10 @@
 
 	/**
      * Adds a caption paragraph after (or before) the current paragraph.
-	 * <note>Please note that the current paragraph must be in the document (not in the footer/header).
-	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 * :::note
+	 * The current paragraph must be in the document (not in the footer/header).
+	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
      * @param {string} sAdditional - The additional text.
@@ -12278,8 +12308,7 @@
 	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current paragraph (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddCaption.js
@@ -13227,7 +13256,9 @@
 
 	/**
 	 * Adds a comment to the current run.
-	 * <note>Please note that this run must be in the document.</note>
+	 * :::note
+	 * This run must be in the document.
+	 * :::
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -14058,7 +14089,9 @@
 	};
 	/**
 	 * Merges an array of cells. If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
-	 * <note>The number of cells in any row and the number of rows in the current table may be changed.</note>
+	 * :::note
+	 * The number of cells in any row and the number of rows in the current table may be changed.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell[]} aCells - The array of cells to be merged.
@@ -14840,7 +14873,9 @@
 
 	/**
 	 * Adds a comment to all contents of the current table.
-	 * <note>Please note that this table must be in the document.</note>
+	 * :::note
+	 * This table must be in the document.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -14878,8 +14913,10 @@
 
 	/**
      * Adds a caption paragraph after (or before) the current table.
-	 * <note>Please note that the current table must be in the document (not in the footer/header).
-	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 * :::note
+	 * The current table must be in the document (not in the footer/header).
+	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
      * @memberof ApiTable
      * @typeofeditors ["CDE"]
      * @param {string} sAdditional - The additional text.
@@ -14887,8 +14924,7 @@
 	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current table (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddCaption.js
@@ -16201,8 +16237,10 @@
 	};
 	/**
 	 * The text style base method.
-	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
-	 * the selected or created style to the text.</note>
+	 * :::note
+	 * This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
+	 * the selected or created style to the text.
+	 * :::
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStyle} oStyle - The style which must be applied to the text character.
@@ -17058,7 +17096,9 @@
 	};
 	/**
 	 * The paragraph style base method.
-	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.</note>
+	 * :::note
+	 * This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStyle} oStyle - The style of the paragraph to be set.
@@ -17570,8 +17610,10 @@
 	};
 	/**
 	 * Specifies the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added
-	 * to the whole block rather than to every paragraph in this block.</note>
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added
+	 * to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The border style.
@@ -17668,7 +17710,9 @@
 	};
 	/**
 	 * Specifies the border which will be displayed above a set of paragraphs which have the same set of paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.</note>
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {BorderType} sType - The border style.
@@ -18044,7 +18088,9 @@
 	};
 	/**
 	 * Returns the text properties which will be applied to the text in the current numbering level itself, not to the text in the subsequent paragraph.
-	 * <note>To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.</note>
+	 * :::note
+	 * To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.
+	 * :::
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTextPr}
@@ -18547,7 +18593,9 @@
 	};
 	/**
 	 * Sets the preferred width to the current table.
-	 * <note>Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.</note>
+	 * :::note
+	 * Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.
+	 * :::
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {TableWidth} sType - Type of the width value from one of the available width values types.
@@ -23687,7 +23735,9 @@
 
 	/**
 	 * Adds a comment to the current inline content control.
-	 * <note>Please note that this inline content control must be in the document.</note>
+	 * :::note
+	 * This inline content control must be in the document.
+	 * :::
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -25117,8 +25167,10 @@
 
 	/**
 	 * Returns a collection of tables on a given absolute page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param page - Page number. If it is not specified, an empty array will be returned.
@@ -25538,7 +25590,9 @@
 
 	/**
 	 * Adds a comment to the current block content control.
-	 * <note>Please note that the current block content control must be in the document.</note>
+	 * :::note
+	 * The current block content control must be in the document.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} text - The comment text.
@@ -25576,8 +25630,10 @@
 	
 	/**
 	 * Adds a caption paragraph after (or before) the current content control.
-	 * <note>Please note that the current content control must be in the document (not in the footer/header).
-	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 * :::note
+	 * The current content control must be in the document (not in the footer/header).
+	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} additionalText - The additional text.
@@ -25585,8 +25641,7 @@
 	 * @param {boolean} [excludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [numFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [isBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [headingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [headingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [captionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddCaption.js
