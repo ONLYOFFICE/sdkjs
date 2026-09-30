@@ -1811,7 +1811,9 @@
 	};
 
 	/**
-	 * Returns a new range that goes beyond the specified range in any direction and spans a different range. The current range has not changed.
+	 * Returns a new range that goes beyond the specified range in any direction and spans a different range.
+	 *
+	 * The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be expanded.
@@ -1838,7 +1840,9 @@
 	};
 
 	/**
-	 * Returns a new range as the intersection of the current range with another range. The current range has not changed.
+	 * Returns a new range as the intersection of the current range with another range.
+	 *
+	 * The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be intersected with the current range.
@@ -5103,7 +5107,9 @@
 	}
 
 	/**
-	 * Creates an ApiColor from a universal input. The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
+	 * Creates an ApiColor from a universal input.
+	 *
+	 * The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
 	 *
 	 * - <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
 	 * - <b>Packed integer</b>: "Api.Color(0xRRGGBB)" creates an RGB color from a 24-bit integer.
@@ -6617,7 +6623,9 @@
 		return (docContent === this.Document && docContent.IsEndnote());
 	};
 	/**
-	 * Select the reference to this footnote/endnote. If this document content is not a footnote/endnote, do nothing.
+	 * Selects the reference to this footnote/endnote.
+	 *
+	 * If this document content is not a footnote/endnote, do nothing.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @since 9.3.0
@@ -6633,7 +6641,9 @@
 		return ref && ref.SelectThisElement();
 	};
 	/**
-	 * Moves the cursor to the reference of this footnote/endnote in the main document. If this document content is not a footnote/endnote, does nothing.
+	 * Moves the cursor to the reference of this footnote/endnote in the main document.
+	 *
+	 * If this document content is not a footnote/endnote, does nothing.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @since 9.4.0
@@ -7363,7 +7373,9 @@
 		return new ApiStyle(styles.Get(styleId));
 	};
 	/**
-	 * Creates a new style with the specified type and name. If a style with the specified name already exists, it will be returned without creating a new one.
+	 * Creates a new style with the specified type and name.
+	 *
+	 * If a style with the specified name already exists, it will be returned without creating a new one.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} styleName - The name of the style which will be created.
@@ -7458,7 +7470,9 @@
 		return new ApiSection(this.Document.SectPr);
 	};
 	/**
-	 * Creates a new document section which ends at the specified paragraph. Allows to set local parameters to the current
+	 * Creates a new document section which ends at the specified paragraph.
+	 *
+	 * Allows to set local parameters to the current
 	 * section - page size, footer, header, columns, etc.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -8110,7 +8124,9 @@
 		return Object.keys(keys);
 	};
 	/**
-	 * Returns the form value for the specified key. For a group of radio buttons returns Choice, i.e. the name of the selected item.
+	 * Returns the form value for the specified key.
+	 *
+	 * For a group of radio buttons returns Choice, i.e. the name of the selected item.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param key {string} - The form key.
@@ -8546,7 +8562,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a document object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - Search string.
@@ -10597,7 +10615,9 @@
 		return new ApiRun(oRun);
 	};
 	/**
-	 * Returns the text properties of the paragraph mark which is used to mark the paragraph end. The mark can also acquire
+	 * Returns the text properties of the paragraph mark which is used to mark the paragraph end.
+	 *
+	 * The mark can also acquire
 	 * common text properties like bold, italic, underline, etc.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
@@ -10794,7 +10814,9 @@
         return null;
 	};
 	/**
-	 * Creates a paragraph copy. Ingnore comments, footnote references, complex fields.
+	 * Creates a paragraph copy.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiParagraph}
@@ -11807,7 +11829,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a paragraph object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a paragraph object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - Search string.
@@ -13418,7 +13442,9 @@
 	 */
 
 	/**
-	 * Specifies a type of the current section. The section type defines how the contents of the current 
+	 * Specifies a type of the current section.
+	 *
+	 * The section type defines how the contents of the current
 	 * section are placed relative to the previous section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -13495,7 +13521,9 @@
 		return true;
 	};
 	/**
-	 * Specifies that all the columns in the current section have the different widths. Number of columns is equal 
+	 * Specifies that all the columns in the current section have the different widths.
+	 *
+	 * Number of columns is equal
 	 * to the length of the aWidth array. The length of the aSpaces array MUST BE equal to (aWidth.length - 1).
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -13768,7 +13796,9 @@
 		return new ApiDocumentContent(oHeader.Get_DocumentContent());
 	};
 	/**
-	 * Removes the header of the specified type from the current section. After removal, the header will be inherited from
+	 * Removes the header of the specified type from the current section.
+	 *
+	 * After removal, the header will be inherited from
 	 * the previous section, or if this is the first section in the document, no header of the specified type will be presented.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -13830,7 +13860,9 @@
 		return null;
 	};
 	/**
-	 * Removes the footer of the specified type from the current section. After removal, the footer will be inherited from 
+	 * Removes the footer of the specified type from the current section.
+	 *
+	 * After removal, the footer will be inherited from
 	 * the previous section, or if this is the first section in the document, no footer of the specified type will be presented.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -13975,7 +14007,9 @@
 		return this.Section.GetPageNumStart();
 	};
 	/**
-	 * Specifies the page margins for all the pages in this section. Alias for {@link ApiSection#SetPageMargins}.
+	 * Specifies the page margins for all the pages in this section.
+	 *
+	 * Alias for {@link ApiSection#SetPageMargins}.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} left - The left margin width measured in twentieths of a point (1/1440 of an inch).
@@ -14117,7 +14151,9 @@
 		return new ApiTableCell(row.GetCell(cellIndex));
 	};
 	/**
-	 * Merges an array of cells. If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
+	 * Merges an array of cells.
+	 *
+	 * If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
 	 *
 	 * :::note
 	 * The number of cells in any row and the number of rows in the current table may be changed.
@@ -14749,7 +14785,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a table object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - Search string.
@@ -15322,7 +15360,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a table row object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table row object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - Search string.
@@ -15588,7 +15628,9 @@
 		return oTable.RemoveRow(this);
 	};
 	/**
-	 * Searches for a scope of a table cell object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table cell object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - Search string.
@@ -17384,7 +17426,9 @@
 		return this.GetEffectiveParaPr().PageBreakBefore;
 	};
 	/**
-	 * Sets the paragraph line spacing. If the value of the sLineRule parameter is either 
+	 * Sets the paragraph line spacing.
+	 *
+	 * If the value of the sLineRule parameter is either
 	 * "atLeast" or "exact", then the value of nLine will be interpreted as twentieths of a point. If 
 	 * the value of the sLineRule parameter is "auto", then the value of the 
 	 * nLine parameter will be interpreted as 240ths of a line.
@@ -17477,7 +17521,9 @@
 		return spacing ? GetRule(spacing.LineRule) : undefined;
 	};
 	/**
-	 * Sets the spacing before the current paragraph. If the value of the isBeforeAuto parameter is true, then 
+	 * Sets the spacing before the current paragraph.
+	 *
+	 * If the value of the isBeforeAuto parameter is true, then
 	 * any value of the nBefore is ignored. If isBeforeAuto parameter is not specified, then 
 	 * it will be interpreted as false.
 	 * @memberof ApiParaPr
@@ -17511,7 +17557,9 @@
 		return undefined !== before ? private_MM2Twips(before) : undefined;
 	};
 	/**
-	 * Sets the spacing after the current paragraph. If the value of the isAfterAuto parameter is true, then 
+	 * Sets the spacing after the current paragraph.
+	 *
+	 * If the value of the isAfterAuto parameter is true, then
 	 * any value of the nAfter is ignored. If isAfterAuto parameter is not specified, then it 
 	 * will be interpreted as false.
 	 * @memberof ApiParaPr
@@ -18242,7 +18290,9 @@
 		return true;
 	};
 	/**
-	 * Specifies a one-based index which determines when a numbering level should restart to its starting value. A numbering level restarts when an instance of the specified numbering level which is higher (earlier than this level) is used in the given document contents. By default this value is true.
+	 * Specifies a one-based index which determines when a numbering level should restart to its starting value.
+	 *
+	 * A numbering level restarts when an instance of the specified numbering level which is higher (earlier than this level) is used in the given document contents. By default this value is true.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isRestart - The true value means that a numbering level will be restarted to its starting value.
@@ -18255,7 +18305,9 @@
 		return true;
 	};
 	/**
-	 * Specifies the starting value for the numbering used by the parent numbering level within a given numbering level definition. By default this value is 1.
+	 * Specifies the starting value for the numbering used by the parent numbering level within a given numbering level definition.
+	 *
+	 * By default this value is 1.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nStart - The starting value for the numbering used by the parent numbering level.
@@ -18268,7 +18320,9 @@
 		return true;
 	};
 	/**
-	 * Specifies the content which will be added between the given numbering level text and the text of every numbered paragraph which references that numbering level. By default this value is "tab".
+	 * Specifies the content which will be added between the given numbering level text and the text of every numbered paragraph which references that numbering level.
+	 *
+	 * By default this value is "tab".
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {("space" | "tab" | "none")} sType - The content added between the numbering level text and the text in the numbered paragraph.
@@ -19105,7 +19159,9 @@
 		return true;
 	};
 	/**
-	 * Specifies how the current table cell is laid out when the parent table is displayed in a document. This setting
+	 * Specifies how the current table cell is laid out when the parent table is displayed in a document.
+	 *
+	 * This setting
 	 * only affects the behavior of the cell when the {@link ApiTablePr#SetTableLayout} table layout for this table is set to use the <code>"autofit"</code> algorithm.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
@@ -19408,7 +19464,9 @@
 		return true;
 	};
 	/**
-	 * Sets the wrapping type of the current object (image, shape, chart). One of the following wrapping style types can be set:
+	 * Sets the wrapping type of the current object (image, shape, chart).
+	 *
+	 * One of the following wrapping style types can be set:
 	 *
 	 * - <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
 	 *
@@ -21962,7 +22020,9 @@
 	};
 
 	/**
-	 * Sets the x-axis values to all chart series. It is used with the scatter charts only.
+	 * Sets the x-axis values to all chart series.
+	 *
+	 * It is used with the scatter charts only.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {string[]} aValues - The array of the data which will be set to the x-axis data points.
@@ -22364,7 +22424,9 @@
 	};
 
 	/**
-	 * Tries to change the series type. Returns true if successful.
+	 * Tries to change the series type.
+	 *
+	 * Returns true if successful.
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ChartType} sType - Chart type.
@@ -23359,7 +23421,9 @@
 	};
 
 	/**
-	 * Returns a number of elements in the current inline text content control. The text content 
+	 * Returns a number of elements in the current inline text content control.
+	 *
+	 * The text content
      * control is created with one text run present in it by default, so even without any 
      * element added this method will return the value of '1'.
 	 * @memberof ApiInlineLvlSdt
@@ -23540,7 +23604,9 @@
 	};
 
 	/**
-	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
+	 * Removes a content control and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
@@ -23696,7 +23762,9 @@
 	};
 
 	/**
-	 * Creates a copy of an inline content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of an inline content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiInlineLvlSdt}
@@ -25254,7 +25322,9 @@
 	};
 
 	/**
-	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
+	 * Removes a content control and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
@@ -25494,7 +25564,9 @@
 	};
 	
 	/**
-	 * Creates a copy of a block content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of a block content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt}
@@ -25513,7 +25585,9 @@
 		return new ApiBlockLvlSdt(oBlockSdt);
 	};
 	/**
-	 * Searches for a scope of a content control object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a content control object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} text - Search string.
@@ -25803,7 +25877,9 @@
 	};
 
 	/**
-	 * Creates a copy of an block content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of a block content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt}
@@ -26564,7 +26640,9 @@
 	};
 	
 	/**
-	 * Removes a form and its content. If keepContent is true, the content is not deleted.
+	 * Removes a form and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @since 9.2.0
@@ -26907,7 +26985,9 @@
 		return this.Sdt.GetTextFormPr().GetFormatSymbols();
 	};
 	/**
-	 * Sets the allowed symbols for the current text field. Only the specified characters will be accepted as input.
+	 * Sets the allowed symbols for the current text field.
+	 *
+	 * Only the specified characters will be accepted as input.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {string} symbols - A string of allowed characters.
@@ -27442,7 +27522,9 @@
 		}, this);
 	};
 	/**
-	 * Checks if the combo box text can be edited. If it is not editable, then this form is a drop-down list.
+	 * Checks if the combo box text can be edited.
+	 *
+	 * If it is not editable, then this form is a drop-down list.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -27465,7 +27547,9 @@
 		return this.Sdt.GetInnerText();
 	};
 	/**
-	 * Sets the value of the combo box form. Selects a list item if the value matches one,
+	 * Sets the value of the combo box form.
+	 *
+	 * Selects a list item if the value matches one,
 	 * otherwise sets it as free text (only for editable combo boxes).
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
@@ -29147,7 +29231,9 @@
 
 
 	/**
-	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
+	 * Compares the current document with another document opened via builderJS.OpenTmpFile.
+	 *
+	 * Tracked changes between the two documents are produced in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
@@ -29158,7 +29244,9 @@
 	};
 
 	/**
-	 * Merges the current document with another document opened via builderJS.OpenTmpFile. Its contents are merged into the current document.
+	 * Merges the current document with another document opened via builderJS.OpenTmpFile.
+	 *
+	 * Its contents are merged into the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
@@ -29187,7 +29275,9 @@
 	};
 	
 	/**
-	 * Returns the current comment ID. If the comment doesn't have an ID, null is returned.
+	 * Returns the current comment ID.
+	 *
+	 * If the comment doesn't have an ID, null is returned.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {?string}

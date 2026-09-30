@@ -1366,7 +1366,9 @@
 	 */
 
 	/**
-     * Returns the image data from the first of the selected drawings. If there are no drawings selected, the method returns a white rectangle.
+     * Returns the image data from the first of the selected drawings.
+     *
+     * If there are no drawings selected, the method returns a white rectangle.
      * @memberof Api
      * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
      * @alias GetImageDataFromSelection

@@ -42,7 +42,9 @@ window.startPluginApi = function() {
 	 */
 
 	/**
-	 * Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
+	 * Translations for the text field.
+	 *
+	 * The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 * Example: { "en" : "name", "ru" : "имя" }
 	 * @typedef { Object.<string, string> } localeTranslate
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/localeTranslate.js

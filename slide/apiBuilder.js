@@ -7394,7 +7394,9 @@
     };
 
     /**
-     * Merges an array of cells. If merge is successful, it will return merged cell, otherwise "null".
+     * Merges an array of cells.
+     *
+     * If merge is successful, it will return merged cell, otherwise "null".
      * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
      * @memberof ApiTable
      * @typeofeditors ["CPE"]

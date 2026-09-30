@@ -797,7 +797,9 @@
 	};
 
 	/**
-	 * Creates a new worksheet. The new worksheet becomes the active sheet.
+	 * Creates a new worksheet.
+	 *
+	 * The new worksheet becomes the active sheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name of a new worksheet.
@@ -974,7 +976,9 @@
 	};
 
 	/**
-	 * Returns the ApiRange object that represents the rectangular intersection of two or more ranges. If one or more ranges from a different worksheet are specified, an error will be returned.
+	 * Returns the ApiRange object that represents the rectangular intersection of two or more ranges.
+	 *
+	 * If one or more ranges from a different worksheet are specified, an error will be returned.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range1 - One of the intersecting ranges. At least two Range objects must be specified.
@@ -2104,7 +2108,9 @@
 		return this.private_calculateFunction("REPLACEB", arguments);
 	};
 	/**
-	 * Repeats text a given number of times. Use this function to fill a cell with a number of instances of a text string.
+	 * Repeats text a given number of times.
+	 *
+	 * Use this function to fill a cell with a number of instances of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text that will be repeated.
@@ -3214,7 +3220,9 @@
 		return this.private_calculateFunction("KURT", arguments);
 	};
 	/**
-	 * Returns the k-th largest value in a data set. For example, the fifth largest number.
+	 * Returns the k-th largest value in a data set.
+	 *
+	 * For example, the fifth largest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - The array or range of data for which the k-th largest value will be determined.
@@ -3831,7 +3839,9 @@
 	// 	return this.private_calculateFunction("SLOPE", arguments);
 	// };
 	/**
-	 * Returns the k-th smallest value in a data set. For example, the fifth smallest number.
+	 * Returns the k-th smallest value in a data set.
+	 *
+	 * For example, the fifth smallest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - An array or range of numerical data for which the k-th smallest value will be determined.
@@ -3880,7 +3890,9 @@
 		return this.private_calculateFunction("STDEV.S", arguments);
 	};
 	/**
-	 * Estimates standard deviation based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
+	 * Estimates standard deviation based on a sample, including logical values and text.
+	 *
+	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number[] | number | string | boolean | ApiRange | ApiName} args - Up to 255 values for which the standard deviation will be calculated.
@@ -4096,7 +4108,9 @@
 		return this.private_calculateFunction("VAR", arguments);
 	};
 	/**
-	 * Estimates variance based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
+	 * Estimates variance based on a sample, including logical values and text.
+	 *
+	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values for which the variance will be calculated.
@@ -4144,7 +4158,9 @@
 		return this.private_calculateFunction("VAR.S", arguments);
 	};
 	/**
-	 * Calculates variance based on the entire population, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
+	 * Calculates variance based on the entire population, including logical values and text.
+	 *
+	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values for which the variance will be calculated.
@@ -4407,7 +4423,9 @@
 		return this.private_calculateFunction("TIME", arguments);
 	};
 	/**
-	 * Converts a text time to a serial number for a time, a number from 0 (12:00:00 AM) to 0.999988426 (11:59:59 PM). Format the number with a time format after entering the formula.
+	 * Converts a text time to a serial number for a time, a number from 0 (12:00:00 AM) to 0.999988426 (11:59:59 PM).
+	 *
+	 * Format the number with a time format after entering the formula.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - A text string that represents a time in one of the time formats (date information in the string is ignored).
@@ -4710,7 +4728,9 @@
 		return this.private_calculateFunction("DEC2OCT", arguments);
 	};
 	/**
-	 * Tests whether two numbers are equal. The function returns 1 if the numbers are equal and 0 otherwise.
+	 * Tests whether two numbers are equal.
+	 *
+	 * The function returns 1 if the numbers are equal and 0 otherwise.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The first number.
@@ -4767,7 +4787,9 @@
 		return this.private_calculateFunction("ERFC.PRECISE", arguments);
 	};
 	/**
-	 * Tests whether a number is greater than a threshold value. The function returns 1 if the number is greater than or equal to the threshold value and 0 otherwise.
+	 * Tests whether a number is greater than a threshold value.
+	 *
+	 * The function returns 1 if the number is greater than or equal to the threshold value and 0 otherwise.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The value to test against step.
@@ -5898,7 +5920,9 @@
 		return this.private_calculateFunction("PV", arguments);
 	};
 	/**
-	 * Returns the interest rate per period for a loan or an investment. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * Returns the interest rate per period for a loan or an investment.
+	 *
+	 * For example, use 6%/4 for quarterly payments at 6% APR.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The total number of payment periods for the loan or investment.
@@ -6069,7 +6093,9 @@
 		return this.private_calculateFunction("YIELD", arguments);
 	};
 	/**
-	 * Returns the annual yield for a discounted security. For example, a Treasury bill.
+	 * Returns the annual yield for a discounted security.
+	 *
+	 * For example, a Treasury bill.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
@@ -6111,7 +6137,9 @@
 		return this.private_calculateFunction("ABS", arguments);
 	};
 	/**
-	 * Returns the arccosine of a number, in radians in the range from 0 to Pi. The arccosine is the angle whose cosine is a number specified in the parameters.
+	 * Returns the arccosine of a number, in radians in the range from 0 to Pi.
+	 *
+	 * The arccosine is the angle whose cosine is a number specified in the parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The angle cosine. It must be from -1 to 1.
@@ -6280,7 +6308,7 @@
 		return this.private_calculateFunction("CEILING.MATH", arguments);
 	};
 	/**
-	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance. The number is always rounded up regardless of its sing.
+	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance. The number is always rounded up regardless of its sign.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The value to round up.
@@ -6428,7 +6456,9 @@
 		return this.private_calculateFunction("EVEN", arguments);
 	};
 	/**
-	 * Returns the <b>e</b> constant raised to the power of a given number. The <b>e</b> constant is equal to <b>2.71828182845904</b>, the base of the natural logarithm.
+	 * Returns the <b>e</b> constant raised to the power of a given number.
+	 *
+	 * The <b>e</b> constant is equal to <b>2.71828182845904</b>, the base of the natural logarithm.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The exponent applied to the base <b>e</b>.
@@ -6522,7 +6552,7 @@
 	};
 	/**
 	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance regardless of the sign of the number.
-	 * The number is always rounded up regardless of its sing.
+	 * The number is always rounded up regardless of its sign.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The numeric value to round up.
@@ -7108,7 +7138,9 @@
 		return this.private_calculateFunction("INDEX", arguments);
 	};
 	/**
-	 * Looks up a value either from a one-row or one-column range. Provided for backwards compatibility.
+	 * Looks up a value either from a one-row or one-column range.
+	 *
+	 * Provided for backwards compatibility.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | ApiName} arg1 - A value that is searched for in the first vector. It can be a number, text, a logical value, or a name or reference to a value.
@@ -7165,7 +7197,9 @@
 		return this.private_calculateFunction("TRANSPOSE", arguments);
 	};
 	/**
-	 * Looks for a value in the leftmost column of a table and then returns a value in the same row from the specified column. By default, the table must be sorted in an ascending order.
+	 * Looks for a value in the leftmost column of a table and then returns a value in the same row from the specified column.
+	 *
+	 * By default, the table must be sorted in an ascending order.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | ApiName} arg1 - The value to be found in the first column of the table. It can be a value, a reference, or a text string.
@@ -7458,7 +7492,9 @@
 		return this.private_calculateFunction("NOT", arguments);
 	};
 	/**
-	 * Checks whether any of the arguments are <b>true</b>. Returns <b>false</b> only if all arguments are <b>false</b>.
+	 * Checks whether any of the arguments are <b>true</b>.
+	 *
+	 * Returns <b>false</b> only if all arguments are <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | ApiName | boolean} args - A condition to check.
@@ -7479,7 +7515,9 @@
 		return this.private_calculateFunction("TRUE", arguments);
 	};
 	/**
-	 * Returns the logical <b>Exclusive Or</b> value of all arguments. The function returns <b>true</b> when the number of <b>true</b> inputs is odd and <b>false</b> when the number of <b>true</b> inputs is even.
+	 * Returns the logical <b>Exclusive Or</b> value of all arguments.
+	 *
+	 * The function returns <b>true</b> when the number of <b>true</b> inputs is odd and <b>false</b> when the number of <b>true</b> inputs is even.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | boolean | boolean[]} args - The conditions to check.
@@ -8604,7 +8642,9 @@
 	});
 
 	/**
-	 * Returns an object that represents the selected range of the current sheet. Can be a single cell - <b>A1</b>, or cells
+	 * Returns an object that represents the selected range of the current sheet.
+	 *
+	 * Can be a single cell - <b>A1</b>, or cells
 	 * from a single row - <b>A1:E1</b>, or cells from a single column - <b>A1:A10</b>, or cells from several rows and columns - <b>A1:E10</b>.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9876,7 +9916,9 @@
     };
 
 	/**
-	 * Returns a Range object that represents the rows in the specified range. If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
+	 * Returns a Range object that represents the rows in the specified range.
+	 *
+	 * If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The row number (starts counting from 1, the 0 value returns an error).
@@ -10454,7 +10496,9 @@
 	});
 
 	/**
-	 * Returns the value hiding property. The specified range must span an entire column or row.
+	 * Returns the value hiding property.
+	 *
+	 * The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - returns true if the values in the range specified are hidden.
@@ -10476,7 +10520,9 @@
 		}
 	};
 	/**
-	 * Sets the value hiding property. The specified range must span an entire column or row.
+	 * Sets the value hiding property.
+	 *
+	 * The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isHidden - Specifies if the values in the current range are hidden or not.
@@ -10922,7 +10968,9 @@
 		return true;
 	};
 	/**
-	 * Returns the background color for the current cell range. Returns 'No Fill' when the color of the background in the cell / cell range is null.
+	 * Returns the background color for the current cell range.
+	 *
+	 * Returns 'No Fill' when the color of the background in the cell / cell range is null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - return 'No Fill' when the color to the background in the cell / cell range is null.
@@ -11158,7 +11206,9 @@
 	};
 
 	/**
-	 * Returns the Worksheet object that represents the worksheet containing the specified range. It will be available in the read-only mode.
+	 * Returns the Worksheet object that represents the worksheet containing the specified range.
+	 *
+	 * It will be available in the read-only mode.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet}
@@ -11874,7 +11924,9 @@
 	};
 
 	/**
-	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the next cell that matches those same conditions and returns the ApiRange object that represents that cell. This does not affect the selection or the active cell.
+	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the next cell that matches those same conditions and returns the ApiRange object that represents that cell.
+	 *
+	 * This does not affect the selection or the active cell.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} After - The cell after which the search will start. If this argument is not specified, the search starts from the last cell found.
@@ -11916,7 +11968,9 @@
 	};
 
 	/**
-	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the previous cell that matches those same conditions and returns the ApiRange object that represents that cell. This does not affect the selection or the active cell.
+	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the previous cell that matches those same conditions and returns the ApiRange object that represents that cell.
+	 *
+	 * This does not affect the selection or the active cell.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Before - The cell before which the search will start. If this argument is not specified, the search starts from the last cell found.
@@ -12029,7 +12083,9 @@
 	};
 
 	/**
-	 * Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
+	 * Returns the ApiCharacters object that represents a range of characters within the object text.
+	 *
+	 * Use the ApiCharacters object to format characters within a text string.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Start - The first character to be returned. If this argument is either 1 or omitted, this property returns a range of characters starting with the first character.
@@ -13010,7 +13066,9 @@
 		}
 	});
 	/**
-	 * Returns the data validation object associated with this range. If no validation object exists yet, it will be created.
+	 * Returns the data validation object associated with this range.
+	 *
+	 * If no validation object exists yet, it will be created.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiValidation}
@@ -13800,7 +13858,9 @@
 	};
 
 	/**
-	 * Sets the x-axis values from the specified range to the specified series. It is used with the scatter charts only.
+	 * Sets the x-axis values from the specified range to the specified series.
+	 *
+	 * It is used with the scatter charts only.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - A range of cells from the sheet with series x-axis values. For example:
@@ -16025,7 +16085,9 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to the cells that will be frozen in the top- and left-most pane.
+	 * Sets the frozen cells in the active worksheet view.
+	 *
+	 * The range provided corresponds to the cells that will be frozen in the top- and left-most pane.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen.
@@ -19566,7 +19628,9 @@
 	 */
 
 	/**
-	 * Adds a new filter to the pivot field. This method is VBA-compatible and follows the PivotFilters.Add signature from Excel VBA.
+	 * Adds a new filter to the pivot field.
+	 *
+	 * This method is VBA-compatible and follows the PivotFilters.Add signature from Excel VBA.
 	 * Supports all major filter types including label filters, value filters, top/bottom filters, and date filters.
 	 * @memberof ApiPivotFilters
 	 * @typeofeditors ["CSE"]
@@ -23253,7 +23317,9 @@
 	};
 
 	/**
-	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
+	 * Returns the background color for the format condition.
+	 *
+	 * Returns 'No Fill' when the background color of the format condition is null.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
@@ -23532,7 +23598,9 @@
 	ApiAboveAverage.prototype.SetNumberFormat = ApiFormatCondition.prototype.SetNumberFormat;
 
 	/**
-	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
+	 * Returns the background color for the format condition.
+	 *
+	 * Returns 'No Fill' when the background color of the format condition is null.
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
