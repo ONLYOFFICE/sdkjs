@@ -1379,14 +1379,15 @@
 		return this.getImageDataFromSelection();
 	};
 	/**
-     * Replaces the first selected drawing with the image specified in the parameters.
-     * If there are no drawings selected, the method inserts the image at the current position.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
-     * @alias PutImageDataToSelection
-     * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
-     * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
+	 * Replaces the first selected drawing with the image specified in the parameters.
+	 *
+	 * If there are no drawings selected, the method inserts the image at the current position.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
+	 * @alias PutImageDataToSelection
+	 * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
+	 * @since 7.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
 	 */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
