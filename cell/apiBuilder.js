@@ -19823,7 +19823,7 @@
 			}
 		}
 
-		if (!options.addToTable) {
+		if (!options['addToTable']) {
 			const pivotFields = this.GetPivotFields()
 			pivotFields.forEach(function (pivotField) {
 				pivotField.Remove()
