@@ -217,7 +217,7 @@
 		const startParagraph = this.getParagraph(start.index);
 		const blockEnd = (end.index > start.index && this.isAtBegin(end)) ? this.getEndPoint(end.index - 1) : end;
 		if (this.reader.isTitle(startParagraph)) {
-			return this.buildFromTitle(start, end, blockEnd);
+			return this.buildFromTitle(start, blockEnd);
 		}
 		if (this.hasTitleBetween(start.index + 1, blockEnd.index)) {
 			return this.buildMixed(start, blockEnd);
@@ -227,7 +227,7 @@
 	OutlineDragSelectionBuilder.prototype.buildText = function (start, end) {
 		return new OutlineDragSelection(OutlineDragSelectionType.text, start.index, start.pos, end.index, end.pos, [], false);
 	};
-	OutlineDragSelectionBuilder.prototype.buildFromTitle = function (start, end, blockEnd) {
+	OutlineDragSelectionBuilder.prototype.buildFromTitle = function (start, end) {
 		const startSlide = this.reader.getSlide(this.getParagraph(start.index));
 		const titleRange = this.reader.getTitleRange(startSlide);
 		if (end.index <= titleRange.last) {
@@ -236,10 +236,6 @@
 			if (!isWholeTitle) {
 				return this.buildText(start, end);
 			}
-			return this.buildSlides(titleRange.first, this.getEndPoint(titleRange.last), [startSlide], true);
-		}
-		end = blockEnd;
-		if (end.index <= titleRange.last) {
 			return this.buildSlides(titleRange.first, this.getEndPoint(titleRange.last), [startSlide], true);
 		}
 		const endParagraph = this.getParagraph(end.index);
@@ -953,7 +949,6 @@
 		if (this.outlineView.isEmptyPresentation()) {
 			return null;
 		}
-		this.getPresentation().updateSlideIndexes();
 		return new OutlineDragSelectionBuilder(this.outlineView).build();
 	};
 
