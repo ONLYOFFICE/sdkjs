@@ -544,6 +544,7 @@
 
 		this.posAttrEnd  = 0;
 		this.attrQuote = 0x22;//"
+		this.ooxmlEscape = true;
 
 		if (true !== bIsNoInit)
 			this.Init();
@@ -924,6 +925,11 @@
 		{
 			this.attrQuote = val;
 		}
+		// false switches the *Encode writers to plain XML, where _xHHHH_ is ordinary text and never produced
+		this.SetXmlOoxmlEscape = function(val)
+		{
+			this.ooxmlEscape = val;
+		}
 		this.WriteXmlString = function(val)
 		{
 			var pCur = 0;
@@ -1000,7 +1006,10 @@
 					this.WriteUtf8Char(0x3b);
 					break;
 				default:
-					this.WriteUtf8Char(code);
+					if ((code < 0x20 || 0xFFFE === code || 0xFFFF === code) && !this.ooxmlEscape)
+						this._writeXmlPlainSpecialChar(code, true);
+					else
+						this.WriteUtf8Char(code);
 					break;
 			}
 		};
@@ -1057,8 +1066,13 @@
 					this.WriteUtf8Char(0x3b);
 					break;
 				default:
-					if (code < 0x20 || code >= 0xFFFE)
-						this.WriteXmlEscapeOoxmlChar(code);
+					if (code < 0x20 || 0xFFFE === code || 0xFFFF === code)
+					{
+						if (this.ooxmlEscape)
+							this.WriteXmlEscapeOoxmlChar(code);
+						else
+							this._writeXmlPlainSpecialChar(code, false);
+					}
 					else
 						this.WriteUtf8Char(code);
 					break;
@@ -1117,12 +1131,25 @@
 					this.WriteUtf8Char(0x3b);
 					break;
 				default:
-					if (code < 0x20 || code >= 0xFFFE)
-						this.WriteXmlEscapeOoxmlChar(code);
+					if (code < 0x20 || 0xFFFE === code || 0xFFFF === code)
+					{
+						if (this.ooxmlEscape)
+							this.WriteXmlEscapeOoxmlChar(code);
+						else
+							this._writeXmlPlainSpecialChar(code, false);
+					}
 					else
 						this.WriteUtf8Char(code);
 					break;
 			}
+		};
+		// Plain XML writes CR anywhere and TAB/LF in attributes as char references, and drops chars XML 1.0 forbids
+		this._writeXmlPlainSpecialChar = function(code, isText)
+		{
+			if (isText && (0x09 === code || 0x0A === code))
+				this.WriteUtf8Char(code);
+			else if (0x09 === code || 0x0A === code || 0x0D === code)
+				this.WriteXmlString("&#x" + code.toString(16).toUpperCase() + ";");
 		};
 		this.WriteXmlEscapeOoxmlChar = function(code)
 		{
@@ -1139,7 +1166,7 @@
 		this._isOoxmlEscapePattern = function(val, pos, end)
 		{
 			// check if characters at pos form xHHHH_ pattern (after an underscore)
-			if (pos + 6 > end) return false;
+			if (!this.ooxmlEscape || pos + 6 > end) return false;
 			if (val.charCodeAt(pos) !== 0x78) return false; // 'x'
 			for (var i = 1; i <= 4; i++)
 			{

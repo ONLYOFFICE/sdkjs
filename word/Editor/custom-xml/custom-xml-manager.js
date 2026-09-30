@@ -37,6 +37,15 @@
 
 (function()
 {
+	// A block-level control ends its last paragraph with a separator that is not part of the bound value, and Word keeps line breaks of a bound value as LF
+	function getDataBindingText(contentControl)
+	{
+		let text = contentControl.GetInnerText();
+		if (contentControl instanceof AscWord.CBlockLevelSdt && text.endsWith("\r\n"))
+			text = text.slice(0, -2);
+		return text.replace(/\r\n?/g, "\n");
+	}
+
 	/**
 	 * Класс представляющий менеджер CustomXMLs
 	 * @param {AscWord.CDocument} document
@@ -185,13 +194,13 @@
 			return;
 		
 		if (contentControl.Pr.Text || contentControl.IsComboBox() || contentControl.IsDropDownList() || contentControl.IsDatePicker())
-			this.setContentByDataBinding(dataBinding, contentControl.GetInnerText());
+			this.setContentByDataBinding(dataBinding, getDataBindingText(contentControl));
 		else if (contentControl.IsCheckBox())
 			this.setContentByDataBinding(dataBinding, contentControl.IsCheckBoxChecked() ? "true" : "false");
 		else if (contentControl instanceof AscWord.CBlockLevelSdt)
 			this.updateRichTextCustomXML(contentControl);
 		else
-			this.setContentByDataBinding(dataBinding, contentControl.GetInnerText());
+			this.setContentByDataBinding(dataBinding, getDataBindingText(contentControl));
 	};
 	CustomXmlManager.prototype.GetRichTextContentToWrite = function (oCC, fCallback)
 	{
@@ -267,8 +276,6 @@
 
 			outputUString	= outputUString.replace("pkg:contentType=\"application/xml\"", "pkg:contentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"");
 			outputUString	+= "</pkg:package>";
-			outputUString	= outputUString.replaceAll("<", "&lt;");
-			outputUString	= outputUString.replaceAll(">", "&gt;");
 
 			if (fCallback)
 				fCallback(outputUString, this);
@@ -326,17 +333,8 @@
 	{
 		let drawingDocument = this.document.GetDrawingDocument();
 		let docContent = AscCommon.ExecuteNoHistory(function(){
-			strLinearXML = strLinearXML.replaceAll("&lt;", "<");
-			strLinearXML = strLinearXML.replaceAll("&gt;", ">");
 			strLinearXML = strLinearXML.replaceAll("<?xml version=\"1.0\" standalone=\"yes\"?>", "");
 			strLinearXML = strLinearXML.replaceAll("<?mso-application progid=\"Word.Document\"?>", "");
-			
-			// при записи в атрибут больше проблем, изменить подход если в будущем еще будут проблемы c html entry
-			strLinearXML = strLinearXML.replaceAll("&#xA;", "");
-			strLinearXML = strLinearXML.replaceAll("&amp;", "&");
-			strLinearXML = strLinearXML.replaceAll("&quot;", "\"");
-			strLinearXML = strLinearXML.replaceAll("&#039;", "'");
-			strLinearXML = strLinearXML.replaceAll("'", "\"");
 
 			let zLib = new AscCommon.ZLib;
 			zLib.create();
@@ -391,9 +389,8 @@
 				let nEndPos = nPos = strLinearXML.indexOf('</pkg:part>', nStartPos);
 				let strText = strLinearXML.substring(nStartPos, nEndPos);
 				
-				let nPosStartName = strText.indexOf('name="', 0) + 'name="'.length;
-				let nPosEndName   = strText.indexOf('"', nPosStartName);
-				let name          = strText.substring(nPosStartName, nPosEndName);
+				let nameMatch = /name\s*=\s*(["'])(.*?)\1/.exec(strText);
+				let name      = nameMatch ? nameMatch[2] : "";
 				
 				let nDataStartPos = strText.indexOf('<pkg:xmlData>', 0);
 				let nDataEndPos;

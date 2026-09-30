@@ -621,6 +621,28 @@
 		this.getBuffer = function ()
 		{
 			let writer = new AscCommon.CMemory();
+			// Custom XML is arbitrary XML that holds decoded values: _xHHHH_ in it is literal text, not an OOXML escape
+			writer.SetXmlOoxmlEscape(false);
+
+			// Boundary whitespace beside child elements is written as references, since reading trims the literal one as layout
+			function WriteTextBesideElements(text)
+			{
+				let core	= text.trim();
+				let start	= core ? text.indexOf(core) : text.length;
+				let end		= start + core.length;
+				for (let i = 0; i < text.length; i++)
+				{
+					if (i === start && core)
+					{
+						writer.WriteXmlStringEncode(core);
+						i = end - 1;
+						continue;
+					}
+					let code = text.charCodeAt(i);
+					if (code >= 0x20 || 0x09 === code || 0x0A === code || 0x0D === code)
+						writer.WriteXmlString("&#x" + code.toString(16).toUpperCase() + ";");
+				}
+			}
 
 			function Write(content)
 			{
@@ -660,8 +682,10 @@
 					Write(current.childNodes[i]);
 				}
 
-				if (current.text)
-					writer.WriteXmlString(current.text.toString().trim());
+				if (current.text && current.childNodes.length)
+					WriteTextBesideElements(current.text.toString());
+				else if (current.text)
+					writer.WriteXmlStringEncode(current.text.toString());
 
 				writer.WriteXmlNodeEnd(current.nodeName);
 			}
@@ -672,10 +696,7 @@
 		this.getStringFromBuffer = function (isOnlyInner)
 		{
 			let buffer	= this.getBuffer(isOnlyInner);
-			let str		= fromUtf8(buffer.GetData());
-			str			= str.replaceAll("&quot;", "\"");
-			str			= str.replaceAll("&amp;", "&");
-			return str;
+			return fromUtf8(buffer.GetData());
 		};
 		this.setXml = function(strXml)
 		{
@@ -766,7 +787,8 @@
 		}
 
 		let oStax			= new StaxParser(strCustomXml),
-			rootContent		= new CustomXmlContent(null, null, xml);
+			rootContent		= new CustomXmlContent(null, null, xml),
+			rawTexts		= [""];
 
 		if (strXmlHeader !== null)
 			rootContent.xmlQuestionHeader = strXmlHeader;
@@ -775,19 +797,23 @@
 		{
 			switch (oStax.GetEventType()) {
 				case EasySAXEvent.CHARACTERS:
-					rootContent.addTextContent(oStax.text);
+					rawTexts[rawTexts.length - 1] += oStax.text;
 					break;
 				case EasySAXEvent.END_ELEMENT:
+					// Literal whitespace beside child elements is layout and is trimmed before references are decoded, text of a leaf element is data
+					let rawText = rawTexts.pop();
+					rootContent.addTextContent(oStax.DecodeXmlEntities(rootContent.childNodes.length ? rawText.trim() : rawText));
 					rootContent = rootContent.getParent();
 					break;
 				case EasySAXEvent.START_ELEMENT:
+					rawTexts.push("");
 					let name = oStax.GetName();
 					let childElement = rootContent.addContent(name);
 
 					while (oStax.MoveToNextAttribute())
 					{
 						let attributeName = oStax.GetName();
-						let attributeValue = oStax.GetValue();
+						let attributeValue = oStax.GetValueDecodeXmlEntities();
 
 						if (attributeName.length >= 5 && attributeName.slice(0,5) === 'xmlns')
 						{
