@@ -10131,27 +10131,27 @@
 	 * Adds a hyperlink to the specified range.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sRange - The range where the hyperlink will be added to.
-	 * @param {string} sAddress - The link address.
+	 * @param {string} range - The range where the hyperlink will be added to.
+	 * @param {string} address - The link address.
 	 * @param {string} [subAddress] - The link subaddress to insert internal sheet hyperlinks.
-	 * @param {string} [sScreenTip] - The screen tip text.
-	 * @param {string} [sTextToDisplay] - The link text that will be displayed on the sheet.
+	 * @param {string} [screenTip] - The screen tip text.
+	 * @param {string} [textToDisplay] - The link text that will be displayed on the sheet.
 	 * @returns {boolean} - returns true if the hyperlink was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetHyperlink.js
 	 */
-	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
+	ApiWorksheet.prototype.SetHyperlink = function (range, address, subAddress, screenTip, textToDisplay) {
 		// Validate required parameters
-		if (!sRange || sAddress == null) {
+		if (!range || address == null) {
 			throwException(new Error('Incorrect required parameters'));
 			return false;
 		}
 
-		var range = new ApiRange(this.worksheet.getRange2(sRange));
-		var address;
-		if (range && range.range.isOneCell()) {
-			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
-			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				throwException(new Error('Incorrect "sAddress".'));
+		var apiRange = new ApiRange(this.worksheet.getRange2(range));
+		var subAddressParts;
+		if (apiRange.range) {
+			var externalLink = address ? AscCommon.rx_allowedProtocols.test(address) : false;
+			if (externalLink && AscCommonExcel.getFullHyperlinkLength(address) > Asc.c_nMaxHyperlinkLength) {
+				throwException(new Error('Incorrect "address".'));
 				return false;
 			}
 			if (!externalLink) {
@@ -10160,40 +10160,43 @@
 					return false;
 				}
 
-				address = subAddress.split("!");
-				if (address.length === 1) {
-					address.unshift(this.GetName());
-				} else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
+				subAddressParts = subAddress.split("!");
+				if (subAddressParts.length === 1) {
+					subAddressParts.unshift(this.GetName());
+				} else if (this.worksheet.workbook.getWorksheetByName(subAddressParts[0]) === null) {
 					throwException(new Error('Invalid "subAddress".'));
 					return false;
 				}
-				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
+				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, subAddressParts[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
 					throwException(new Error('Invalid "subAddress".'));
 					return false;
 				}
 			}
-			this.worksheet.selectionRange.assign2(range.range.bbox);
+			this.worksheet.selectionRange.assign2(apiRange.range.bbox);
 			var Hyperlink = new Asc.asc_CHyperlink();
-			if (sTextToDisplay) {
-				Hyperlink.asc_setText(sTextToDisplay);
+			if (textToDisplay) {
+				Hyperlink.asc_setText(textToDisplay);
 			} else {
-				Hyperlink.asc_setText((externalLink ? sAddress : subAddress));
+				Hyperlink.asc_setText((externalLink ? address : subAddress));
 			}
-			if (sScreenTip) {
-				Hyperlink.asc_setTooltip(sScreenTip);
+			if (screenTip) {
+				Hyperlink.asc_setTooltip(screenTip);
 			}
 			if (externalLink) {
-				Hyperlink.asc_setHyperlinkUrl(sAddress);
+				Hyperlink.asc_setHyperlinkUrl(address);
 				// As in MS: an external URL keeps the subaddress ("URL#subaddress").
 				if (subAddress) {
 					Hyperlink.asc_setLocation(subAddress);
 				}
 			} else {
-				Hyperlink.asc_setRange(address[1]);
-				Hyperlink.asc_setSheet(address[0]);
+				Hyperlink.asc_setRange(subAddressParts[1]);
+				Hyperlink.asc_setSheet(subAddressParts[0]);
 			}
 			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink, this.GetIndex());
+		} else {
+			throwException(new Error('Invalid "range".'));
+			return false;
 		}
 		return true;
 	};

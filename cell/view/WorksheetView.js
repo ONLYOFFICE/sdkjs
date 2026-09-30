@@ -17789,7 +17789,7 @@ function isAllowPasteLink(pastedWb) {
 								mc = t.model.getMergedByCell(activeCell.row, activeCell.col);
 								c = mc ? mc.c1 : activeCell.col;
 								r = mc ? mc.r1 : activeCell.row;
-								t.model.getRange3(r, c, r, c).setValue(val.asc_getText());
+								t.model.getRange3(r, c, r, c).setValue(val.asc_getText(), undefined, undefined, undefined, true);
 								// Call the recalculation function for formatted table headers
 								t.model.checkChangeTablesContent(range.bbox);
 							}
