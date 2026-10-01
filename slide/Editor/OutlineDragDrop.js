@@ -478,13 +478,34 @@
 		}
 	};
 
-	function mapParagraphToSlideCopy(paragraph, slide, slideCopy) {
-		const shape = paragraph.GetParentShape();
-		const shapeIndex = slide.cSld.spTree.indexOf(shape);
-		const shapeCopy = slideCopy.cSld.spTree[shapeIndex];
-		const content = shapeCopy && shapeCopy.getDocContent();
-		return content ? content.Content[paragraph.GetIndex()] || null : null;
+	function SlideCopyContentMap(slide, slideCopy) {
+		this.slide = slide;
+		this.slideCopy = slideCopy;
+		this.contents = null;
 	}
+	SlideCopyContentMap.prototype.fillContents = function () {
+		this.contents = {};
+		const shapes = this.slide.cSld.spTree;
+		const shapeCopies = this.slideCopy.cSld.spTree;
+		for (let i = 0; i < shapes.length; i += 1) {
+			const content = shapes[i].getDocContent();
+			if (content) {
+				const shapeCopy = shapeCopies[i];
+				this.contents[content.Get_Id()] = (shapeCopy && shapeCopy.getDocContent()) || null;
+			}
+		}
+	};
+	SlideCopyContentMap.prototype.getContentCopy = function (paragraph) {
+		if (!this.contents) {
+			this.fillContents();
+		}
+		const parent = paragraph.GetParent();
+		return this.contents[parent.Get_Id()] || null;
+	};
+	SlideCopyContentMap.prototype.getParagraph = function (paragraph) {
+		const content = this.getContentCopy(paragraph);
+		return content && content.Content[paragraph.GetIndex()] || null;
+	};
 
 	function OutlineDragDropExecutor(outlineView, selection, target, isCopy) {
 		this.outlineView = outlineView;
@@ -735,10 +756,11 @@
 		const selection = this.selection;
 		const operations = this.operations;
 		const contentSources = this.getSlideContentSources(lastSlide);
+		const copyMap = new SlideCopyContentMap(lastSlide, lastCopy);
 		if (selection.isEndInTitle) {
 			const copiesToRemove = [];
 			for (let i = 0; i < contentSources.length; i += 1) {
-				const paragraph = mapParagraphToSlideCopy(contentSources[i], lastSlide, lastCopy);
+				const paragraph = copyMap.getParagraph(contentSources[i]);
 				if (paragraph) {
 					copiesToRemove.push(paragraph);
 				}
@@ -746,17 +768,17 @@
 			operations.removeParagraphs(copiesToRemove);
 			const titleSources = this.getTitleSourcesOfSlide(lastSlide);
 			const lastTitle = titleSources[titleSources.length - 1];
-			return lastTitle ? mapParagraphToSlideCopy(lastTitle, lastSlide, lastCopy) : null;
+			return lastTitle ? copyMap.getParagraph(lastTitle) : null;
 		}
 		const endSource = this.reader.getSourceParagraph(this.getOutlineParagraph(selection.endIndex));
 		const endIndexInContent = contentSources.indexOf(endSource);
-		const endCopy = mapParagraphToSlideCopy(endSource, lastSlide, lastCopy);
+		const endCopy = copyMap.getParagraph(endSource);
 		if (endIndexInContent === -1 || !endCopy) {
 			return endCopy;
 		}
 		const leftoverCopies = [];
 		for (let i = endIndexInContent + 1; i < contentSources.length; i += 1) {
-			const paragraph = mapParagraphToSlideCopy(contentSources[i], lastSlide, lastCopy);
+			const paragraph = copyMap.getParagraph(contentSources[i]);
 			if (paragraph) {
 				leftoverCopies.push(paragraph);
 			}
