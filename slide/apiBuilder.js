@@ -2504,7 +2504,7 @@
 	 * @param {string} text - The text to add to document.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 9.5.0
+	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/EnterText.js
 	 */
 	ApiPresentation.prototype.EnterText = function(text)
