@@ -2690,7 +2690,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
-	 * @param {ApiRange | ApiName | number} arg2- The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {ApiRange | ApiName | number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHISQ_INV.js
 	 */
@@ -4545,7 +4545,7 @@
 	 * Returns the month, a number from 1 (January) to 12 (December).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1- A number in the date-time code.
+	 * @param {ApiRange | ApiName | number} arg1 - A number in the date-time code.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MONTH.js
 	 */
@@ -5332,7 +5332,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The octal number to convert.
-	 * @param {ApiRange | ApiName | number} [arg2] -The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2HEX.js
 	 */
@@ -5369,7 +5369,7 @@
 	 * Counts nonblank cells in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName} arg1- The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {ApiRange | ApiName} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
 	 * @param {ApiRange | ApiName | number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {ApiRange | ApiName} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
 	 * @returns {number}
