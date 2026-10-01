@@ -14887,14 +14887,7 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @deprecated since 9.3.0 version.
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
-	 */
-	/**
-	 * Selects the current graphic object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CSE"]
-	 * @since 9.3.0
+	 * @since 9.1.0
 	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */

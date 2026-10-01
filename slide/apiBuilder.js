@@ -2504,7 +2504,7 @@
 	 * @param {string} text - The text to add to document.
 	 * @returns {boolean}
 	 * @typeofeditors ["CPE"]
-	 * @since 10.0.0
+	 * @since 9.5.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/EnterText.js
 	 */
 	ApiPresentation.prototype.EnterText = function(text)
@@ -7525,15 +7525,7 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @deprecated since 9.3.0 version.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
-	 */
-	/**
-	 * Selects the current graphic object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CPE"]
-	 * @since 9.3.0
+	 * @since 8.2.0
 	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js

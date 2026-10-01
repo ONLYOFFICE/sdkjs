@@ -5691,19 +5691,6 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
-	 * @deprecated since 9.3.0 version.
-	 * @param {EMU} width - The width of the shadow measured in English measure units.
-	 * @param {ApiFill} fill - The fill type used to create the shadow.
-	 * @returns {ApiStroke}
-	 *
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStroke.js
-	 */
-	/**
-	 * Creates a stroke adding shadows to the element.
-	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 *
-	 * @since 9.3.0
 	 * @param {EMU} width - The width of the shadow measured in English measure units.
 	 * @param {ApiFill} fill - The fill type used to create the shadow.
 	 * @param {DashType} [sDash="solid"] - The type of line dash.
@@ -20981,19 +20968,6 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @deprecated since 9.3.0 version.
-	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
-	 * @param {EMU} nDistance - The distance from the right side of the document element to the floating object measured in English measure units.
-	 * @returns {boolean}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorPosition.js
-	 */
-	/**
-	 * Sets the absolute measurement for the horizontal positioning of the floating object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @since 9.3.0
 	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
 	 * @param {EMU|number} nDistance - The distance from the right side of the document element to the floating object. Use EMU for absolute distance or a number for percent (1 = 1%) when bPercent=true.
 	 * @param {boolean} [bPercent=false] - The option defining whether the horizontal alignment offset is specified in percent.
@@ -21013,19 +20987,6 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @deprecated since 9.3.0 version.
-	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
-	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
-	 * @returns {boolean}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetVerPosition.js
-	 */
-	/**
-	 * Sets the absolute measurement for the vertical positioning of the floating object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @since 9.3.0
 	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {EMU|number} nDistance - The distance from the bottom part of the document element to the floating object. Use EMU for absolute units or a number (1 = 1%) when bPercent=true for percent relative positioning.
 	 * @param {boolean} [bPercent=false] - The option defining whether the vertical alignment offset is specified in percent.
@@ -21282,15 +21243,6 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @deprecated since 9.3.0 version.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
-	 */
-	/**
-	 * Selects the current graphic object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE"]
-	 * @since 9.3.0
 	 * @param {boolean} [isReplace=true] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
@@ -21298,7 +21250,7 @@
 	ApiDrawing.prototype.Select = function(isReplace)
 	{
 		if (isReplace === undefined)
-			isReplace = false;
+			isReplace = true;
 
 		let oParaDrawing = this.getParaDrawing();
 		if(!oParaDrawing)
