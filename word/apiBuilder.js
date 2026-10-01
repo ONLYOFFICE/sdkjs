@@ -21243,14 +21243,14 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} [isReplace=true] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
+	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */
 	ApiDrawing.prototype.Select = function(isReplace)
 	{
 		if (isReplace === undefined)
-			isReplace = true;
+			isReplace = false;
 
 		let oParaDrawing = this.getParaDrawing();
 		if(!oParaDrawing)
