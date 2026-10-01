@@ -466,6 +466,9 @@
 	};
 	WriterToJSON.prototype.SerTxStyles = function(oTxStyles)
 	{
+		if (!oTxStyles)
+			return undefined;
+
 		return {
 			"bodyStyle":  this.SerLstStyle(oTxStyles.bodyStyle),
 			"otherStyle": this.SerLstStyle(oTxStyles.otherStyle),
