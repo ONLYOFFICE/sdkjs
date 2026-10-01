@@ -24527,7 +24527,7 @@
 			uniColor.Mods.Mods = mods;
 		}
 
-		settings["color"] = new ApiUniColor(uniColor);
+		settings["color"] = private_UniColorToApiColor(new ApiUniColor(uniColor));
 		settings["transparency"] = (typeof alpha === "number") ? (1 - alpha / 100000) : 0;
 
 		let dist = (typeof shadow.dist === "number") ? shadow.dist : 0;
