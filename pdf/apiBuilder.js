@@ -6272,7 +6272,7 @@
 	 * Sets annotation border style.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {AnnotBorderStyle} borderStyle - The border style: <b>"solid"</b> or <b>"dashed"</b>.
+	 * @param {AnnotBorderStyle} borderStyle - The border style: <code>"solid"</code> or <code>"dashed"</code>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderStyle.js
 	 */
@@ -6546,7 +6546,7 @@
 	 * Sets annotation dash pattern.
 	 *
 	 * :::note
-	 * The border style property must be set to "dashed".
+	 * The border style must be set to <code>"dashed"</code> using the {@link ApiBaseAnnotation#SetBorderStyle} method.
 	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
