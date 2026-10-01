@@ -10135,6 +10135,7 @@
 		InitClass(FontScheme, CBaseNoIdObject, 0);
 		FontScheme.prototype.createDuplicate = function () {
 			var oCopy = new FontScheme();
+			oCopy.name = this.name;
 			oCopy.majorFont.setLatin(this.majorFont.latin);
 			oCopy.majorFont.setEA(this.majorFont.ea);
 			oCopy.majorFont.setCS(this.majorFont.cs);
