@@ -6791,7 +6791,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
 	 *
-	 * @param {number} duration - The duration in milliseconds.
+	 * @param {number} duration - The duration in milliseconds. The minimum duration is 10 ms, a smaller value is set to 10 ms.
 	 * @returns {boolean} - True if the duration was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetDuration.js
 	 */
@@ -6827,7 +6827,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
 	 *
-	 * @param {number} delay - The delay in milliseconds.
+	 * @param {number} delay - The delay in milliseconds. The maximum delay is 65536000 ms, a larger value is set to 65536000 ms.
 	 * @returns {boolean} - True if the delay was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetDelay.js
 	 */

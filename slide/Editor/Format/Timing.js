@@ -5682,7 +5682,7 @@
         return delay;
     };
     CCTn.prototype.changeDelay = function (nDelay) {
-        let nNewDelay = ((Math.max(0, nDelay) + 0.5) >> 0);
+        let nNewDelay = ((Math.min(65536000, Math.max(0, nDelay)) + 0.5) >> 0);
         if(this.getDelay() === nNewDelay) {
             return;
         }
