@@ -1727,6 +1727,7 @@
 	 */
     ApiPresentation.prototype.GetMaster = function(nPos)
     {
+        nPos = GetIntParameter(nPos, -1);
         if (nPos < 0 || nPos >= this.Presentation.slideMasters.length)
             return null;
 
@@ -1747,6 +1748,12 @@
         if (apiMaster && apiMaster.GetClassType && apiMaster.GetClassType() === "master")
         {
 			let master = apiMaster.Master;
+			if (pos != undefined)
+			{
+				pos = GetIntParameter(pos, -1);
+				if (pos < 0 || pos > this.Presentation.slideMasters.length)
+					return false;
+			}
 			let position = getArrayAddIndex(pos, master, this.Presentation.slideMasters);
 			if (position === null)
 				return false;
@@ -1892,7 +1899,7 @@
      * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {boolean} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
      * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
-	 * @returns {JSON[]}
+	 * @returns {JSON | null} - returns null if the slide range is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SlidesToJSON.js
 	 */
     ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
