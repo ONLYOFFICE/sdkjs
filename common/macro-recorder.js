@@ -744,11 +744,11 @@
 
 	function private_GetAlignH(nAlign)
 	{
-		if (c_oAscAlignH.Left === nAlign)
+		if (Asc.c_oAscAlignH.Left === nAlign)
 			return "left";
-		else if (c_oAscAlignH.Right === nAlign)
+		else if (Asc.c_oAscAlignH.Right === nAlign)
 			return "right";
-		else if (c_oAscAlignH.Center === nAlign)
+		else if (Asc.c_oAscAlignH.Center === nAlign)
 			return "center";
 
 		return "left";
@@ -756,11 +756,11 @@
 
 	function private_GetAlignV(nAlign)
 	{
-		if (c_oAscAlignV.Top === nAlign)
+		if (Asc.c_oAscAlignV.Top === nAlign)
 			return "top";
-		else if (c_oAscAlignV.Bottom === nAlign)
+		else if (Asc.c_oAscAlignV.Bottom === nAlign)
 			return "bottom";
-		else if (c_oAscAlignV.Center === nAlign)
+		else if (Asc.c_oAscAlignV.Center === nAlign)
 			return "center";
 
 		return "center";
@@ -992,7 +992,7 @@
 		{
 			let oController = doc.GetCurrentController();
 			let oContent = oController && oController.getTargetDocContent(undefined, true);
-			oTable = (oContent instanceof CTable) ? oContent : null;
+			oTable = (oContent instanceof AscWord.CTable) ? oContent : null;
 		}
 
 		return oTable ? oTable.CurCell : null;
@@ -2044,7 +2044,7 @@
 		},
 		setTableLayout			: function(oAdditional){
 			let reg = private_getTableVar(oAdditional.tableId);
-			let strLayout = oAdditional.data === c_oAscTableLayout.AutoFit ? "autofit" : "fixed";
+			let strLayout = oAdditional.data === Asc.c_oAscTableLayout.AutoFit ? "autofit" : "fixed";
 			return reg.declaration + "\t" + reg.varName + ".SetTableLayout(\"" + strLayout + "\");\n";
 		},
 		setTableDefaultMargin	: function(oAdditional){
@@ -2233,9 +2233,9 @@
 			let value = oAdditional.data.value;
 			let strRelate;
 
-			if (relative === c_oAscHAnchor.Text)
+			if (relative === Asc.c_oAscHAnchor.Text)
 				strRelate = "character"
-			else if (relative === c_oAscHAnchor.Margin)
+			else if (relative === Asc.c_oAscHAnchor.Margin)
 				strRelate = "margin";
 			else
 				strRelate = "page";
@@ -2249,9 +2249,9 @@
 			let value = oAdditional.data.value;
 			let strRelate;
 
-			if (relative === c_oAscVAnchor.Text)
+			if (relative === Asc.c_oAscVAnchor.Text)
 				strRelate = "character"
-			else if (relative === c_oAscVAnchor.Margin)
+			else if (relative === Asc.c_oAscVAnchor.Margin)
 				strRelate = "margin";
 			else
 				strRelate = "page";
@@ -2265,9 +2265,9 @@
 			let value = oAdditional.data.value;
 			let strRelate;
 
-			if (relative === c_oAscVAnchor.Text)
+			if (relative === Asc.c_oAscVAnchor.Text)
 				strRelate = "character"
-			else if (relative === c_oAscVAnchor.Margin)
+			else if (relative === Asc.c_oAscVAnchor.Margin)
 				strRelate = "margin";
 			else
 				strRelate = "page";
@@ -2281,9 +2281,9 @@
 			let value = oAdditional.data.value;
 			let strRelate;
 
-			if (relative === c_oAscVAnchor.Text)
+			if (relative === Asc.c_oAscVAnchor.Text)
 				strRelate = "character"
-			else if (relative === c_oAscVAnchor.Margin)
+			else if (relative === Asc.c_oAscVAnchor.Margin)
 				strRelate = "margin";
 			else
 				strRelate = "page";
