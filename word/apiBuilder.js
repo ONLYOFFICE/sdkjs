@@ -5707,7 +5707,7 @@
 	/**
 	 * Properties used to create a shadow.
 	 * @typedef {Object} ShadowSettings
-	 * @property {ApiColor | ApiUniColor} [color] - The shadow color (black by default).
+	 * @property {ApiColor} [color] - The shadow color (black by default).
 	 * @property {number} [transparency=0] - The shadow transparency from 0.0 (opaque) to 1.0 (clear).
 	 * @property {number} [offsetX=0] - The horizontal offset of the shadow measured in points (a positive value offsets to the right).
 	 * @property {number} [offsetY=0] - The vertical offset of the shadow measured in points (a positive value offsets downwards).
@@ -24512,23 +24512,9 @@
 		let shadow = this.Shadow;
 		let settings = {};
 
-		let uniColor = shadow.color ? shadow.color.createDuplicate() : AscFormat.CreateUniColorRGB(0, 0, 0);
-		let alpha = null;
-		if (uniColor.Mods && Array.isArray(uniColor.Mods.Mods))
-		{
-			let mods = [];
-			for (let i = 0; i < uniColor.Mods.Mods.length; ++i)
-			{
-				if (uniColor.Mods.Mods[i].name === "alpha")
-					alpha = uniColor.Mods.Mods[i].val;
-				else
-					mods.push(uniColor.Mods.Mods[i]);
-			}
-			uniColor.Mods.Mods = mods;
-		}
-
+		let uniColor = shadow.color && shadow.color.isCorrect() ? shadow.color : AscFormat.CreateUniColorRGB(0, 0, 0);
 		settings["color"] = private_UniColorToApiColor(new ApiUniColor(uniColor));
-		settings["transparency"] = (typeof alpha === "number") ? (1 - alpha / 100000) : 0;
+		settings["transparency"] = uniColor.getTransparency() / 100;
 
 		let dist = (typeof shadow.dist === "number") ? shadow.dist : 0;
 		let dir = (typeof shadow.dir === "number") ? shadow.dir : 0;
