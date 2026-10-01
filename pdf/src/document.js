@@ -583,9 +583,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.drawings.forEach(function(drawing) {
-			if (drawing.IsShape() && drawing.IsFromScan()) {
-				drawing.AddToRedraw();
-			}
+			drawing.AddToRedraw();
 		});
 
         this.UpdateCopyCutState();
