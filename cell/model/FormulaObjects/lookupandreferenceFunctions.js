@@ -3265,16 +3265,22 @@ function (window, undefined) {
 	 */
 	TypedMapCache.prototype.unshiftValues = function (data, valuesToUnshift) {
 		for (let i in valuesToUnshift) {
+			if (!data[i]) {
+				data[i] = new Map();
+			}
+			const map = data[i];
 			const unshiftMap = valuesToUnshift[i];
 			unshiftMap.forEach(function (value, key) {
-				const map = data[i];
 				const prevArr = map.get(key);
-				map.set(key, value.concat(prevArr));
+				map.set(key, prevArr ? value.concat(prevArr) : value);
 			});
 		}
 	};
 
 	/**
+	 * Extends the cached part of the row/column upward. All indices of the added part are collected first
+	 * (in ascending order) and then put in front of the cached ones, so every index list stays sorted -
+	 * _indexedBinarySearch and _findLastSame rely on it.
 	 * @param range
 	 * @param data
 	 */
@@ -3284,23 +3290,15 @@ function (window, undefined) {
 		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
-			if (!rowColAxisData.data[value.type]) {
-				rowColAxisData.data[value.type] = new Map();
+			if (!unshiftMaps[value.type]) {
+				unshiftMaps[value.type] = new Map();
 			}
-			const map = rowColAxisData.data[value.type];
-			if (!map.has(value.value)) {
-				map.set(value.value, [index]);
-			} else {
-				if (!unshiftMaps[value.type]) {
-					unshiftMaps[value.type] = new Map();
-				}
-				const unshiftMap = unshiftMaps[value.type];
-				if (!unshiftMap.has(value.value)) {
-					unshiftMap.set(value.value, []);
-				}
-				const arr = unshiftMap.get(value.value);
-				arr.push(index);
+			const unshiftMap = unshiftMaps[value.type];
+			if (!unshiftMap.has(value.value)) {
+				unshiftMap.set(value.value, []);
 			}
+			const arr = unshiftMap.get(value.value);
+			arr.push(index);
 		});
 		this.unshiftValues(rowColAxisData.data, unshiftMaps);
 	};
