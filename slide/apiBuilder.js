@@ -8182,25 +8182,21 @@
         if (!this.Drawing || !this.Drawing.IsUseInDocument())
             return null;
 
-        let oPresentation = Asc.editor.getLogicDocument();
-        let nSlideIdx = this.Drawing.getSlideIndex();
-        let oSlide = oPresentation.GetSlide(nSlideIdx);
-        if (!oSlide) {
+        const controller = this.Drawing.parent && this.Drawing.parent.graphicObjects;
+        if (!controller)
             return null;
-        }
 
-        let oGraphicObjects = oSlide.graphicObjects;
-        let aChildren = this.Drawing.spTree.slice();
+        const children = this.Drawing.spTree.slice();
 
-        oGraphicObjects.resetSelection();
-        oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
-        
-        if (!oGraphicObjects.canUnGroup())
+        controller.resetSelection();
+        controller.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
+
+        if (!controller.canUnGroup())
             return null;
 
         this.Drawing.recalculate();
-        oGraphicObjects.unGroupCallback();
-        return GetApiDrawings(aChildren);
+        controller.unGroupCallback();
+        return GetApiDrawings(children);
     };
 
 	//------------------------------------------------------------------------------------------------------------------
