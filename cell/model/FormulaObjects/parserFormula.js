@@ -583,8 +583,9 @@ var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
 var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
-var c_nMaxDate1900 = 2958465;
-var c_nMaxDate1904 = c_nMaxDate1900 - (c_Date1900Const - c_Date1904Const) + 1;
+// 31.12.9999 in the 1904 date system: the 1904 epoch is 1462 days later (1461 real days + fake 29.02.1900)
+var c_nMaxDate1900 = 2958465; // 31.12.9999 in the 1900 date system
+var c_nMaxDate1904 = c_nMaxDate1900 - (c_Date1900Const - c_Date1904Const) - 1; // 2957003
 const aLinkTypes =  [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D,
 	cElementType.name, cElementType.name3D, cElementType.table];
 
