@@ -176,6 +176,9 @@
 			visitor.visitDocContent(this, false);
 			
 			this.SectionsInfo.forEachHdrFtr(function(hdrFtr){
+				if (visitor.isStopped())
+					return;
+				
 				hdrFtr.GetContent().visit(visitor, false);
 			});
 		}
@@ -213,7 +216,7 @@
 		
 		let start = isPartial ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : undefined;
 		let end   = isPartial ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : undefined;
-		if (visitor.paragraph(this, true, start, end))
+		if (visitor.paragraph(this, true, start, end) || visitor.isStopped())
 			return;
 		
 		let from = isPartial ? start : 0;
@@ -237,7 +240,7 @@
 		if (cells && !cells.length)
 			return;
 		
-		if (visitor.table(this, true))
+		if (visitor.table(this, true) || visitor.isStopped())
 			return;
 		
 		let startRow = cells ? cells[0].Row : 0;
@@ -270,7 +273,7 @@
 				return;
 		}
 		
-		if (visitor.tableRow(this, true))
+		if (visitor.tableRow(this, true) || visitor.isStopped())
 			return;
 		
 		let isTextSelection = !!isSelection && !this.GetTable().IsCellSelection();
@@ -292,10 +295,12 @@
 		
 		let start = isPartial ? Math.min(content.Selection.StartPos, content.Selection.EndPos) : undefined;
 		let end   = isPartial ? Math.max(content.Selection.StartPos, content.Selection.EndPos) : undefined;
-		if (visitor.tableCell(this, true, start, end))
+		if (visitor.tableCell(this, true, start, end) || visitor.isStopped())
 			return;
 		
 		content.visit(visitor, isPartial);
+		if (visitor.isStopped())
+			return;
 		
 		visitor.tableCell(this, false, start, end);
 	};
@@ -308,10 +313,12 @@
 		
 		let start = isPartial ? Math.min(content.Selection.StartPos, content.Selection.EndPos) : undefined;
 		let end   = isPartial ? Math.max(content.Selection.StartPos, content.Selection.EndPos) : undefined;
-		if (visitor.blockLevelSdt(this, true, start, end))
+		if (visitor.blockLevelSdt(this, true, start, end) || visitor.isStopped())
 			return;
 		
 		content.visit(visitor, isPartial);
+		if (visitor.isStopped())
+			return;
 		
 		visitor.blockLevelSdt(this, false, start, end);
 	};
@@ -358,7 +365,12 @@
 		if (!isForm && visitor.inlineLevelSdt(this, true, start, end))
 			return;
 		
+		if (visitor.isStopped())
+			return;
+		
 		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.call(this, visitor, isPartial);
+		if (visitor.isStopped())
+			return;
 		
 		if (isForm)
 			visitor.oform(this, false, start, end);
@@ -386,7 +398,7 @@
 			}
 		}
 		
-		if (visitor.run(this, true, start, end))
+		if (visitor.run(this, true, start, end) || visitor.isStopped())
 			return;
 		
 		// TODO: inner elements
@@ -404,10 +416,12 @@
 		
 		let start = isPartial ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : undefined;
 		let end   = isPartial ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : undefined;
-		if (visitor.fldSimple(this, true, start, end))
+		if (visitor.fldSimple(this, true, start, end) || visitor.isStopped())
 			return;
 		
 		AscWord.ParagraphContentWithParagraphLikeContent.prototype.visit.call(this, visitor, isPartial);
+		if (visitor.isStopped())
+			return;
 		
 		visitor.fldSimple(this, false, start, end);
 	};
@@ -423,10 +437,12 @@
 		
 		let start = isPartial ? Math.min(root.Selection.StartPos, root.Selection.EndPos) : undefined;
 		let end   = isPartial ? Math.max(root.Selection.StartPos, root.Selection.EndPos) : undefined;
-		if (visitor.oMath(this, true, start, end))
+		if (visitor.oMath(this, true, start, end) || visitor.isStopped())
 			return;
 		
 		root.visit(visitor, isPartial);
+		if (visitor.isStopped())
+			return;
 		
 		visitor.oMath(this, false, start, end);
 	};

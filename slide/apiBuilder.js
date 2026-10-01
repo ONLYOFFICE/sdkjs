@@ -1788,8 +1788,8 @@
 	 */
     ApiPresentation.prototype.RemoveSlides = function(nStart, nCount)
 	{
-        nStart = nStart || 0;
-        nCount = nCount || this.GetSlidesCount();
+        nStart = nStart == undefined ? 0 : GetIntParameter(nStart, null);
+        nCount = nCount == undefined ? this.GetSlidesCount() : GetIntParameter(nCount, null);
         if (AscFormat.isRealNumber(nStart) && nStart > -1 && nStart < this.GetSlidesCount())
         {
             if (AscFormat.isRealNumber(nCount) && nCount > 0)

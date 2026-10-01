@@ -95,7 +95,7 @@
 	};
 	PresentationVisitor.prototype.traverseSlide = function(slide, withNotes)
 	{
-		if (this.slide(slide, true))
+		if (this.slide(slide, true) || this.isStopped())
 			return;
 
 		this.visitSpTree(slide.cSld.spTree);
@@ -113,7 +113,7 @@
 	};
 	PresentationVisitor.prototype.traverseMaster = function(master, withLayouts)
 	{
-		if (this.master(master, true))
+		if (this.master(master, true) || this.isStopped())
 			return;
 
 		this.visitSpTree(master.cSld.spTree);
@@ -131,7 +131,7 @@
 	};
 	PresentationVisitor.prototype.traverseLayout = function(layout)
 	{
-		if (this.layout(layout, true))
+		if (this.layout(layout, true) || this.isStopped())
 			return;
 
 		this.visitSpTree(layout.cSld.spTree);
@@ -142,7 +142,7 @@
 	};
 	PresentationVisitor.prototype.traverseNotes = function(notes)
 	{
-		if (this.notes(notes, true))
+		if (this.notes(notes, true) || this.isStopped())
 			return;
 
 		let bodyShape = notes.getBodyShape();
@@ -192,7 +192,7 @@
 
 		if (AscDFH.historyitem_type_GraphicFrame === textObject.getObjectType() && textObject.graphicObject.Selection.Use)
 		{
-			if (this.drawing(textObject, true))
+			if (this.drawing(textObject, true) || this.isStopped())
 				return;
 
 			textObject.graphicObject.visit(this, true);
@@ -208,7 +208,7 @@
 			return;
 
 		let isDrawing = textObject instanceof AscFormat.CGraphicObjectBase;
-		if (isDrawing && this.drawing(textObject, true))
+		if ((isDrawing && this.drawing(textObject, true)) || this.isStopped())
 			return;
 
 		docContent.visit(this, docContent.IsSelectionUse());
@@ -255,7 +255,7 @@
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	AscFormat.CGraphicObjectBase.prototype.visit = function(visitor)
 	{
-		if (visitor.drawing(this, true))
+		if (visitor.drawing(this, true) || visitor.isStopped())
 			return;
 
 		this.visitContent(visitor);
