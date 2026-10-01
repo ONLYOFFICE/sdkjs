@@ -8730,6 +8730,7 @@
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
 		this.Document.SetGlobalTrackRevisions(isTrack, true);
+		this.Document.SetLocalTrackRevisions(null);
 		return true;
 	};
 	
@@ -8737,7 +8738,8 @@
 		name : "",
 		userId : "",
 		isTrack : false,
-		isUser : false
+		isUser : false,
+		isLocalTrack : null
 	};
 	/**
 	 * Enables or disables AI-assisted change tracking in the document.
@@ -8752,8 +8754,10 @@
 	{
 		if (isTrack)
 		{
-			trackRevisionBuffer.isTrack = this.Document.IsTrackRevisions();
+			trackRevisionBuffer.isTrack      = this.Document.IsTrackRevisions();
+			trackRevisionBuffer.isLocalTrack = this.Document.GetLocalTrackRevisions();
 			this.Document.SetGlobalTrackRevisions(true);
+			this.Document.SetLocalTrackRevisions(null);
 			
 			let userInfo = Asc.editor.DocInfo.get_UserInfo();
 			if (!userInfo)
@@ -8779,7 +8783,8 @@
 		else
 		{
 			this.Document.SetGlobalTrackRevisions(trackRevisionBuffer.isTrack);
-			
+			this.Document.SetLocalTrackRevisions(trackRevisionBuffer.isLocalTrack);
+
 			if (trackRevisionBuffer.isUser)
 			{
 				let userInfo = Asc.editor.DocInfo.get_UserInfo();
