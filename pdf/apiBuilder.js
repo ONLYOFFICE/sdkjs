@@ -1111,19 +1111,17 @@
 	 * Creates stamp annotation.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} rect - annotation rect (only x1, y1 coordinates will be used, since the stamp dimensions are reserved).
+	 * @param {Point | Rect} position - The position of the upper-left corner of the annotation. For a Rect, only x1 and y1 are used.
 	 * @param {StampType} type - stamp type
 	 * @param {string} [author] - name of the author
 	 * @param {number} [creationDate] - creation date (timeStamp)
 	 * @returns {ApiStampAnnotation}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStampAnnot.js
 	 */
-	Api.CreateStampAnnot = function(rect, type, author, creationDate) {
+	Api.CreateStampAnnot = function(position, type, author, creationDate) {
 		let oDoc = private_GetLogicDocument();
 
-		if (!private_IsValidRect(rect, true)) {
-			AscBuilder.throwException("The rect parameter must be a valid rect");
-		}
+		position = private_GetStampPosition(position);
 
 		if (!Object.values(AscPDF.STAMP_TYPES).includes(type) || type === AscPDF.STAMP_TYPES.Image) {
 			AscBuilder.throwException("The type parameter must be one of available");
@@ -1154,8 +1152,8 @@
 		let nExtY = oStampRender.Height * g_dKoef_mm_to_pt;
 		let nLineW = oStampRender.m_oPen.Size * g_dKoef_mm_to_pt;
 
-		let X1 = rect[0];
-		let Y1 = rect[1];
+		let X1 = position["x"];
+		let Y1 = position["y"];
 		let X2 = X1 + nExtX;
 		let Y2 = Y1 + nExtY;
 
@@ -1175,18 +1173,20 @@
 		oAnnot.SetBorderWidth(nLineW);
 		oAnnot.SetBorderColor([0, 0, 0]);
 		oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
-		oAnnot.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
 		let oXfrm = oAnnot.getXfrm();
 		oXfrm.setRot(0);
+		oAnnot.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
+		oAnnot.SetPosition(position["x"], position["y"]);
 
 		return new ApiStampAnnotation(oAnnot);
 	};
 
 	/**
 	 * Creates stamp annotation from an image.
+	 * The annotation dimensions are taken from the loaded image, or updated after it has been loaded.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} rect - annotation rect
+	 * @param {Point | Rect} position - The position of the upper-left corner of the annotation. For a Rect, only x1 and y1 are used.
 	 * @param {string} imageSrc - The image source where the image should be taken from (currently,
 	 * only internet URL or Base64 encoded images are supported).
 	 * @param {string} [author] - name of the author
@@ -1195,12 +1195,10 @@
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImageStampAnnot.js
 	 */
-	Api.CreateImageStampAnnot = function(rect, imageSrc, author, creationDate) {
+	Api.CreateImageStampAnnot = function(position, imageSrc, author, creationDate) {
 		let oDoc = private_GetLogicDocument();
 
-		if (!private_IsValidRect(rect)) {
-			AscBuilder.throwException("The rect parameter must be a valid rect");
-		}
+		position = private_GetStampPosition(position);
 
 		imageSrc = AscBuilder.GetStringParameter(imageSrc, null);
 		if (!imageSrc) {
@@ -1227,9 +1225,19 @@
 			creationDate = new Date().getTime();
 		}
 
+		let sRasterImageId = AscFormat.checkRasterImageId(imageSrc);
+		let nX = position["x"];
+		let nY = position["y"];
+		let aRect = [nX, nY, nX + 10, nY + 10];
+		let oImageSize = AscCommon.getSourceImageSize(AscCommon.getFullImageSrc2(sRasterImageId));
+		if (oImageSize.width > 0 && oImageSize.height > 0) {
+			aRect[2] = nX + Math.max(10, oImageSize.width * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
+			aRect[3] = nY + Math.max(10, oImageSize.height * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
+		}
+		
 		let nDate = creationDate != null ? creationDate : new Date().getTime();
 		let oProps = {
-			rect:           rect,
+			rect:           aRect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
 			creationDate:   nDate,
@@ -1243,13 +1251,15 @@
 		let oBlipFill = new AscFormat.CBlipFill();
 
 		oUniFill.setFill(oBlipFill);
-		oBlipFill.setRasterImageId(AscFormat.checkRasterImageId(imageSrc));
+		oBlipFill.setRasterImageId(sRasterImageId);
 		oBlipFill.setStretch(new AscFormat.CBlipFillStretch());
+		oAnnot.setFill(oUniFill);
 
 		oAnnot.SetIconType(AscPDF.STAMP_TYPES.Image);
 		oAnnot.SetBorderWidth(0);
-		oAnnot.setFill(oUniFill);
 		oAnnot.getXfrm().setRot(0);
+		oAnnot.SetInRect([aRect[0], aRect[3], aRect[0], aRect[1], aRect[2], aRect[1], aRect[2], aRect[3]]);
+		oAnnot.SetPosition(position["x"], position["y"]);
 
 		return new ApiStampAnnotation(oAnnot);
 	};
@@ -6106,6 +6116,10 @@
 
 	/**
 	 * Sets annotation rect.
+	 *
+	 * :::note
+	 * Not for stamps. The SetScale method is used to change the stamp size.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - The new bounding rectangle for the annotation.
@@ -6115,6 +6129,10 @@
 	ApiBaseAnnotation.prototype.SetRect = function(rect) {
 		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		if (this.Annot.IsStamp()) {
+			return false;
 		}
 
 		this.Annot.private_UpdateRect(rect);
@@ -12328,14 +12346,23 @@
 		}
 	}
 
-	function private_IsValidRect(value, isForStamp) {
+	function private_IsValidRect(value) {
 		return (
 			Array.isArray(value) &&
 			value.length === 4 &&
 			value.every(Number.isFinite) &&
-			(isForStamp !== true ? value[0] < value[2] &&
-			value[1] < value[3] : true)
+			value[0] < value[2] &&
+			value[1] < value[3]
 		);
+	}
+
+	function private_GetStampPosition(position) {
+		if (Array.isArray(position)) {
+			position = {"x": position[0], "y": position[1]};
+		}
+
+		private_CheckPoint(position);
+		return position;
 	}
 
 	function private_IsValidRectDiff(value) {

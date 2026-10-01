@@ -108,6 +108,40 @@
     CAnnotationStamp.prototype.IsStamp = function() {
         return true;
     };
+    CAnnotationStamp.prototype.Reassign_ImageUrls = function(mapUrl) {
+        if (this.GetIconType() !== STAMP_TYPES.Image || this.IsNeedDrawFromStream()) {
+            return;
+        }
+
+        let sRasterId = this.spPr.Fill && this.spPr.Fill.checkRasterImageId();
+        if (!sRasterId) {
+            return;
+        }
+
+        let oImageSize = AscCommon.getSourceImageSize(AscCommon.getFullImageSrc2(sRasterId));
+        if (oImageSize.width <= 0 || oImageSize.height <= 0) {
+            return;
+        }
+
+        let aRect = this.GetRect();
+        let nX = aRect[0];
+        let nY = aRect[1];
+        let nWidth = Math.max(1, oImageSize.width * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
+        let nHeight = Math.max(1, oImageSize.height * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
+        let nScale = this.GetOriginViewScale();
+        let nAngle = this.GetRotate() * Math.PI / 180;
+        let nCos = Math.abs(Math.cos(nAngle));
+        let nSin = Math.abs(Math.sin(nAngle));
+
+        this.SetRect([
+            nX, nY,
+            nX + (nWidth * nCos + nHeight * nSin) * nScale,
+            nY + (nWidth * nSin + nHeight * nCos) * nScale
+        ]);
+        this.SetInRect([nX, nY + nHeight, nX, nY, nX + nWidth, nY, nX + nWidth, nY + nHeight]);
+        this.SetNeedRecalcSizes(true);
+        this.Recalculate();
+    };
     CAnnotationStamp.prototype.RecalcSizes = function() {
         let aRect = this.GetRect();
         let aInRect = this.GetInRect();
@@ -117,7 +151,8 @@
             return;
         }
 
-        function calcScale(rectA, angleRad, bboxB, eps) {
+        function calcScale(rectA, angleRad, bboxB, borderWidth, eps) {
+            borderWidth = borderWidth || 0;
             eps = undefined !== eps ? eps : 1e-3;
             const cosL = Math.cos(angleRad);
             const sinL = Math.sin(angleRad);
@@ -143,8 +178,8 @@
             const wB = Math.abs(bboxB[2] - bboxB[0]);
             const hB = Math.abs(bboxB[3] - bboxB[1]);
 
-            const sX = wB / dUX;
-            const sY = hB / dUY;
+            const sX = wB / (dUX + borderWidth);
+            const sY = hB / (dUY + borderWidth);
 
             return (sX + sY) * 0.5;
         }
@@ -193,7 +228,7 @@
             aInRect = rotateRect(aInRect, -nInRectRot);
         }
 
-        let scale = calcScale(aInRect, rad, aRect);
+        let scale = calcScale(aInRect, rad, aRect, this.IsChanged() ? this.GetBorderWidth() : 0);
         let nShapeW = getDistance(aInRect[0], aInRect[1], aInRect[6], aInRect[7]);
         let nShapeH = getDistance(aInRect[0], aInRect[1], aInRect[2], aInRect[3]);
 
@@ -311,7 +346,6 @@
             return;
         }
 
-        AscCommon.History.StartNoHistoryMode();
         this.spPr.xfrm.setExtX(nShapeW * g_dKoef_pt_to_mm);
         this.spPr.xfrm.setExtY(nShapeH * g_dKoef_pt_to_mm);
 
@@ -326,25 +360,13 @@
         this.spPr.xfrm.setOffX(nOffX * g_dKoef_pt_to_mm);
         this.spPr.xfrm.setOffY(nOffY * g_dKoef_pt_to_mm);
 
-        AscCommon.History.EndNoHistoryMode();
+        this.SetNeedRecalcSizes(false);
     };
     CAnnotationStamp.prototype.GetInRect = function() {
-		if (this.GetIconType() == AscPDF.STAMP_TYPES.Image && !this.IsNeedDrawFromStream()) {
-			let aRect = this.GetRect();
-			return [aRect[0], aRect[3], aRect[0], aRect[1], aRect[2], aRect[1], aRect[2], aRect[3]];
-		}
-
         return this._inRect;
     };
     CAnnotationStamp.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
-    };
-    CAnnotationStamp.prototype.SetWasChanged = function(isChanged) {
-        let oViewer = Asc.editor.getDocumentRenderer();
-
-        if (this._wasChanged !== isChanged && oViewer.IsOpenAnnotsInProgress == false) {
-            this._wasChanged = isChanged;
-        }
     };
     CAnnotationStamp.prototype.GetOriginViewScale = function() {
         let aInRect = this.GetInRect();
@@ -547,18 +569,24 @@
         let oXfrm = this.getXfrm();
 
         this.SetRotate(-oXfrm.rot * (180 / Math.PI));
+
+        this.SetNeedRecalcSizes(false);
         this.recalcBounds();
         this.recalcGeometry();
         this.Recalculate(true);
-        
-        let aNewRect = [];
-        let oGrBounds = this.bounds;
-        aNewRect[0] = Math.round(oGrBounds.l) * g_dKoef_mm_to_pt;
-        aNewRect[1] = Math.round(oGrBounds.t) * g_dKoef_mm_to_pt;
-        aNewRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pt;
-        aNewRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pt;
 
-        this.SetRect(aNewRect, true);
+        let oGrBounds = this.bounds;
+        let nBorderOffset = (this.GetBorderWidth() || 0) * this.GetOriginViewScale() / 2;
+        let aNewRect = [
+            oGrBounds.l * g_dKoef_mm_to_pt - nBorderOffset,
+            oGrBounds.t * g_dKoef_mm_to_pt - nBorderOffset,
+            oGrBounds.r * g_dKoef_mm_to_pt + nBorderOffset,
+            oGrBounds.b * g_dKoef_mm_to_pt + nBorderOffset
+        ];
+
+        this.SetRect(aNewRect);
+        this.SetNeedRecalcSizes(false);
+        this.SetNeedRecalc(false);
     };
     CAnnotationStamp.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -578,10 +606,10 @@
 
         // original rect (save)
         if (memory.docRenderer) {
-            memory.WriteDouble(aInRect[0] - (nBorderW / 2) * nScale); // x1
-            memory.WriteDouble(aInRect[3] - (nBorderW / 2) * nScale); // y1
-            memory.WriteDouble(aInRect[4] + (nBorderW / 2) * nScale); // x2
-            memory.WriteDouble(aInRect[1] + (nBorderW / 2) * nScale); // y2
+            memory.WriteDouble(aInRect[0] - (nBorderW / 2)); // x1
+            memory.WriteDouble(aInRect[3] - (nBorderW / 2)); // y1
+            memory.WriteDouble(aInRect[4] + (nBorderW / 2)); // x2
+            memory.WriteDouble(aInRect[1] + (nBorderW / 2)); // y2
         }
         else { // copying
             aInRect.forEach(function(measure) {
@@ -642,7 +670,7 @@
     };
     
     CAnnotationStamp.prototype.getNoChangeAspect = function() {
-		return !(false == this.IsNeedDrawFromStream() && this.GetIconType() === AscPDF.STAMP_TYPES.Image);
+		return true;
     };
     CAnnotationStamp.prototype.hitInPath = function(x, y) {
         return this.hitInInnerArea(x, y);

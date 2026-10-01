@@ -1308,6 +1308,10 @@ RotateState.prototype =
                                         oAnnot.SetRect(aRect);
                                     }
                                     else if (oAnnot.IsStamp()) {
+										if (oAnnot.GetIconType() == AscPDF.STAMP_TYPES.Image && !oAnnot.IsNeedDrawFromStream()) {
+											oAnnot.SetInRect([aRect[0], aRect[3], aRect[0], aRect[1], aRect[2], aRect[1], aRect[2], aRect[3]]);
+										}
+
                                         AscCommon.History.StartNoHistoryMode();
                                         let aCurRect = oAnnot.GetRect().slice();
                                         let oCurXfrm = oAnnot.getXfrm();
@@ -1326,11 +1330,14 @@ RotateState.prototype =
                                         
                                         AscCommon.History.EndNoHistoryMode();
                                         
-                                        let oGrBounds = oAnnot.bounds;
-                                        aRect[0] = oGrBounds.l * g_dKoef_mm_to_pt;
-                                        aRect[1] = oGrBounds.t * g_dKoef_mm_to_pt;
-                                        aRect[2] = oGrBounds.r * g_dKoef_mm_to_pt;
-                                        aRect[3] = oGrBounds.b * g_dKoef_mm_to_pt;
+										let nBorderW = oAnnot.GetBorderWidth();
+										let nScale = oAnnot.GetOriginViewScale();
+
+										let oGrBounds = oAnnot.bounds;
+                                        aRect[0] = oGrBounds.l * g_dKoef_mm_to_pt - (nBorderW / 2) * nScale;
+                                        aRect[1] = oGrBounds.t * g_dKoef_mm_to_pt - (nBorderW / 2) * nScale;
+                                        aRect[2] = oGrBounds.r * g_dKoef_mm_to_pt + (nBorderW / 2) * nScale;
+                                        aRect[3] = oGrBounds.b * g_dKoef_mm_to_pt + (nBorderW / 2) * nScale;
 
                                         oAnnot._rect = aCurRect;
                                         oCurXfrm.extX = nCurExtX;

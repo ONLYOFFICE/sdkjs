@@ -1225,13 +1225,13 @@ CChangesPDFAnnotIntent.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseLongProperty}
+ * @extends {AscDFH.CChangesBaseDoubleProperty}
  */
 function CChangesPDFAnnotRotate(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFAnnotRotate.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFAnnotRotate.prototype = Object.create(AscDFH.CChangesBaseDoubleProperty.prototype);
 CChangesPDFAnnotRotate.prototype.constructor = CChangesPDFAnnotRotate;
 CChangesPDFAnnotRotate.prototype.Type = AscDFH.historyitem_Pdf_Annot_Rotate;
 CChangesPDFAnnotRotate.prototype.private_SetValue = function(Value)
@@ -1273,6 +1273,10 @@ CChangesPDFAnnotStampType.prototype.private_SetValue = function(Value)
 	let oAnnot = this.Class;
 	oAnnot.SetIconType(Value);
 };
+CChangesPDFAnnotStampType.prototype.ReplaceImageUrl = function(mapUrl)
+{
+	this.Class.Reassign_ImageUrls(mapUrl);
+};
 
 /**
  * @constructor
@@ -1288,7 +1292,10 @@ CChangesPDFAnnotStampInRect.prototype.Type = AscDFH.historyitem_Pdf_Stamp_InRect
 CChangesPDFAnnotStampInRect.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetInRect(Value);
+	oAnnot._inRect = Value;
+
+	oAnnot.SetNeedRecalcSizes(false);
+	oAnnot.SetNeedRecalc(true);
 };
 
 /**
