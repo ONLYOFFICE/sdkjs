@@ -7217,6 +7217,15 @@
 	 */
     ApiDrawing.prototype.Delete = function()
     {
+        const drawing = this.Drawing;
+        const controller = drawing && drawing.group && drawing.parent && drawing.parent.graphicObjects;
+        if (controller)
+        {
+            this.private_ResetSelection();
+            controller.removeInGroup(drawing.getMainGroup(), [drawing]);
+            return true;
+        }
+
         var oParent = this.GetParent();
         if (this.Drawing && oParent)
         {
@@ -7283,7 +7292,7 @@
                 drawingNvPr = this.Drawing.nvGraphicFramePr.nvPr;
                 break;
             case AscDFH.historyitem_type_GroupShape:
-                drawingNvPr = this.Drawing.nvGrpSpPr;
+                drawingNvPr = this.Drawing.nvGrpSpPr.nvPr;
                 break;
             case AscDFH.historyitem_type_ImageShape:
             case AscDFH.historyitem_type_OleObject:
