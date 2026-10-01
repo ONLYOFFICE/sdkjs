@@ -705,39 +705,36 @@
 	OutlineDragDropExecutor.prototype.getSlideContentSources = function (slide) {
 		return this.getSourceParagraphs(this.reader.getContentParagraphs(slide));
 	};
-	OutlineDragDropExecutor.prototype.moveSlides = function (slides, afterSlide) {
+	OutlineDragDropExecutor.prototype.getSlideIndexes = function (slides) {
 		const presentation = this.getPresentation();
 		const indexes = [];
 		for (let i = 0; i < slides.length; i += 1) {
 			indexes.push(presentation.GetSlideIndex(slides[i]));
 		}
-		indexes.sort(function (a, b) {
-			return a - b;
-		});
-		let position = afterSlide ? presentation.GetSlideIndex(afterSlide) + 1 : 0;
-		for (let i = 0; i < indexes.length; i += 1) {
-			if (indexes[i] < position) {
-				position -= 1;
-			}
-		}
-		if (position !== indexes[0]) {
-			presentation.moveSlides(indexes, position);
+		indexes.sort(AscCommon.fSortAscending);
+		return indexes;
+	};
+	OutlineDragDropExecutor.prototype.getSlideInsertPos = function (afterSlide) {
+		return afterSlide ? this.getPresentation().GetSlideIndex(afterSlide) + 1 : 0;
+	};
+	OutlineDragDropExecutor.prototype.moveSlides = function (slides, afterSlide) {
+		const presentation = this.getPresentation();
+		const indexes = this.getSlideIndexes(slides);
+		const position = this.getSlideInsertPos(afterSlide);
+		const isInPlace = position >= indexes[0] && position <= indexes[indexes.length - 1] + 1;
+		if (!isInPlace) {
+			presentation.getViewManager().shiftSlides(position, indexes, false);
 		}
 		presentation.updateSlideIndexes();
-		return slides;
 	};
 	OutlineDragDropExecutor.prototype.copySlides = function (slides, afterSlide) {
 		const presentation = this.getPresentation();
-		let position = afterSlide ? presentation.GetSlideIndex(afterSlide) + 1 : 0;
-		const copies = [];
-		for (let i = 0; i < slides.length; i += 1) {
-			const idMap = {};
-			const slideCopy = slides[i].createDuplicate(idMap, false);
-			AscFormat.fResetConnectorsIds(slideCopy.cSld.spTree, idMap);
-			presentation.insertSlideObjectToPos(position + i, slideCopy);
-			copies.push(slideCopy);
-		}
+		const newIndexes = presentation.getViewManager().shiftSlides(this.getSlideInsertPos(afterSlide), this.getSlideIndexes(slides), true);
 		presentation.updateSlideIndexes();
+		const copies = [];
+		for (let i = 0; i < newIndexes.length; i += 1) {
+			copies.push(presentation.Slides[newIndexes[i]]);
+		}
 		return copies;
 	};
 	OutlineDragDropExecutor.prototype.getBlockEnd = function (lastSlide) {
