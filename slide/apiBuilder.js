@@ -5862,7 +5862,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetDuration.js
 	 */
 	ApiSlideShowTransition.prototype.SetDuration = function (duration) {
-		if (this.Transition && AscFormat.isRealNumber(duration)) {
+		if (this.Transition && AscFormat.isRealNumber(duration) && duration >= 0) {
 			const copy = this.Transition.createDuplicate();
 			copy.put_TransitionDuration(duration);
 			return this.private_ApplyModified(copy);
@@ -6033,7 +6033,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetAdvanceTime.js
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceTime = function (advanceTime) {
-		if (this.Transition && AscFormat.isRealNumber(advanceTime)) {
+		if (this.Transition && AscFormat.isRealNumber(advanceTime) && advanceTime >= 0) {
 			const copy = this.Transition.createDuplicate();
 			copy.put_SlideAdvanceDuration(advanceTime);
 			return this.private_ApplyModified(copy);
