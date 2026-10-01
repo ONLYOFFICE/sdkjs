@@ -791,7 +791,6 @@
 
 	/**
 	 * Creates a new theme color scheme.
-	 *
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
 	 *
@@ -1219,7 +1218,6 @@
 
 	/**
 	 * Creates a new slide show transition object.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -1480,7 +1478,6 @@
 
 	/**
 	 * Creates a new hyperlink object to be used for setting hyperlinks on drawing objects (shapes or images).
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 *
@@ -2277,7 +2274,6 @@
 
 	/**
 	 * Returns whether the presentation loops continuously until the user stops it.
-	 *
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -2321,7 +2317,6 @@
 
 	/**
 	 * Sets whether the presentation loops continuously until the user stops it.
-	 *
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -3094,7 +3089,6 @@
 	 * :::note
 	 * Master can't be deleted if it's the last one in the presentation.
 	 * :::
-	 *
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean} - return false if master doesn't exist or is not in the presentation or couldn't be deleted (e.g. the last master).
@@ -3237,7 +3231,6 @@
 
 	/**
 	 * Returns an array with all tables from the slide master.
-	 *
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the slide master.
@@ -3684,7 +3677,6 @@
 
 	/**
 	 * Returns an array with all tables from the current slide layout.
-	 *
 	 * @memberof ApiLayout
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current slide layout.
@@ -4596,7 +4588,6 @@
 
 	/**
 	 * Adds a comment to the current slide.
-	 *
 	 * @typeofeditors ["CPE"]
 	 * @memberof ApiSlide
 	 * @param {number} posX - The X position (in EMU) of the comment (defaults to 0).
@@ -5185,7 +5176,6 @@
 
 	/**
 	 * Returns an array with all tables from the current slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current slide.
@@ -5358,7 +5348,6 @@
 
 	/**
 	 * Returns the slide show transition of the current slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5375,7 +5364,6 @@
 
 	/**
 	 * Sets the slide show transition to the current slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5394,7 +5382,6 @@
 
 	/**
 	 * Returns the animation timeline for the slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5420,7 +5407,6 @@
 
 	/**
 	 * Returns the type of the ApiNotesPage class.
-	 *
 	 * @memberof ApiNotesPage
 	 * @typeofeditors ["CPE"]
 	 * @returns {"notesPage"}
@@ -5482,7 +5468,6 @@
 
 	/**
 	 * Returns the text from the body shape of the current notes page.
-	 *
 	 * @typeofeditors ["CPE"]
 	 * @memberof ApiNotesPage
 	 * @returns {string} The text from the body shape.
@@ -5528,7 +5513,6 @@
 
 	/**
 	 * Returns the type of the ApiSlideShowTransition class.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5751,7 +5735,6 @@
 
 	/**
 	 * Returns the entry effect for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5813,7 +5796,6 @@
 
 	/**
 	 * Sets the entry effect for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5853,7 +5835,6 @@
 
 	/**
 	 * Returns the transition duration in milliseconds for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5867,7 +5848,6 @@
 
 	/**
 	 * Sets the transition duration in milliseconds for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5917,7 +5897,6 @@
 	 * - fast: duration <= 500ms
 	 * - medium: 500ms < duration <= 750ms
 	 * - slow: duration > 750ms
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5938,7 +5917,6 @@
 	 * - fast = 500ms
 	 * - medium = 750ms
 	 * - slow = 1000ms
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5961,7 +5939,6 @@
 
 	/**
 	 * Returns whether the slide advances on mouse click.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5975,7 +5952,6 @@
 
 	/**
 	 * Sets whether the slide advances on mouse click.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5995,7 +5971,6 @@
 
 	/**
 	 * Returns whether the slide advances after a specified time.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6009,7 +5984,6 @@
 
 	/**
 	 * Sets whether the slide advances after a specified time.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6029,7 +6003,6 @@
 
 	/**
 	 * Returns the slide advance time in milliseconds.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6046,7 +6019,6 @@
 
 	/**
 	 * Sets the slide advance time in milliseconds.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6133,7 +6105,6 @@
 
 	/**
 	 * Returns the type of the ApiTimeLine class.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6147,7 +6118,6 @@
 
 	/**
 	 * Returns the main animation sequence for the slide.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6162,7 +6132,6 @@
 
 	/**
 	 * Returns all interactive animation sequences for the slide.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6182,7 +6151,6 @@
 
 	/**
 	 * Creates an interactive animation sequence triggered by clicking on a specified object.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6202,7 +6170,6 @@
 
 	/**
 	 * Returns all animation effects for the slide.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6534,7 +6501,6 @@
 
 	/**
 	 * Returns the type of the ApiAnimationSequence class.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6548,7 +6514,6 @@
 
 	/**
 	 * Returns the number of effects in the sequence.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6572,7 +6537,6 @@
 
 	/**
 	 * Returns the effect at the specified index.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6601,7 +6565,6 @@
 
 	/**
 	 * Adds an animation effect to the sequence.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6655,7 +6618,6 @@
 
 	/**
 	 * Removes all effects from the sequence.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6728,7 +6690,6 @@
 
 	/**
 	 * Returns the type of the ApiAnimationEffect class.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6742,7 +6703,6 @@
 
 	/**
 	 * Returns the animation effect type.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6762,7 +6722,6 @@
 
 	/**
 	 * Returns the trigger type for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6780,7 +6739,6 @@
 
 	/**
 	 * Sets the trigger type for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6807,7 +6765,6 @@
 
 	/**
 	 * Returns the duration of the animation effect in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6825,7 +6782,6 @@
 
 	/**
 	 * Sets the duration of the animation effect in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6845,7 +6801,6 @@
 
 	/**
 	 * Returns the delay before the animation effect starts in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6863,7 +6818,6 @@
 
 	/**
 	 * Sets the delay before the animation effect starts in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6883,7 +6837,6 @@
 
 	/**
 	 * Returns the animated drawing object.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6926,7 +6879,6 @@
 
 	/**
 	 * Deletes the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6960,7 +6912,6 @@
 
 	/**
 	 * Moves the animation effect to the specified position in the sequence.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -7003,7 +6954,6 @@
 
 	/**
 	 * Returns the repeat count for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -7022,7 +6972,6 @@
 
 	/**
 	 * Sets the repeat count for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -7887,7 +7836,6 @@
 	 * Sets a hyperlink to the current drawing object (shape or image).
 	 *
 	 * Pass null to remove the hyperlink.
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 *
@@ -7935,7 +7883,6 @@
 
 	/**
 	 * Returns the hyperlink from the current drawing object (shape or image).
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 *
@@ -9128,7 +9075,6 @@
 
 	/**
 	 * Sets the width of the specified column in the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 *
@@ -9177,7 +9123,6 @@
 
 	/**
 	 * Returns the width of the specified column (by index) of the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 *
@@ -9567,7 +9512,6 @@
 
 	/**
 	 * Sets the height to the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 *
@@ -9591,7 +9535,6 @@
 
 	/**
 	 * Returns the height of the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 *

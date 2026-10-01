@@ -62,7 +62,6 @@
 	 *
 	 * - <code>rect[0] < rect[2]</code> (x1 < x2)
 	 * - <code>rect[1] < rect[3]</code> (y1 < y2)
-	 *
 	 * @typedef {pt[]} Rect
 	 * @property {pt} 0 - x1 (left)
 	 * @property {pt} 1 - y1 (top)

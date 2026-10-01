@@ -2140,7 +2140,6 @@
 
 	/**
 	 * Sets the text color to the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
@@ -2155,7 +2154,6 @@
 	 */
 	/**
 	 * Sets the text color to the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
@@ -2310,7 +2308,6 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
@@ -2325,7 +2322,6 @@
 	 */
 	/**
 	 * Specifies the shading applied to the contents of the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
@@ -5036,7 +5032,6 @@
 	 * :::danger[Breaking Change]
 	 * Starting from version 9.4.0, the parameter order has been changed from `Api.CreateTable(cols, rows)` to `Api.CreateTable(rows, cols)`.
 	 * :::
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {number} rows - Number of rows. Must be a positive integer.
@@ -5396,7 +5391,6 @@
 
 	/**
 	 * Creates an auto-color.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiColor} Instance of ApiColor with 'auto' type.
@@ -5408,7 +5402,6 @@
 
 	/**
 	 * Creates an RGB color from red, green and blue components.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {byte} r - Red component (0-255).
@@ -5424,7 +5417,6 @@
 
 	/**
 	 * Creates an RGBA color from red, green, blue and alpha components.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {byte} r - Red component (0-255).
@@ -5441,7 +5433,6 @@
 
 	/**
 	 * Creates a color from a HEX string.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} hexString - The HEX string representing a color.
@@ -5458,7 +5449,6 @@
 
 	/**
 	 * Creates a theme color.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {SchemeColorId} [name="tx1"] The theme color name. If the provided name is not supported, the 'tx1' color will be used.
@@ -5498,7 +5488,6 @@
 	 * For a single string argument, the resolution priority is: "auto", a string starting with "#", a theme name, a preset name, a bare 6-digit HEX. Theme and preset palettes do not overlap. A 3-digit shorthand is accepted only with the leading "#".
 	 *
 	 * Unsupported inputs (objects, arrays, an existing ApiColor, unknown strings, no arguments) return a black color (#000000).
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number | string | byte | SchemeColorId | PresetColor} r - The universal color input. With three or four arguments, the red component (0-255).
@@ -5576,7 +5565,6 @@
 
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5588,7 +5576,6 @@
 	 */
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5637,7 +5624,6 @@
 
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5651,7 +5637,6 @@
 	 */
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5703,7 +5688,6 @@
 
 	/**
 	 * Creates a stroke adding shadows to the element.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5716,7 +5700,6 @@
 	 */
 	/**
 	 * Creates a stroke adding shadows to the element.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5801,7 +5784,6 @@
 
 	/**
 	 * Creates a gradient stop used for different types of gradients.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5814,7 +5796,6 @@
 	 */
 	/**
 	 * Creates a gradient stop used for different types of gradients.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -9513,7 +9494,6 @@
 
 	/**
 	 * Sets the highlight to the forms in the document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -9528,7 +9508,6 @@
 	 */
 	/**
 	 * Sets the highlight to the forms in the document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -9833,7 +9812,6 @@
 
 	/**
 	 * Returns all the selected drawings in the current document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
@@ -9954,7 +9932,6 @@
 
 	/**
 	 * Sets the highlight to the content controls from the current document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
@@ -9969,7 +9946,6 @@
 	 */
 	/**
 	 * Sets the highlight to the content controls from the current document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
@@ -11701,7 +11677,6 @@
 
 	/**
 	 * Sets the text color to the current paragraph.
-	 *
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 *
@@ -11716,7 +11691,6 @@
 	 */
 	/**
 	 * Sets the text color to the current paragraph.
-	 *
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
@@ -15611,7 +15585,6 @@
 
 	/**
 	 * Sets the background color to all cells in the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 *
@@ -15626,7 +15599,6 @@
 	 */
 	/**
 	 * Sets the background color to all cells in the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16495,7 +16467,6 @@
 
 	/**
 	 * Sets the background color to all cells in the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16510,7 +16481,6 @@
 	 */
 	/**
 	 * Sets the background color to all cells in the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16876,7 +16846,6 @@
 
 	/**
 	 * Sets the background color to the current table cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16891,7 +16860,6 @@
 	 */
 	/**
 	 * Sets the background color to the current table cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16914,7 +16882,6 @@
 
 	/**
 	 * Returns the background color of the current table cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiColor}
@@ -16949,7 +16916,6 @@
 
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16964,7 +16930,6 @@
 	 */
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -17638,7 +17603,6 @@
 
 	/**
 	 * Sets the text color to the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -17653,7 +17617,6 @@
 	 */
 	/**
 	 * Sets the text color to the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -18034,7 +17997,6 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -18049,7 +18011,6 @@
 	 */
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -18737,7 +18698,6 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
-	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -18753,7 +18713,6 @@
 	 */
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
-	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -21019,7 +20978,6 @@
 	};
 	/**
 	 * Sets the absolute measurement for the horizontal positioning of the floating object.
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
@@ -21032,7 +20990,6 @@
 	 */
 	/**
 	 * Sets the absolute measurement for the horizontal positioning of the floating object.
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
@@ -21053,7 +21010,6 @@
 	};
 	/**
 	 * Sets the absolute measurement for the vertical positioning of the floating object.
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
@@ -21066,7 +21022,6 @@
 	 */
 	/**
 	 * Sets the absolute measurement for the vertical positioning of the floating object.
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
@@ -25151,7 +25106,6 @@
 
 	/**
 	 * Returns a type of the ApiColor class.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -25177,7 +25131,6 @@
 
 	/**
 	 * Returns true if the color is set to auto.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
 	 * @since 9.1.0
@@ -25190,7 +25143,6 @@
 
 	/**
 	 * Returns true if the color is a theme color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -25203,7 +25155,6 @@
 
 	/**
 	 * Gets the RGB components of the color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -25221,7 +25172,6 @@
 
 	/**
 	 * Gets the RGBA components of the color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -25240,7 +25190,6 @@
 
 	/**
 	 * Gets the HEX string representation of the color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -25285,7 +25234,6 @@
 
 	/**
 	 * Gets the theme color name if the color is a theme color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
@@ -25308,7 +25256,6 @@
 
 	/**
 	 * Converts the ApiColor object into the JSON object.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
@@ -25356,7 +25303,6 @@
 
 	/**
 	 * Converts the JSON object into the ApiColor object.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
@@ -26138,7 +26084,9 @@
 	/**
 	 * Sets the placeholder text to the current inline content control.
 	 *
-	 * *Can't be set to checkbox or radio button*
+	 * :::note
+	 * The placeholder text can't be set for checkbox or radio button content controls.
+	 * :::
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText - The text that will be set to the current inline content control.
 	 * @typeofeditors ["CDE"]
@@ -26241,7 +26189,6 @@
 	
 	/**
 	 * Sets the border color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26256,7 +26203,6 @@
 	 */
 	/**
 	 * Sets the border color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26288,7 +26234,6 @@
 	};
 	/**
 	 * Returns the border color of the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
@@ -26306,7 +26251,6 @@
 
 	/**
 	 * Sets the background color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26321,7 +26265,6 @@
 	 */
 	/**
 	 * Sets the background color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26354,7 +26297,6 @@
 	
 	/**
 	 * Returns the background color of the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
@@ -26477,8 +26419,6 @@
 
 	/**
 	 * Sets the checkbox value for the content control.
-	 *
-	 * This method updates the checkbox state of the content control to either checked or unchecked.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26503,7 +26443,6 @@
 	 * Determines whether a checkbox content control is currently checked or unchecked.
 	 *
 	 * Throws: Error if the content control is not a checkbox.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26520,8 +26459,6 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
-	 *
-	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26535,8 +26472,6 @@
 
 	/**
 	 * Sets the size for the picture in a content control.
-	 *
-	 * This method adjusts the width and height of the image if the content control is a picture.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26570,7 +26505,6 @@
 	/**
 	 * Sets the content (image) for the picture content control.
 	 *
-	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -26760,7 +26694,6 @@
 	 * Retrieves the selected date value from a date picker content control and returns it as a Date object.
 	 *
 	 * Throws: Error if the content control is not a date picker.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26782,7 +26715,6 @@
 	/**
 	 * Sets the date format for the datepicker content control.
 	 *
-	 * This method allows setting the format in which the date should be displayed in the datepicker content control.
 	 * The format string should be specified using common date format patterns (e.g., "mm.dd.yyyy").
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -27418,7 +27350,6 @@
 	/**
 	 * Sets the content (image) for the picture content control.
 	 *
-	 * This method updates the picture inside a content control by setting an image from a provided URL.
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -27471,8 +27402,6 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
-	 *
-	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -28297,7 +28226,6 @@
 	
 	/**
 	 * Sets the visualization of the content control.
-	 *
 	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -28309,7 +28237,6 @@
 	
 	/**
 	 * Gets the visualization of the content control.
-	 *
 	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -28583,7 +28510,9 @@
 	/**
 	 * Converts the current form to an inline form.
 	 *
-	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
+	 * :::note
+	 * A picture form can't be converted to an inline form, as it's always a fixed-size object.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -28602,7 +28531,6 @@
 
 	/**
 	 * Sets the border color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28617,7 +28545,6 @@
 	 */
 	/**
 	 * Sets the border color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28668,7 +28595,6 @@
 	};
 	/**
 	 * Returns the border color of the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {?ApiColor}
@@ -28688,7 +28614,6 @@
 
 	/**
 	 * Sets the background color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28703,7 +28628,6 @@
 	 */
 	/**
 	 * Sets the background color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28760,7 +28684,6 @@
 
 	/**
 	 * Returns the background color of the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {?ApiColor}
@@ -28852,7 +28775,9 @@
 	/**
 	 * Sets the placeholder text to the current form.
 	 *
-	 * *Can't be set to checkbox or radio button.*
+	 * :::note
+	 * The placeholder text can't be set for checkbox or radio button forms.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -28886,7 +28811,9 @@
 	/**
 	 * Sets the text properties to the current form.
 	 *
-	 * *Used if possible for this type of form*
+	 * :::note
+	 * Used if possible for this type of form.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} textPr - The text properties that will be set to the current form.
@@ -28904,7 +28831,9 @@
 	/**
 	 * Returns the text properties from the current form.
 	 *
-	 * *Used if possible for this type of form*
+	 * :::note
+	 * Used if possible for this type of form.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -29881,7 +29810,9 @@
 	/**
 	 * Sets the text to the current combo box.
 	 *
-	 * *Available only for editable combo box forms.*
+	 * :::note
+	 * Available only for editable combo box forms.
+	 * :::
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -31594,7 +31525,6 @@
 	 * Converts millimeters to English Metric Units (EMUs).
 	 *
 	 * The result is an integer value.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {mm} mm - The value in millimeters.
@@ -31993,7 +31923,6 @@
 	
 	/**
 	 * Sets the position of the comment in the document.
-	 * 
 	 * @memberof ApiComment
 	 * @typeofeditors ["CPE"]
 	 * @param {number} x - The X coordinate of the comment position in EMU.
@@ -32009,7 +31938,6 @@
 
 	/**
 	 * Returns the position of the comment in the document.
-	 * 
 	 * @memberof ApiComment
 	 * @typeofeditors ["CPE"]
 	 * @returns {Object} - An object with the coordinates (in EMU) of the comment position.
