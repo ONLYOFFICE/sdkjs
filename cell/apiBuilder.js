@@ -8207,7 +8207,6 @@
 
 	/**
 	 * Saves changes to the specified document.
-	 *
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -8219,7 +8218,6 @@
 
 	/**
 	 * Returns a sheet collection that represents all the sheets in the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet[]}
@@ -8232,7 +8230,6 @@
 
 	/**
 	 * Returns all pivot tables in the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable[]}
@@ -8245,7 +8242,6 @@
 
 	/**
 	 * Returns the custom properties of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiCustomProperties}
 	 * @typeofeditors ["CSE"]
@@ -8258,7 +8254,6 @@
 
 	/**
 	 * Returns the theme of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiTheme}
 	 * @typeofeditors ["CSE"]
@@ -8271,7 +8266,6 @@
 
 	/**
 	 * Returns the name of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {string}
 	 * @typeofeditors ["CSE"]
@@ -8284,7 +8278,6 @@
 
 	/**
 	 * Returns the active sheet of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiWorksheet}
 	 * @typeofeditors ["CSE"]
@@ -8297,7 +8290,6 @@
 
 	/**
 	 * Returns the active chart of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiChart | null}
 	 * @typeofeditors ["CSE"]
@@ -10794,7 +10786,6 @@
 
 	/**
 	 * Sets the direction (reading order) of the text in the current cell range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {'context' | 'ltr' | 'rtl'} direction - The direction (reading order) that will be applied to the cell contents.
@@ -15050,7 +15041,6 @@
 
 	/**
 	 * Returns a type of the ApiTheme class.
-	 *
 	 * @memberof ApiTheme
 	 * @typeofeditors ["CSE"]
 	 * @returns {"theme"}
@@ -15063,7 +15053,6 @@
 
 	/**
 	 * Returns the name of the theme.
-	 *
 	 * @memberof ApiTheme
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The theme name.
@@ -27830,7 +27819,6 @@
      * it does not change the currently defined filter conditions; it only
      * reevaluates which rows should be visible based on the active filters.
      * If no AutoFilter is defined for the worksheet, the method does nothing.
-     *
      * @memberof ApiAutoFilter
      * @typeofeditors ["CSE"]
      * @returns {void}
@@ -27856,7 +27844,6 @@
      * it removes any active filtering from the worksheet while preserving the
      * AutoFilter drop-downs on the header row. If no AutoFilter is defined
      * for the worksheet, the method does nothing.
-     *
      * @memberof ApiAutoFilter
      * @typeofeditors ["CSE"]
      * @returns {void}
@@ -27965,8 +27952,6 @@
 
     /**
      * Returns the first criteria associated with the filter for this column.
-     *
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {string|string[]|number|XlDynamicFilterCriteria|null} The first criteria for the filter.
@@ -28032,7 +28017,6 @@
 
     /**
      * Returns the second criteria associated with the filter for this column.
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {string|null} The second criteria for the filter, or null if not applicable.
@@ -28084,7 +28068,6 @@
      * - DynamicFilter
      * - ColorFilter
      * - Top10
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {boolean} True if a filter is applied; otherwise, false.
@@ -28106,7 +28089,6 @@
 
     /**
      * Returns the operator used for the filter on this column.
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {XlAutoFilterOperator|null} The operator for the current filter.
