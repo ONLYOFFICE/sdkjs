@@ -1769,7 +1769,7 @@
     ApiPresentation.prototype.ApplyTheme = function(oApiTheme){
        if (this.Presentation && oApiTheme.GetClassType && oApiTheme.GetClassType() === "theme")
         {
-           this.Presentation.changeTheme(oApiTheme.ThemeInfo);
+           this.Presentation.changeTheme(oApiTheme.ThemeInfo, this.Presentation.GetAllSlideIndexes());
            return true;
         }
 
