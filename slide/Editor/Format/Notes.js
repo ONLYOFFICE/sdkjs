@@ -178,11 +178,12 @@
 
 	};
 
-	CNotes.prototype.createDuplicate = function (IdMap) {
-
+	CNotes.prototype.createDuplicate = function (IdMap, isCacheImage) {
+		isCacheImage = isCacheImage !== false;
 		var oIdMap = IdMap || {};
 		var oPr = new AscFormat.CCopyObjectProperties();
 		oPr.idMap = oIdMap;
+		oPr.cacheImage = isCacheImage;
 		var copy = new CNotes();
 		if (this.clrMap) {
 			copy.setClMapOverride(this.clrMap.createDuplicate());
