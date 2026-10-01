@@ -4586,14 +4586,8 @@ CParagraphContentWithParagraphLikeContent.prototype.AddContentControl = function
 				nEndPos   = this.Selection.StartPos;
 			}
 
-			for (var nIndex = nStartPos; nIndex <= nEndPos; ++nIndex)
-			{
-				if (para_Run !== this.Content[nIndex].Type)
-				{
-					// TODO: Вывести сообщение, что в данном месте нельзя добавить Plain text content control
-					return null;
-				}
-			}
+			if (para_Run !== this.Content[nStartPos].Type || para_Run !== this.Content[nEndPos].Type)
+				return null;
 
 			var oContentControl = new CInlineLevelSdt();
 			oContentControl.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);

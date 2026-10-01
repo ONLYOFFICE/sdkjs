@@ -2548,6 +2548,7 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 		paraPr.CanEditBlockCC    = selectedInfo.CanEditBlockSdts();
 		paraPr.CanDeleteInlineCC = selectedInfo.CanDeleteInlineSdts();
 		paraPr.CanEditInlineCC   = selectedInfo.CanEditInlineSdts();
+		paraPr.InPlainTextCC     = selectedInfo.IsInPlainTextSdt();
 	}
 	
 	if (paraPr.Tabs)

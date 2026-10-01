@@ -4316,6 +4316,13 @@ CInlineLevelSdt.prototype.OnDetach = function()
 	
 	CParagraphContentWithParagraphLikeContent.prototype.OnDetach.apply(this, arguments);
 };
+CInlineLevelSdt.prototype.AddContentControl = function()
+{
+	if (this.IsContentControlText())
+		return null;
+
+	return CParagraphContentWithParagraphLikeContent.prototype.AddContentControl.apply(this, arguments);
+};
 CInlineLevelSdt.prototype.ApplyPlainText = function(isPlain)
 {
 	if (this.Pr.Text === isPlain)
