@@ -11298,7 +11298,26 @@ Paragraph.prototype.GetCompiledInheritedPr = function()
 		}
 		
 		if (-1 === Lvl)
-			Pr.ParaPr.NumPr = undefined;
+		{
+			let headingLvl = Styles.GetHeadingNumId(_styleId);
+			// Follow MS Behaviour (78570)
+			if (-1 !== headingLvl)
+			{
+				if (undefined === Pr.ParaPr.NumPr.Lvl)
+				{
+					Pr.ParaPr.NumPr.Lvl = 0;
+					Lvl = 0;
+				}
+				else
+				{
+					Lvl = Pr.ParaPr.NumPr.Lvl;
+				}
+			}
+			else
+			{
+				Pr.ParaPr.NumPr = undefined;
+			}
+		}
 	}
 	
 	Pr.ParaPr.StyleTabs = ( undefined != Pr.ParaPr.Tabs ? Pr.ParaPr.Tabs.Copy() : new CParaTabs() );
