@@ -2579,6 +2579,15 @@
 		const outlineView = this.GetOutlineView();
 		return outlineView ? outlineView.getDragDropManager() : null;
 	};
+	COutlineThumbnailsManager.prototype.GoToSelectedOutlineSlide = function () {
+		const outlineView = this.GetOutlineView();
+		const selectedPage = outlineView ? outlineView.getSelectedSlide() : null;
+		if (selectedPage !== null) {
+			this.SelectPageEnabled = false;
+			this.m_oWordControl.GoToPage(selectedPage);
+			this.SelectPageEnabled = true;
+		}
+	};
 	COutlineThumbnailsManager.prototype.UpdateDragTarget = function () {
 		const dragDropManager = this.GetDragDropManager();
 		if (!dragDropManager || !dragDropManager.isTrackText()) {
@@ -2659,16 +2668,14 @@
 				return false;
 			}
 			outlineView.selectionSetStart(global_mouseEvent, outlineXMm, outlineYMm, 0);
-			const selectedPage = outlineView.getSelectedSlide();
-			if (selectedPage !== null) {
-				this.SelectPageEnabled = false;
-				this.m_oWordControl.GoToPage(selectedPage);
-				this.SelectPageEnabled = true;
-			}
+			this.GoToSelectedOutlineSlide();
 			if (global_mouseEvent.Button === 2) {
 				this.showContextMenu(false);
 			}
 			this.OnUpdateOverlay();
+			if (outlineView.isDecorationMouseDown) {
+				outlineView.getDragDropManager().checkDecorationMouseDown(global_mouseEvent, outlineXMm, outlineYMm);
+			}
 			checkSelectionEnd();
 		}
 		return false;
@@ -2806,8 +2813,12 @@
 			}
 			else
 			{
+				const isClick = !dragDropManager.isTrackText();
 				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 				dragDropManager.checkMouseUp(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm);
+				if (isClick) {
+					this.GoToSelectedOutlineSlide();
+				}
 			}
 			this.m_oWordControl.OnUpdateOverlay();
 			this.OnUpdateOverlay();

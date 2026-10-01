@@ -44,7 +44,8 @@
 	const OutlineDragSelectionType = {
 		text: 0,
 		slides: 1,
-		mixed: 2
+		mixed: 2,
+		paragraphs: 3
 	};
 	const OutlineDropTargetKind = {
 		none: 0,
@@ -158,8 +159,9 @@
 		};
 	};
 
-	function OutlineDragSelectionBuilder(outlineView) {
+	function OutlineDragSelectionBuilder(outlineView, isBlock) {
 		this.reader = new OutlineModelReader(outlineView);
+		this.isBlock = !!isBlock;
 	}
 	OutlineDragSelectionBuilder.prototype.getBounds = function () {
 		const content = this.reader.getDocContent();
@@ -222,6 +224,9 @@
 		if (this.hasTitleBetween(start.index + 1, blockEnd.index)) {
 			return this.buildMixed(start, blockEnd);
 		}
+		if (this.isBlock) {
+			return this.buildParagraphs(start, blockEnd);
+		}
 		return this.buildText(start, blockEnd);
 	};
 	OutlineDragSelectionBuilder.prototype.buildText = function (start, end) {
@@ -233,7 +238,7 @@
 		if (end.index <= titleRange.last) {
 			const isWholeTitle = start.index === titleRange.first && end.index === titleRange.last &&
 				this.getParagraph(start.index).IsSelectionFromStart() && this.getParagraph(end.index).IsSelectionToEnd();
-			if (!isWholeTitle) {
+			if (!isWholeTitle && !this.isBlock) {
 				return this.buildText(start, end);
 			}
 			return this.buildSlides(titleRange.first, this.getEndPoint(titleRange.last), [startSlide], true);
@@ -265,6 +270,11 @@
 		const slides = this.getSlidesBetween(start.index + 1, end.index);
 		return new OutlineDragSelection(OutlineDragSelectionType.mixed, start.index, startPos, end.index, end.pos, slides, isEndInTitle);
 	};
+	OutlineDragSelectionBuilder.prototype.buildParagraphs = function (start, end) {
+		end = this.getEndPoint(end.index);
+		const startPos = this.getParagraph(start.index).Get_StartPos();
+		return new OutlineDragSelection(OutlineDragSelectionType.paragraphs, start.index, startPos, end.index, end.pos, [], false);
+	};
 
 	function OutlineDropTargetBuilder(outlineView, selection) {
 		this.outlineView = outlineView;
@@ -273,7 +283,8 @@
 	}
 
 	OutlineDropTargetBuilder.prototype.isBlockSelection = function () {
-		return this.selection.type === OutlineDragSelectionType.slides || this.selection.type === OutlineDragSelectionType.mixed;
+		const type = this.selection.type;
+		return type === OutlineDragSelectionType.slides || type === OutlineDragSelectionType.mixed || type === OutlineDragSelectionType.paragraphs;
 	};
 	OutlineDropTargetBuilder.prototype.buildByPoint = function (x, y) {
 		const content = this.reader.getDocContent();
@@ -373,7 +384,7 @@
 	OutlineDropTargetBuilder.prototype.buildBoundary = function (boundaryIndex, ty) {
 		const paragraphs = this.reader.getParagraphs();
 		boundaryIndex = this.snapBoundary(boundaryIndex, ty);
-		if (boundaryIndex <= 0 && this.selection.type === OutlineDragSelectionType.mixed) {
+		if (boundaryIndex <= 0 && (this.selection.type === OutlineDragSelectionType.mixed || this.selection.type === OutlineDragSelectionType.paragraphs)) {
 			return new OutlineDropTarget(OutlineDropTargetKind.none);
 		}
 		const target = new OutlineDropTarget(OutlineDropTargetKind.boundary);
@@ -554,7 +565,9 @@
 			for (let i = 0; i < selection.slides.length; i += 1) {
 				slides.push(selection.slides[i]);
 			}
-			if (selection.type !== OutlineDragSelectionType.text) {
+			if (selection.type === OutlineDragSelectionType.paragraphs) {
+				addSlideShapes(this.reader.getSlide(this.getOutlineParagraph(selection.startIndex)));
+			} else if (selection.type !== OutlineDragSelectionType.text) {
 				const firstSlide = selection.slides[0];
 				addSlideShapes(presentation.Slides[presentation.GetSlideIndex(firstSlide) - 1]);
 				addSlideShapes(this.reader.getSlide(this.getOutlineParagraph(selection.startIndex)));
@@ -577,6 +590,9 @@
 				case OutlineDragSelectionType.slides:
 				case OutlineDragSelectionType.mixed: {
 					return this.executeBlock();
+				}
+				case OutlineDragSelectionType.paragraphs: {
+					return this.executeParagraphs();
 				}
 			}
 			return false;
@@ -931,6 +947,28 @@
 		this.operations.checkShapesExtents();
 		return true;
 	};
+	OutlineDragDropExecutor.prototype.executeParagraphs = function () {
+		const operations = this.operations;
+		const selection = this.selection;
+		const outlineParagraphs = this.reader.getParagraphs().slice(selection.startIndex, selection.endIndex + 1);
+		const sources = this.getSourceParagraphs(outlineParagraphs);
+		const anchor = this.getBoundaryAnchor();
+		if (!sources.length || !anchor.slide) {
+			return false;
+		}
+		const copies = operations.copyParagraphs(sources);
+		if (!this.isCopy) {
+			operations.removeParagraphs(sources);
+		}
+		this.insertAtAnchor(anchor.slide, anchor.paragraph, copies);
+		const first = copies[0];
+		const last = copies[copies.length - 1];
+		this.resultStart = new AscCommonSlide.ContentPosition(getDocPos(first, first.Get_StartPos()));
+		this.resultEnd = new AscCommonSlide.ContentPosition(getDocPos(last, last.Get_EndPos(true)));
+		this.resultSlide = anchor.slide;
+		operations.checkShapesExtents();
+		return true;
+	};
 
 	function COutlineDragDropManager(outlineView) {
 		this.outlineView = outlineView;
@@ -939,6 +977,7 @@
 		this.startY = 0;
 		this.target = null;
 		this.selection = null;
+		this.isBlockDrag = false;
 	}
 	COutlineDragDropManager.prototype.getPresentation = function () {
 		return this.outlineView.getPresentation();
@@ -957,7 +996,7 @@
 		if (this.outlineView.isEmptyPresentation()) {
 			return null;
 		}
-		return new OutlineDragSelectionBuilder(this.outlineView).build();
+		return new OutlineDragSelectionBuilder(this.outlineView, this.isBlockDrag).build();
 	};
 
 	COutlineDragDropManager.prototype.normalizeSelection = function () {
@@ -1041,15 +1080,25 @@
 		return isDone;
 	};
 
+	COutlineDragDropManager.prototype.canStartPending = function (e) {
+		const content = this.outlineView.getDocContent();
+		if (!content || !content.IsSelectionUse() || content.IsSelectionEmpty()) {
+			return false;
+		}
+		if (e.Button !== 0 || e.ShiftKey || e.ClickCount > 1) {
+			return false;
+		}
+		return this.canEdit();
+	};
 	COutlineDragDropManager.prototype.checkMouseDown = function (e, x, y) {
 		this.reset();
+		if (!this.canStartPending(e)) {
+			return false;
+		}
 		const outlineView = this.outlineView;
 		const content = outlineView.getDocContent();
 		const outlineShape = outlineView.outlineShape;
-		if (!content || !outlineShape || !content.IsSelectionUse() || content.IsSelectionEmpty()) {
-			return false;
-		}
-		if (e.Button !== 0 || e.ShiftKey || e.ClickCount > 1 || x < outlineShape.x || !this.canEdit()) {
+		if (!outlineShape || x < outlineShape.x) {
 			return false;
 		}
 		const tx = outlineView.getInvertTransformX(x);
@@ -1058,6 +1107,17 @@
 			return false;
 		}
 		this.state = OutlineDragState.pending;
+		this.startX = x;
+		this.startY = y;
+		return true;
+	};
+	COutlineDragDropManager.prototype.checkDecorationMouseDown = function (e, x, y) {
+		this.reset();
+		if (!this.canStartPending(e)) {
+			return false;
+		}
+		this.state = OutlineDragState.pending;
+		this.isBlockDrag = true;
 		this.startX = x;
 		this.startY = y;
 		return true;
@@ -1080,8 +1140,11 @@
 	};
 	COutlineDragDropManager.prototype.checkMouseUp = function (e, x, y) {
 		if (this.state === OutlineDragState.pending) {
+			const isBlockDrag = this.isBlockDrag;
 			this.reset();
-			this.placeCursor(x, y);
+			if (!isBlockDrag) {
+				this.placeCursor(x, y);
+			}
 			return true;
 		}
 		if (this.state === OutlineDragState.tracking) {
@@ -1113,6 +1176,7 @@
 		this.state = OutlineDragState.none;
 		this.target = null;
 		this.selection = null;
+		this.isBlockDrag = false;
 	};
 	COutlineDragDropManager.prototype.placeCursor = function (x, y) {
 		const outlineView = this.outlineView;
