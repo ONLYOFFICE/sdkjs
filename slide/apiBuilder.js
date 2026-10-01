@@ -4109,20 +4109,25 @@
      * Changes a color in the theme color scheme.
      * @memberof ApiThemeColorScheme
      * @typeofeditors ["CPE"]
-     * @param {number} nPos - Color position in the color scheme which will be changed.
-     * @param {ApiColor | ApiUniColor | ApiRGBColor} oColor - New color of the theme color scheme.
+     * @param {number} nPos - Color position in the color scheme which will be changed:
+     * 0-5 - accent1-accent6, 6 - dk1, 7 - dk2, 8 - folHlink, 9 - hlink, 10 - lt1, 11 - lt2.
+     * @param {ApiColor | ApiUniColor | ApiRGBColor} oColor - New color of the theme color scheme. A theme color is saved as its current RGB value.
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/ChangeColor.js
 	 */
     ApiThemeColorScheme.prototype.ChangeColor = function(nPos, oColor)
     {
-        if (nPos < 0 || nPos > 12)
+        nPos = GetIntParameter(nPos, -1);
+        if (nPos < 0 || nPos > 11)
             return false;
+
+        if (oColor && oColor.Unicolor && oColor.Unicolor.color instanceof AscFormat.CSchemeColor)
+            oColor = Api.Color(oColor);
 
         let unicolor;
         if (oColor instanceof AscBuilder.ApiColor)
             unicolor = private_ApiColorToUniColor(oColor);
-        else if (oColor.GetClassType() === "rgbColor" || oColor.GetClassType() === "uniColor")
+        else if (oColor && oColor.Unicolor)
             unicolor = oColor.Unicolor;
 
         if (!unicolor)
