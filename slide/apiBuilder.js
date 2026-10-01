@@ -1207,8 +1207,8 @@
 
 		var oArt = this.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
 
-        nIndLeft  = typeof(nIndLeft) === "number" && nIndLeft > -1 ? nIndLeft : (oPres.GetWidthMM() - oArt.spPr.xfrm.extX) / 2;
-        nIndTop  = typeof(nIndTop) === "number" && nIndTop > -1 ? nIndTop : (oPres.GetHeightMM() - oArt.spPr.xfrm.extY) / 2;
+        nIndLeft  = typeof(nIndLeft) === "number" && nIndLeft > -1 ? nIndLeft / 36000 : (oPres.GetWidthMM() - oArt.spPr.xfrm.extX) / 2;
+        nIndTop  = typeof(nIndTop) === "number" && nIndTop > -1 ? nIndTop / 36000 : (oPres.GetHeightMM() - oArt.spPr.xfrm.extY) / 2;
 
         oArt.spPr.xfrm.setOffX(nIndLeft);
         oArt.spPr.xfrm.setOffY(nIndTop);
