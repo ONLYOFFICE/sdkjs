@@ -686,7 +686,6 @@
 		outlineContent.SetContentPosition(getDocPos(outlineParagraph, nearPos.ContentPos), 0, 0);
 		outlineView.insertContent(selectedContent, true);
 		this.setResultFromOutlineSelection();
-		this.operations.checkShapesExtents();
 		return true;
 	};
 	OutlineDragDropExecutor.prototype.setResultFromOutlineSelection = function () {
@@ -973,8 +972,6 @@
 	function COutlineDragDropManager(outlineView) {
 		this.outlineView = outlineView;
 		this.state = OutlineDragState.none;
-		this.startX = 0;
-		this.startY = 0;
 		this.target = null;
 		this.selection = null;
 		this.isBlockDrag = false;
@@ -1107,8 +1104,6 @@
 			return false;
 		}
 		this.state = OutlineDragState.pending;
-		this.startX = x;
-		this.startY = y;
 		return true;
 	};
 	COutlineDragDropManager.prototype.checkDecorationMouseDown = function (e, x, y) {
@@ -1118,8 +1113,6 @@
 		}
 		this.state = OutlineDragState.pending;
 		this.isBlockDrag = true;
-		this.startX = x;
-		this.startY = y;
 		return true;
 	};
 	COutlineDragDropManager.prototype.startTrackText = function () {
