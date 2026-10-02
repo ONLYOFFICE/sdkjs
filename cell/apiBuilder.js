@@ -10335,7 +10335,7 @@
 	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
+	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry. The "textRect" type creates a text box as the editor inserts it: a light fill and a thin black outline.
 	 * @param {EMU} nWidth - The shape width in English measure units.
 	 * @param {EMU} nHeight - The shape height in English measure units.
 	 * @param {ApiFill} [oFill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
@@ -10353,8 +10353,8 @@
 			return null;
 		}
 		sType = sType || "rect";
-		if (!AscFormat.isValidShapeType(sType)) sType = "rect";
-		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
+		if (sType !== "textRect" && !AscFormat.isValidShapeType(sType)) sType = "rect";
+		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet, this.worksheet);
 		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiShape(oShape);
 	};

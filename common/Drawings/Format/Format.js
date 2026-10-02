@@ -17412,21 +17412,21 @@
 		 * Common Functions For Builder
 		 * @return {CShape}
 		 */
-		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
-			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0, undefined, undefined, undefined, true);
-			oShapeTrack.track({}, nWidth, nHeight, true);
-			var oShape = oShapeTrack.getShape(bWord === true, oDrawingDocument, null);
-			oShape.setParent(oParent);
+		function builder_CreateShape(type, width, height, fill, stroke, parent, theme, drawingDocument, isWord, worksheet, drawingObjects) {
+			let shapeTrack = new AscFormat.NewShapeTrack(type, 0, 0, theme, null, null, null, 0, undefined, undefined, undefined, true);
+			shapeTrack.track({}, width, height, true);
+			let shape = shapeTrack.getShape(isWord === true, drawingDocument, type === "textRect" ? drawingObjects : null);
+			shape.setParent(parent);
 			if (worksheet) {
-				oShape.setWorksheet(worksheet);
+				shape.setWorksheet(worksheet);
 			}
-			if (oFill) {
-				oShape.spPr.setFill(oFill);
+			if (fill) {
+				shape.spPr.setFill(fill);
 			}
-			if (oStroke) {
-				oShape.spPr.setLn(oStroke);
+			if (stroke) {
+				shape.spPr.setLn(stroke);
 			}
-			return oShape;
+			return shape;
 		}
 
 		let chartBuilderTypes = null;
