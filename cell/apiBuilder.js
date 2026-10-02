@@ -19693,7 +19693,7 @@
 		if (isValidTitle && isValidIdTitle) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
-				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true, true);
 
 				let newUser = new Asc.CUserProtectedRangeUserInfo();
 				newUser.asc_setId(sId);
@@ -19706,17 +19706,23 @@
 				}
 				newUser.asc_setType(nType);
 
-				let users = this.protectedRange.asc_getUsers();
-				if (!users) {
-					users = [];
+				let users = newProtectedRange.asc_getUsers() || [];
+				let existing = newProtectedRange.getUserById(sId);
+				if (existing) {
+					users[existing.index] = newUser;
+				} else {
+					users.push(newUser);
 				}
-				users.push(newUser);
 				newProtectedRange.asc_setUsers(users);
 				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
 				if (typeof editRes === "object") {
 					this.protectedRange = editRes;
 				}
-				result = new ApiProtectedRangeUserInfo(newUser, this.protectedRange);
+				if (editRes) {
+					// the model keeps a copy of the new range, so the user returned is the stored one
+					let stored = this.protectedRange.getUserById(sId);
+					result = new ApiProtectedRangeUserInfo(stored ? stored.obj : newUser, this.protectedRange);
+				}
 			}
 		}
 		return result;
@@ -19750,7 +19756,12 @@
 						}
 						newProtectedRange.asc_setUsers(newUsers);
 
-						if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+						// keep the edited range, as the other setters do, or the next edit brings the user back
+						let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+						if (typeof editRes === "object") {
+							this.protectedRange = editRes;
+						}
+						if (editRes) {
 							result = true;
 						}
 					}

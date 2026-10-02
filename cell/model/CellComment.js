@@ -860,7 +860,7 @@ CCellCommentator.prototype.sortComments = function(sortData) {
 	if (null === sortData)
 		return;
 	var comment, places = sortData.places, i = 0, l = places.length, j, row, line;
-	var range = sortData.bbox, oComments = this.getRangeComments(new Asc.Range(range.c1, range.r1, range.c2, range.r2));
+	var range = sortData.bbox, oComments = this.getRangeComments(new Asc.Range(range.c1, range.r1, range.c2, range.r2), true);
 	if (null === oComments)
 		return;
 
@@ -1288,9 +1288,9 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 		return (_isHidden || !_canView) ? null : comment;
 	};
 
-	CCellCommentator.prototype.getRangeComments = function (range) {
+	CCellCommentator.prototype.getRangeComments = function (range, includeHidden) {
 		var oComments = {};
-		if (this.hiddenComments()) {
+		if (!includeHidden && this.hiddenComments()) {
 			return null;
 		}
 
@@ -1508,7 +1508,9 @@ CCellCommentator.prototype.Undo = function(type, data) {
 
 		case AscCH.historyitem_Comment_Coords:
 			if (data.from) {
-				comment = this.getComment(data.from.nCol, data.from.nRow, false);
+				// the area is recorded after the comment moves, so on undo the comment is still where the area points
+				comment = (data.to && this.getComment(data.to.nCol, data.to.nRow, false)) ||
+					this.getComment(data.from.nCol, data.from.nRow, false);
 				if (comment) {
 					comment.coords = data.from.clone();
 				}

@@ -27338,6 +27338,8 @@ function isAllowPasteLink(pastedWb) {
 
 					var range = new Asc.Range(selection.r1, selection.c1, selection.r2, selection.c2);
 					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem);
+					// the kept rows move up with their comments, as in sorting
+					t.cellCommentator.sortComments(_historyElem);
 				}
 			}
 		};
