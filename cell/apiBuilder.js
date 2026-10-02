@@ -1082,6 +1082,30 @@
 	};
 
 	/**
+	 * Returns an object by its internal ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} id - The internal ID of the object.
+	 * @returns {ApiDrawing | ApiDocumentContent | ApiParagraph | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetByInternalId.js
+	 */
+	Api.GetByInternalId = function (id) {
+		let obj = AscCommon.g_oTableId.Get_ById(id);
+		if (!obj)
+			return null;
+
+		if (obj instanceof AscWord.CDocumentContent)
+			return new AscBuilder.ApiDocumentContent(obj);
+		else if (obj instanceof AscWord.Paragraph)
+			return new AscBuilder.ApiParagraph(obj);
+		else if (obj instanceof AscFormat.CGraphicObjectBase)
+			return GetApiDrawing(obj);
+
+		return null;
+	};
+
+	/**
 	 * Returns a list of all the available theme colors for the spreadsheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -14737,6 +14761,18 @@
 		}
 
 		return null;
+	};
+
+	/**
+	 * Returns an internal ID of the current drawing object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetInternalId.js
+	 */
+	ApiDrawing.prototype.GetInternalId = function () {
+		return this.Drawing.GetId();
 	};
 
 
@@ -31629,6 +31665,7 @@
 	Api["GetLocale"]             = Api.GetLocale;
 	Api["SetLocale"]             = Api.SetLocale;
 	Api["GetSheet"]              = Api.GetSheet;
+	Api["GetByInternalId"]       = Api.GetByInternalId;
 	Api["GetThemesColors"]       = Api.GetThemesColors;
 	Api["SetThemeColors"]        = Api.SetThemeColors;
 	Api["CreateNewHistoryPoint"] = Api.CreateNewHistoryPoint;
@@ -31899,6 +31936,7 @@
 	ApiDrawing.prototype["GetLockValue"]               =  ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]               =  ApiDrawing.prototype.SetLockValue;
 	ApiDrawing.prototype["GetParentSheet"]             =  ApiDrawing.prototype.GetParentSheet;
+	ApiDrawing.prototype["GetInternalId"]              =  ApiDrawing.prototype.GetInternalId;
 	ApiDrawing.prototype["SetRotation"]                =  ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]                =  ApiDrawing.prototype.GetRotation;
 	ApiDrawing.prototype["GetFlipH"]                   =  ApiDrawing.prototype.GetFlipH;
