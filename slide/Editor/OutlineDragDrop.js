@@ -582,23 +582,28 @@
 		return {slides: slides, shapes: shapes, isOnlyAdditional: this.isCopy};
 	};
 	OutlineDragDropExecutor.prototype.execute = function () {
-		try {
-			switch (this.selection.type) {
-				case OutlineDragSelectionType.text: {
-					return this.executeText();
-				}
-				case OutlineDragSelectionType.slides:
-				case OutlineDragSelectionType.mixed: {
-					return this.executeBlock();
-				}
-				case OutlineDragSelectionType.paragraphs: {
-					return this.executeParagraphs();
-				}
-			}
-			return false;
-		} finally {
-			this.operations.clearTracked();
+		const isDone = this.executeBySelectionType();
+		if (isDone) {
+			this.operations.hideEmptiedContents();
+			this.operations.checkShapesExtents();
 		}
+		this.operations.clearTracked();
+		return isDone;
+	};
+	OutlineDragDropExecutor.prototype.executeBySelectionType = function () {
+		switch (this.selection.type) {
+			case OutlineDragSelectionType.text: {
+				return this.executeText();
+			}
+			case OutlineDragSelectionType.slides:
+			case OutlineDragSelectionType.mixed: {
+				return this.executeBlock();
+			}
+			case OutlineDragSelectionType.paragraphs: {
+				return this.executeParagraphs();
+			}
+		}
+		return false;
 	};
 
 	OutlineDragDropExecutor.prototype.showResult = function () {
@@ -926,7 +931,6 @@
 		}
 		this.setBlockResult(firstSlide, lastSlide, leadCopies, blockEnd.lastSelected);
 		this.resultSlide = leadCopies.length ? leadSlide : firstSlide;
-		this.operations.checkShapesExtents();
 		return true;
 	};
 	OutlineDragDropExecutor.prototype.executeBlockCopy = function (lead, anchor) {
@@ -943,7 +947,6 @@
 		this.moveParagraphsToSlideEnd(tail, lastCopy);
 		this.setBlockResult(slideCopies[0], lastCopy, leadCopies, lastSelected);
 		this.resultSlide = leadCopies.length ? anchor.slide : slideCopies[0];
-		this.operations.checkShapesExtents();
 		return true;
 	};
 	OutlineDragDropExecutor.prototype.executeParagraphs = function () {
@@ -965,7 +968,6 @@
 		this.resultStart = new AscCommonSlide.ContentPosition(getDocPos(first, first.Get_StartPos()));
 		this.resultEnd = new AscCommonSlide.ContentPosition(getDocPos(last, last.Get_EndPos(true)));
 		this.resultSlide = anchor.slide;
-		operations.checkShapesExtents();
 		return true;
 	};
 
