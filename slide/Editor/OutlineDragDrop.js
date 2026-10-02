@@ -605,7 +605,14 @@
 		const presentation = this.getPresentation();
 		const slideIndex = this.resultSlide ? presentation.GetSlideIndex(this.resultSlide) : -1;
 		if (slideIndex !== -1) {
-			presentation.DrawingDocument.m_oWordControl.GoToPage(slideIndex);
+			const wordControl = presentation.DrawingDocument.m_oWordControl;
+			const thumbnails = wordControl.Thumbnails;
+			if (thumbnails) {
+				const isSelectPageEnabled = thumbnails.SelectPageEnabled;
+				thumbnails.SelectPageEnabled = false;
+				wordControl.GoToPage(slideIndex);
+				thumbnails.SelectPageEnabled = isSelectPageEnabled;
+			}
 		}
 		if (this.resultStart && this.resultEnd) {
 			this.outlineView.setSavedPosition(new AscCommonSlide.SavedPosition(this.resultStart, this.resultEnd));
