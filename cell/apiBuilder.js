@@ -10563,6 +10563,7 @@
 		if (!oGroup)
 			return null;
 
+		oController.drawingObjects.getWorksheet().setSelectionShape(true);
 		return new ApiGroup(oGroup);
 	};
 
@@ -14937,6 +14938,7 @@
 			oController.resetSelection();
 
 		oController.selectObject(oDrawing, 0);
+		oController.drawingObjects.getWorksheet().setSelectionShape(true);
 		oController.updateSelectionState();
 		oController.updateOverlay();
 	};
@@ -14957,6 +14959,9 @@
 		if (!oController)
 			return false
 		oController.deselectObject(oDrawing);
+		const worksheet = oController.drawingObjects.getWorksheet();
+		if (!worksheet.objectRender.selectedGraphicObjectsExists() && worksheet._endSelectionShape())
+			worksheet._updateSelectionNameAndInfo();
 		oController.updateSelectionState();
 		oController.updateOverlay();
 		return true
@@ -15348,6 +15353,7 @@
 
 		this.Drawing.recalculate();
 		oController.unGroupCallback();
+		oController.drawingObjects.getWorksheet().setSelectionShape(true);
 		return GetApiDrawings(aChildren);
 	};
 
