@@ -1291,6 +1291,7 @@
 				}
 				shape.recalculate();
 				shape.shdwPenW = penW;
+				shape.transform = shape.getShdwTransform(outerShdw, this);
 				this.shdwSp = shape;
 			}, this, []);
 		}
