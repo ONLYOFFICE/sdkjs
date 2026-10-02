@@ -1172,10 +1172,6 @@
 			this.processSelectedContent(isOnAddText);
 		} else {
 			const removeDirection = direction === AscWord.Direction.FORWARD ? AscWord.Direction.FORWARD : AscWord.Direction.BACKWARD;
-			this.processNotSelectedContent(removeDirection);
-		}
-		outlineView.removeSlides(this.checkSlidesForRemove, isOnAddText, savedContentsOnUpdate);
-		return savedContentsOnUpdate;
 			if (!this.processEmptyContentParagraph(removeDirection)) {
 				this.processNotSelectedContent(removeDirection);
 			}

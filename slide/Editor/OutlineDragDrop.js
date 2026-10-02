@@ -410,6 +410,7 @@
 		this.outlineView = outlineView;
 		this.tracked = [];
 		this.touchedContents = {};
+		this.insertedParagraphs = {};
 	}
 	OutlineParagraphOperations.prototype.touch = function (content) {
 		if (content) {
@@ -449,6 +450,8 @@
 	OutlineParagraphOperations.prototype.insertParagraphs = function (content, index, paragraphs) {
 		for (let i = 0; i < paragraphs.length; i += 1) {
 			content.Add_ToContent(index + i, paragraphs[i]);
+			this.outlineView.keepEmptyParagraph(paragraphs[i]);
+			this.insertedParagraphs[paragraphs[i].Get_Id()] = true;
 		}
 		this.touch(content);
 	};
@@ -478,6 +481,14 @@
 			return firstShape.getDocContent();
 		}
 		return this.outlineView.createSubtitleContent(slide);
+	};
+	OutlineParagraphOperations.prototype.hideEmptiedContents = function () {
+		for (let id in this.touchedContents) {
+			const content = this.touchedContents[id];
+			if (!this.insertedParagraphs[content.Content[0].Get_Id()]) {
+				this.outlineView.hideContentIfEmpty(content);
+			}
+		}
 	};
 	OutlineParagraphOperations.prototype.checkShapesExtents = function () {
 		for (let id in this.touchedContents) {
@@ -817,7 +828,7 @@
 		const contentShapes = slide.getOutlineSlide().content;
 		for (let i = 0; i < contentShapes.length; i += 1) {
 			const content = contentShapes[i].getDocContent();
-			if (content && !content.Is_Empty()) {
+			if (content && this.outlineView.isContentInOutline(content)) {
 				for (let j = 0; j < content.Content.length; j += 1) {
 					result.push(content.Content[j]);
 				}
