@@ -4148,7 +4148,11 @@ function (window, undefined) {
 				res = this._simpleSearch(valueForSearching, false, ws, startIndex, endIndex, rowCol,opt_arg4, opt_array);
 			} else if (cElementType.string === valueForSearching.type && /[*?~]/.test(valueForSearching.value)) {
 				const typed = this.typedCache.getData(ws, rowCol, cElementType.string, startIndex, endIndex, this.bHor);
-				for (let i = 0; typed && i < typed.length; i++) {
+				// the cache can hold the positions of the whole axis: only those inside this table count
+				for (let i = 0; typed && i < typed.length && typed[i] <= endIndex; i++) {
+					if (typed[i] < startIndex) {
+						continue;
+					}
 					const cell = ws.getCell3(t.bHor ? rowCol : typed[i], t.bHor ? typed[i] : rowCol);
 					if (AscCommonExcel.searchRegExp2(checkTypeCell(cell, true).getValue(), valueForSearching.value)) {
 						res = typed[i];
