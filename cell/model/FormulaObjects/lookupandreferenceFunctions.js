@@ -1753,8 +1753,9 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+				// a reference, as over a range: text reached through it counts as read from a cell
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
-					res = arg0.getValue();
+					res = arg0;
 				}
 			} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
 				cElementType.bool === arg0.type) {
