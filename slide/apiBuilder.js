@@ -1741,9 +1741,9 @@
      * Adds the slide master to the presentation slide masters collection.
      * @memberof ApiPresentation
      * @typeofeditors ["CPE"]
-     * @param {number} [pos = ApiPresentation.GetMastersCount()] - The position where the slide master will be added.
+     * @param {number} [pos = ApiPresentation.GetMastersCount()] - The position where the slide master will be added. If the position is invalid, the slide master is added to the end.
      * @param {ApiMaster} apiMaster - The slide master to be added.
-     * @returns {boolean} - return false if position is invalid or apiMaster doesn't exist.
+     * @returns {boolean} - returns false if apiMaster isn't a slide master or is already in the presentation.
      * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMaster.js
 	 */
     ApiPresentation.prototype.AddMaster = function(pos, apiMaster)
@@ -1751,12 +1751,6 @@
         if (apiMaster && apiMaster.GetClassType && apiMaster.GetClassType() === "master")
         {
 			let master = apiMaster.Master;
-			if (pos != undefined)
-			{
-				pos = GetIntParameter(pos, -1);
-				if (pos < 0 || pos > this.Presentation.slideMasters.length)
-					return false;
-			}
 			let position = getArrayAddIndex(pos, master, this.Presentation.slideMasters);
 			if (position === null)
 				return false;
