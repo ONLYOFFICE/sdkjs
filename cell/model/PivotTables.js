@@ -8648,7 +8648,8 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 			const pivotField = pivotFields[i];
 			const cacheField = cacheFields[i];
 			const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-			const findValue = value.replace(new RegExp(' ' + subtotalCaption, 'g'), '');
+			//the caption is a translated string: escape it, a locale with regex metacharacters must not break the pattern
+			const findValue = value.replace(new RegExp(' ' + AscCommon.escapeRegExp(subtotalCaption), 'g'), '');
 			const item = pivotField.findFieldItemByTextValue(cacheField, findValue);
 			if (item !== null) {
 				const cell = this.getCellByGetPivotDataParams({
@@ -8665,7 +8666,7 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 		return new AscCommonExcel.cError(AscCommonExcel.cErrorType.not_available);
 	} else {
 		const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-		const findValue = value.replace(new RegExp(subtotalCaption + ' ', 'g'), '');
+		const findValue = value.replace(new RegExp(AscCommon.escapeRegExp(subtotalCaption) + ' ', 'g'), '');
 		const cell = this.getCellByGetPivotDataParams({
 			dataFieldName: findValue,
 			optParams: []
@@ -9282,7 +9283,8 @@ CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(arrayFieldI
 	let prefix;
 	for (let i = 1; ; i += 1) {
 		prefix = translatedInfoString + String(i);
-		const re = new RegExp('^' + prefix + '(-|$)');
+		//the prefix carries a translated string, so escape it before it becomes a pattern
+		const re = new RegExp('^' + AscCommon.escapeRegExp(prefix) + '(-|$)');
 		if (reIndexOf(re, sheetNames) === -1) {
 			break;
 		}

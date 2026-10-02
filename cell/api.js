@@ -5925,7 +5925,8 @@ var editor;
 
         if (letterDifference !== null) {
           var replaceWith = newWord || changeWords[word];
-          var valueForSearching = new RegExp(usrWords[lastIndex], "y");
+          // the word comes from the cell text: '(' in it would throw a SyntaxError out of the correction
+          var valueForSearching = new RegExp(AscCommon.escapeRegExp(usrWords[lastIndex]), "y");
           valueForSearching.lastIndex = wordsIndex[lastIndex];
           cellText = cellText.replace(valueForSearching, replaceWith);
           if (letterDifference !== 0) {

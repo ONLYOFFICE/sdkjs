@@ -12519,9 +12519,10 @@
 		if (findEmptyStr) {
 			options.findWhat = new RegExp("^$", "g");
 		} else if(options.isWholeWord) {
+			// The search string is user text and goes into a pattern, so it has to be escaped
 			var length = options.findWhat.length;
-			options.findWhat = '\\b' + options.findWhat + '\\b';
-			options.findWhat = new RegExp(options.findWhat, "g");
+			options.findWhat = new RegExp('\\b' + AscCommon.escapeRegExp(options.findWhat) + '\\b', "g");
+			// isWholeCell compares the search string length with the cell text, so carry it on the RegExp
 			options.findWhat.length = length;
 		}
 		var isWholeWordTrue = null;
