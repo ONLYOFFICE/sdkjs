@@ -14311,7 +14311,7 @@ CDocument.prototype.Get_SelectionState2 = function()
 	}
 	else if (docpostype_Endnotes === nDocPosType)
 	{
-		var oEndnote = this.Footnotes.GetCurEndnote();
+		var oEndnote = this.Endnotes.GetCurEndnote();
 
 		State.Type = docpostype_Endnotes;
 		State.Id   = oEndnote ? oEndnote.GetId() : null;
