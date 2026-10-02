@@ -48,6 +48,7 @@
 
 	var PATH_DIV_EPSILON = 0.1;
 	var UNDERLINE_DIV_EPSILON = 3;
+	const FOLLOW_PATH_LINE_POS = 0.65;
 
 
 	function ParaDrawingStruct(nPageIndex, pDrawing) {
@@ -140,8 +141,11 @@
 	CDocContentStructure.prototype.checkByWarpStruct = function (oWarpStruct, dWidth, dHeight, oTheme, oColorMap, oShape, dOneLineWidth, XLimit, dContentHeight, dKoeff) {
 		var i, j, t, aByPaths, aWarpedObjects = [];
 		var bOddPaths = oWarpStruct.pathLst.length / 2 - ((oWarpStruct.pathLst.length / 2) >> 0) > 0;
-		var nDivCount = bOddPaths ? oWarpStruct.pathLst.length : oWarpStruct.pathLst.length >> 1, oNextPointOnPolygon,
-			oObjectToDrawNext, oMatrix = new AscCommon.CMatrix();
+		if (bOddPaths) {
+			this.checkByFollowPathWarp(oWarpStruct, XLimit);
+			return;
+		}
+		var nDivCount = oWarpStruct.pathLst.length >> 1;
 		aByPaths = oWarpStruct.getArrayPolygonsByPaths(PATH_DIV_EPSILON);
 		var nLastIndex = 0, dTmp, oBoundsChecker, oTemp, nIndex, aWarpedObjects2 = [];
 		oBoundsChecker = new AscFormat.CSlideBoundsChecker();
@@ -174,28 +178,85 @@
 			if (oBoundsChecker.Bounds.max_x < dMaxX) {
 				oBoundsChecker.Bounds.max_x = dMaxX;
 			}
-			if (!bOddPaths) {
-				ObjectsToDrawBetweenTwoPolygons(aWarpedObjects, oBoundsChecker.Bounds, new PolygonWrapper(aByPaths[i << 1]), new PolygonWrapper(aByPaths[(i << 1) + 1]));
-			}
-			else {
-				oNextPointOnPolygon = null;
-				oObjectToDrawNext = null;
-				var oPolygon = new PolygonWrapper(aByPaths[i]);
-				for (t = 0; t < aWarpedObjects.length; ++t) {
-					var oWarpedObject = aWarpedObjects[t];
-					var bArcDown = "textArchDown" !== oWarpStruct.preset && i < 1;
-					if (!AscFormat.isRealNumber(oWarpedObject.x) || !AscFormat.isRealNumber(oWarpedObject.y)) {
-						oWarpedObject.geometry.checkByPolygon(oPolygon, bArcDown, XLimit * dKoeff, dContentHeight, dKoeff, nDivCount > 1 ? oBoundsChecker.Bounds : null);
-					}
-					else {
-						oNextPointOnPolygon = this.checkTransformByOddPath(oMatrix, oWarpedObject, aWarpedObjects[t + 1], oNextPointOnPolygon, dContentHeight, dKoeff, bArcDown, oPolygon, XLimit);
-						oWarpedObject.geometry.transform(oMatrix, dKoeff);
-					}
-				}
-			}
+			ObjectsToDrawBetweenTwoPolygons(aWarpedObjects, oBoundsChecker.Bounds, new PolygonWrapper(aByPaths[i << 1]), new PolygonWrapper(aByPaths[(i << 1) + 1]));
 			nLastIndex = nIndex;
 		}
 		this.checkUnionPaths(aWarpedObjects2);
+	};
+	CDocContentStructure.prototype.checkByFollowPathWarp = function (warpGeometry, xLimit) {
+		const polygons = warpGeometry.getArrayPolygonsByPaths(PATH_DIV_EPSILON);
+		const pathCount = polygons.length;
+		const lines = this.m_aByLines;
+		const lineInfos = new Map();
+		CollectFollowPathLines(this, lineInfos);
+
+		const groups = [];
+		let scale = 1;
+		let startIndex = 0;
+		for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
+			const endIndex = startIndex + Math.ceil((lines.length - startIndex) / (pathCount - pathIndex));
+			const group = {polygon: polygons[pathIndex], path: new PolygonWrapper(polygons[pathIndex]), infos: []};
+			for (let lineIndex = startIndex; lineIndex < endIndex; ++lineIndex) {
+				for (let structIndex = 0; structIndex < lines[lineIndex].length; ++structIndex) {
+					const line = lines[lineIndex][structIndex];
+					const info = lineInfos.get(line);
+					if (!info) {
+						continue;
+					}
+					group.infos.push(info);
+					if (info.width * scale > group.path.dLen) {
+						scale = group.path.dLen / info.width;
+					}
+				}
+			}
+			groups.push(group);
+			startIndex = endIndex;
+		}
+
+		for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
+			const group = groups[pathIndex];
+			if (!group.infos.length) {
+				continue;
+			}
+			const first = group.infos[0];
+			const last = group.infos[group.infos.length - 1];
+			let anchorY = last.pathY;
+			if (pathIndex > 0 && pathIndex < pathCount - 1) {
+				anchorY = (first.top + last.bottom) / 2;
+				if (first === last) {
+					anchorY = first.pathY;
+				}
+			}
+			else if (pathCount > 1 ? pathIndex === pathCount - 1 : warpGeometry.preset === "textArchDown") {
+				anchorY = first.pathY;
+			}
+			for (let infoIndex = 0; infoIndex < group.infos.length; ++infoIndex) {
+				const info = group.infos[infoIndex];
+				const offset = scale * (info.pathY - anchorY);
+				const path = Math.abs(offset) > EPSILON_TEXT_AUTOFIT ? new PolygonWrapper(GetOffsetPolygon(group.polygon, offset)) : group.path;
+				const lineWarp = new CFollowPathLineWarp(path, scale, info.align * (path.dLen - scale * xLimit), info.pathY);
+				const objects = [];
+				info.line.GetAllWarped(objects);
+				for (let objectIndex = 0; objectIndex < objects.length; ++objectIndex) {
+					const object = objects[objectIndex];
+					if (AscFormat.isRealNumber(object.x) && AscFormat.isRealNumber(object.y)) {
+						const advance = object.TextElement ? object.TextElement.GetWidth() : 0;
+						object.geometry.transform(lineWarp.getGlyphTransform(object.x + advance / 2), 1);
+					}
+					else {
+						object.geometry.transform(lineWarp, 1);
+					}
+				}
+			}
+		}
+
+		const warpedObjects = [];
+		for (let lineIndex = 0; lineIndex < lines.length; ++lineIndex) {
+			for (let structIndex = 0; structIndex < lines[lineIndex].length; ++structIndex) {
+				lines[lineIndex][structIndex].GetAllWarped(warpedObjects);
+			}
+		}
+		this.checkUnionPaths(warpedObjects);
 	};
 	CDocContentStructure.prototype.checkContentReduct = function (oWarpStruct, dWidth, dHeight, oTheme, oColorMap, oShape, dOneLineWidth, XLimit, dContentHeight, dKoeff) {
 		var i, j, t, aByPaths, aWarpedObjects = [];
@@ -2763,6 +2824,108 @@
 			oP1: oRetPoint1,
 			oP2: oRetPoint2
 		};
+	};
+
+	function CollectFollowPathLines(structure, lineInfos) {
+		const content = structure.m_aContent;
+		if (structure.m_nType !== DRAW_COMMAND_PARAGRAPH) {
+			for (let index = 0; index < content.length; ++index) {
+				const type = content[index].m_nType;
+				if (type === DRAW_COMMAND_PARAGRAPH || type === DRAW_COMMAND_CONTENT || type === DRAW_COMMAND_TABLE) {
+					CollectFollowPathLines(content[index], lineInfos);
+				}
+			}
+			return;
+		}
+		const paragraph = structure.m_oParagraph;
+		for (let lineIndex = 0; lineIndex < content.length; ++lineIndex) {
+			const paraLine = paragraph.Lines[lineIndex];
+			const range = paraLine.Ranges[0];
+			const pageY = paragraph.Pages[paragraph.getPageByLine(lineIndex)].Y;
+			const top = pageY + paraLine.Top;
+			const bottom = pageY + paraLine.Bottom;
+			const freeWidth = range.XEnd - range.X - range.W;
+			lineInfos.set(content[lineIndex], {
+				line: content[lineIndex],
+				top: top,
+				bottom: bottom,
+				pathY: top + FOLLOW_PATH_LINE_POS * (bottom - top),
+				width: range.W,
+				align: freeWidth > EPSILON_TEXT_AUTOFIT ? Math.min(Math.max((range.XVisible - range.X) / freeWidth, 0), 1) : 0
+			});
+		}
+	}
+
+	function GetOffsetPolygon(polygon, offset) {
+		const result = [];
+		const count = polygon.length;
+		for (let index = 0; index < count; ++index) {
+			let prev = index, next = index, dx = 0, dy = 0;
+			while ((prev > 0 || next < count - 1) && Math.abs(dx) < EPSILON_TEXT_AUTOFIT && Math.abs(dy) < EPSILON_TEXT_AUTOFIT) {
+				prev = Math.max(prev - 1, 0);
+				next = Math.min(next + 1, count - 1);
+				dx = polygon[next].x - polygon[prev].x;
+				dy = polygon[next].y - polygon[prev].y;
+			}
+			const norm = Math.sqrt(dx * dx + dy * dy);
+			if (norm > 0) {
+				result.push({x: polygon[index].x - dy * offset / norm, y: polygon[index].y + dx * offset / norm});
+			}
+			else {
+				result.push({x: polygon[index].x, y: polygon[index].y});
+			}
+		}
+		return result;
+	}
+
+	function CFollowPathLineWarp(path, scale, shift, pathY) {
+		this.path = path;
+		this.scale = scale;
+		this.shift = shift;
+		this.pathY = pathY;
+		this.lastX = null;
+		this.lastY = null;
+		this.resultX = 0;
+		this.resultY = 0;
+	}
+
+	CFollowPathLineWarp.prototype.getFrame = function (x) {
+		const position = this.scale * x + this.shift;
+		const point = this.path.getPointOnPolygon(this.path.dLen > 0 ? position / this.path.dLen : 0, true);
+		const dx = point.oP2.x - point.oP1.x;
+		const dy = point.oP2.y - point.oP1.y;
+		const norm = Math.sqrt(dx * dx + dy * dy);
+		return {x: point.x, y: point.y, cos: dx / norm, sin: dy / norm};
+	};
+	CFollowPathLineWarp.prototype.getGlyphTransform = function (midX) {
+		const frame = this.getFrame(midX);
+		const matrix = new AscCommon.CMatrix();
+		matrix.sx = frame.cos * this.scale;
+		matrix.shy = frame.sin * this.scale;
+		matrix.shx = -frame.sin * this.scale;
+		matrix.sy = frame.cos * this.scale;
+		matrix.tx = frame.x - matrix.sx * midX - matrix.shx * this.pathY;
+		matrix.ty = frame.y - matrix.shy * midX - matrix.sy * this.pathY;
+		return matrix;
+	};
+	CFollowPathLineWarp.prototype.checkPoint = function (x, y) {
+		if (x === this.lastX && y === this.lastY) {
+			return;
+		}
+		const frame = this.getFrame(x);
+		const offset = this.scale * (y - this.pathY);
+		this.resultX = frame.x - frame.sin * offset;
+		this.resultY = frame.y + frame.cos * offset;
+		this.lastX = x;
+		this.lastY = y;
+	};
+	CFollowPathLineWarp.prototype.TransformPointX = function (x, y) {
+		this.checkPoint(x, y);
+		return this.resultX;
+	};
+	CFollowPathLineWarp.prototype.TransformPointY = function (x, y) {
+		this.checkPoint(x, y);
+		return this.resultY;
 	};
 
 
