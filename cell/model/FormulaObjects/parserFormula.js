@@ -10865,6 +10865,7 @@ function parserFormula( formula, parent, _ws ) {
 			this._endCalculate();
 		} else {
 			let res = elemArr.pop();
+			// TODO add to EXPECTED_MAX_ARRAY check here to prevent bufferAllocation problem?
 
 			if (this.replaceFormulaAfterCalc === cReplaceFormulaType.formula) {
 				if (res && res.type === cElementType.string) {

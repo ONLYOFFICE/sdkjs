@@ -3919,6 +3919,12 @@ function (window, undefined) {
 				colCount = Math.max(colCount, array[i].length)
 			}
 
+			//MS returns "out of resources" here; we have no such error, so #VALUE!
+			const EXPECTED_MAX_ARRAY = 10223960;
+			if (rowCount * colCount > EXPECTED_MAX_ARRAY) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			let newArray = [];
 			for (i = 0; i < rowCount; i++) {
 				let row = [];
