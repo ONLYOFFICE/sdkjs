@@ -9580,6 +9580,7 @@
 		CSpPr.prototype.setEffectPr = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetEffectPr, this.effectProps, pr));
 			this.effectProps = pr;
+			this.handleUpdateGeometry();
 		};
 		CSpPr.prototype.handleUpdatePosition = function () {
 			if (this.parent && this.parent.handleUpdatePosition) {
