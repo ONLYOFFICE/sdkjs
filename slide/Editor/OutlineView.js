@@ -123,8 +123,6 @@
 		this.outlineView = outlineView;
 		this.paragraphMap = paragraphMap;
 		this.additionalCheckSlideMap = {};
-		this.additionalCorrectedContents = additionalCorrectedContents || {};
-	}
 		this.shownContentMap = null;
 		this.shownContentCache = {};
 	}
