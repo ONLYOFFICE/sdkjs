@@ -6144,6 +6144,8 @@ function (window, undefined) {
 
 		this.type = PluginType.Background;
 
+		this.autostart = false;		// used only if this.type === PluginType.Background
+
 		this.isCustomWindow = false;	// used only if this.type === PluginType.Window
 		this.isModal = true;     // used only if this.type === PluginType.Window
 
@@ -6248,6 +6250,8 @@ function (window, undefined) {
 
 		_object["type"] = this.type;
 
+		_object["autostart"] = this.autostart;
+
 		_object["isCustomWindow"] = this.isCustomWindow;
 		_object["isModal"] = this.isModal;
 
@@ -6300,6 +6304,8 @@ function (window, undefined) {
 			else
 				this.type = PluginType.Invisible;
 		}
+
+		this.autostart = (true === _object["autostart"]);
 
 		this.isCustomWindow = (_object["isCustomWindow"] != null) ? _object["isCustomWindow"] : this.isCustomWindow;
 		this.isModal = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
@@ -6452,6 +6458,9 @@ function (window, undefined) {
 	};
 	CPlugin.prototype.isBackground = function () {
 		return this.isType(PluginType.Background);
+	};
+	CPlugin.prototype.isAutostart = function () {
+		return this.isBackground() && true === this.variations[0].autostart;
 	};
 	CPlugin.prototype.getIntVersion = function () {
 		if (!this.version) return 0;

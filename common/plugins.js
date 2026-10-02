@@ -221,6 +221,7 @@
 			this.path = basePath;
 
 			let services = Object.create(null);
+			let autostartServices = [];
 			for (let i = 0; i < plugins.length; i++)
 			{
 				let newPlugin = plugins[i];
@@ -230,6 +231,9 @@
 
 				if (newPlugin.isBackground())
 					services[guid] = true;
+
+				if (newPlugin.isAutostart())
+					autostartServices.push(guid);
 
 				if (this.runnedPluginsMap[guid])
 				{
@@ -278,6 +282,19 @@
 			}
 
 			let runnedServices = this.api.getUsedBackgroundPlugins();
+
+			// background plugins with the "autostart" flag start unless they were stopped explicitly
+			if (autostartServices.length > 0)
+			{
+				let stoppedServices = this.api.getStoppedBackgroundPlugins();
+				for (let i = 0, len = autostartServices.length; i < len; i++)
+				{
+					let guid = autostartServices[i];
+					if (-1 === runnedServices.indexOf(guid) && -1 === stoppedServices.indexOf(guid))
+						runnedServices.push(guid);
+				}
+			}
+
 			for (let i = 0, len = runnedServices.length; i < len; i++)
 			{
 				let guid = runnedServices[i];
