@@ -10142,7 +10142,7 @@
 	ApiWorksheet.prototype.GetDefName = function (defName) {
 		if (defName && typeof defName === "string") {
 			defName = this.worksheet.workbook.getDefinesNames(defName, this.worksheet.getId());
-			return new ApiName(defName);
+			return defName ? new ApiName(defName) : null;
 		}
 
 		return null;
@@ -11457,7 +11457,7 @@
 				break;
 
 			case Asc.c_oAscSelectionType.RangeMax:
-				count = range.r2 * range.c2;
+				count = (range.c2 - range.c1 + 1) * (range.r2 - range.r1 + 1);
 				break;
 		}
 		return count;
@@ -12849,8 +12849,8 @@
 	 * Changes the width of the columns or the height of the rows in the range to achieve the best fit.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} [bRows] - Specifies if the width of the columns will be autofit.
-	 * @param {boolean} [bCols] - Specifies if the height of the rows will be autofit.
+	 * @param {boolean} [bRows] - Specifies if the height of the rows will be autofit.
+	 * @param {boolean} [bCols] - Specifies if the width of the columns will be autofit.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AutoFit.js
 	 */
 	ApiRange.prototype.AutoFit = function (bRows, bCols) {
@@ -15856,13 +15856,23 @@
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRef    - The range reference which must contain the sheet name, followed by sign ! and a range of cells.
-	 * Example: "Sheet1!$A$1:$B$2".
-	 * @returns {boolean} - returns true if the reference was set successfully.
+	 * Example: "Sheet1!$A$1:$B$2". A constant or a formula is accepted as well, and so is a leading "=", as in the Excel RefersTo form.
+	 * @returns {boolean} - returns true if the reference was set successfully, false if it is not a valid formula.
 	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/SetRefersTo.js
 	 */
 	ApiName.prototype.SetRefersTo = function (sRef) {
-		this.DefName.setRef(sRef);
-		return true;
+		if (!this.DefName || typeof sRef !== "string")
+			return false;
+		// the very string that is stored is parsed, and it is applied as SetName is, so the change is undoable and reaches co-authors
+		let ref = sRef.trim().replace(/^=/, "");
+		let wb = this.DefName.wb;
+		let ws = (this.DefName.sheetId && wb.getWorksheetById(this.DefName.sheetId)) || wb.getActiveWs();
+		if (!ref || !new AscCommonExcel.parserFormula(ref, null, ws).parse(false))
+			return false;
+		let oldName = this.DefName.getAscCDefName(false);
+		let newName = this.DefName.getAscCDefName(false);
+		newName.Ref = ref;
+		return !!wb.editDefinesNames(oldName, newName);
 	};
 
 	/**
@@ -28626,7 +28636,7 @@
 			return 100;
 		}
 
-		return dataBarElement.MaxLength || 100;
+		return dataBarElement.MaxLength == null ? 100 : dataBarElement.MaxLength;
 	};
 
 	/**
@@ -29075,7 +29085,7 @@
 			return null;
 		}
 
-		return ToXlIconSetFrom(iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights2);
+		return ToXlIconSetFrom(iconSetElement.IconSet == null ? Asc.EIconSetType.Traffic3Lights2 : iconSetElement.IconSet);
 	};
 
 	function getIconSetCount(iconSetType) {
