@@ -19170,7 +19170,10 @@
 		let numLvl = undefined;
 
 		if (this.Parent instanceof ApiParagraph)
-			numLvl = Math.min(8, Math.max(0, (lvl ? lvl : 0)));
+		{
+			numLvl = Math.floor(GetNumberParameter(lvl, 0));
+			numLvl = isNaN(numLvl) ? 0 : Math.min(8, Math.max(0, numLvl));
+		}
 
 		this.ParaPr.NumPr = new AscWord.NumPr(numId, numLvl);
 		this.private_OnChange();
