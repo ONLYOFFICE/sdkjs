@@ -38,6 +38,12 @@
 	function CThumbnailsManagerBase(editorPage) {
 		this.m_oWordControl = editorPage;
 	}
+	CThumbnailsManagerBase.prototype.GoToPageWithoutSelect = function (slideIndex) {
+		const isSelectPageEnabled = this.SelectPageEnabled;
+		this.SelectPageEnabled = false;
+		this.m_oWordControl.GoToPage(slideIndex);
+		this.SelectPageEnabled = isSelectPageEnabled;
+	};
 	CThumbnailsManagerBase.prototype.initEvents = function()
 	{
 		var control = this.m_oWordControl.m_oThumbnails.HtmlElement;
@@ -2583,9 +2589,7 @@
 		const outlineView = this.GetOutlineView();
 		const selectedPage = outlineView ? outlineView.getSelectedSlide() : null;
 		if (selectedPage !== null) {
-			this.SelectPageEnabled = false;
-			this.m_oWordControl.GoToPage(selectedPage);
-			this.SelectPageEnabled = true;
+			this.GoToPageWithoutSelect(selectedPage);
 		}
 	};
 	COutlineThumbnailsManager.prototype.UpdateDragTarget = function () {

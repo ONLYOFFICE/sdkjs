@@ -605,13 +605,9 @@
 		const presentation = this.getPresentation();
 		const slideIndex = this.resultSlide ? presentation.GetSlideIndex(this.resultSlide) : -1;
 		if (slideIndex !== -1) {
-			const wordControl = presentation.DrawingDocument.m_oWordControl;
-			const thumbnails = wordControl.Thumbnails;
+			const thumbnails = presentation.DrawingDocument.m_oWordControl.Thumbnails;
 			if (thumbnails) {
-				const isSelectPageEnabled = thumbnails.SelectPageEnabled;
-				thumbnails.SelectPageEnabled = false;
-				wordControl.GoToPage(slideIndex);
-				thumbnails.SelectPageEnabled = isSelectPageEnabled;
+				thumbnails.GoToPageWithoutSelect(slideIndex);
 			}
 		}
 		if (this.resultStart && this.resultEnd) {
