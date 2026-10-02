@@ -3449,15 +3449,21 @@ function (window, undefined) {
 			arg0Val = arg0;
 		}
 		let answer = cElementType.error === arg0Val.type ? arg0Val : null;
+		// a number, a logical or a numeric text is no table either, but it answers after index_num and range_lookup (measured)
+		let notTable = false;
 		if (!answer && !opt_xlookup) {
 			if (cElementType.string === arg0Val.type && arg0Val.getValue().length > 255) {
 				answer = new cError(cErrorType.wrong_value_type);
 			} else if (cElementType.error === arg1.type) {
 				answer = arg1;
 			} else if (cElementType.string === arg1.type) {
-				answer = new cError(cErrorType.wrong_value_type);
+				if ("" !== arg1.getValue() && cElementType.number === arg1.tocNumber().type) {
+					notTable = true;
+				} else {
+					answer = new cError(cErrorType.wrong_value_type);
+				}
 			} else if (cElementType.number === arg1.type || cElementType.bool === arg1.type) {
-				answer = new cError(cErrorType.not_available);
+				notTable = true;
 			}
 		}
 		if (!answer && !opt_xlookup) {
@@ -3490,7 +3496,7 @@ function (window, undefined) {
 					Math.round(indexVal) : Math.trunc(indexVal)) - 1;
 			}
 			if (!answer) {
-				answer = rangeLookupError;
+				answer = rangeLookupError || (notTable ? new cError(cErrorType.not_available) : null);
 			}
 		}
 		if (answer) {
