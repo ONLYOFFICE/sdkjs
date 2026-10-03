@@ -1250,7 +1250,7 @@
 	}
 	function ChangeOutlineLevelManager(outlineView) {
 		this.outlineView = outlineView;
-		this.droppedParagraphMap = {};
+		this.mockTitleCopyMap = {};
 	}
 	ChangeOutlineLevelManager.prototype.getSelectedOutlineParagraphs = function () {
 		const docContent = this.outlineView.getDocContent();
@@ -1278,15 +1278,9 @@
 		}
 		return contents;
 	};
-	ChangeOutlineLevelManager.prototype.getSlideJoinedContents = function (slide, droppedTitles) {
-		const contents = this.getSlideOutlineContents(slide);
-		const titleShape = slide.getOutlineSlide().title;
-		const titleContent = titleShape && titleShape.getDocContent();
-		if (contents.length > 1 && contents[0] === titleContent && titleContent.Is_Empty()) {
-			contents.shift();
-			droppedTitles.push({paragraph: titleContent.Content[0], replacement: contents[0].Content[0]});
-		}
-		return contents;
+	ChangeOutlineLevelManager.prototype.getMockTitleCopy = function (outlineParagraph) {
+		const slideInfo = this.outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
+		return slideInfo ? this.mockTitleCopyMap[slideInfo.slide.GetId()] || null : null;
 	};
 	ChangeOutlineLevelManager.prototype.getShapeDocContent = function (shape, slide) {
 		if (!shape) {
@@ -1326,11 +1320,11 @@
 		if (!sourceParagraphs.length) {
 			return addedParagraphs;
 		}
-		if (targetContent.Is_Empty()) {
+		if (targetContent.Is_Empty() && !this.outlineView.isContentInOutline(targetContent)) {
 			targetContent.ClearContent(false);
 		}
 		for (let i = 0; i < sourceParagraphs.length; i += 1) {
-			const newParagraph = sourceParagraphs[i].Copy2(targetContent);
+			const newParagraph = sourceParagraphs[i] ? sourceParagraphs[i].Copy2(targetContent) : new AscWord.Paragraph(targetContent, true);
 			targetContent.Add_ToContent(targetContent.Content.length, newParagraph);
 			this.outlineView.keepEmptyParagraph(newParagraph);
 			addedParagraphs.push(newParagraph);
@@ -1493,7 +1487,9 @@
 	};
 	ChangeOutlineLevelManager.prototype.mapParagraphCopies = function (paragraphCopyMap, sourceParagraphs, addedParagraphs) {
 		for (let i = 0; i < sourceParagraphs.length; i += 1) {
-			paragraphCopyMap[sourceParagraphs[i].Get_Id()] = addedParagraphs[i];
+			if (sourceParagraphs[i]) {
+				paragraphCopyMap[sourceParagraphs[i].Get_Id()] = addedParagraphs[i];
+			}
 		}
 	};
 	ChangeOutlineLevelManager.prototype.fillSplitSlide = function (newSlide, group, paragraphCopyMap) {
@@ -1532,11 +1528,8 @@
 		}
 		const sourceParagraph = this.outlineView.getSourceParagraph(pos[1].Class);
 		if (!sourceParagraph) {
-			return null;
-		}
-		const replacement = this.droppedParagraphMap[sourceParagraph.Get_Id()];
-		if (replacement) {
-			return getSourceParagraphStartPos(replacement);
+			const mockTitleCopy = this.getMockTitleCopy(pos[1].Class);
+			return mockTitleCopy ? rebuildPos(pos, mockTitleCopy.GetParent(), mockTitleCopy) : null;
 		}
 		const targetParagraph = paragraphCopyMap[sourceParagraph.Get_Id()] || sourceParagraph;
 		return rebuildPos(pos, targetParagraph.GetParent(), targetParagraph);
@@ -1586,28 +1579,36 @@
 		if (!previousSlide) {
 			return;
 		}
-		let contents = [];
-		const droppedTitles = [];
+		const contents = [];
+		const movedParagraphs = [];
+		const mockTitles = [];
 		const slidesForRemove = {};
 		//todo split removeSlides and getSlidesFromMap
 		for (let i = 0; i < slides.length; i += 1) {
 			const slide = slides[i];
-			contents = contents.concat(this.getSlideJoinedContents(slide, droppedTitles));
+			if (!slide.getOutlineSlide().title) {
+				mockTitles.push({slide: slide, index: movedParagraphs.length});
+				movedParagraphs.push(null);
+			}
+			const slideContents = this.getSlideOutlineContents(slide);
+			this.collectContentsParagraphs(slideContents, movedParagraphs);
+			for (let j = 0; j < slideContents.length; j += 1) {
+				contents.push(slideContents[j]);
+			}
 			slidesForRemove[slide.num] = slide;
 		}
-		const movedParagraphs = this.collectContentsParagraphs(contents);
 		const targetContent = this.getSlideJoinContent(previousSlide);
 		const addedParagraphs = this.addParagraphsToContent(targetContent, movedParagraphs);
 		const paragraphCopyMap = {};
 		this.mapParagraphCopies(paragraphCopyMap, movedParagraphs, addedParagraphs);
-		for (let i = 0; i < droppedTitles.length; i += 1) {
-			this.droppedParagraphMap[droppedTitles[i].paragraph.Get_Id()] = paragraphCopyMap[droppedTitles[i].replacement.Get_Id()];
+		for (let i = 0; i < mockTitles.length; i += 1) {
+			this.mockTitleCopyMap[mockTitles[i].slide.GetId()] = addedParagraphs[mockTitles[i].index];
 		}
 		for (let i = 0; i < contents.length; i += 1) {
 			contents[i].Clear_Content();
 		}
 
-		this.setResultPosition(startParagraph || movedParagraphs[0], paragraphCopyMap);
+		this.setResultPosition(startParagraph || movedParagraphs[0] || addedParagraphs[0], paragraphCopyMap);
 
 		outlineView.removeSlides(slidesForRemove);
 		outlineView.update();
@@ -1616,7 +1617,7 @@
 	};
 	ChangeOutlineLevelManager.prototype.setResultPosition = function (fallbackParagraph, paragraphCopyMap) {
 		const outlineView = this.outlineView;
-		const resultParagraph = fallbackParagraph ? (paragraphCopyMap[fallbackParagraph.Get_Id()] || this.droppedParagraphMap[fallbackParagraph.Get_Id()] || fallbackParagraph) : null;
+		const resultParagraph = fallbackParagraph ? (paragraphCopyMap[fallbackParagraph.Get_Id()] || fallbackParagraph) : null;
 
 		function saveCollapsedResultPosition() {
 			if (resultParagraph) {
