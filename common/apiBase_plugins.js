@@ -434,7 +434,7 @@
 		AscCommon.g_clipboardBase.bSaveFormat = false;
 		let _t = this;
 
-		let logicDocument = this.private_GetLogicDocument();
+		let logicDocument = this.getLogicDocument();
 		let isMergeLast   = !!(options && options["MergeLast"]) && logicDocument && logicDocument.IsDocumentEditor();
 		let oldMergeLast  = isMergeLast ? logicDocument.MergeLastOnInsertContent : false;
 		if (isMergeLast)
