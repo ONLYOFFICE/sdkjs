@@ -4710,15 +4710,15 @@
 	CEditorPage.prototype.GoToPage = function (lPageNum, isFromZoom, isScroll, bIsAttack, isReporterUpdateSlide) {
 		if (this.m_oApi.isReporterMode) {
 			if (!this.DemonstrationManager.Mode) {
-				// first run
-				this.m_oApi.StartDemonstration("id_reporter_dem", 0);
+				// first run: start the reporter on the slide requested by the main presentation
+				this.m_oApi.StartDemonstration("id_reporter_dem", this.m_oApi.reporterStartSlide || 0);
 				this.m_oApi.sendEvent("asc_onDemonstrationFirstRun");
 				this.m_oApi.sendFromReporter("{ \"reporter_command\" : \"start_show\" }");
+				return;
 			}
 			else if (true !== isReporterUpdateSlide) {
 				this.m_oApi.DemonstrationGoToSlide(lPageNum);
 			}
-			//return;
 		}
 
 		if (this.DemonstrationManager.Mode && (isFromZoom || isScroll)) {
