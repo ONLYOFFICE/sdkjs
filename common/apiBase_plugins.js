@@ -361,9 +361,10 @@
 		if (window["NATIVE_EDITOR_ENJINE"] && this.editorId === AscCommon.c_oEditorId.Presentation)
 			return this._pluginMethod_PasteHtmlNative(htmlText, callback);
 
+		let pasteFrame = document.getElementById("pmpastehtmlframe");
 		if (!AscCommon.g_clipboardBase
 			|| !this.canEdit()
-			|| document.getElementById("pmpastehtml"))
+			|| (pasteFrame && pasteFrame.contentWindow.document.getElementById("pmpastehtml")))
 		{
 			if (callback)
 				callback();
@@ -371,7 +372,29 @@
 			return null;
 		}
 		
-		let _elem = document.createElement("div");
+		if (!pasteFrame) {
+			pasteFrame = document.createElement("iframe");
+			pasteFrame.id = "pmpastehtmlframe";
+			pasteFrame.setAttribute("sandbox", "allow-same-origin");
+			pasteFrame.setAttribute("tabindex", "-1");
+			pasteFrame.setAttribute("aria-hidden", "true");
+			pasteFrame.style.cssText = "position:absolute;left:0;top:-100%;width:100%;height:100%;border:0;z-index:-1000;";
+			document.body.appendChild(pasteFrame);
+		}
+		
+		let styles = "";
+		let styleElems = document.getElementsByTagName("style");
+		for (let i = 0; i < styleElems.length; ++i)
+			styles += styleElems[i].outerHTML;
+		
+		let pasteDoc = pasteFrame.contentWindow.document;
+		pasteDoc.open();
+		pasteDoc.write("<!DOCTYPE html><html><head><meta charset=\"utf-8\">" + styles + "</head><body></body></html>");
+		pasteDoc.close();
+		for (let i = 0; i < document.body.attributes.length; ++i)
+			pasteDoc.body.setAttribute(document.body.attributes[i].name, document.body.attributes[i].value);
+		
+		let _elem = pasteDoc.createElement("div");
 		_elem.id = "pmpastehtml";
 		_elem.style.color = "rgb(0,0,0)";
 		
@@ -405,7 +428,7 @@
 		this.executeGroupActionsStart();
 
 		_elem.innerHTML = htmlText;
-		document.body.appendChild(_elem);
+		pasteDoc.body.appendChild(_elem);
 		this.incrementCounterLongAction();
 		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
 		AscCommon.g_clipboardBase.bSaveFormat = false;
@@ -427,7 +450,7 @@
 				
 				let fCallback = function()
 				{
-					document.body.removeChild(_elem);
+					pasteDoc.body.removeChild(_elem);
 					_elem = null;
 					
 					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
