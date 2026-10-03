@@ -899,7 +899,6 @@
 		this.checkSlidesForRemove = {};
 		this.selectionStartSlide = null;
 		this.contentsToHideWhenEmpty = {};
-		this.contentsToKeep = {};
 		this.saveManager = new SavePosManager(outlineView);
 		this.concatShapesManager = new ConcatShapesManager(outlineView);
 	}
@@ -908,9 +907,7 @@
 	};
 	RemoveOutlineParagraphsManager.prototype.hideEmptiedContents = function () {
 		for (let id in this.contentsToHideWhenEmpty) {
-			if (!this.contentsToKeep[id]) {
-				this.outlineView.hideContentIfEmpty(this.contentsToHideWhenEmpty[id]);
-			}
+			this.outlineView.hideContentIfEmpty(this.contentsToHideWhenEmpty[id]);
 		}
 	};
 	RemoveOutlineParagraphsManager.prototype.getEmptyContentOfParagraph = function (outlineParagraph) {
@@ -1046,9 +1043,6 @@
 	};
 	RemoveOutlineParagraphsManager.prototype.processSourceSelectedContent = function (content, idx, count, isOnAddText, edgeContents) {
 		const shape = content.Is_DrawingShape(true);
-		const slide = shape.parent;
-		const slideNum = slide.num;
-		this.checkSlidesForRemove[slideNum] = slide;
 		if (shape.isTitlePlaceholder()) {
 			const slide = shape.parent;
 			this.checkSlidesForRemove[slide.num] = slide;
@@ -1128,9 +1122,6 @@
 			}
 		});
 
-		if (isOnAddText && edgeContents.firstContent) {
-			this.contentsToKeep[edgeContents.firstContent.GetId()] = edgeContents.firstContent;
-		}
 		if (isSingleContent) {
 			return;
 		}
