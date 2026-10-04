@@ -1243,12 +1243,14 @@ CDegreeSubSup.prototype.Apply_MenuProps = function(Props)
 		{
 			AscCommon.History.Add(new CChangesMathDegreeSubSupType(this, this.Pr.type, DEGREE_PreSubSup));
 			this.raw_SetType(DEGREE_PreSubSup);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.ScriptType == Asc.c_oAscMathInterfaceScript.SubSup && this.Pr.type == DEGREE_PreSubSup)
 		{
 			AscCommon.History.Add(new CChangesMathDegreeSubSupType(this, this.Pr.type, DEGREE_SubSup));
 			this.raw_SetType(DEGREE_SubSup);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };

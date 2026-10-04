@@ -530,6 +530,7 @@ CMatrixBase.prototype.Add_Row = function (Pos) {
 
 	AscCommon.History.Add(new CChangesMathMatrixAddRow(this, Pos, Items));
 	this.raw_AddRow(Pos, Items);
+	this.private_UpdatePresentationOutline();
 };
 CMatrixBase.prototype.raw_AddRow = function (Pos, Items) {
 	// изменить кол-во строк в матрицы и добавить элементы новой строки нужно в одной точке истории
@@ -564,12 +565,14 @@ CMatrixBase.prototype.Remove_Row = function (RowPos) {
 
 		AscCommon.History.Add(new CChangesMathMatrixRemoveRow(this, NextPos, Items));
 		this.raw_RemoveRow(NextPos, Items.length);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMatrixBase.prototype.SetBaseJc = function (Value) {
 	if (this.Pr.baseJc !== Value) {
 		AscCommon.History.Add(new CChangesMathMatrixBaseJc(this, this.Pr.baseJc, Value));
 		this.raw_SetBaseJc(Value);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMatrixBase.prototype.raw_SetBaseJc = function (Value) {
@@ -590,6 +593,7 @@ CMatrixBase.prototype.Modify_Interval = function (Item, NewRule, NewGap) {
 	if (NewRule !== OldRule || NewGap !== OldGap) {
 		AscCommon.History.Add(new CChangesMathMatrixInterval(this, Item.Type, OldRule, OldGap, NewRule, NewGap));
 		this.raw_SetInterval(Item.Type, NewRule, NewGap);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMatrixBase.prototype.raw_SetInterval = function (Item, Rule, Gap) {
@@ -782,6 +786,7 @@ CMathMatrix.prototype.Apply_MenuProps = function (Props) {
 			if (CurrentMcJc !== McJc) {
 				AscCommon.History.Add(new CChangesMathMatrixColumnJc(this, CurrentMcJc, McJc, ColumnPos));
 				this.raw_SetColumnJc(McJc, ColumnPos);
+				this.private_UpdatePresentationOutline();
 			}
 		}
 
@@ -897,6 +902,7 @@ CMathMatrix.prototype.Apply_MenuProps = function (Props) {
 			if (Props.bHidePlh !== this.Pr.plcHide) {
 				AscCommon.History.Add(new CChangesMathMatrixPlh(this, this.Pr.plcHide, Props.bHidePlh));
 				this.raw_HidePlh(Props.bHidePlh);
+				this.private_UpdatePresentationOutline();
 			}
 		}
 	}
@@ -916,6 +922,7 @@ CMathMatrix.prototype.Add_Column = function (ColumnPos) {
 
 	AscCommon.History.Add(new CChangesMathMatrixAddColumn(this, ColumnPos, Items));
 	this.raw_AddColumn(ColumnPos, Items);
+	this.private_UpdatePresentationOutline();
 };
 CMathMatrix.prototype.raw_AddColumn = function (Pos, Items) {
 	var CountColumn = this.getColsCount();
@@ -944,6 +951,7 @@ CMathMatrix.prototype.Remove_Column = function (ColumnPos) {
 
 	AscCommon.History.Add(new CChangesMathMatrixRemoveColumn(this, ColumnPos, Items));
 	this.raw_RemoveColumn(ColumnPos, Items.length);
+	this.private_UpdatePresentationOutline();
 };
 CMathMatrix.prototype.raw_RemoveColumn = function (Pos, CountItems) {
 	var CountColumn = this.getColsCount();

@@ -621,6 +621,7 @@ CFraction.prototype.Apply_MenuProps = function(Props)
 		{
 			AscCommon.History.Add(new CChangesMathFractionType(this, this.Pr.type, FractionType));
 			this.raw_SetFractionType(FractionType);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };

@@ -1248,6 +1248,7 @@ CMathBase.prototype.SetUnderline = function(Value)
 	{
 		AscCommon.History.Add(new CChangesMathBaseUnderline(this, this.CtrPrp.Underline, Value));
 		this.raw_SetUnderline(Value);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMathBase.prototype.SetStrikeout = function(Value)
@@ -1259,6 +1260,7 @@ CMathBase.prototype.SetStrikeout = function(Value)
 	{
 		AscCommon.History.Add(new CChangesMathBaseStrikeout(this, this.CtrPrp.Strikeout, Value));
 		this.raw_SetStrikeout(Value);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMathBase.prototype.SetDoubleStrikeout = function(Value)
@@ -1270,6 +1272,7 @@ CMathBase.prototype.SetDoubleStrikeout = function(Value)
 	{
 		AscCommon.History.Add(new CChangesMathBaseDoubleStrikeout(this, this.CtrPrp.DStrikeout, Value));
 		this.raw_Set_DoubleStrikeout(Value);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMathBase.prototype.SetBold = function(Value)
@@ -1292,6 +1295,7 @@ CMathBase.prototype.SetItalic = function(Value)
 	{
 		AscCommon.History.Add(new CChangesMathBaseItalic(this, this.CtrPrp.Italic, Value));
 		this.raw_SetItalic(Value);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMathBase.prototype.SetRFontsAscii = function(Value)
@@ -1986,6 +1990,7 @@ CMathBase.prototype.protected_AddToContent = function(Pos, Items, bUpdatePositio
 	AscCommon.History.Add(new CChangesMathBaseAddItems(this, Pos, Items));
 	this.raw_AddToContent(Pos, Items, bUpdatePosition);
 	this.private_UpdatePosOnAdd(Pos, bUpdatePosition);
+	this.private_UpdatePresentationOutline();
 };
 CMathBase.prototype.protected_RemoveItems = function(Pos, Items, bUpdatePosition)
 {
@@ -2002,6 +2007,7 @@ CMathBase.prototype.protected_RemoveItems = function(Pos, Items, bUpdatePosition
 
 	this.private_CorrectCurPos();
 	this.private_UpdatePosOnRemove(Pos, Count);
+	this.private_UpdatePresentationOutline();
 };
 CMathBase.prototype.raw_AddToContent = function(Pos, Items, bUpdatePosition)
 {
