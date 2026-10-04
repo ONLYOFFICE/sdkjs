@@ -920,20 +920,20 @@
 		return content;
 	};
 	RemoveOutlineParagraphsManager.prototype.processEmptyContentParagraph = function (direction) {
+		if (direction !== AscWord.Direction.BACKWARD) {
+			return false;
+		}
 		const docContent = this.getDocContent();
 		const outlineParagraph = this.getContentPosParagraph(docContent);
 		const content = this.getEmptyContentOfParagraph(outlineParagraph);
 		if (!content) {
 			return false;
 		}
-		if (direction === AscWord.Direction.BACKWARD && content.Content[0].IsPresentationBulleted()) {
+		if (content.Content[0].IsPresentationBulleted()) {
 			return false;
 		}
-		const nextOutlineParagraph = docContent.Content[outlineParagraph.Index + 1];
 		const previousOutlineParagraph = docContent.Content[outlineParagraph.Index - 1];
-		if (direction === AscWord.Direction.FORWARD && nextOutlineParagraph) {
-			this.saveManager.saveOutlineParagraphEdgePos(nextOutlineParagraph, true);
-		} else if (previousOutlineParagraph) {
+		if (previousOutlineParagraph) {
 			this.saveManager.saveOutlineParagraphEdgePos(previousOutlineParagraph, false);
 		}
 		this.outlineView.hideEmptyContent(content);
