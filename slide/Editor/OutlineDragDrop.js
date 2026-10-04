@@ -469,7 +469,7 @@
 		const contentShapes = slide.getOutlineSlide().content;
 		for (let i = contentShapes.length - 1; i >= 0; i -= 1) {
 			const content = contentShapes[i].getDocContent();
-			if (content && !content.Is_Empty()) {
+			if (content && this.outlineView.isContentInOutline(content)) {
 				return content;
 			}
 		}
