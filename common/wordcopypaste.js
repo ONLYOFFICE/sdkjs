@@ -15404,10 +15404,6 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		"dt": { "dd": 1, "dt": 1 }
 	};
 
-	var SAX_START_ELEMENT = 1;
-	var SAX_CHARACTERS    = 2;
-	var SAX_END_ELEMENT   = 3;
-
 	function liteStripUnscannable(sHtml) {
 		return sHtml
 			.replace(/<(script|style|head)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
@@ -15434,60 +15430,169 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		}
 	}
 
+	function liteIsSpace(code) {
+		return 32 === code || 9 === code || 10 === code || 12 === code || 13 === code;
+	}
+
+	function liteIsAsciiLetter(code) {
+		return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+	}
+
+	//reads the tag that starts at pos ("<" or "</" and an ascii letter) by the html rules, not the xml ones: an
+	//attribute value may be quoted, unquoted or missing. Returns null when the input ends inside the tag
+	function liteReadTag(sHtml, pos) {
+		var len   = sHtml.length;
+		var isEnd = 47 === sHtml.charCodeAt(pos + 1);
+		var i     = pos + (isEnd ? 2 : 1);
+
+		var nameStart = i;
+		while (i < len && !liteIsSpace(sHtml.charCodeAt(i)) && 47 !== sHtml.charCodeAt(i) && 62 !== sHtml.charCodeAt(i)) {
+			++i;
+		}
+		var tag = {name : sHtml.substring(nameStart, i).toLowerCase(), isEnd : isEnd, isEmpty : false, attrs : null, next : -1};
+
+		while (i < len) {
+			var code = sHtml.charCodeAt(i);
+			if (62 === code) {
+				tag.next = i + 1;
+				return tag;
+			}
+			if (liteIsSpace(code)) {
+				++i;
+				continue;
+			}
+			if (47 === code) {
+				++i;
+				if (62 === sHtml.charCodeAt(i)) {
+					tag.isEmpty = true;
+				}
+				continue;
+			}
+
+			//the name runs up to a space, "/", ">" or "=" - a "=" that starts it belongs to it
+			var attrStart = i++;
+			while (i < len) {
+				code = sHtml.charCodeAt(i);
+				if (liteIsSpace(code) || 47 === code || 62 === code || 61 === code) {
+					break;
+				}
+				++i;
+			}
+			var attrName = sHtml.substring(attrStart, i).toLowerCase();
+			while (i < len && liteIsSpace(sHtml.charCodeAt(i))) {
+				++i;
+			}
+
+			var attrValue = "";
+			if (61 === sHtml.charCodeAt(i)) {
+				++i;
+				while (i < len && liteIsSpace(sHtml.charCodeAt(i))) {
+					++i;
+				}
+				code = sHtml.charCodeAt(i);
+				if (34 === code || 39 === code) {
+					var quoteEnd = sHtml.indexOf(34 === code ? "\"" : "'", i + 1);
+					if (-1 === quoteEnd) {
+						return null;
+					}
+					attrValue = sHtml.substring(i + 1, quoteEnd);
+					i = quoteEnd + 1;
+				} else {
+					var valueStart = i;
+					while (i < len && !liteIsSpace(sHtml.charCodeAt(i)) && 62 !== sHtml.charCodeAt(i)) {
+						++i;
+					}
+					attrValue = sHtml.substring(valueStart, i);
+				}
+			}
+
+			//the first of the repeated attributes wins, as in a browser; an end tag has none
+			if (!isEnd) {
+				if (!tag.attrs) {
+					tag.attrs = {};
+				}
+				if (!tag.attrs.hasOwnProperty(attrName)) {
+					tag.attrs[attrName] = attrValue;
+				}
+			}
+		}
+		return null;
+	}
+
+	//the end of the markup that starts at pos and is no element: a comment, "<!...>", "<?...>", or "</" with no name.
+	//It is dropped, as a browser does; markup the input ends inside runs to the end of the input
+	function liteSkipMarkup(sHtml, pos) {
+		var end;
+		if ("<!--" === sHtml.substring(pos, pos + 4)) {
+			end = sHtml.indexOf("-->", pos + 4);
+			return -1 === end ? sHtml.length : end + 3;
+		}
+		end = sHtml.indexOf(">", pos + 1);
+		return -1 === end ? sHtml.length : end + 1;
+	}
+
 	function liteParseHtmlToTree(sHtml) {
 		var root = new CLiteNode("element", "#root");
 		if (!sHtml) {
 			return root;
 		}
 
-		var clean = liteStripUnscannable(sHtml);
-		var parser = new AscCommon.StaxParser(clean, null, null);
-
+		var html  = liteStripUnscannable(sHtml);
+		var len   = html.length;
 		var stack = [root];
-		var skipEnd = false;
 
-		while (parser.hasNext()) {
-			var type = parser.next();
-			if (undefined === type) {
+		var textStart = 0;
+		var pos       = 0;
+		while (pos < len) {
+			var lt = html.indexOf("<", pos);
+			if (-1 === lt) {
+				break;
+			}
+
+			var code  = html.charCodeAt(lt + 1);
+			var isTag = liteIsAsciiLetter(code) || (47 === code && liteIsAsciiLetter(html.charCodeAt(lt + 2)));
+			if (!isTag) {
+				if (33 === code || 63 === code || (47 === code && lt + 2 < len)) {
+					liteAppendText(stack[stack.length - 1], html.substring(textStart, lt));
+					pos = textStart = liteSkipMarkup(html, lt);
+				} else {
+					//a "<" that starts no tag is text
+					pos = lt + 1;
+				}
+				continue;
+			}
+
+			var tag = liteReadTag(html, lt);
+			if (!tag) {
+				//the input ends inside the tag: the tag is dropped and the text before it kept, as in a browser
+				len = lt;
 				break;
 			}
 
 			var parent = stack[stack.length - 1];
+			liteAppendText(parent, html.substring(textStart, lt));
+			pos = textStart = tag.next;
 
-			if (SAX_START_ELEMENT === type) {
-				var name = (parser.GetName() || "").toLowerCase();
-				var attrs = parser.GetAttributes();
-				var empty = parser.IsEmptyNode();
+			if (tag.isEnd) {
+				liteCloseTag(stack, tag.name);
+				continue;
+			}
 
-				var close = g_liteAutoClose[parent.name];
-				if (close && close[name]) {
-					stack.pop();
-					parent = stack[stack.length - 1];
-				}
+			var close = g_liteAutoClose[parent.name];
+			if (close && close[tag.name]) {
+				stack.pop();
+				parent = stack[stack.length - 1];
+			}
 
-				var node = new CLiteNode("element", name);
-				liteApplyAttrs(node, attrs);
-				parent.addChild(node);
+			var node = new CLiteNode("element", tag.name);
+			liteApplyAttrs(node, tag.attrs);
+			parent.addChild(node);
 
-				if (!empty && !g_liteVoidTags[name]) {
-					stack.push(node);
-				}
-				if (empty) {
-					skipEnd = true;
-				}
-			} else if (SAX_CHARACTERS === type) {
-				liteAppendText(parent, parser.GetValue());
-			} else if (SAX_END_ELEMENT === type) {
-				if (skipEnd) {
-					skipEnd = false;
-					continue;
-				}
-				var end = parser.index - 1;
-				var start = clean.lastIndexOf("</", end);
-				var closeName = start >= 0 ? clean.substring(start + 2, end).trim().toLowerCase() : "";
-				liteCloseTag(stack, closeName);
+			if (!tag.isEmpty && !g_liteVoidTags[tag.name]) {
+				stack.push(node);
 			}
 		}
+		liteAppendText(stack[stack.length - 1], html.substring(textStart, len));
 		return root;
 	}
 
