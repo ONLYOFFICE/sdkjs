@@ -25934,11 +25934,14 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} oTextPr - The properties that will be set to the content of the content control.
-	 * @returns {ApiInlineLvlSdt} this.
+	 * @returns {ApiInlineLvlSdt | null} - this, or null if the content control content is locked.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetTextPr.js
 	 */
 	ApiInlineLvlSdt.prototype.SetTextPr = function(oTextPr)
 	{
+		if (!this._canBeEdited())
+			return null;
+
 		for (var Index = 0; Index < this.Sdt.Content.length; Index++)
 		{
 			var Run = new ApiRun(this.Sdt.Content[Index]);
@@ -27637,11 +27640,14 @@
 	 * Clears the contents from the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - returns true.
+	 * @returns {boolean} - returns false if the content control content is locked.
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/RemoveAllElements.js
 	 */
 	ApiBlockLvlSdt.prototype.RemoveAllElements = function()
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		this.Sdt.ReplaceContentWithPlaceHolder(false);
 		return true;
 	};
@@ -27687,6 +27693,9 @@
 	 */
 	ApiBlockLvlSdt.prototype.SetTextPr = function(textPr)
 	{
+		if (!this._canBeEdited())
+			return false;
+		
 		var ParaTextPr = new AscWord.ParaTextPr(textPr.TextPr);
 		this.Sdt.Content.SetApplyToAll(true);
 		this.Sdt.Add(ParaTextPr);
