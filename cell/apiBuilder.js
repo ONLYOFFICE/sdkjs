@@ -10436,8 +10436,8 @@
 		nRotAngle = typeof (nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
 		nWidth = typeof (nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
 		nHeight = typeof (nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
-		oFill = oFill && oFill.UniFill ? oFill.UniFill : Asc.editor.CreateNoFill().UniFill;
-		oStroke = oStroke && oStroke.Ln ? oStroke.Ln : Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill()).Ln;
+		oFill = oFill && oFill.UniFill ? oFill.UniFill : Api.CreateNoFill().UniFill;
+		oStroke = oStroke && oStroke.Ln ? oStroke.Ln : Api.CreateStroke(0, Api.CreateNoFill()).Ln;
 		nFromCol = typeof (nFromCol) === "number" && nFromCol > 0 ? nFromCol : 0;
 		nFromRow = typeof (nFromRow) === "number" && nFromRow > 0 ? nFromRow : 0;
 		nColOffset = typeof (nColOffset) === "number" && nColOffset > 0 ? nColOffset : 0;
