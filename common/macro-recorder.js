@@ -1247,6 +1247,31 @@
 		return code;
 	}
 
+	function private_getStrokeStyleCode(line)
+	{
+		let code = "";
+		let capTypes = {
+			[Asc.c_oAscLineCapType.Flat]: "flat",
+			[Asc.c_oAscLineCapType.Round]: "round",
+			[Asc.c_oAscLineCapType.Square]: "square"
+		};
+
+		if (capTypes[line.cap])
+			code += "\t\tstroke.SetCapType(\"" + capTypes[line.cap] + "\");\n";
+
+		let joinTypes = {
+			[AscFormat.LineJoinType.Empty]: "empty",
+			[AscFormat.LineJoinType.Round]: "round",
+			[AscFormat.LineJoinType.Bevel]: "bevel",
+			[AscFormat.LineJoinType.Miter]: "miter"
+		};
+
+		if (line.Join && joinTypes[line.Join.type])
+			code += "\t\tstroke.SetJoinType(\"" + joinTypes[line.Join.type] + "\");\n";
+
+		return code;
+	}
+
 	function getCreateShadowExpr(shadow)
 	{
 		if (!shadow)
@@ -1832,6 +1857,7 @@
 					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+			strStrokeShape += private_getStrokeStyleCode(line);
 
 			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 
@@ -2887,6 +2913,7 @@
 					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+			strStrokeShape += private_getStrokeStyleCode(line);
 
 			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 
@@ -3438,6 +3465,7 @@
 					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+			strStrokeShape += private_getStrokeStyleCode(line);
 
 			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 

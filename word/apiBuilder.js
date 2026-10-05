@@ -4563,6 +4563,16 @@
 	 */
 
 	/**
+	 * The line cap type.
+	 * @typedef {"flat" | "round" | "square"} LineCapType
+	 */
+
+	/**
+	 * The line join type.
+	 * @typedef {"empty" | "round" | "bevel" | "miter"} LineJoinType
+	 */
+
+	/**
 	 * The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
 	 *     | "folHlink" | "hlink" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
@@ -24748,6 +24758,112 @@
 		return null;
 	};
 
+	/**
+	 * Sets the cap type of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 *
+	 * @param {LineCapType} type - The cap type of the stroke.
+	 * @returns {boolean}
+	 *
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetCapType.js
+	 */
+	ApiStroke.prototype.SetCapType = function (type) {
+		const typeCode = private_GetLineCapTypeCode(type);
+		if (typeCode === undefined) {
+			throwException(new Error('The type parameter must be one of "flat", "round" or "square"'));
+		}
+
+		if (this.Ln) {
+			if (this.parent) {
+				this.Ln = this.Ln.createDuplicate();
+			}
+
+			this.Ln.setCap(typeCode);
+
+			if (this.parent) {
+				this.parent.setLn(this.Ln);
+			}
+
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the cap type of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 *
+	 * @returns {LineCapType | null}
+	 *
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetCapType.js
+	 */
+	ApiStroke.prototype.GetCapType = function () {
+		if (this.Ln && this.Ln.cap !== null && this.Ln.cap !== undefined) {
+			return private_GetLineCapTypeString(this.Ln.cap);
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the join type of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 *
+	 * @param {LineJoinType} type - The join type of the stroke.
+	 * @returns {boolean}
+	 *
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetJoinType.js
+	 */
+	ApiStroke.prototype.SetJoinType = function (type) {
+		const typeCode = private_GetLineJoinTypeCode(type);
+		if (typeCode === undefined) {
+			throwException(new Error('The type parameter must be one of "empty", "round", "bevel" or "miter"'));
+		}
+
+		if (this.Ln) {
+			if (this.parent) {
+				this.Ln = this.Ln.createDuplicate();
+			}
+
+			const join = new AscFormat.LineJoin();
+			join.setType(typeCode);
+			this.Ln.setJoin(join);
+
+			if (this.parent) {
+				this.parent.setLn(this.Ln);
+			}
+
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the join type of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 *
+	 * @returns {LineJoinType | null}
+	 *
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetJoinType.js
+	 */
+	ApiStroke.prototype.GetJoinType = function () {
+		if (this.Ln && this.Ln.Join && this.Ln.Join.type !== null && this.Ln.Join.type !== undefined) {
+			return private_GetLineJoinTypeString(this.Ln.Join.type);
+		}
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiGradientStop
@@ -35462,6 +35578,10 @@
 	ApiStroke.prototype["GetBeginArrow"]             = ApiStroke.prototype.GetBeginArrow;
 	ApiStroke.prototype["SetEndArrow"]               = ApiStroke.prototype.SetEndArrow;
 	ApiStroke.prototype["GetEndArrow"]               = ApiStroke.prototype.GetEndArrow;
+	ApiStroke.prototype["SetCapType"]                = ApiStroke.prototype.SetCapType;
+	ApiStroke.prototype["GetCapType"]                = ApiStroke.prototype.GetCapType;
+	ApiStroke.prototype["SetJoinType"]               = ApiStroke.prototype.SetJoinType;
+	ApiStroke.prototype["GetJoinType"]               = ApiStroke.prototype.GetJoinType;
 
 	ApiGradientStop.prototype["GetClassType"]        = ApiGradientStop.prototype.GetClassType;
 	ApiGradientStop.prototype["ToJSON"]              = ApiGradientStop.prototype.ToJSON;
@@ -36802,6 +36922,44 @@
 			case AscFormat.LineEndSize.Mid: return 'medium';
 		}
 		return 'medium';
+	}
+
+	function private_GetLineCapTypeCode(typeName) {
+		switch (typeName) {
+			case 'flat': return Asc.c_oAscLineCapType.Flat;
+			case 'round': return Asc.c_oAscLineCapType.Round;
+			case 'square': return Asc.c_oAscLineCapType.Square;
+		}
+		return undefined;
+	}
+
+	function private_GetLineCapTypeString(typeCode) {
+		switch (typeCode) {
+			case Asc.c_oAscLineCapType.Flat: return 'flat';
+			case Asc.c_oAscLineCapType.Round: return 'round';
+			case Asc.c_oAscLineCapType.Square: return 'square';
+		}
+		return undefined;
+	}
+
+	function private_GetLineJoinTypeCode(typeName) {
+		switch (typeName) {
+			case 'empty': return AscFormat.LineJoinType.Empty;
+			case 'round': return AscFormat.LineJoinType.Round;
+			case 'bevel': return AscFormat.LineJoinType.Bevel;
+			case 'miter': return AscFormat.LineJoinType.Miter;
+		}
+		return undefined;
+	}
+
+	function private_GetLineJoinTypeString(typeCode) {
+		switch (typeCode) {
+			case AscFormat.LineJoinType.Empty: return 'empty';
+			case AscFormat.LineJoinType.Round: return 'round';
+			case AscFormat.LineJoinType.Bevel: return 'bevel';
+			case AscFormat.LineJoinType.Miter: return 'miter';
+		}
+		return undefined;
 	}
 
 	function private_GetDrawingLockType(sType)
