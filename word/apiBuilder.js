@@ -8730,7 +8730,7 @@
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
 		this.Document.SetGlobalTrackRevisions(isTrack, true);
-		this.Document.SetLocalTrackRevisions(null);
+		this.Document.SetLocalTrackRevisions(null, true);
 		return true;
 	};
 	
@@ -8756,8 +8756,8 @@
 		{
 			trackRevisionBuffer.isTrack      = this.Document.IsTrackRevisions();
 			trackRevisionBuffer.isLocalTrack = this.Document.GetLocalTrackRevisions();
-			this.Document.SetGlobalTrackRevisions(true);
-			this.Document.SetLocalTrackRevisions(null);
+			this.Document.SetGlobalTrackRevisions(true, true);
+			this.Document.SetLocalTrackRevisions(null, true);
 			
 			let userInfo = Asc.editor.DocInfo.get_UserInfo();
 			if (!userInfo)
@@ -8782,8 +8782,8 @@
 		}
 		else
 		{
-			this.Document.SetGlobalTrackRevisions(trackRevisionBuffer.isTrack);
-			this.Document.SetLocalTrackRevisions(trackRevisionBuffer.isLocalTrack);
+			this.Document.SetGlobalTrackRevisions(trackRevisionBuffer.isTrack, true);
+			this.Document.SetLocalTrackRevisions(trackRevisionBuffer.isLocalTrack, true);
 
 			if (trackRevisionBuffer.isUser)
 			{
@@ -38011,7 +38011,7 @@
 			return Asc.editor.asc_GetLocalTrackRevisions();
 		};
 		
-		Api.asc_GetLocalTrackRevisions = Api["asc_SetLocalTrackRevisions"] = function(isTrack)
+		Api.asc_SetLocalTrackRevisions = Api["asc_SetLocalTrackRevisions"] = function(isTrack)
 		{
 			Asc.editor.asc_SetLocalTrackRevisions(isTrack);
 		};
