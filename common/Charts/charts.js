@@ -1296,31 +1296,48 @@ TextArtPreviewManager.prototype.getWordArtPreviews = function()
 };
 TextArtPreviewManager.prototype.getWordArtPreviewCanvas = function(prst)
 {
-	var _canvas = this.createCanvas();
-	var ctx = _canvas.getContext('2d');
-	var graphics = new AscCommon.CGraphics();
-	var oShape = this.getShapeByPrst(prst);
-    if(!oShape)
-    {
-        return "";
-    }
-	graphics.init(ctx, _canvas.width, _canvas.height, oShape.extX, oShape.extY);
-	graphics.m_oFontManager = AscCommon.g_fontManager;
-	graphics.transform(1,0,0,1,0,0);
-
-	var oldShowParaMarks;
+	const canvas = this.createCanvas();
+	const ctx = canvas.getContext('2d');
+	const graphics = new AscCommon.CGraphics();
+	const shape = this.getShapeByPrst(prst);
+	if(!shape)
+	{
+		return "";
+	}
+	let oldShowParaMarks;
 	if(editor)
 	{
 		oldShowParaMarks = editor.ShowParaMarks;
 		editor.ShowParaMarks = false;
 	}
-	oShape.draw(graphics);
+	const boundsChecker = new AscFormat.CSlideBoundsChecker();
+	boundsChecker.init(100, 100, 100, 100);
+	if(shape.txWarpStruct && shape.checkNeedRecalcDocContentForTxWarp(shape.getBodyPr()))
+	{
+		shape.txWarpStruct.draw(boundsChecker, shape.transformTextWordArt);
+	}
+	const bounds = boundsChecker.Bounds;
+	const left = Math.min(bounds.min_x, 0);
+	const top = Math.min(bounds.min_y, 0);
+	const width = Math.max(bounds.max_x, shape.extX) - left;
+	const height = Math.max(bounds.max_y, shape.extY) - top;
+	const size = Math.max(width, height);
+	const scale = canvas.width / size;
+
+	ctx.fillStyle = "#FFFFFF";
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	graphics.init(ctx, canvas.width, canvas.height, size, size);
+	graphics.m_oFontManager = AscCommon.g_fontManager;
+	graphics.m_oCoordTransform.tx = (size - width) * scale / 2 - left * scale;
+	graphics.m_oCoordTransform.ty = (size - height) * scale / 2 - top * scale;
+	graphics.transform(1,0,0,1,0,0);
+	shape.draw(graphics);
 
 	if(editor)
 	{
 		editor.ShowParaMarks = oldShowParaMarks;
 	}
-	return _canvas;
+	return canvas;
 };
 
 TextArtPreviewManager.prototype.generateTextArtStyles = function()

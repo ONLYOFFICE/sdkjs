@@ -452,8 +452,7 @@
 			return;
 		}
 		
-        let aFields     = this.GetAllWidgets();
-
+        let aFields = this.GetAllWidgets();
         let aCurIdxs = this.GetCurIdxs();
         let aApiIdxs = this.GetLogicCurIdxs();
 
@@ -462,14 +461,7 @@
         let sFormatValue = this.GetFormatValue();
 
         let sNewValue = this.GetValue();
-        let isChanged = sNewValue !== this.GetLogicValue();
-        for (let i = 0; i < aCurIdxs.length; i++) {
-            if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
-                isChanged = true;
-                break;
-            }
-        }
-        
+        let isChanged = !aApiIdxs || sNewValue !== this.GetLogicValue() || false == AscCommon.isEqualSortedArrays(aCurIdxs, aApiIdxs);
         if (!isChanged && sFormatValueBefore === sFormatValue) {
             return;
         }

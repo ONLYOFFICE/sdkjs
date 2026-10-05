@@ -5925,7 +5925,8 @@ var editor;
 
         if (letterDifference !== null) {
           var replaceWith = newWord || changeWords[word];
-          var valueForSearching = new RegExp(usrWords[lastIndex], "y");
+          // the word comes from the cell text: '(' in it would throw a SyntaxError out of the correction
+          var valueForSearching = new RegExp(AscCommon.escapeRegExp(usrWords[lastIndex]), "y");
           valueForSearching.lastIndex = wordsIndex[lastIndex];
           cellText = cellText.replace(valueForSearching, replaceWith);
           if (letterDifference !== 0) {
@@ -7926,6 +7927,8 @@ var editor;
 		// Check global lock
 
 		var t = this;
+		// the lock of a single user is answered before the return, so the result is known then
+		var isDone = false;
 		var pivotTables = pivot.getPivotTablesConnectedByPivotCache();
 		this._isLockedPivotAndConnectedByPivotCache(pivotTables, function(res) {
 			if (!res) {
@@ -7943,7 +7946,9 @@ var editor;
 				//todo pivot
 				t.updateWorksheetByPivotTable(pivot, changeRes, true, updateSelection);
 			}
+			isDone = success;
 		});
+		return isDone;
 	};
 	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, fitColumnsWidth, onAction, doNotCheckUnderlyingData) {
 		if (!doNotCheckUnderlyingData && !pivot.checkPivotUnderlyingData()) {

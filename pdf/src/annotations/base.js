@@ -1217,7 +1217,7 @@
 		}
 
 		// draws using the basic drawings draw method.
-		if (this.IsStamp() && !this.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Signature == this.GetIconType()) {
+		if (this.IsStamp() && !this.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Image == this.GetIconType()) {
 			return;
 		}
 
@@ -1247,37 +1247,6 @@
 		this.IsChanged() && oGraphicsWord.AddClipRect(aRect[0] * g_dKoef_pt_to_mm, aRect[1] * g_dKoef_pt_to_mm, (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm, (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
         this.draw(oGraphicsWord);
         this.IsChanged() && oGraphicsWord.RemoveLastClip();
-		
-        // draw annot rect
-        // if (oGraphicsPDF) {
-        //     oGraphicsPDF.SetLineWidth(1);
-        //     let aOringRect  = this.GetRect();
-        //     let X       = aOringRect[0];
-        //     let Y       = aOringRect[1];
-        //     let nWidth  = aOringRect[2] - aOringRect[0];
-        //     let nHeight = aOringRect[3] - aOringRect[1];
-
-        //     Y += 1 / 2;
-        //     X += 1 / 2;
-        //     nWidth  -= 1;
-        //     nHeight -= 1;
-
-        //     oGraphicsPDF.SetStrokeStyle(0, 255, 255);
-        //     oGraphicsPDF.SetLineDash([]);
-        //     oGraphicsPDF.BeginPath();
-        //     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
-        //     oGraphicsPDF.Stroke();
-
-        //     // if (this.IsLine()) {
-        //     //     let aPoints = this.GetLinePoints();
-
-        //     //     oGraphicsPDF.BeginPath();
-        //     //     oGraphicsPDF.SetStrokeStyle(255, 0, 0);
-        //     //     oGraphicsPDF.MoveTo(aPoints[0], aPoints[1]);
-        //     //     oGraphicsPDF.LineTo(aPoints[2], aPoints[3]);
-        //     //     oGraphicsPDF.Stroke();
-        //     // }
-        // }
     };
     CAnnotationBase.prototype.changeFlipH = function () {
         return false;
@@ -1691,22 +1660,10 @@
 
         // rect
         let aOrigRect = this.GetRect();
-        if (this.IsStamp() && memory.docRenderer) {
-            let nScale = this.GetOriginViewScale();
-
-            // for not clipping by half border width
-            memory.WriteDouble(aOrigRect[0] - (nBorderW / 2) * nScale); // x1
-            memory.WriteDouble(aOrigRect[1] - (nBorderW / 2) * nScale); // y1
-            memory.WriteDouble(aOrigRect[2] + (nBorderW / 2) * nScale); // x2
-            memory.WriteDouble(aOrigRect[3] + (nBorderW / 2) * nScale); // y2
-        }
-        else {
-            memory.WriteDouble(aOrigRect[0]); // x1
-            memory.WriteDouble(aOrigRect[1]); // y1
-            memory.WriteDouble(aOrigRect[2]); // x2
-            memory.WriteDouble(aOrigRect[3]); // y2
-        }
-        
+        memory.WriteDouble(aOrigRect[0]); // x1
+		memory.WriteDouble(aOrigRect[1]); // y1
+		memory.WriteDouble(aOrigRect[2]); // x2
+		memory.WriteDouble(aOrigRect[3]); // y2
 
         // new flags
         let Flags = 0;
@@ -1783,7 +1740,7 @@
                     if (this.GetRenderStructure()) {
                         oMeta["InRect"] = this.GetInRect();
                     }
-					if (this.GetIconType() == AscPDF.STAMP_TYPES.Signature) {
+					if (this.GetIconType() == AscPDF.STAMP_TYPES.Image) {
 						let aImages = [];
 						this.getAllRasterImages(aImages);
 						

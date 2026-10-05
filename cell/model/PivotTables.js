@@ -8084,15 +8084,71 @@ CT_pivotTableDefinition.prototype.getGroupRangePr = function (fld) {
 CT_pivotTableDefinition.prototype.createGroupRangePr = function (fld) {
 	return this.cacheDefinition.createGroupRangePr(fld);
 };
-CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmation, onRepeat, opt_rangePr, opt_dateTypes) {
+// the type a field is grouped by from its cells in the report, or null when it is not a row or column field of dates or numbers
+CT_pivotTableDefinition.prototype.getGroupFieldType = function (fld) {
+	var base = this.getGroupBase(fld);
+	var axis = this.asc_getPivotFields()[base].axis;
+	if (c_oAscAxis.AxisRow !== axis && c_oAscAxis.AxisCol !== axis) {
+		return null;
+	}
+	var rangePrRes = this.getGroupRangePr(base);
+	var groupType = rangePrRes ? rangePrRes.rangePr.getFieldGroupType() : this.getFieldGroupType(fld);
+	return c_oAscGroupType.Date === groupType || c_oAscGroupType.Number === groupType ? groupType : null;
+};
+// the grouping from the first to the last value of the field, or from the given serial numbers, with the given size; null when its groups could not be placed
+CT_pivotTableDefinition.prototype.createGroupRangePrByBounds = function (fld, opt_start, opt_end, opt_interval) {
+	var rangePr = this.createGroupRangePr(this.getGroupBase(fld)).rangePr;
+	var isDate = c_oAscGroupType.Date === rangePr.getFieldGroupType();
+	if (null != opt_interval) {
+		rangePr.groupInterval = opt_interval;
+	}
+	if (null != opt_start) {
+		rangePr.autoStart = false;
+		if (isDate) {
+			rangePr.startDate = Asc.cDate.prototype.getDateFromExcelWithTime2(opt_start);
+		} else {
+			rangePr.startNum = opt_start;
+		}
+	}
+	if (null != opt_end) {
+		rangePr.autoEnd = false;
+		if (isDate) {
+			rangePr.endDate = Asc.cDate.prototype.getDateFromExcelWithTime2(opt_end);
+		} else {
+			rangePr.endNum = opt_end;
+		}
+	}
+	var start = isDate ? rangePr.startDate.getExcelDateWithTime2() : rangePr.startNum;
+	var end = isDate ? rangePr.endDate.getExcelDateWithTime2() : rangePr.endNum;
+	if (!(start <= end)) {
+		return null;
+	}
+	// an end equal to the start moves one step further, so the groups are counted after that
+	rangePr.correctEndValue();
+	// more groups of numbers than rows of a sheet cannot be placed, and a size lost in the precision of the start never ends them
+	if (!isDate && (!(rangePr.startNum + rangePr.groupInterval > rangePr.startNum) || (rangePr.endNum - rangePr.startNum) / rangePr.groupInterval > AscCommon.gc_nMaxRow0)) {
+		return null;
+	}
+	return rangePr;
+};
+// returns true when the grouping is done by the time it returns; a macro passes opt_isForMacros and no onRepeat
+CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmation, onRepeat, opt_rangePr, opt_dateTypes, opt_isForMacros) {
 	var newRangePrRes;
 	var sheetId = this.worksheet.getId();
 	var pivotTable = this;
 	var fieldGroupType = pivotTable.getFieldGroupType(layout.fld);
 	var baseFld = pivotTable.getGroupBase(layout.fld);
 	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
+	// a field grouped together with a longer period lists its groups as text, so its grouping gives the type
+	if (rangePrRes) {
+		fieldGroupType = rangePrRes.rangePr.getFieldGroupType();
+	}
 	if (opt_rangePr && opt_rangePr.getFieldGroupType() === fieldGroupType) {
-		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
+		// a co-editor's answer to the lock would come after the macro returns, and a failed change is undone with the whole history point of the macro
+		if (opt_isForMacros && (api.collaborativeEditing.getCollaborativeEditing() || !pivotTable.canPlaceGroupRangePr(baseFld, opt_rangePr, opt_dateTypes))) {
+			return false;
+		}
+		return api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
@@ -8114,7 +8170,9 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 				pivotTable._updateCacheDataUpdateSlicersPost();
 			});
 			return changeRes;
-		}, onRepeat, true);
+		}, onRepeat, !opt_isForMacros);
+	} else if (opt_isForMacros) {
+		return false;
 	} else if (rangePrRes) {
 		rangePrRes.rangePr = rangePrRes.rangePr.clone();
 		newRangePrRes = pivotTable.createGroupRangePr(baseFld);
@@ -8149,6 +8207,38 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 	} else {
 		api.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.NoCritical);
 	}
+};
+// whether the report grouped so has its data and fits where it is, worked out on a copy of the pivot table
+CT_pivotTableDefinition.prototype.canPlaceGroupRangePr = function (fld, rangePr, dateTypes) {
+	if (!this.checkPivotUnderlyingData()) {
+		return false;
+	}
+	var ws = this.GetWS();
+	var copy = this.cloneForHistory(true, false);
+	copy.cacheDefinition.cacheRecords = this.cacheDefinition.cacheRecords;
+	copy.setWS(ws);
+	// the slicers of the workbook stay with the pivot table, not with the copy that is thrown away
+	copy._updateCacheDataUpdateSlicers = function () {};
+	AscFormat.ExecuteNoHistory(function () {
+		copy.ungroupRangePr(fld);
+		copy.groupRangePr(fld, rangePr.clone(), dateTypes && dateTypes.slice());
+		copy.updateAfterEdit();
+	});
+	var ranges = copy.getReportRanges();
+	if (c_oAscError.ID.No !== ws.checkPivotReportLocationForError(ranges, this)) {
+		return false;
+	}
+	// the cells of the current report are cleared before it is drawn anew
+	var oldRanges = this.getReportRanges();
+	return ranges.every(function (range) {
+		var isFree = 0 === ws.mergeManager.get(range).inner.length;
+		ws.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmptyByCol(function (cell, row, col) {
+			if (!cell.isNullTextString() && !oldRanges.some(function (oldRange) { return oldRange.contains(col, row); })) {
+				isFree = false;
+			}
+		});
+		return isFree;
+	});
 };
 CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirmation, onRepeat) {
 	var sheetId = this.worksheet.getId();
@@ -8558,7 +8648,8 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 			const pivotField = pivotFields[i];
 			const cacheField = cacheFields[i];
 			const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-			const findValue = value.replace(new RegExp(' ' + subtotalCaption, 'g'), '');
+			//the caption is a translated string: escape it, a locale with regex metacharacters must not break the pattern
+			const findValue = value.replace(new RegExp(' ' + AscCommon.escapeRegExp(subtotalCaption), 'g'), '');
 			const item = pivotField.findFieldItemByTextValue(cacheField, findValue);
 			if (item !== null) {
 				const cell = this.getCellByGetPivotDataParams({
@@ -8575,7 +8666,7 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 		return new AscCommonExcel.cError(AscCommonExcel.cErrorType.not_available);
 	} else {
 		const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-		const findValue = value.replace(new RegExp(subtotalCaption + ' ', 'g'), '');
+		const findValue = value.replace(new RegExp(AscCommon.escapeRegExp(subtotalCaption) + ' ', 'g'), '');
 		const cell = this.getCellByGetPivotDataParams({
 			dataFieldName: findValue,
 			optParams: []
@@ -9192,7 +9283,8 @@ CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(arrayFieldI
 	let prefix;
 	for (let i = 1; ; i += 1) {
 		prefix = translatedInfoString + String(i);
-		const re = new RegExp('^' + prefix + '(-|$)');
+		//the prefix carries a translated string, so escape it before it becomes a pattern
+		const re = new RegExp('^' + AscCommon.escapeRegExp(prefix) + '(-|$)');
 		if (reIndexOf(re, sheetNames) === -1) {
 			break;
 		}
@@ -15613,7 +15705,8 @@ CT_CacheField.prototype.createGroupRangePr = function () {
 	var rangePr = new CT_RangePr(true);
 	rangePr.autoStart = true;
 	rangePr.autoEnd = true;
-	var groupType = this.getFieldGroupType();
+	// a field grouped together with a longer period lists its groups as text, so its grouping gives the type
+	var groupType = this.fieldGroup && this.fieldGroup.rangePr ? this.fieldGroup.rangePr.getFieldGroupType() : this.getFieldGroupType();
 	var sharedItems = this.getSharedItems();
 	//todo default
 	rangePr.groupInterval = 1;

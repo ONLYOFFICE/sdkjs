@@ -2138,7 +2138,8 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_PasteHtmlAsText = function(sHtml, callback)
+	// isKeepTextPr - keep the text properties of the html instead of applying the current ones
+	asc_docs_api.prototype.asc_PasteHtmlAsText = function(sHtml, callback, rejectCallback, isKeepTextPr)
 	{
 		if (!this.canEdit())
 			return;
@@ -2147,7 +2148,7 @@ background-repeat: no-repeat;\
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, false)) {
 			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
-			AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback);
+			AscCommon.Editor_Paste_Html_Lite_Exec(this, sHtml, callback, rejectCallback, isKeepTextPr);
 		}
 	};
 
@@ -7414,7 +7415,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.ChangeTheme = function(indexTheme, bSelectedSlides)
 	{
 		if (true === AscCommon.CollaborativeEditing.Get_GlobalLock())
-			return;
+			return false;
 
 		if (!this.isViewMode && this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Theme) === false)
 		{
@@ -7425,7 +7426,9 @@ background-repeat: no-repeat;\
 			this.inkDrawer.endSilentMode();
 			this.bSelectedSlidesTheme = (bSelectedSlides === true);
 			this.ThemeLoader.StartLoadTheme(indexTheme);
+			return true;
 		}
+		return false;
 	};
 
 	asc_docs_api.prototype.StartLoadTheme = function()

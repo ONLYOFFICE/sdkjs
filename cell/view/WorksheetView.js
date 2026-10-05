@@ -17789,7 +17789,7 @@ function isAllowPasteLink(pastedWb) {
 								mc = t.model.getMergedByCell(activeCell.row, activeCell.col);
 								c = mc ? mc.c1 : activeCell.col;
 								r = mc ? mc.r1 : activeCell.row;
-								t.model.getRange3(r, c, r, c).setValue(val.asc_getText());
+								t.model.getRange3(r, c, r, c).setValue(val.asc_getText(), undefined, undefined, undefined, true);
 								// Call the recalculation function for formatted table headers
 								t.model.checkChangeTablesContent(range.bbox);
 							}
@@ -18457,6 +18457,9 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			asc_applyFunction(functionModelAction);
+			if ("insCell" === prop) {
+				t.workbook.MacrosAddData("InsertCells", [{sheet: t.model.getName(), type: val, range: arn}]);
+			}
 
 			t._initCellsArea(oRecalcType);
 			if (oRecalcType) {
@@ -23780,13 +23783,17 @@ function isAllowPasteLink(pastedWb) {
         t._isLockedDefNames(callBackLockedDefNames, defNameId);
     };
 
-	WorksheetView.prototype.af_changeTableRange = function (tableName, range, callbackAfterChange, doNotUpdate) {
+	WorksheetView.prototype.af_changeTableRange = function (tableName, range, callbackAfterChange, doNotUpdate, callbackBeforeChange) {
 		var t = this;
 		if (typeof range === "string") {
 			range = AscCommonExcel.g_oRangeCache.getAscRange(range);
 		}
 
 		if (!window['AscCommonExcel'].filteringMode) {
+			// the caller may wait for the answer to end the transaction it started
+			if (callbackAfterChange) {
+				callbackAfterChange(false);
+			}
 			return;
 		}
 
@@ -23800,6 +23807,10 @@ function isAllowPasteLink(pastedWb) {
 
 			History.Create_NewPoint();
 			History.StartTransaction();
+
+			if (callbackBeforeChange) {
+				callbackBeforeChange();
+			}
 
 			var tablePart = t.model.autoFilters._getFilterByDisplayName(tableName);
 			var oldRange = tablePart && tablePart.Ref.clone();
@@ -27062,13 +27073,14 @@ function isAllowPasteLink(pastedWb) {
 		}
 	};
 
-	WorksheetView.prototype.getRemoveDuplicates = function(bExpand) {
+	// a macro passes opt_range instead of the selection, which then stays as it is and no message is shown, and opt_hasHeaders instead of the detected header of a range outside a table
+	WorksheetView.prototype.getRemoveDuplicates = function(bExpand, opt_range, opt_hasHeaders) {
 		var settings = null;
 		var t = this;
 
 		//bExpand - response from this function, which is passed through the interface
 		//if multiselect - disable button
-		var selection = t.model.selectionRange.getLast();
+		var selection = opt_range || t.model.selectionRange.getLast();
 		var activeCell = t.model.selectionRange.activeCell.clone();
 		var oldSelection = selection.clone();
 
@@ -27083,7 +27095,9 @@ function isAllowPasteLink(pastedWb) {
 				selection = tables[0].getRangeWithoutHeaderFooter();
 				dataHasHeaders = true;
 			} else {
-				t.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
+				if (!opt_range) {
+					t.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
+				}
 				return false;
 			}
 		} else if(autoFilter && autoFilter.Ref && (autoFilter.Ref.isEqual(selection) || (selection.isOneCell() && (autoFilter.Ref.containsRange(selection) || autoFilter.Ref.containsRange(tryExpandRange))))) {
@@ -27097,8 +27111,13 @@ function isAllowPasteLink(pastedWb) {
 			if(bExpand) {
 				selection = t.model.autoFilters.checkExpandRangeForSort(selection);
 			}
+			// a macro counts the columns from the first one of its range, so only the empty rows are cut off
+			if (opt_range) {
+				selection.c1 = opt_range.c1;
+				selection.c2 = opt_range.c2;
+			}
 
-			dataHasHeaders = window['AscCommonExcel'].ignoreFirstRowSort(t.model, selection);
+			dataHasHeaders = typeof opt_hasHeaders === "boolean" ? opt_hasHeaders : window['AscCommonExcel'].ignoreFirstRowSort(t.model, selection);
 
 			//for columnSort - increment r1
 			if (dataHasHeaders) {
@@ -27107,18 +27126,30 @@ function isAllowPasteLink(pastedWb) {
 
 			//if empty range, return error
 			if(t.model.autoFilters._isEmptyRange(selection, 0) || selection.r1 === selection.r2) {
-				t.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
+				if (!opt_range) {
+					t.workbook.handlers.trigger("asc_onError", c_oAscError.ID.AutoFilterDataRangeError, c_oAscError.Level.NoCritical);
+				}
 				return false;
 			}
 		}
 
-		//change selection
-		t.cleanSelection();
-		t.model.selectionRange.getLast().assign2(selection);
-		if(!selection.contains(activeCell.col, activeCell.row)) {
-			t.model.selectionRange.activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
+		// removing rows would break a pivot table, as Excel refuses to do
+		if (t.model.inPivotTable(selection)) {
+			if (!opt_range) {
+				t.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+			}
+			return false;
 		}
-		t._drawSelection();
+
+		//change selection
+		if (!opt_range) {
+			t.cleanSelection();
+			t.model.selectionRange.getLast().assign2(selection);
+			if(!selection.contains(activeCell.col, activeCell.row)) {
+				t.model.selectionRange.activeCell = new AscCommon.CellBase(selection.r1, selection.c1);
+			}
+			t._drawSelection();
+		}
 
 		//in terms of interface interaction, there's a lot in common with custom sorting
 		//because sorting here requires several fields + to avoid confusion
@@ -27129,6 +27160,7 @@ function isAllowPasteLink(pastedWb) {
 		//headers
 		settings.hasHeaders = dataHasHeaders;
 		settings._newSelection = selection;
+		settings.isForMacros = !!opt_range;
 		settings.generateColumnList();
 
 		return settings;
@@ -27136,10 +27168,15 @@ function isAllowPasteLink(pastedWb) {
 
 	WorksheetView.prototype.setRemoveDuplicates = function(props, bCancel) {
 		var t = this;
-		var selection = t.model.selectionRange.getLast();
+		// a macro works on the range of its props, shows no message and gets the number of removed rows in the props, which stays null when they cannot be removed
+		var isForMacros = props && props.isForMacros;
+		var selection = isForMacros ? props._newSelection : t.model.selectionRange.getLast();
 		var activeCell = t.model.selectionRange.activeCell.clone();
 
 		var revertSelection = function() {
+			if (isForMacros) {
+				return;
+			}
 			t.cleanSelection();
 			t.model.selectionRange.getLast().assign2(props.selection.clone());
 			if(!selection.contains(activeCell.col, activeCell.row)) {
@@ -27156,13 +27193,16 @@ function isAllowPasteLink(pastedWb) {
 		var aMerged = this.model.mergeManager.get(selection);
 		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(selection, aMerged.inner, true))) {
 			revertSelection();
-			t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
+			if (!isForMacros) {
+				t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
+			}
 			return;
 		}
 
 		var i, startSortCol, colMap = [];
-		for (i = 0; i < props.columnList.length; i++) {
-			if (props.columnList[i].asc_getVisible()) {
+		var colCount = selection.c2 - selection.c1 + 1;
+		for (i = 0; i < colCount; i++) {
+			if (i >= props.columnList.length || props.columnList[i].asc_getVisible()) {
 				var _colIndex = i + selection.c1;
 				colMap[_colIndex] = 1;
 				if(undefined === startSortCol) {
@@ -27175,28 +27215,46 @@ function isAllowPasteLink(pastedWb) {
 			revertSelection();
 			return;
 		}
+		
+		//TODO fix for release with minimal changes. later need add more fast functions 
+		var getDuplicateKey = function(row, col) {
+			var key;
+			t.model._getCellNoEmpty(row, col, function(cell) {
+				var val = AscCommonExcel.checkTypeCell(cell, true);
+				switch (val.type) {
+					case AscCommonExcel.cElementType.number:
+						key = val.type + "_" + val.value + "_" + cell.getValue().toLowerCase();
+						break;
+					case AscCommonExcel.cElementType.bool:
+						key = AscCommonExcel.cElementType.string + "_" + cell.getValueWithoutFormat().toUpperCase();
+						break;
+					case AscCommonExcel.cElementType.string:
+						key = val.type + "_" + val.value.toUpperCase();
+						break;
+					default:
+						key = val.type + "_" + val.value;
+				}
+			});
+			return key;
+		};
 
 		var  firstLockRow;
 		var deleteIndexes = [];
 		var deleteIndexesMap = [];
-		var oRepeatMap = {};
+		// no prototype, so values such as "constructor" or "__proto__" are keys like any other text
+		var oRepeatMap = Object.create(null);
 		var aSortElems = [];
 		for (i = selection.r1; i <= selection.r2; i++) {
-			var cell = t.model.getCell3(i, startSortCol);
-			var value = cell.getValueWithFormat();
+			var value = getDuplicateKey(i, startSortCol);
 			aSortElems.push({index: i});
-			if (oRepeatMap.hasOwnProperty(value)) {
+			if (oRepeatMap[value]) {
 				for (var n = 0; n < oRepeatMap[value].length; n++) {
 					var _notEqual = false;
 					for (var j = startSortCol + 1; j <= selection.c2; j++) {
 						if (!colMap[j]) {
 							continue;
 						}
-						var cell1 = t.model.getCell3(i, j);
-						var cell2 = t.model.getCell3(oRepeatMap[value][n], j);
-						var val1 = cell1.getValueWithFormat();
-						var val2 = cell2.getValueWithFormat();
-						if (val1 !== val2) {
+						if (getDuplicateKey(i, j) !== getDuplicateKey(oRepeatMap[value][n], j)) {
 							_notEqual = true;
 							break;
 						}
@@ -27223,20 +27281,10 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		var _removeDuplicates = function(success) {
-			if (!success) {
-				if (isStartTransaction) {
-					History.EndTransaction();
-				}
-				return;
-			}
-			if(!isStartTransaction) {
-				History.Create_NewPoint();
-				History.StartTransaction();
-			}
-
-			var tableIntersection;
-			var filterIntersection = t.model.AutoFilter && t.model.AutoFilter.Ref.intersection(selection);
+		var tableIntersection, filterIntersection, isRowsRemoved = false;
+		var removeRows = function() {
+			isRowsRemoved = true;
+			filterIntersection = t.model.AutoFilter && t.model.AutoFilter.Ref.intersection(selection);
 			if (filterIntersection) {
 				//unhide
 				t.model.setRowHidden(false, filterIntersection.r1, filterIntersection.r2);
@@ -27290,7 +27338,25 @@ function isAllowPasteLink(pastedWb) {
 
 					var range = new Asc.Range(selection.r1, selection.c1, selection.r2, selection.c2);
 					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Sort, t.model.getId(), range, _historyElem);
+					// the kept rows move up with their comments, as in sorting
+					t.cellCommentator.sortComments(_historyElem);
 				}
+			}
+		};
+
+		var _removeDuplicates = function(success) {
+			if (!success) {
+				if (isStartTransaction) {
+					History.EndTransaction();
+				}
+				return;
+			}
+			if(!isStartTransaction) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+			}
+			if (!isRowsRemoved) {
+				removeRows();
 			}
 
 			if (filterIntersection) {
@@ -27311,14 +27377,23 @@ function isAllowPasteLink(pastedWb) {
 				props.setUniqueValues(selection.r2 - selection.r1 - deleteIndexes.length + 1);
 			}
 
-			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.RemoveDuplicates, c_oAscError.Level.NoCritical, props);
+			if (!isForMacros) {
+				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.RemoveDuplicates, c_oAscError.Level.NoCritical, props);
+			}
 		};
 
 		if (undefined !== firstLockRow) {
 			var lockRange = new Asc.Range(selection.c1, firstLockRow, selection.c2, selection.r2);
-			if (this.intersectionFormulaArray(lockRange)) {
-				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
-					c_oAscError.Level.NoCritical);
+			// the moved rows would break an array formula even when it lies among them, as Excel refuses to do
+			if (this.intersectionFormulaArray(lockRange, true)) {
+				if (!isForMacros) {
+					this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
+						c_oAscError.Level.NoCritical);
+				}
+				return;
+			}
+			// a co-editor's answer to the lock would come after the macro returns
+			if (isForMacros && this.collaborativeEditing.getCollaborativeEditing()) {
 				return;
 			}
 			var tableContains = this.model.autoFilters.getTablesIntersectionRange(selection);
@@ -27332,11 +27407,14 @@ function isAllowPasteLink(pastedWb) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					isStartTransaction = true;
-					this.af_changeTableRange(name, newRef, _removeDuplicates, true);
+					// the rows move up before the table shrinks, as it writes its totals row over the last of its rows
+					this.af_changeTableRange(name, newRef, _removeDuplicates, true, removeRows);
 				}
 			} else {
 				this._isLockedCells(lockRange, /*subType*/null, _removeDuplicates);
 			}
+		} else if (isForMacros) {
+			props.setDuplicateValues(0);
 		} else {
 			t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.RemoveDuplicates, c_oAscError.Level.NoCritical, props);
 		}

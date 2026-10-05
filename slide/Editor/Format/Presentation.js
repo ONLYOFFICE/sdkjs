@@ -9082,9 +9082,9 @@ CPresentation.prototype.addForceNextSlide = function (layoutIndex) {
 	this.Document_UpdateInterfaceState();
 	this.FinalizeAction();
 };
-CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
+CPresentation.prototype.addNextSlideByPosAction = function (layoutIndex, slideIndex) {
 	var new_slide, layout, i, _ph_type, sp, hf, bIsSpecialPh, aLayouts, bRemoveOnTitle;
-	let cur_slide = this.GetCurrentSlide();
+	let cur_slide = this.GetSlide(slideIndex);
 	cur_slide = (cur_slide && cur_slide.isNote()) ? cur_slide.slide : cur_slide;
 	if (cur_slide) {
 		aLayouts = this.GetAllLayouts();
@@ -9114,7 +9114,7 @@ CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
 		layout = oMaster.sldLayoutLst[0];
 	}
 	hf = layout.hf || layout.Master.hf;
-	new_slide = new AscCommonSlide.Slide(this, layout, this.CurPage + 1);
+	new_slide = new AscCommonSlide.Slide(this, layout, slideIndex + 1);
 	new_slide.setNotes(AscCommonSlide.CreateNotes(this.notesMasters[0]));
 	new_slide.notes.setNotesMaster(this.notesMasters[0]);
 	new_slide.notes.setSlide(new_slide);
@@ -9141,13 +9141,16 @@ CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
 			}
 		}
 	});
-	new_slide.setSlideNum(this.CurPage + 1);
+	new_slide.setSlideNum(slideIndex + 1);
 	new_slide.setSlideSize(this.GetWidthMM(), this.GetHeightMM());
-	this.insertSlide(this.CurPage + 1, new_slide);
-	for (i = this.CurPage + 2; i < this.Slides.length; ++i) {
+	this.insertSlide(slideIndex + 1, new_slide);
+	for (i = slideIndex + 2; i < this.Slides.length; ++i) {
 		this.Slides[i].setSlideNum(i);
 	}
 	return new_slide;
+};
+CPresentation.prototype.addNextSlideAction = function (layoutIndex) {
+	return this.addNextSlideByPosAction(layoutIndex, this.CurPage);
 };
 CPresentation.prototype.getDefaultMasterSlide = function () {
 	if (this.lastMaster && this.lastMaster.sldLayoutLst.length > 0) {

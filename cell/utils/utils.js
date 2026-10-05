@@ -328,6 +328,10 @@
 			if (options.isWholeWord)
 				value = '\\b' + value + '\\b';
 
+			// Every '*' becomes a '(.*)' group, so a mask of a few thousand asterisks (about 3000 in
+			// Chromium) throws on the first exec/test, not here - compilation is lazy. Deliberately not
+			// guarded: wildcards are reachable only from ApiRange.Find, so a macro sees the exception,
+			// while a formula criterion is capped at 255 characters.
 			return new RegExp(value, findFlags);
 		}
 

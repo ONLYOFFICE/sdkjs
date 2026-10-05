@@ -3184,6 +3184,7 @@ function (window, undefined) {
 			this.CanEditBlockCC = undefined !== obj.CanEditBlockCC ? obj.CanEditBlockCC : true;
 			this.CanDeleteInlineCC = undefined !== obj.CanDeleteInlineCC ? obj.CanDeleteInlineCC : true;
 			this.CanEditInlineCC = undefined !== obj.CanEditInlineCC ? obj.CanEditInlineCC : true;
+			this.InPlainTextCC = undefined !== obj.InPlainTextCC ? obj.InPlainTextCC : false;
 		}
 		else {
 			this.Bidi = undefined;
@@ -3220,6 +3221,7 @@ function (window, undefined) {
 			this.CanEditBlockCC = true;
 			this.CanDeleteInlineCC = true;
 			this.CanEditInlineCC = true;
+			this.InPlainTextCC = false;
 		}
 	}
 
@@ -3459,6 +3461,9 @@ function (window, undefined) {
 	};
 	asc_CParagraphProperty.prototype.asc_canEditInlineContentControl = function () {
 		return this.CanEditInlineCC;
+	};
+	asc_CParagraphProperty.prototype.asc_isInPlainTextContentControl = function () {
+		return this.InPlainTextCC;
 	};
 	asc_CParagraphProperty.prototype.asc_getLigatures = function () {
 		return this.Ligatures;
@@ -6139,6 +6144,8 @@ function (window, undefined) {
 
 		this.type = PluginType.Background;
 
+		this.autostart = false;		// used only if this.type === PluginType.Background
+
 		this.isCustomWindow = false;	// used only if this.type === PluginType.Window
 		this.isModal = true;     // used only if this.type === PluginType.Window
 
@@ -6243,6 +6250,8 @@ function (window, undefined) {
 
 		_object["type"] = this.type;
 
+		_object["autostart"] = this.autostart;
+
 		_object["isCustomWindow"] = this.isCustomWindow;
 		_object["isModal"] = this.isModal;
 
@@ -6295,6 +6304,8 @@ function (window, undefined) {
 			else
 				this.type = PluginType.Invisible;
 		}
+
+		this.autostart = (true === _object["autostart"]);
 
 		this.isCustomWindow = (_object["isCustomWindow"] != null) ? _object["isCustomWindow"] : this.isCustomWindow;
 		this.isModal = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
@@ -6447,6 +6458,9 @@ function (window, undefined) {
 	};
 	CPlugin.prototype.isBackground = function () {
 		return this.isType(PluginType.Background);
+	};
+	CPlugin.prototype.isAutostart = function () {
+		return this.isBackground() && true === this.variations[0].autostart;
 	};
 	CPlugin.prototype.getIntVersion = function () {
 		if (!this.version) return 0;
@@ -7623,6 +7637,7 @@ function (window, undefined) {
 	prot["can_EditBlockContentControl"] = prot["asc_canEditBlockContentControl"] = prot.asc_canEditBlockContentControl;
 	prot["can_DeleteInlineContentControl"] = prot["asc_canDeleteInlineContentControl"] = prot.asc_canDeleteInlineContentControl;
 	prot["can_EditInlineContentControl"] = prot["asc_canEditInlineContentControl"] = prot.asc_canEditInlineContentControl;
+	prot["is_InPlainTextContentControl"] = prot["asc_isInPlainTextContentControl"] = prot.asc_isInPlainTextContentControl;
 	prot["get_Ligatures"] = prot["asc_getLigatures"] = prot.asc_getLigatures;
 	prot["put_Ligatures"] = prot["asc_putLigatures"] = prot.asc_putLigatures;
 

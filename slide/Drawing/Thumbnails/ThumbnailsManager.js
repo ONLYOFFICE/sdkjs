@@ -2426,7 +2426,7 @@
 		if (wordControl.Width > 0 && !isDesktopVersion) {
 			isNeedCheckPosition = true;
 			const maxSplitterThMax = Math.min(g_dKoef_pix_to_mm * wordControl.Width / 3, 80);
-			thumbnailSplitter.setLimits(maxSplitterThMax >> 2, maxSplitterThMax >> 0);
+			thumbnailSplitter.setLimits(maxSplitterThMax >> 2, Math.max(maxSplitterThMax >> 0, 1));
 		} else if (!thumbnailSplitter.isEqualLimits(20, 80)) {
 			isNeedCheckPosition = true;
 			thumbnailSplitter.setLimits(20, 80);
@@ -2780,6 +2780,7 @@
 		this.MouseDownTrack.Reset();
 
 		this.onMouseMove(e);
+		this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 	};
 
 	COutlineThumbnailsManager.prototype.onMouseLeave = function(e)

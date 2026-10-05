@@ -65,13 +65,17 @@
 		return AscCommonExcel.UndoRedoDataTypes.UserProtectedRange;
 	};
 
-	CUserProtectedRange.prototype.clone = function (ws, needCloneId) {
+	CUserProtectedRange.prototype.clone = function (ws, needCloneId, needCloneUsers) {
 		var res = new CUserProtectedRange(ws);
 
 		res.ref = this.ref ? this.ref.clone() : null;
 		res.name = this.name;
-		res.users = this.users;
-		res.usersGroups = this.usersGroups;
+		res.users = needCloneUsers && this.users ? this.users.map(function (user) {
+			return user.clone();
+		}) : this.users;
+		res.usersGroups = needCloneUsers && this.usersGroups ? this.usersGroups.map(function (group) {
+			return group.clone();
+		}) : this.usersGroups;
 
 		res.warningText = this.warningText;
 

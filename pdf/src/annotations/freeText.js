@@ -1545,10 +1545,14 @@
 
         if (oRectShape.getDocContent() == null) {
             oRectShape.createTextBody();
-            oRectShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
             oRectShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
             oRectShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
         }
+
+		let nLineWidth = oParentAnnot.GetBorderWidth();
+		let nPadding = nLineWidth * g_dKoef_pt_to_mm;
+
+		oRectShape.txBody.bodyPr.setInsets(nPadding, nPadding, nPadding, nPadding);
 
         oRectShape.setTxBox(true);
         oRectShape.setGroup(oParentAnnot);

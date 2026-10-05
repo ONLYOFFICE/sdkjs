@@ -412,7 +412,7 @@
 
         AscCommon.History.StartNoHistoryMode();
 
-        if (isOnOpen == false && typeof(displayValue) == "string" && Asc.editor.isDocumentLoadComplete) {
+        if (isOnOpen == false && typeof(displayValue) == "string") {
 			oDoc.checkFieldFont(this, function() {
 				_t.private_NeedShapeText();
 				_t.SetNeedRecalc(true);

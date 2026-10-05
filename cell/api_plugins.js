@@ -36,13 +36,17 @@
 "use strict";
 
 (function (window, undefined) {
+
 	/**
-	 * Base class.
+	 * The Spreadsheet API lists the methods and events a plugin can use when working with a
+	 * spreadsheet in ONLYOFFICE Docs. To work with the spreadsheet content directly, such as
+	 * worksheets and ranges, run Office API code in <code>callCommand</code>. See
+	 * {@link /docs/office-api/usage-api/spreadsheet-api/spreadsheet-api Spreadsheet API}.
 	 * @global
 	 * @class
 	 * @name Api
+	 * @typeofeditors ["CSE"]
 	 */
-
 	var Api = window["Asc"]["spreadsheet_api"];
 
 	/**

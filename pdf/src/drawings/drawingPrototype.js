@@ -396,7 +396,8 @@
 		let nExtMM = AscPDF.PARTIAL_REDRAW_EXT;
 		let oBounds = null;
 		if (this.bounds.l !== 0 && this.bounds.r !== 0 && this.bounds.r !== 0 && this.bounds.b !== 0) {
-			oBounds = {l: this.bounds.l - nExtMM, t: this.bounds.t - nExtMM, r: this.bounds.r + nExtMM, b: this.bounds.b + nExtMM};
+			let drawingBounds = this.getBoundsByDrawing();
+			oBounds = {l: drawingBounds.l - nExtMM, t: drawingBounds.t - nExtMM, r: drawingBounds.r + nExtMM, b: drawingBounds.b + nExtMM};
 		}
 
         function setRedrawPageOnRepaint() {

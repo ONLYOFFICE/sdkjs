@@ -115,6 +115,7 @@
 
 	/**
 	 * NumberSepStyle — defines number formatting style:
+	 *
 	 * - "us"        — 1,234.56   (English style)
 	 * - "plain"     — 1234.56    (No separators)
 	 * - "euro"      — 1.234,56   (European style)
@@ -130,7 +131,6 @@
 	 * - "red-minus"   — "-1,234.56" (red minus sign)
 	 * - "black-parens" — "(1,234.56)"" (black parentheses)
 	 * - "red-parens"   — "(1,234.56)"" (red parentheses)
-	 *
 	 * @typedef {"black-minus" | "red-minus" | "black-parens" | "red-parens"} NumberNegStyle
 	 */
 
@@ -141,13 +141,13 @@
 	 * - "zip+4"     — ZIP+4 (e.g., 12345-6789)
 	 * - "phone"     — Phone number (e.g., (123) 456-7890)
 	 * - "ssn"       — Social Security Number (e.g., 123-45-6789)
-	 *
 	 * @typedef {"zip" | "zip+4" | "phone" | "ssn"} PsfFormat
 	 */
 
 	/**
 	 * @typedef {'HH:MM' | 'h:MM tt' | 'HH:MM:ss' | 'h:MM:ss tt'} TimeFormat
 	 * Time format options:
+	 *
 	 * - "HH:MM" — 24-hour format, hours and minutes (e.g., "14:30")
 	 * - "h:MM tt" — 12-hour format with AM/PM, hours and minutes (e.g., "2:30 PM")
 	 * - "HH:MM:ss" — 24-hour format, hours, minutes, and seconds (e.g., "14:30:15")
@@ -163,9 +163,9 @@
 	 * Axis-aligned rectangle represented as a tuple.
 	 *
 	 * Invariants:
-	 *  - rect[0] < rect[2] (x1 < x2)
-	 *  - rect[1] < rect[3] (y1 < y2)
 	 *
+	 * - <code>rect[0] < rect[2]</code> (x1 < x2)
+	 * - <code>rect[1] < rect[3]</code> (y1 < y2)
 	 * @typedef {pt[]} Rect
 	 * @property {pt} 0 - x1 (left)
 	 * @property {pt} 1 - y1 (top)
@@ -175,14 +175,15 @@
 
 	/**
 	 * Axis-aligned rectangle difference represented as a tuple.
+	 *
 	 * Describes coordinate-wise deltas between two rectangles (B - A).
 	 *
 	 * Invariants:
-	 *  - diff[0] = x1B - x1A
-	 *  - diff[1] = y1B - y1A
-	 *  - diff[2] = x2B - x2A
-	 *  - diff[3] = y2B - y2A
 	 *
+	 * - <code>diff[0] = x1B - x1A</code>
+	 * - <code>diff[1] = y1B - y1A</code>
+	 * - <code>diff[2] = x2B - x2A</code>
+	 * - <code>diff[3] = y2B - y2A</code>
 	 * @typedef {pt[]} RectDiff
 	 * @property {pt} 0 - dx1 (left delta)
 	 * @property {pt} 1 - dy1 (top delta)
@@ -234,6 +235,7 @@
 
 	/**
 	 * Quadrilateral represented as a flat tuple of vertices.
+	 *
 	 * Vertices order is fixed:
 	 *  · left-top → right-top → left-bottom → right-bottom
 	 *
@@ -242,7 +244,6 @@
 	 *  · x3 <= x4 (bottom edge goes left → right)
 	 *  · y1 <= y3 (left edge goes top → bottom)
 	 *  · y2 <= y4 (right edge goes top → bottom)
-	 *
 	 * @typedef {pt[]} Quad
 	 * @property {pt} 0 - x1 (left top)
 	 * @property {pt} 1 - y1 (left top)
@@ -279,8 +280,8 @@
 
 	/**
 	 * Degree defines an angle in degrees.
-	 * Can be any finite number (positive or negative).
 	 *
+	 * Can be any finite number (positive or negative).
 	 * @typedef {number} Degree
 	 */
 
@@ -349,7 +350,7 @@
 
 	/**
 	 * This type specifies the preset shape geometry that will be used for a shape.
-	 * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" | "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" | "actionButtonHelp" | "actionButtonHome" | "actionButtonInformation" | "actionButtonMovie" | "actionButtonReturn" | "actionButtonSound" | "arc" | "bentArrow" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "bentUpArrow" | "bevel" | "blockArc" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "bracePair" | "bracketPair" | "callout1" | "callout2" | "callout3" | "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" | "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" | "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
+	 * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" | "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" | "actionButtonHelp" | "actionButtonHome" | "actionButtonInformation" | "actionButtonMovie" | "actionButtonReturn" | "actionButtonSound" | "arc" | "bentArrow" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "bentUpArrow" | "bevel" | "blockArc" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "bracePair" | "bracketPair" | "callout1" | "callout2" | "callout3" | "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" | "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" | "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "textRect" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
 	 */
 
 	/**
@@ -450,6 +451,8 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
+     * The main class of the PDF API. Use it to get the current document and to create page
+     * content, such as paragraphs, tables, images, annotations, and form fields.
      * @global
      * @class
      * @name Api
@@ -675,15 +678,13 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isHidde - to hide - true, to show - false
-	 * @param {string[]} names - field names
+	 * @param {string[]} [names=[]] - field names
 	 * @returns {ApiHideShowFormsAction}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
 	 */
 	Api.CreateHideShowFormsAction = function(isHide, names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
 
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
@@ -717,15 +718,13 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isAllExcept - will all fields be reset except the fields whose names are specified
-	 * @param {string[]} names - field names
+	 * @param {string[]} [names=[]] - field names
 	 * @returns {ApiHideShowFormsAction}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHideShowFormsAction.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateResetFormsAction.js
 	 */
 	Api.CreateResetFormsAction = function(isAllExcept, names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
 
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
@@ -1112,25 +1111,23 @@
 	 * Creates stamp annotation.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {Rect} rect - annotation rect (only x1, y1 coordinates will be used, since the stamp dimensions are reserved).
+	 * @param {Point | Rect} position - The position of the upper-left corner of the annotation. For a Rect, only x1 and y1 are used.
 	 * @param {StampType} type - stamp type
 	 * @param {string} [author] - name of the author
 	 * @param {number} [creationDate] - creation date (timeStamp)
 	 * @returns {ApiStampAnnotation}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStampAnnot.js
 	 */
-	Api.CreateStampAnnot = function(rect, type, author, creationDate) {
+	Api.CreateStampAnnot = function(position, type, author, creationDate) {
 		let oDoc = private_GetLogicDocument();
 
-		if (!private_IsValidRect(rect, true)) {
-			AscBuilder.throwException("The rect parameter must be a valid rect");
-		}
+		position = private_GetStampPosition(position);
 
-		if (!Object.values(AscPDF.STAMP_TYPES).includes(type)) {
+		if (!Object.values(AscPDF.STAMP_TYPES).includes(type) || type === AscPDF.STAMP_TYPES.Image) {
 			AscBuilder.throwException("The type parameter must be one of available");
 		}
 
-		if (author != null) {
+		if (author != undefined) {
 			author = AscBuilder.GetStringParameter(author, null);
 			if (!author) {
 				AscBuilder.throwException("The author parameter must be a non emptry string");
@@ -1140,11 +1137,14 @@
 			author = AscCommon.UserInfoParser.getCurrentName();
 		}
 
-		if (creationDate != null) {
+		if (creationDate != undefined) {
 			creationDate = AscBuilder.GetNumberParameter(creationDate, null);
 			if (creationDate === null) {
 				AscBuilder.throwException("The creationDate parameter must be a number");
 			}
+		}
+		else {
+			creationDate = new Date().getTime();
 		}
 		
 		let oStampRender = oDoc.CreateStampRender(type, author, creationDate);
@@ -1152,8 +1152,8 @@
 		let nExtY = oStampRender.Height * g_dKoef_mm_to_pt;
 		let nLineW = oStampRender.m_oPen.Size * g_dKoef_mm_to_pt;
 
-		let X1 = rect[0];
-		let Y1 = rect[1];
+		let X1 = position["x"];
+		let Y1 = position["y"];
 		let X2 = X1 + nExtX;
 		let Y2 = Y1 + nExtY;
 
@@ -1161,8 +1161,8 @@
 			rect:			[X1, Y1, X2, Y2],
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
-			creationDate:   creationDate ? creationDate : new Date().getTime(),
-			modDate:        creationDate ? creationDate : new Date().getTime(),
+			creationDate:   creationDate,
+			modDate:        creationDate,
 			author:			author,
 			hidden:         false
 		}
@@ -1173,9 +1173,93 @@
 		oAnnot.SetBorderWidth(nLineW);
 		oAnnot.SetBorderColor([0, 0, 0]);
 		oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
-		oAnnot.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
 		let oXfrm = oAnnot.getXfrm();
 		oXfrm.setRot(0);
+		oAnnot.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
+		oAnnot.SetPosition(position["x"], position["y"]);
+
+		return new ApiStampAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates stamp annotation from an image.
+	 * The annotation dimensions are taken from the loaded image, or updated after it has been loaded.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Point | Rect} position - The position of the upper-left corner of the annotation. For a Rect, only x1 and y1 are used.
+	 * @param {string} imageSrc - The image source where the image should be taken from (currently,
+	 * only internet URL or Base64 encoded images are supported).
+	 * @param {string} [author] - name of the author
+	 * @param {number} [creationDate] - creation date (timeStamp)
+	 * @returns {ApiStampAnnotation}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImageStampAnnot.js
+	 */
+	Api.CreateImageStampAnnot = function(position, imageSrc, author, creationDate) {
+		let oDoc = private_GetLogicDocument();
+
+		position = private_GetStampPosition(position);
+
+		imageSrc = AscBuilder.GetStringParameter(imageSrc, null);
+		if (!imageSrc) {
+			AscBuilder.throwException("The imageSrc parameter must be a non empty string");
+		}
+
+		if (author != undefined) {
+			author = AscBuilder.GetStringParameter(author, null);
+			if (!author) {
+				AscBuilder.throwException("The author parameter must be a non emptry string");
+			}
+		}
+		else {
+			author = AscCommon.UserInfoParser.getCurrentName();
+		}
+
+		if (creationDate != undefined) {
+			creationDate = AscBuilder.GetNumberParameter(creationDate, null);
+			if (creationDate === null) {
+				AscBuilder.throwException("The creationDate parameter must be a number");
+			}
+		}
+		else {
+			creationDate = new Date().getTime();
+		}
+
+		let sRasterImageId = AscFormat.checkRasterImageId(imageSrc);
+		let nX = position["x"];
+		let nY = position["y"];
+		let aRect = [nX, nY, nX + 10, nY + 10];
+		let oImageSize = AscCommon.getSourceImageSize(AscCommon.getFullImageSrc2(sRasterImageId));
+		if (oImageSize.width > 0 && oImageSize.height > 0) {
+			aRect[2] = nX + Math.max(10, oImageSize.width * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
+			aRect[3] = nY + Math.max(10, oImageSize.height * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
+		}
+		
+		let nDate = creationDate != null ? creationDate : new Date().getTime();
+		let oProps = {
+			rect:           aRect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
+			creationDate:   nDate,
+			modDate:        nDate,
+			author:         author,
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+		let oUniFill = new AscFormat.CUniFill();
+		let oBlipFill = new AscFormat.CBlipFill();
+
+		oUniFill.setFill(oBlipFill);
+		oBlipFill.setRasterImageId(sRasterImageId);
+		oBlipFill.setStretch(new AscFormat.CBlipFillStretch());
+		oAnnot.setFill(oUniFill);
+
+		oAnnot.SetIconType(AscPDF.STAMP_TYPES.Image);
+		oAnnot.SetBorderWidth(0);
+		oAnnot.getXfrm().setRot(0);
+		oAnnot.SetInRect([aRect[0], aRect[3], aRect[0], aRect[1], aRect[2], aRect[1], aRect[2], aRect[3]]);
+		oAnnot.SetPosition(position["x"], position["y"]);
 
 		return new ApiStampAnnotation(oAnnot);
 	};
@@ -1535,22 +1619,25 @@
 	 * Creates a shape with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShapeType} [shapeType= "rect"] - The shape type which specifies the preset shape geometry.
+	 * @param {ShapeType} [shapeType= "rect"] - The shape type which specifies the preset shape geometry. The "textRect" type creates a text box: it has no fill and no outline, and its height follows the text.
 	 * @param {EMU} [width = 914400] - The shape width in English measure units.
 	 * @param {EMU} [height = 914400] - The shape height in English measure units.
-	 * @param {ApiFill} [fill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
-	 * @param {ApiStroke} [stroke] - The stroke used to draw the shape outline. If not specified, the default shape style outline (theme accent) is used.
+	 * @param {ApiFill} [fill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used, a text box has no fill.
+	 * @param {ApiStroke} [stroke] - The stroke used to draw the shape outline. If not specified, the default shape style outline (theme accent) is used, a text box has no outline.
 	 * @returns {ApiShape}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
 	Api.CreateShape = function(shapeType, width, height, fill, stroke) {
-		let oDoc = private_GetLogicDocument();
+		let doc = private_GetLogicDocument();
 		shapeType = shapeType || "rect";
-		if (!AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
+		if (shapeType !== "textRect" && !AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
 		width = width || 914400;
 		height = height || 914400;
 
-		return new ApiShape(AscFormat.builder_CreateShape(shapeType, private_EMU2MM(width), private_EMU2MM(height), fill ? fill.UniFill : null, stroke ? stroke.Ln : null, null, oDoc.GetTheme(), private_GetDrawingDocument(), false));
+		let shape = AscFormat.builder_CreateShape(shapeType, private_EMU2MM(width), private_EMU2MM(height), fill ? fill.UniFill : null, stroke ? stroke.Ln : null, null, doc.GetTheme(), private_GetDrawingDocument(), false, null, doc);
+		if (shapeType === "textRect")
+			Asc.editor.addBuilderEndAction(function() { shape.checkExtentsByDocContent(true, true); });
+		return new ApiShape(shape);
 	};
 
 	/**
@@ -1610,12 +1697,13 @@
 
 	/**
 	 * Creates a chart with the parameters specified.
+	 *
 	 * :::note
 	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @param {ChartType} [chartType="bar"] - The chart type used for the chart display.
+	 * @param {ChartType} [chartType="ColumnClustered"] - The chart type used for the chart display.
 	 * @param {number[][]} series - The array of the data used to build the chart from.
 	 * @param {number[] | string[]} seriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
 	 * @param {number[] | string[]} categoryNames - The array of the names (the source table row names) used for the data which the chart will be build from.
@@ -1847,11 +1935,14 @@
 	};
 
 	/**
-	 * Removes page by index from document
-	 * <note> You can't delete last page </note>
+	 * Removes a page from the document by its index.
+	 *
+	 * :::note
+	 * If the document has only one page, it cannot be removed, and the method returns <b>false</b>.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} index - page index
+	 * @param {number} index - The index of the page to remove.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/RemovePage.js
 	 */
@@ -1995,10 +2086,12 @@
 	 * Applies added redact.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
+	 * @param {boolean} [includeForms=true] - specifies whether form fields should be included in the redaction.
+	 * @param {boolean} [includeAnnots=true] - specifies whether annotations should be included in the redaction.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/ApplyRedact.js
 	 */
-	ApiDocument.prototype.ApplyRedact = function() {
+	ApiDocument.prototype.ApplyRedact = function(includeForms, includeAnnots) {
 		let hasRedact = !!this.Document.annots.find(function(annot) {
 			return annot.IsRedact() && !annot.GetRedactId();
 		});
@@ -2007,7 +2100,10 @@
 			AscBuilder.throwException("Has no redact to apply");
 		}
 
-		this.Document.ApplyRedact();
+		includeForms = AscBuilder.GetBoolParameter(includeForms, true);
+		includeAnnots = AscBuilder.GetBoolParameter(includeAnnots, true);
+
+		this.Document.ApplyRedact(undefined, undefined, includeForms, includeAnnots);
 		return true;
 	};
 
@@ -2315,11 +2411,14 @@
 	 * Sets page rotation angle
 	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} angle - The rotation angle in degrees. Must be a multiple of 90.
+	 * @param {Degree} angle - The rotation angle in degrees. Must be a multiple of 90.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/SetRotation.js
 	 */
 	ApiPage.prototype.SetRotation = function(angle) {
+		angle = AscBuilder.GetNumberParameter(angle, 0);
+		angle = private_NormalizeDegree(angle);
+		
 		if (angle % 90 !== 0) {
 			return false;
 		}
@@ -2338,6 +2437,28 @@
 	 */
 	ApiPage.prototype.GetRotation = function() {
 		return this.Page.GetRotate();
+	};
+
+	/**
+	 * Gets page width
+	 * @memberof ApiPage
+	 * @typeofeditors ["PDFE"]
+	 * @returns {pt}
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetWidth.js
+	 */
+	ApiPage.prototype.GetWidth = function() {
+		return private_GetLogicDocument().GetPageWidth(this.GetIndex());
+	};
+
+	/**
+	 * Gets page height
+	 * @memberof ApiPage
+	 * @typeofeditors ["PDFE"]
+	 * @returns {pt}
+	 * @see office-js-api/Examples/{Editor}/ApiPage/Methods/GetHeight.js
+	 */
+	ApiPage.prototype.GetHeight = function() {
+		return private_GetLogicDocument().GetPageHeight(this.GetIndex());
 	};
 
 	/**
@@ -2644,7 +2765,7 @@
 		
 		oDoc.EditPage(this.GetIndex());
 
-		return AscBuilder.GetApiDrawings(this.Page.drawings.slice(nCurLength));
+		return AscBuilder.GetApiDrawings(this.Page.drawings.slice(0, this.Page.drawings.length - nCurLength));
 	};
 
 	/**
@@ -3203,7 +3324,10 @@
 
 	/**
 	 * Sets widget text size.
-	 * <note> Text size === 0 means autofit </note>
+	 *
+	 * :::note
+	 * Text size === 0 means autofit.
+	 * :::
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @param {hps} size - The font size measured in half-points (1/144 of an inch).
@@ -3221,7 +3345,10 @@
 
 	/**
 	 * Gets widget text size.
-	 * <note> Text size === 0 means autofit </note>
+	 *
+	 * :::note
+	 * Text size === 0 means autofit.
+	 * :::
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @returns {hps}
@@ -3275,7 +3402,7 @@
 	 */
 	ApiBaseWidget.prototype.GetParent = function() {
 		let oParent = this.Field.GetParent();
-		if (oParent && oParent.IsAllKidsWidgets()) {
+		if (oParent && oParent.IsLogicalRoot()) {
 			return GetFieldApi(oParent);
 		}
 
@@ -3348,7 +3475,10 @@
 
 	/**
 	 * Sets the text field character limit.
-	 * <note> Character limit 0 means the field doesn't have a character limit.
+	 *
+	 * :::note
+	 * If the character limit is 0, the field has no character limit.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} charLimit - The maximum number of characters allowed in the field.
@@ -3361,7 +3491,10 @@
 
 	/**
 	 * Gets the text field character limit.
-	 * <note> Char limit 0 means field doesn't have char limit
+	 *
+	 * :::note
+	 * If the character limit is 0, the field has no character limit.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
@@ -3373,7 +3506,10 @@
 
 	/**
 	 * Sets whether the text field uses comb formatting.
-	 * <note>The character limit must be greater than 0.</note>
+	 *
+	 * :::note
+	 * The character limit must be greater than 0.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} comb - Specifies whether comb formatting is enabled.
@@ -3651,7 +3787,10 @@
 
 	/**
 	 * Sets validate range for field.
-	 * <note> Can only be applied to fields with a percentage or number format. </note>
+	 *
+	 * :::note
+	 * Can only be applied to fields with a percentage or number format.
+	 * :::
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
@@ -4128,7 +4267,10 @@
 
 	/**
 	 * Sets validate range for field.
-	 * <note> Can only be applied to fields with a percentage or number format. </note>
+	 *
+	 * :::note
+	 * Can only be applied to fields with a percentage or number format.
+	 * :::
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} [greaterThan=false] - If true, enables minimum value validation using `greaterThanValue`.
@@ -5400,7 +5542,7 @@
 	 * @param {ApiBaseAction} action
 	 * @returns {ApiBaseAction} - returns next action
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetNext.js
+	 * @see office-js-api/Examples/{Editor}/ApiBaseAction/Methods/SetNext.js
 	 */
 	ApiBaseAction.prototype.SetNext = function(action) {
 		this.Next = action;
@@ -5558,7 +5700,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?number}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetRect.js
+	 * @see office-js-api/Examples/{Editor}/ApiGoToAction/Methods/GetZoom.js
 	 */
 	ApiGoToAction.prototype.GetZoom = function() {
 		return this.Action.GetZoom(true);
@@ -5574,7 +5716,7 @@
 	 */
 	ApiGoToAction.prototype.SetZoom = function(zoom) {
 		if ("xyz" == this.GetType()) {
-			zoom = AscBuilder.GetNumberParameter(zoom, 1);
+			zoom = Math.max(0.5, Math.min(AscBuilder.GetNumberParameter(zoom, 1), 5));
 
 			this.Action.SetZoom(zoom);
 			this.private_OnChange();
@@ -5620,7 +5762,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
+	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetUri.js
 	 */
 	ApiUriAction.prototype.GetUri = function() {
 		return this.Action.GetUri();
@@ -5632,7 +5774,7 @@
 	 * @param {string} uri
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/GetRect.js
+	 * @see office-js-api/Examples/{Editor}/ApiUriAction/Methods/SetUri.js
 	 */
 	ApiUriAction.prototype.SetUri = function(uri) {
 		uri = AscBuilder.GetStringParameter(uri, null);
@@ -5720,13 +5862,10 @@
 	 * @param {string[]} names
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/GetNames.js
+	 * @see office-js-api/Examples/{Editor}/ApiHideShowFormsAction/Methods/SetNames.js
 	 */
 	ApiHideShowFormsAction.prototype.SetNames = function(names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
-
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
 			if (!name) {
@@ -5877,13 +6016,10 @@
 	 * @param {string[]} names
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/GetNames.js
+	 * @see office-js-api/Examples/{Editor}/ApiResetFormsAction/Methods/SetNames.js
 	 */
 	ApiResetFormsAction.prototype.SetNames = function(names) {
 		names = AscBuilder.GetArrayParameter(names, []);
-		if (names.length == 0)
-			AscBuilder.throwException("The names parameter must be a non empty array");
-
 		names.forEach(function(name) {
 			name = AscBuilder.GetStringParameter(name, null);
 			if (!name) {
@@ -5980,6 +6116,10 @@
 
 	/**
 	 * Sets annotation rect.
+	 *
+	 * :::note
+	 * Not for stamps. The SetScale method is used to change the stamp size.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - The new bounding rectangle for the annotation.
@@ -5989,6 +6129,10 @@
 	ApiBaseAnnotation.prototype.SetRect = function(rect) {
 		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		if (this.Annot.IsStamp()) {
+			return false;
 		}
 
 		this.Annot.private_UpdateRect(rect);
@@ -6075,7 +6219,7 @@
 	 * Sets annotation fill color.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {?ApiColor} color - color to set fill (omit the argument to set no fill)
+	 * @param {?ApiColor} [color] - color to set fill (omit the argument to set no fill)
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetFillColor.js
 	 */
@@ -6149,7 +6293,7 @@
 	 * Sets annotation border style.
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {AnnotBorderStyle} borderStyle - The border style: <b>"solid"</b> or <b>"dashed"</b>.
+	 * @param {AnnotBorderStyle} borderStyle - The border style: <code>"solid"</code> or <code>"dashed"</code>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetBorderStyle.js
 	 */
@@ -6421,7 +6565,10 @@
 
 	/**
 	 * Sets annotation dash pattern.
-	 * <note> The border style property must be set to "dashed". </note>
+	 *
+	 * :::note
+	 * The border style must be set to <code>"dashed"</code> using the {@link ApiBaseAnnotation#SetBorderStyle} method.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {number[]} pattern - A dash array defining a pattern of dashes and gaps to be used in drawing a dashed border. For example, a value of [3, 2] specifies a border drawn with 3-point dashes alternating with 2-point gaps.
@@ -6450,7 +6597,10 @@
 
 	/**
 	 * Sets annotation border effect style.
-	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 *
+	 * :::note
+	 * Can be applied to circle, square, freeText and polygon annotations.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {AnnotBorderEffectStyle} style - The border effect style: <b>"none"</b> or <b>"cloud"</b>.
@@ -6493,7 +6643,10 @@
 
 	/**
 	 * Sets annotation border effect intensity.
-	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 *
+	 * :::note
+	 * Can be applied to circle, square, freeText and polygon annotations.
+	 * :::
 	 * @memberof ApiBaseAnnotation
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} value - The border effect intensity. Must be greater than or equal to 0.
@@ -6840,6 +6993,7 @@
 		}
 
 		this.Annot.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE[intentType]);
+		this.Annot.private_UpdateRect();
 		return true;
 	};
 
@@ -6891,6 +7045,7 @@
 		});
 
 		this.Annot.SetCallout(flatCallout);
+		this.Annot.private_UpdateRect();
 		return true;
 	};
 
@@ -6917,6 +7072,44 @@
 		}
 
 		return aResult;
+	};
+
+	/**
+	 * Sets a line end style.
+	 * @memberof ApiFreeTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {LineEndStyle} style - The style of the polyline end endpoint.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/SetEndStyle.js
+	 */
+	ApiFreeTextAnnotation.prototype.SetEndStyle = function(style) {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return false;
+		}
+
+		if (undefined == private_GetInnerLineEndType(style)) {
+			AscBuilder.throwException("The style parameter must be one of available");
+		}
+
+		this.Annot.SetLineEnd(private_GetInnerLineEndType(style));
+		this.Annot.private_UpdateRect();
+		return true;
+	};
+
+	/**
+	 * Gets a line end style.
+	 * @memberof ApiFreeTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {LineEndStyle}
+	 * @see office-js-api/Examples/{Editor}/ApiFreeTextAnnotation/Methods/GetEndStyle.js
+	 */
+	ApiFreeTextAnnotation.prototype.GetEndStyle = function() {
+		if (this.GetIntent() !== "freeTextCallout") {
+			return "none";
+		}
+
+		let nStyle = this.Annot.GetLineEnd();
+		return private_GetStrLineEndType(nStyle);
 	};
 
 	/**
@@ -7467,11 +7660,16 @@
 	 * Sets stamp size scale.
 	 * @memberof ApiStampAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {number} scale - size scale
+	 * @param {number} scale - The size scale.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiStampAnnotation/Methods/SetScale.js
 	 */
 	ApiStampAnnotation.prototype.SetScale = function(scale) {
+		scale = AscBuilder.GetNumberParameter(scale, null);
+		if (scale <= 0) {
+			AscBuilder.throwException("The scale parameter must be a number greater than 0");
+		}
+
 		let aInRect = this.Annot.GetInRect();
 		let nInRectRot = AscPDF.getQuadsRot([aInRect[0], aInRect[3], aInRect[4], aInRect[3], aInRect[4], aInRect[1], aInRect[0], aInRect[1]]);
 		let aInRectNoRot = AscPDF.rotateRect([aInRect[0], aInRect[3], aInRect[4], aInRect[3], aInRect[4], aInRect[1], aInRect[0], aInRect[1]], -nInRectRot);
@@ -7513,10 +7711,12 @@
 		AscCommon.History.EndNoHistoryMode();
 		
 		let oGrBounds = this.Annot.bounds;
-		aNewRect[0] = oGrBounds.l * g_dKoef_mm_to_pt;
-		aNewRect[1] = oGrBounds.t * g_dKoef_mm_to_pt;
-		aNewRect[2] = oGrBounds.r * g_dKoef_mm_to_pt;
-		aNewRect[3] = oGrBounds.b * g_dKoef_mm_to_pt;
+		let nNewWidth = (oGrBounds.r - oGrBounds.l) * g_dKoef_mm_to_pt;
+		let nNewHeight = (oGrBounds.b - oGrBounds.t) * g_dKoef_mm_to_pt;
+		aNewRect[0] = aCurRect[0];
+		aNewRect[1] = aCurRect[1];
+		aNewRect[2] = aCurRect[0] + nNewWidth;
+		aNewRect[3] = aCurRect[1] + nNewHeight;
 
 		this.Annot._rect = aCurRect;
 		oCurXfrm.extX = nCurExtX;
@@ -7949,7 +8149,10 @@
 
 	/**
 	 * Removes all the elements from the current rich content.
-	 * <note>When all elements are removed, a new empty rich paragraph is automatically created.</note>
+	 *
+	 * :::note
+	 * When all elements are removed, a new empty rich paragraph is automatically created.
+	 * :::
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8246,8 +8449,11 @@
 
 	/**
 	 * Removes an element using the position specified.
-	 * <note>If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
-	 * a new empty run is automatically created.</note>
+	 *
+	 * :::note
+	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
+	 * a new empty run is automatically created.
+	 * :::
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} pos - The element position which we want to remove from the paragraph.
@@ -8258,7 +8464,10 @@
 
 	/**
 	 * Removes all the elements from the current paragraph.
-	 * <note>When all the elements are removed from the paragraph, a new empty run is automatically created.</note>
+	 *
+	 * :::note
+	 * When all the elements are removed from the paragraph, a new empty run is automatically created.
+	 * :::
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8336,10 +8545,12 @@
 	
 	/**
 	 * Specifies the reading order for the current paragraph.
+	 *
 	 * Possible values are:
-	 * <b>null</b> - use the standart direction parameter;
-	 * <b>"ltr"</b> - left-to-right text direction;
-	 * <b>"rtl"</b> - right-to-left text direction.
+	 *
+	 * - <b>null</b> - use the standart direction parameter;
+	 * - <b>"ltr"</b> - left-to-right text direction;
+	 * - <b>"rtl"</b> - right-to-left text direction.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ReadingOrder} [readingOrder = undefined] - The reading order.
@@ -8494,6 +8705,7 @@
 
 	/**
 	 * Returns the font family from the current text properties.
+	 *
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
@@ -8747,7 +8959,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?ApiPage}
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetParentPage.js
 	 */
 	ApiDrawing.prototype.GetParentPage = function() {
 		let oParentPage = this.Drawing.GetParentPage();
@@ -8999,7 +9211,7 @@
 	/**
 	 * Sets the rotation angle to the current drawing object.
 	 * @memberof ApiDrawing
-	 * @param {number} rotAngle - New drawing rotation angle.
+	 * @param {Degree} rotAngle - New drawing rotation angle.
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRotation.js
@@ -9008,6 +9220,9 @@
 		if (!this.Drawing.canRotate()) {
 			return false;
 		}
+
+		rotAngle = AscBuilder.GetNumberParameter(rotAngle, 0);
+		rotAngle = private_NormalizeDegree(rotAngle);
 
 		this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
@@ -9450,22 +9665,22 @@
 
 	/**
 	 * Returns a text range that covers the whole text of the current drawing.
+	 * Creates a text body if the drawing does not yet have one.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiTextRange | null} - returns null if the drawing has no text body.
+	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetTextRange.js
 	 */
 	ApiDrawing.prototype.GetTextRange = function() {
-		if (this.Drawing.isTable())
+		if (!this.Drawing.isShape())
 			return null;
 
-		let docContent = this.Drawing.getDocContent();
+		if (!this.Drawing.getDocContent()) {
+			this.Drawing.createTextBodyOnEdit();
+		}
 
-		if (!docContent)
-			return null;
-
-		return new AscBuilder.ApiTextRange(docContent, 0, -1);
+		return new AscBuilder.ApiTextRange(this.Drawing.getDocContent(), 0, -1);
 	};
 
 	/**
@@ -9474,31 +9689,13 @@
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
 	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/HasTextContent.js
 	 */
-	ApiDrawing.prototype.HasTextRange = function() {
-		if (this.Drawing.isTable())
+	ApiDrawing.prototype.HasTextContent = function() {
+		if (!this.Drawing.isShape())
 			return false;
 
 		return !!this.Drawing.getDocContent();
-	};
-
-	/**
-	 * Creates a text body for the drawing if it does not already exist and returns its full text range.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiTextRange | null} - returns null if the drawing cannot have a text body.
-	 * @since 10.0.0
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/CreateTextRange.js
-	 */
-	ApiDrawing.prototype.CreateTextRange = function() {
-		if (this.Drawing.isTable())
-			return null;
-
-		if (!this.Drawing.getDocContent())
-			this.Drawing.createTextBodyOnEdit();
-
-		return new AscBuilder.ApiTextRange(this.Drawing.getDocContent(), 0, -1);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -9934,8 +10131,13 @@
 	};
 
 	/**
-	 * Merges an array of cells. If merge is successful, it will return merged cell, otherwise "null".
-	 * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
+	 * Merges an array of cells.
+	 *
+	 * If merge is successful, it will return merged cell, otherwise "null".
+	 *
+	 * :::warning
+	 * The number of cells in any row and the number of rows in the current table may be changed.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableCell[]} cells - The cells to merge.
@@ -10033,12 +10235,12 @@
 		let oTableLook = this.Table.Get_TableLook();
 
 		return {
-			firstCol:	oTableLook.IsFirstCol(),
-			firstRow:	oTableLook.IsFirstRow(),
-			lastCol:	oTableLook.IsLastCol(),
-			lastRow:	oTableLook.IsLastRow(),
-			bandHor:	oTableLook.IsBandHor(),
-			bandVer:	oTableLook.IsBandVer()
+			"firstCol":	oTableLook.IsFirstCol(),
+			"firstRow":	oTableLook.IsFirstRow(),
+			"lastCol":	oTableLook.IsLastCol(),
+			"lastRow":	oTableLook.IsLastRow(),
+			"bandHor":	oTableLook.IsBandHor(),
+			"bandVer":	oTableLook.IsBandVer()
 		}
 	};
 
@@ -10093,55 +10295,65 @@
 	 * Specifies the shading which shall be applied to the extents of the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShdType | ApiFill} shadingType - The shading type or fill to apply.
+	 * @deprecated since 10.0.0 version.
+	 * @param {ShdType | ApiFill} type - The shading type or fill to apply.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetShd.js
 	 */
-	ApiTable.prototype.SetShd = function(shadingType, r, g, b) {
-		let oPr = this.Table.Pr.Copy();
-		let color = new Asc.asc_CColor({
-			r: r,
-			g: g,
-			b: b,
-			Auto: false
-		});
-		let oShd = new CDocumentShd();
-		let _Shd = null;
+	/**
+	 * Specifies the shading which shall be applied to the extents of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["PDFE"]
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetShd.js
+	 */
+	ApiTable.prototype.SetShd = function(type, r, g, b)
+	{
+		if (type instanceof AscBuilder.ApiShd)
+			return this.SetShd("clear" === type.GetType() ? Api.CreateSolidFill(type.GetColor()) : "nil");
 
-		if (shadingType === "nil") {
-			_Shd = {
-				Value: Asc.c_oAscShdNil
-			};
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType === "clear") {
+		const pr    = this.Table.Pr.Copy();
+		const color = new Asc.asc_CColor({r : r, g : g, b : b, Auto : false});
+		const shd   = new CDocumentShd();
 
-			let Unifill = new AscFormat.CUniFill();
-			Unifill.fill = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			_Shd = {
-				Value: Asc.c_oAscShdClear,
-				Color: {
-					r: color.asc_getR(),
-					g: color.asc_getG(),
-					b: color.asc_getB()
+		if (type === "nil")
+		{
+			shd.Set_FromObject({
+				Value : Asc.c_oAscShdNil
+			});
+			pr.Shd = shd;
+		}
+		else if (type === "clear")
+		{
+			const unifill      = new AscFormat.CUniFill();
+			unifill.fill       = new AscFormat.CSolidFill();
+			unifill.fill.color = AscFormat.CorrectUniColor(color, unifill.fill.color, 1);
+			shd.Set_FromObject({
+				Value   : Asc.c_oAscShdClear,
+				Color   : {
+					r : color.asc_getR(),
+					g : color.asc_getG(),
+					b : color.asc_getB()
 				},
-				Unifill: Unifill
-			};
+				Unifill : unifill
+			});
+			pr.Shd = shd;
+		}
+		else if (type.GetClassType && type.GetClassType() === "fill")
+		{
+			shd.Value   = Asc.c_oAscShdClear;
+			shd.Unifill = type.UniFill;
+			pr.Shd      = shd;
+		}
+		else
+			pr.Shd = null;
 
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType.GetClassType && shadingType.GetClassType() === "fill") {
-			oShd.Value = Asc.c_oAscShdClear;
-			oShd.Unifill = shadingType.UniFill;
-			oPr.Shd = oShd;
-		} else
-			oPr.Shd = null;
-
-		this.Table.Set_Pr(oPr);
+		this.Table.Set_Pr(pr);
 
 		return true;
 	};
@@ -10919,55 +11131,65 @@
 	 * Specifies the shading which shall be applied to the extents of the current table cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {ShdType | ApiFill} shadingType - The shading type or fill to apply.
+	 * @deprecated since 10.0.0 version.
+	 * @param {ShdType | ApiFill} type - The shading type or fill to apply.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetShd.js
 	 */
-	ApiTableCell.prototype.SetShd = function(shadingType, r, g, b) {
-		let oPr = this.Cell.Pr.Copy();
-		let color = new Asc.asc_CColor({
-			r: r,
-			g: g,
-			b: b,
-			Auto: false
-		});
-		let oShd = new CDocumentShd();
-		let _Shd = null;
+	/**
+	 * Specifies the shading which shall be applied to the extents of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["PDFE"]
+	 * @since 10.0.0
+	 * @param {ApiShd} shd - The shading created with the Api.CreateShd method.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetShd.js
+	 */
+	ApiTableCell.prototype.SetShd = function(type, r, g, b)
+	{
+		if (type instanceof AscBuilder.ApiShd)
+			return this.SetShd("clear" === type.GetType() ? Api.CreateSolidFill(type.GetColor()) : "nil");
 
-		if (shadingType === "nil") {
-			_Shd = {
-				Value: Asc.c_oAscShdNil
-			};
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType === "clear") {
+		const pr    = this.Cell.Pr.Copy();
+		const color = new Asc.asc_CColor({r : r, g : g, b : b, Auto : false});
+		const shd   = new CDocumentShd();
 
-			let Unifill = new AscFormat.CUniFill();
-			Unifill.fill = new AscFormat.CSolidFill();
-			Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
-			_Shd = {
-				Value: Asc.c_oAscShdClear,
-				Color: {
-					r: color.asc_getR(),
-					g: color.asc_getG(),
-					b: color.asc_getB()
+		if (type === "nil")
+		{
+			shd.Set_FromObject({
+				Value : Asc.c_oAscShdNil
+			});
+			pr.Shd = shd;
+		}
+		else if (type === "clear")
+		{
+			const unifill      = new AscFormat.CUniFill();
+			unifill.fill       = new AscFormat.CSolidFill();
+			unifill.fill.color = AscFormat.CorrectUniColor(color, unifill.fill.color, 1);
+			shd.Set_FromObject({
+				Value   : Asc.c_oAscShdClear,
+				Color   : {
+					r : color.asc_getR(),
+					g : color.asc_getG(),
+					b : color.asc_getB()
 				},
-				Unifill: Unifill
-			};
+				Unifill : unifill
+			});
+			pr.Shd = shd;
+		}
+		else if (type.GetClassType && type.GetClassType() === "fill")
+		{
+			shd.Value   = Asc.c_oAscShdClear;
+			shd.Unifill = type.UniFill;
+			pr.Shd      = shd;
+		}
+		else
+			pr.Shd = null;
 
-			oShd.Set_FromObject(_Shd);
-			oPr.Shd = oShd;
-		} else if (shadingType.GetClassType && shadingType.GetClassType() === "fill") {
-			oShd.Value = Asc.c_oAscShdClear;
-			oShd.Unifill = shadingType.UniFill;
-			oPr.Shd = oShd;
-		} else
-			oPr.Shd = null;
-
-		this.Cell.Set_Pr(oPr);
+		this.Cell.Set_Pr(pr);
 		return true;
 	};
 
@@ -11065,7 +11287,7 @@
 	 * Sets the background color of the current cell.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} [color] - If not passed, the background color will be cleared (see arguments below for RGB triplet form).
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
 	 * @return {boolean}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
@@ -11813,6 +12035,9 @@
 			case AscPDF.BORDER_WIDTH.thick: {
 				return "thick";
 			}
+			default: {
+				return "none";
+			}
 		}
 	}
 
@@ -11852,6 +12077,9 @@
 			}
 			case AscPDF.BORDER_TYPES.underline: {
 				return "underline";
+			}
+			default: {
+				return "solid";
 			}
 		}
 	}
@@ -12118,14 +12346,23 @@
 		}
 	}
 
-	function private_IsValidRect(value, isForStamp) {
+	function private_IsValidRect(value) {
 		return (
 			Array.isArray(value) &&
 			value.length === 4 &&
 			value.every(Number.isFinite) &&
-			(isForStamp !== true ? value[0] < value[2] &&
-			value[1] < value[3] : true)
+			value[0] < value[2] &&
+			value[1] < value[3]
 		);
+	}
+
+	function private_GetStampPosition(position) {
+		if (Array.isArray(position)) {
+			position = {"x": position[0], "y": position[1]};
+		}
+
+		private_CheckPoint(position);
+		return position;
 	}
 
 	function private_IsValidRectDiff(value) {
@@ -12200,6 +12437,9 @@
 			}
 			case AscPDF.LINE_END_TYPE.slash: {
 				return "slash";
+			}
+			default: {
+				return "none";
 			}
 		}
 	}
@@ -12451,6 +12691,7 @@
 	Api["CreatePolygonAnnot"]		= Api.CreatePolygonAnnot;
 	Api["CreatePolyLineAnnot"]		= Api.CreatePolyLineAnnot;
 	Api["CreateStampAnnot"]			= Api.CreateStampAnnot;
+	Api["CreateImageStampAnnot"]	= Api.CreateImageStampAnnot;
 	Api["CreateHighlightAnnot"]		= Api.CreateHighlightAnnot;
 	Api["CreateStrikeoutAnnot"]		= Api.CreateStrikeoutAnnot;
 	Api["CreateUnderlineAnnot"]		= Api.CreateUnderlineAnnot;
@@ -12497,6 +12738,8 @@
 	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;
 	ApiPage.prototype["SetRotation"]						= ApiPage.prototype.SetRotation;
 	ApiPage.prototype["GetRotation"]						= ApiPage.prototype.GetRotation;
+	ApiPage.prototype["GetWidth"]							= ApiPage.prototype.GetWidth;
+	ApiPage.prototype["GetHeight"]							= ApiPage.prototype.GetHeight;
 	ApiPage.prototype["GetIndex"]							= ApiPage.prototype.GetIndex;
 	ApiPage.prototype["GetAllWidgets"]						= ApiPage.prototype.GetAllWidgets;
 	ApiPage.prototype["AddObject"]							= ApiPage.prototype.AddObject;
@@ -12785,6 +13028,8 @@
 	ApiFreeTextAnnotation.prototype["GetIntent"]			= ApiFreeTextAnnotation.prototype.GetIntent;
 	ApiFreeTextAnnotation.prototype["SetCallout"]			= ApiFreeTextAnnotation.prototype.SetCallout;
 	ApiFreeTextAnnotation.prototype["GetCallout"]			= ApiFreeTextAnnotation.prototype.GetCallout;
+	ApiFreeTextAnnotation.prototype["SetEndStyle"]			= ApiFreeTextAnnotation.prototype.SetEndStyle;
+	ApiFreeTextAnnotation.prototype["GetEndStyle"]			= ApiFreeTextAnnotation.prototype.GetEndStyle;
 	ApiFreeTextAnnotation.prototype["SetRectDiff"]			= ApiFreeTextAnnotation.prototype.SetRectDiff;
 	ApiFreeTextAnnotation.prototype["GetRectDiff"]			= ApiFreeTextAnnotation.prototype.GetRectDiff;
 	ApiFreeTextAnnotation.prototype["GetContent"]			= ApiFreeTextAnnotation.prototype.GetContent;
@@ -12950,8 +13195,7 @@
 	ApiDrawing.prototype["SetLine"]							= ApiDrawing.prototype.SetLine;
 	ApiDrawing.prototype["SetOutLine"]						= ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["GetTextRange"]					= ApiDrawing.prototype.GetTextRange;
-	ApiDrawing.prototype["HasTextRange"]					= ApiDrawing.prototype.HasTextRange;
-	ApiDrawing.prototype["CreateTextRange"]					= ApiDrawing.prototype.CreateTextRange;
+	ApiDrawing.prototype["HasTextContent"]					= ApiDrawing.prototype.HasTextContent;
 	ApiDrawing.prototype["GetLine"]							= ApiDrawing.prototype.GetLine;
 	ApiDrawing.prototype["SetShadow"]						= ApiDrawing.prototype.SetShadow;
 	ApiDrawing.prototype["GetShadow"]						= ApiDrawing.prototype.GetShadow;

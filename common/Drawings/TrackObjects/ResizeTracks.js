@@ -1596,7 +1596,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             if(!this.originalObject.isCrop)
             {
-                this.originalObject.ResetParametersWithResize();
+                this.originalObject.ResetParametersWithResize(false, this.resizedExtX !== this.originalExtX, this.resizedExtY !== this.originalExtY);
                 this.originalObject.checkDrawingBaseCoords();
                 if(this.originalObject.checkExtentsByDocContent)
                 {

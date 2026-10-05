@@ -927,7 +927,7 @@
                 nInnerType = AscFormat.LineEndType.Slash;
                 break;
             default:
-                nInnerType = AscFormat.LineEndType.Arrow;
+                nInnerType = AscFormat.LineEndType.None;
                 break;
         }
 

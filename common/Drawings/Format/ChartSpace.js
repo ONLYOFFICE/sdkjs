@@ -12497,6 +12497,9 @@ function(window, undefined) {
 			if (!bAll && oSeries.idx !== nSeries)
 				continue;
 
+			if (oSeries.isScatter() || (oSeries.getObjectType() === AscDFH.historyitem_type_LineSeries && !AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this)))
+				continue;
+
 			if (!oSeries.spPr) {
 				oSeries.setSpPr(new AscFormat.CSpPr());
 				oSeries.spPr.setParent(oSeries);

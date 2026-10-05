@@ -546,7 +546,7 @@ CGraphicObjects.prototype =
             else if(dScale < 0)
             {
                 let nImageW = oProps.get_ImageWidth();
-                let nImageH = oProps.get_ImageWidth();
+                let nImageH = oProps.get_ImageHeight();
                 if(AscFormat.isRealNumber(nImageW) && AscFormat.isRealNumber(nImageH) &&
                     nImageW > 0 && nImageH > 0) {
                     extX = nImageW / 36000;

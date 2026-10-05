@@ -457,6 +457,7 @@ function CContentControlPr(nType)
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
 	
 	this.Temporary  = undefined;
+	this.PlainText  = undefined;
 	this.DataBinding = undefined;
 	
 	// section property
@@ -595,6 +596,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
 	this.Temporary  = oContentControl.IsContentControlTemporary();
+	this.PlainText  = oContentControl.IsContentControlText();
 
 	if (oContentControl.Pr.DataBinding)
 		this.DataBinding = oContentControl.GetDataBinding();
@@ -697,6 +699,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	
 	if (undefined !== this.Temporary)
 		oContentControl.SetContentControlTemporary(this.Temporary);
+	
+	if (undefined !== this.PlainText && oContentControl.IsInlineLevel() && !oContentControl.IsForm())
+		oContentControl.ApplyPlainText(this.PlainText);
 	
 	let checkBox = oContentControl;
 	if (oContentControl.IsLabeledCheckBox())
@@ -1042,6 +1047,14 @@ CContentControlPr.prototype.SetTemporary = function(isTemporary)
 {
 	this.Temporary = isTemporary;
 };
+CContentControlPr.prototype.GetPlainText = function()
+{
+	return this.PlainText;
+};
+CContentControlPr.prototype.SetPlainText = function(isPlainText)
+{
+	this.PlainText = isPlainText;
+};
 CContentControlPr.prototype.GetSpecificType = function()
 {
 	if (this.CC)
@@ -1181,6 +1194,8 @@ CContentControlPr.prototype['get_Color']              = CContentControlPr.protot
 CContentControlPr.prototype['put_Color']              = CContentControlPr.prototype.SetColor;
 CContentControlPr.prototype['get_Temporary']          = CContentControlPr.prototype.GetTemporary;
 CContentControlPr.prototype['put_Temporary']          = CContentControlPr.prototype.SetTemporary;
+CContentControlPr.prototype['get_PlainText']          = CContentControlPr.prototype.GetPlainText;
+CContentControlPr.prototype['put_PlainText']          = CContentControlPr.prototype.SetPlainText;
 CContentControlPr.prototype['get_SpecificType']       = CContentControlPr.prototype.GetSpecificType;
 CContentControlPr.prototype['get_CheckBoxPr']         = CContentControlPr.prototype.GetCheckBoxPr;
 CContentControlPr.prototype['put_CheckBoxPr']         = CContentControlPr.prototype.SetCheckBoxPr;

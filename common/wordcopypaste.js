@@ -2756,6 +2756,22 @@ function GetContentFromHtml(api, html, callback) {
 		return;
 	}
 
+	//the native engine (document builder) has no DOM: there the html is read by the lite html reader, synchronously,
+	//so the result of the callback is returned
+	if (window["NATIVE_EDITOR_ENJINE"]) {
+		let logicDocument = api.private_GetLogicDocument();
+		let elements = logicDocument ? GetContentFromHtmlLite(logicDocument, logicDocument, html, false) : null;
+		if (!elements || !elements.length)
+			return callback ? callback(null) : undefined;
+
+		let selectedContent = new AscCommonWord.CSelectedContent();
+		for (let i = 0; i < elements.length; ++i)
+			selectedContent.Add(new AscCommonWord.CSelectedElement(elements[i], true));
+		selectedContent.EndCollect(logicDocument);
+		selectedContent.SetCopyComments(false);
+		return callback ? callback(selectedContent) : undefined;
+	}
+
 	//need document -> write, because some props not compile if use innerHTML(sub/sup tags give only "baseline")
 	//TODO use iframe from clipboard_base
 	AscCommon.g_clipboardBase.CommonIframe_PasteStart(html, null, function (oHtmlElem) {
@@ -2858,8 +2874,9 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		}
 	}
 }
-function Editor_Paste_Html_Lite_Exec(api, sHtml, callback, rejectCallback) {
+function Editor_Paste_Html_Lite_Exec(api, sHtml, callback, rejectCallback, isKeepTextPr) {
 	var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback, rejectCallback);
+	oPasteProcessor.keepHtmlTextPr = !!isKeepTextPr;
 	window['AscCommon'].g_specialPasteHelper.endRecalcDocument = false;
 
 	if (!oPasteProcessor._pasteHtmlLite(sHtml)) {
@@ -3044,6 +3061,10 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oCurHyperlinkContentPos = 0;
     this.oCur_rPr = new CTextPr();
     this._lastCommitedRunId = null;
+    //last item added to the current paragraph
+    this.oLastAddedItem = null;
+    //last item before a collapsed trailing line break of a text node
+    this.oPendingSpaceItem = null;
 
 	//Br accumulates because there are cases when br should not be output, even though it's present.
     this.nBrCount = 0;
@@ -3097,6 +3118,9 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.aNeedRecalcImgSize = null;
 
 	this.doNotInsertInDoc = null;
+
+	//lite html paste into a presentation: keep the text properties of the html instead of applying the current ones
+	this.keepHtmlTextPr = false;
 
 	this.arrDrawingsPasteOrder = [];
 }
@@ -7861,10 +7885,14 @@ PasteProcessor.prototype =
 
 		oThis.aContent = content.Content;
 
-		var oTextPr = presentation.GetCalculatedTextPr();
-		content.SetApplyToAll(true);
-		content.AddToParagraph(new AscCommonWord.ParaTextPr(oTextPr));
-		content.SetApplyToAll(false);
+		if (oThis.keepHtmlTextPr) {
+			litePresentationTextPr(content);
+		} else {
+			var oTextPr = presentation.GetCalculatedTextPr();
+			content.SetApplyToAll(true);
+			content.AddToParagraph(new AscCommonWord.ParaTextPr(oTextPr));
+			content.SetApplyToAll(false);
+		}
 
 		var executePaste = function () {
 			oThis.InsertInPlacePresentation(oThis.aContent, true);
@@ -10957,6 +10985,8 @@ PasteProcessor.prototype =
 				this._CommitRunToParagraph(true);
 				this._CommitElemToParagraph(elem);
 			} else {
+				//hyperlink is only a container of already added items, so it isn't tracked
+				this.oLastAddedItem = elem;
 				if (this.oCurRun.Content.length === Asc.c_dMaxParaRunContentLength) {
 					//create new paraRun and set previous settings to it
 					//done to avoid large amount of data in paraRun
@@ -10980,6 +11010,7 @@ PasteProcessor.prototype =
 		this.oCurParContentPos = this.oCurPar.CurPos.ContentPos;
 		this.oCurRun = new ParaRun(this.oCurPar);
 		this.oCurRunContentPos = 0;
+		this.oLastAddedItem = null;
 		this.aContent.push(this.oCurPar);
 		//reset test settings
 		this.oCur_rPr = new CTextPr();
@@ -12751,8 +12782,12 @@ PasteProcessor.prototype =
 				return resText;
 			};
 
+			//line breaks at the edges of a text node (wrapped html source) are collapsible spaces
+			var hasLeadingBreak = false, hasTrailingBreak = false;
 			//because (e.g. sometimes chrome splits lines with \n during paste)
 			if (!whiteSpacing) {
+				hasLeadingBreak = /^(\r|\t|\n)/.test(value);
+				hasTrailingBreak = /(\r|\t|\n)$/.test(value);
 				value = value.replace(/^(\r|\t|\n)+|(\r|\t|\n)+$/g, '');
 				value = value.replace(/(\r|\t|\n)/g, ' ');
 
@@ -12811,6 +12846,14 @@ PasteProcessor.prototype =
 
 					//Add style element if it changed
 					oThis._commit_rPr(oTargetNode, bUseOnlyInherit);
+
+					//like browser: collapsed space is shown only after inline content of the same line
+					var lastItem = oThis.oLastAddedItem;
+					if (lastItem && (hasLeadingBreak || lastItem === oThis.oPendingSpaceItem) && !/^[ \t\n\r]/.test(value) &&
+						para_Space !== lastItem.Type && para_NewLine !== lastItem.Type && para_Tab !== lastItem.Type) {
+						value = " " + value;
+					}
+					oThis.oPendingSpaceItem = null;
 				}
 
 				//for problem with extra spaces at beginning of new line when copying from MS EXCEL cells with text separated by alt+enter
@@ -12897,6 +12940,9 @@ PasteProcessor.prototype =
 						}
 					}
 				}
+			}
+			if (hasTrailingBreak) {
+				oThis.oPendingSpaceItem = oThis.oLastAddedItem;
 			}
 		};
 		/*var checkEndFootnodeText = function (Item, oThis, Text) {
@@ -13586,6 +13632,8 @@ PasteProcessor.prototype =
 						value = value.replace(/(\r|\t|\n)/g, '');
 					}
 					if ("" == value) {
+						//collapsible space between inline elements
+						oThis.oPendingSpaceItem = oThis.oLastAddedItem;
 						return;
 					}
 				}
@@ -15294,6 +15342,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 			case "h1": case "h2": case "h3": case "h4": case "h5": case "h6":
 			case "center": case "blockquote": case "section": case "article":
 			case "header": case "footer": case "dd": case "dt": case "dl": case "pre":
+			case "html": case "body":
 				return true;
 		}
 		return false;
@@ -15361,7 +15410,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 
 	function liteStripUnscannable(sHtml) {
 		return sHtml
-			.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+			.replace(/<(script|style|head)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
 			.replace(/<!--[\s\S]*?-->/g, "")
 			.replace(/<\?[\s\S]*?\?>/g, "")
 			.replace(/<![^>]*>/g, "");
@@ -15613,8 +15662,12 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 			rPr.VertAlign = AscCommon.vertalign_SuperScript;
 		}
 
-		if (pr.family && rPr.RFonts && rPr.RFonts.SetAll) {
-			rPr.RFonts.SetAll(pr.family, -1);
+		//the four fonts, as the full html paste sets them
+		if (pr.family && rPr.RFonts) {
+			rPr.RFonts.Ascii    = {Name : pr.family, Index : -1};
+			rPr.RFonts.HAnsi    = {Name : pr.family, Index : -1};
+			rPr.RFonts.CS       = {Name : pr.family, Index : -1};
+			rPr.RFonts.EastAsia = {Name : pr.family, Index : -1};
 		}
 
 		if (pr.size) {
@@ -15637,6 +15690,30 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 			}
 		}
 		return rPr;
+	}
+
+	//the text properties of the runs as the full html paste reads them into a presentation: the font style is always
+	//set and the colors are unicolors
+	function litePresentationTextPr(content) {
+		content.CheckRunContent(function (run) {
+			if (run.IsParaEndRun()) {
+				return;
+			}
+			var textPr = run.Pr.Copy();
+			textPr.Bold      = true === textPr.Bold;
+			textPr.Italic    = true === textPr.Italic;
+			textPr.Underline = true === textPr.Underline;
+			textPr.Strikeout = true === textPr.Strikeout;
+			if (textPr.Color) {
+				textPr.Unifill = AscFormat.CreateUnfilFromRGB(textPr.Color.r, textPr.Color.g, textPr.Color.b);
+				textPr.Color   = undefined;
+			}
+			if (textPr.HighLight) {
+				textPr.HighlightColor = AscFormat.CreateUniColorRGB(textPr.HighLight.r, textPr.HighLight.g, textPr.HighLight.b);
+				textPr.HighLight      = undefined;
+			}
+			run.Set_Pr(textPr);
+		});
 	}
 
 	function liteResolveAlign(node) {
@@ -15718,8 +15795,40 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		return run;
 	};
 
+	//para is a paragraph or a hyperlink in it
 	CHtmlPasteLiteBuilder.prototype._addRun = function (para, run) {
-		para.Internal_Content_Add(para.Content.length - 1, run, false);
+		if (para_Hyperlink === para.Type) {
+			para.Add_ToContent(para.Content.length, run, false);
+		} else {
+			para.Internal_Content_Add(para.Content.length - 1, run, false);
+		}
+	};
+
+	//the text of a text node: its white space collapses, as in a browser, but inside a pre, where it is kept - except the
+	//line feed that follows the start tag of the pre (html parsing drops it) and the one that ends the pre (the full html
+	//paste drops it)
+	CHtmlPasteLiteBuilder.prototype._getText = function (node, chain) {
+		var pre = null;
+		for (var i = chain.length - 1; i >= 0 && !pre; --i) {
+			if ("pre" === chain[i].name) {
+				pre = chain[i];
+			}
+		}
+		if (!pre) {
+			return liteCollapseSpaces(node.value);
+		}
+		var text = (node.value || "").replace(/\r\n?/g, "\n");
+		if (pre.children[0] === node) {
+			text = text.replace(/^\n/, "");
+		}
+		var last = node;
+		while (last !== pre && last.parent.children[last.parent.children.length - 1] === last) {
+			last = last.parent;
+		}
+		if (last === pre) {
+			text = text.replace(/\n$/, "");
+		}
+		return text;
 	};
 
 	CHtmlPasteLiteBuilder.prototype._appendText = function (para, text, chain) {
@@ -15739,16 +15848,68 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 
 	CHtmlPasteLiteBuilder.prototype._appendInline = function (para, node, chain) {
 		var inner = chain.concat(node);
+
+		//tabs, as the full html paste reads them (the text of the element is not read)
+		var tabCount = parseInt(node.getStyle("mso-tab-count") || 0);
+		if (tabCount > 0) {
+			var run = this._newRun(liteResolveTextPr(inner));
+			for (var t = 0; t < tabCount; ++t) {
+				run.AddToContent(-1, new AscWord.CRunTab(), false);
+			}
+			this._addRun(para, run);
+			return;
+		}
+
+		var hyperlink = ("a" === node.name && para_Hyperlink !== para.Type) ? this._newHyperlink(para, node) : null;
+		var target = hyperlink ? hyperlink : para;
 		for (var i = 0; i < node.children.length; ++i) {
 			var child = node.children[i];
 			if ("text" === child.type) {
-				this._appendText(para, liteCollapseSpaces(child.value), inner);
+				this._appendText(target, this._getText(child, inner), inner);
 			} else if ("br" === child.name) {
-				this._appendBreak(para, inner);
+				this._appendBreak(target, inner);
 			} else {
-				this._appendInline(para, child, inner);
+				this._appendInline(target, child, inner);
 			}
 		}
+		if (hyperlink && hyperlink.Content.length > 0) {
+			this._addHyperlink(para, hyperlink);
+		}
+	};
+
+	//a link is a hyperlink, as the full html paste reads it
+	CHtmlPasteLiteBuilder.prototype._newHyperlink = function (para, node) {
+		var href = node.getAttr("href");
+		if (!href) {
+			return null;
+		}
+		var hyperlink = new ParaHyperlink();
+		hyperlink.SetParagraph(para);
+		//as GetPasteHyperlinkAnchor
+		var anchor = "#" === href.charAt(0) ? (href.substring(1) || "_top") : null;
+		if (anchor) {
+			hyperlink.SetAnchor(anchor);
+		} else {
+			hyperlink.Set_Value(href);
+		}
+		var title = node.getAttr("title");
+		if (null != title) {
+			hyperlink.SetToolTip(title);
+		}
+		return hyperlink;
+	};
+
+	//in a document the runs of a hyperlink have the hyperlink style, as the full html paste sets it
+	CHtmlPasteLiteBuilder.prototype._addHyperlink = function (para, hyperlink) {
+		var styles = para.bFromDocument && this.oLogicDocument ? this.oLogicDocument.Styles : null;
+		if (styles && styles.Default && styles.Default.Hyperlink && styles.Style) {
+			for (var i = 0; i < hyperlink.Content.length; ++i) {
+				if (para_Run === hyperlink.Content[i].Type) {
+					hyperlink.Content[i].Set_RStyle(styles.Default.Hyperlink);
+				}
+			}
+		}
+		para.Internal_Content_Add(para.Content.length - 1, hyperlink, false);
 	};
 
 	CHtmlPasteLiteBuilder.prototype._applyHeadingStyle = function (para, level) {
@@ -15804,7 +15965,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		for (var i = 0; i < node.children.length; ++i) {
 			var child = node.children[i];
 			if ("text" === child.type) {
-				var text = liteCollapseSpaces(child.value);
+				var text = this._getText(child, chain);
 				if ("" === text || (" " === text && !para)) {
 					continue;
 				}
@@ -15913,7 +16074,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 		for (var i = 0; i < node.children.length; ++i) {
 			var child = node.children[i];
 			if ("text" === child.type) {
-				var text = liteCollapseSpaces(child.value);
+				var text = this._getText(child, chain);
 				if ("" === text || (" " === text && !para)) {
 					continue;
 				}

@@ -56,11 +56,13 @@
 /**
  * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
  * Defines the access restrictions for a content control.
+ *
  * Possible values:
- * <b>0</b> - only deleting,
- * <b>1</b> - disable deleting or editing,
- * <b>2</b> - only editing,
- * <b>3</b> - full access.
+ *
+ * - <b>0</b> - only deleting,
+ * - <b>1</b> - disable deleting or editing,
+ * - <b>2</b> - only editing,
+ * - <b>3</b> - full access.
  * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlLock.js
  */
 

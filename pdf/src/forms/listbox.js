@@ -222,13 +222,7 @@
         let aApiIdxs = this.GetLogicCurIdxs();
 
         this.ScrollVerticalEnd(true);
-        let isChanged = false;
-        for (let i = 0; i < aCurIdxs.length; i++) {
-            if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
-                isChanged = true;
-                break;
-            }
-        }
+        let isChanged = !aApiIdxs || false == AscCommon.isEqualSortedArrays(aCurIdxs, aApiIdxs);
         if (!isChanged) {
             return;
         }
@@ -549,6 +543,10 @@
         let aOptions = this.GetOptions();
         if (this.IsWidget()) {
             if (Array.isArray(value)) {
+				if (!this.IsMultipleSelection()) {
+					return false;
+				}
+				
                 for (let i = 0; i < value.length; i++) {
                     let sVal = value[i];
                     let isFound = false;
@@ -594,19 +592,7 @@
                 }
             }
 
-			let oShd = private_GetShd('nil');
-            this.content.Content.forEach(function(para) {
-				para.Pr.Shd = oShd;
-				para.RecalcCompiledPr(true);
-            });
-
-            for (let i = 0; i < aIndexes.length; i++) {
-                if (this.IsMultipleSelection()) {
-                    this.SelectOption(aIndexes[i], false);
-                }
-                else
-                    this.SelectOption(aIndexes[i], true);
-            }
+			this.SetCurIdxs(aIndexes);
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress) {
                 this.SetLogicValue(value);

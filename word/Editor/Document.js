@@ -957,6 +957,15 @@ CSelectedElementsInfo.prototype.CanEditInlineSdts = function()
 
 	return true;
 };
+CSelectedElementsInfo.prototype.IsInPlainTextSdt = function()
+{
+	for (let index = 0, count = this.m_arrSdts.length; index < count; ++index)
+	{
+		if (this.m_arrSdts[index].IsContentControlText())
+			return true;
+	}
+	return false;
+};
 CSelectedElementsInfo.prototype.SetComplexFields = function(arrComplexFields)
 {
     if(this.m_bAddAllComplexFields)
@@ -14302,7 +14311,7 @@ CDocument.prototype.Get_SelectionState2 = function()
 	}
 	else if (docpostype_Endnotes === nDocPosType)
 	{
-		var oEndnote = this.Footnotes.GetCurEndnote();
+		var oEndnote = this.Endnotes.GetCurEndnote();
 
 		State.Type = docpostype_Endnotes;
 		State.Id   = oEndnote ? oEndnote.GetId() : null;

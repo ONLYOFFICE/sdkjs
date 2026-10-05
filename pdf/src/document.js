@@ -583,9 +583,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.drawings.forEach(function(drawing) {
-			if (drawing.IsShape() && drawing.IsFromScan()) {
-				drawing.AddToRedraw();
-			}
+			drawing.AddToRedraw();
 		});
 
         this.UpdateCopyCutState();
@@ -7340,7 +7338,7 @@ var CPresentation = CPresentation || function(){};
         let nCurTime = new Date().getTime();
         let sAuthor = AscCommon.UserInfoParser.getCurrentName();
 
-        if (sType == AscPDF.STAMP_TYPES.Signature) {
+        if (sType == AscPDF.STAMP_TYPES.Image) {
             if (oImage) {
                 nExtX   = Math.max(1, oImage.Image.width * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
                 nExtY   = Math.max(1, oImage.Image.height * g_dKoef_pix_to_mm * g_dKoef_mm_to_pt);
@@ -7408,7 +7406,7 @@ var CPresentation = CPresentation || function(){};
             oStamp.SetRenderStructure(oStampRender.m_aStack[0]);
         }
 
-        if (sType == AscPDF.STAMP_TYPES.Signature) {
+        if (sType == AscPDF.STAMP_TYPES.Image) {
             if (oImage) {
                 let oUniFill = new AscFormat.CUniFill();
                 let oBlipFill = new AscFormat.CBlipFill();
@@ -9413,6 +9411,12 @@ var CPresentation = CPresentation || function(){};
             }
         });
 
+		this.annots.forEach(function(annot) {
+            if (annot.IsStamp() && AscPDF.STAMP_TYPES.Image == annot.GetIconType() && !annot.IsNeedDrawFromStream()) {
+				annot.getAllRasterImages(aImages);
+			}
+        });
+
         return aImages;
     };
     CPDFDoc.prototype.Reassign_ImageUrls = function(oImages) {
@@ -10084,7 +10088,7 @@ var CPresentation = CPresentation || function(){};
 
         if (oMeta && oMeta["isOO"]) {
             if (oAnnot.IsStamp() && !oAnnot.IsNeedDrawFromStream()) {
-				if (oAnnot.GetIconType() !== AscPDF.STAMP_TYPES.Signature) {
+				if (oAnnot.GetIconType() !== AscPDF.STAMP_TYPES.Image) {
 					let oStampRender = oDoc.CreateStampRender(oAnnot.GetIconType(), oAnnot.GetAuthor(), oAnnot.GetCreationDate());
                 	oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
 				}
@@ -10385,10 +10389,9 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.FreeText: {
                 oAnnotProps = new Asc.asc_CFreeTextAnnotProperty();
                 oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
-                annot.GetIntent() == AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout && oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
+                annot.GetIntent() == AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout && oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putCanEditText(annot.IsInTextBox());
-				oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 break;
             }
             case AscPDF.ANNOTATIONS_TYPES.Line: {

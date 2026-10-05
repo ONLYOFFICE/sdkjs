@@ -232,7 +232,7 @@
 		var resultPageIndex = AscFormat.isRealNumber(graphics.shapePageIndex) ? graphics.shapePageIndex : (content ? content.GetRelativeStartPage() : 0);
 		graphics.PageNum = resultPageIndex;
 		var isNeedRestoreState = false;
-		if (graphicObject.bWordShape && graphicObject.clipRect) {
+		if (graphicObject.bWordShape && graphicObject.clipRect && (this.isTargetTextObject() || !graphicObject.checkNeedRecalcDocContentForTxWarp(graphicObject.bodyPr))) {
 			isNeedRestoreState = true;
 			var clipRect = graphicObject.clipRect;
 			if (!graphicObject.bodyPr.upright) {
@@ -380,6 +380,11 @@
 			graphics._e();
 		} else {
 			geometry.check_bounds(graphics, graphicObject);
+			const shapeDrawer = new AscCommon.CShapeDrawer();
+			shapeDrawer.fromShape2(graphicObject, graphics, geometry);
+			if (!shapeDrawer.bIsNoStrokeAttack && shapeDrawer.isArrowPresent()) {
+				shapeDrawer.drawArrows(false);
+			}
 		}
 
 		if (graphics.AutoCheckLineWidth) {
@@ -399,6 +404,9 @@
 			if (graphics.UncheckUseFonts2 !== undefined)
 				graphics.UncheckUseFonts2(contentTransform);
 			graphics.SetIntegerGrid(true);
+		}
+		if (graphicObject.txWarpStruct && (!graphicObject.bWordShape || AscCommon.IsShapeToImageConverter) && graphicObject.checkNeedRecalcDocContentForTxWarp(graphicObject.getBodyPr())) {
+			graphicObject.txWarpStruct.draw(graphics, graphicObject.transformTextWordArt);
 		}
 
 		graphics.reset();

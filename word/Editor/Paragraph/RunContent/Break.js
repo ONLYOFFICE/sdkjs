@@ -365,6 +365,11 @@
 	{
 		return AscBidi.TYPE.PM;
 	};
+	CRunBreak.prototype.IsSentenceEndMark = function()
+	{
+		// Follow MS behaviour. Line break and column break doen't count as a sentence end
+		return this.IsPageBreak();
+	};
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

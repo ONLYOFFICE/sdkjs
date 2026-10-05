@@ -5901,6 +5901,10 @@ StyleManager.prototype =
 	}
 
 	SheetMergedStyles.prototype.setTablePivotStyle = function(range, xf, stripe) {
+		//a style element without a dxf formats nothing; its stripe size already reaches the other stripe's offset
+		if (!xf) {
+			return;
+		}
 		this.stylesTablePivot.push({xf: xf, range: range, stripe: stripe, borders: undefined});
 	};
 	SheetMergedStyles.prototype.clearTablePivotStyle = function(range) {
@@ -14686,6 +14690,7 @@ function RangeDataManagerElem(bbox, data)
 
 		this.duplicateValues = null;
 		this.uniqueValues = null;
+		this.isForMacros = null;
 
 		return this;
 	}
@@ -14724,7 +14729,8 @@ function RangeDataManagerElem(bbox, data)
 		} else {
 			this.columnList = [];
 			for (j = selection.c1; j <= selection.c2; j++) {
-				if (j - selection.c1 >= maxCount) {
+				// a macro compares columns the dialog would not list
+				if (!this.isForMacros && j - selection.c1 >= maxCount) {
 					break;
 				}
 				elem = new window["AscCommonExcel"].AutoFiltersOptionsElements();

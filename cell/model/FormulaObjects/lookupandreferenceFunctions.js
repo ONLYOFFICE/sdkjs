@@ -1056,11 +1056,17 @@ function (window, undefined) {
 	cCOLUMNS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		if (cElementType.array === arg0.type) {
 			return new cNumber(arg0.getCountElementInRow());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type) {
+			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().c1 - range.getBBox0().c2) + 1) :
 			new cError(cErrorType.wrong_value_type));
@@ -1487,50 +1493,9 @@ function (window, undefined) {
 	cHLOOKUP.prototype.arrayIndexes = {1: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
+	cHLOOKUP.prototype.resultShapeArgs = [0, 3];
 	cHLOOKUP.prototype.Calculate = function (arg) {
-		let retArr = new cArray();
-		if (arg[0].type === cElementType.array) {
-			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
-				arg[2] = arg[2].getValue2(0,0);
-			}
-			let dimension = arg[0].getDimensions(true);
-			let ctx = {};
-			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
-			// never stores or mutates the array, so only the varying slot needs a write per element.
-			let callArgs = [null, arg[1], arg[2], arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[0] = arg[0].getValue2(r, c);
-					retArr.addElement(g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx));
-				}
-			}
-
-			return retArr;
-		}
-
-		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions(true);
-			let ctx = {};
-			// see above: one shared args array, only the varying slot is rewritten per element
-			let callArgs = [arg[0], arg[1], null, arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[2] = arg[2].getValue2(r, c);
-					let res = g_oHLOOKUPCache.calculate(callArgs, arguments[1], ctx);
-					if (res.type === cElementType.error) {
-						// the whole result collapses to one error anyway - stop calculating and
-						// building rows for the discarded array right here
-						return new cError(cErrorType.bad_reference);
-					}
-					retArr.addElement(res);
-				}
-			}
-			return retArr;
-		}
-
-		return g_oHLOOKUPCache.calculate(arg, arguments[1]);
+		return g_oHLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
 
 	/**
@@ -1621,7 +1586,7 @@ function (window, undefined) {
 			return arg0;
 		}
 
-		let argError;
+ 		let argError;
 		if (argError = this._checkErrorArg([arg0, arg1, arg2, arg3])) {
 			return argError;
 		}
@@ -1788,8 +1753,9 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+				// a reference, as over a range: text reached through it counts as read from a cell
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
-					res = arg0.getValue();
+					res = arg0;
 				}
 			} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
 				cElementType.bool === arg0.type) {
@@ -2149,6 +2115,9 @@ function (window, undefined) {
 	cROWS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		if (cElementType.array === arg0.type) {
 			//getRealSize=true: honor the logical size of clamped/realSize arrays (e.g. ROW over a full column);
 			//falls back to the physical row count when realSize is not set
@@ -2156,6 +2125,9 @@ function (window, undefined) {
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type) {
+			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().r1 - range.getBBox0().r2) + 1) :
 			new cError(cErrorType.wrong_value_type));
@@ -3265,16 +3237,22 @@ function (window, undefined) {
 	 */
 	TypedMapCache.prototype.unshiftValues = function (data, valuesToUnshift) {
 		for (let i in valuesToUnshift) {
+			if (!data[i]) {
+				data[i] = new Map();
+			}
+			const map = data[i];
 			const unshiftMap = valuesToUnshift[i];
 			unshiftMap.forEach(function (value, key) {
-				const map = data[i];
 				const prevArr = map.get(key);
-				map.set(key, value.concat(prevArr));
+				map.set(key, prevArr ? value.concat(prevArr) : value);
 			});
 		}
 	};
 
 	/**
+	 * Extends the cached part of the row/column upward. All indices of the added part are collected first
+	 * (in ascending order) and then put in front of the cached ones, so every index list stays sorted -
+	 * _indexedBinarySearch and _findLastSame rely on it.
 	 * @param range
 	 * @param data
 	 */
@@ -3284,23 +3262,15 @@ function (window, undefined) {
 		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
-			if (!rowColAxisData.data[value.type]) {
-				rowColAxisData.data[value.type] = new Map();
+			if (!unshiftMaps[value.type]) {
+				unshiftMaps[value.type] = new Map();
 			}
-			const map = rowColAxisData.data[value.type];
-			if (!map.has(value.value)) {
-				map.set(value.value, [index]);
-			} else {
-				if (!unshiftMaps[value.type]) {
-					unshiftMaps[value.type] = new Map();
-				}
-				const unshiftMap = unshiftMaps[value.type];
-				if (!unshiftMap.has(value.value)) {
-					unshiftMap.set(value.value, []);
-				}
-				const arr = unshiftMap.get(value.value);
-				arr.push(index);
+			const unshiftMap = unshiftMaps[value.type];
+			if (!unshiftMap.has(value.value)) {
+				unshiftMap.set(value.value, []);
 			}
+			const arr = unshiftMap.get(value.value);
+			arr.push(index);
 		});
 		this.unshiftValues(rowColAxisData.data, unshiftMaps);
 	};
@@ -3373,12 +3343,76 @@ function (window, undefined) {
 		this.sortedCache = new TypedMapCache();
 	}
 
-	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx) {
+	// The whole H/VLOOKUP call. Excel lifts lookup_value and range_lookup together, the result being their
+	// broadcast; index_num is lifted only when both are scalars, otherwise its first element answers everywhere.
+	// Lifted alone, index_num lets a failure answer for the whole call (measured).
+	VHLOOKUPCache.prototype.calculateCall = function (arg, argument1, opt_argInfo) {
+		let key = arg[0], index = arg[2], rangeLookup = arg[3];
+		if (opt_argInfo) {
+			let keyLifted = opt_argInfo[0].mode || (opt_argInfo[3] && opt_argInfo[3].mode);
+			let indexInfo = opt_argInfo[2];
+			if (indexInfo.mode && keyLifted) {
+				arg[2] = indexInfo.arg.getValue2(0, 0);
+			}
+			return this.calculate(arg, argument1, null, !!indexInfo.mode, indexInfo.mode && !keyLifted ? opt_argInfo : null);
+		}
+
+		let keyDims = cElementType.array === key.type ? key.getDimensions(true) : null;
+		let rangeLookupDims = rangeLookup && cElementType.array === rangeLookup.type ? rangeLookup.getDimensions(true) : null;
+		let indexAlone = !keyDims && !rangeLookupDims;
+		if (indexAlone && cElementType.array !== index.type) {
+			return this.calculate(arg, argument1);
+		}
+		let indexIsElement = indexAlone, dims;
+		if (indexAlone) {
+			dims = index.getDimensions(true);
+		} else {
+			dims = {row: Math.max(keyDims ? keyDims.row : 1, rangeLookupDims ? rangeLookupDims.row : 1),
+				col: Math.max(keyDims ? keyDims.col : 1, rangeLookupDims ? rangeLookupDims.col : 1)};
+			if (cElementType.array === index.type) {
+				index = index.getValue2(0, 0);
+				indexIsElement = true;
+			} else if (cElementType.cellsRange === index.type || cElementType.cellsRange3D === index.type) {
+				index = index.getValueByRowCol(0, 0, true);
+				indexIsElement = true;
+			}
+		}
+		let res = new cArray(), ctx = {};
+		let collapsesCall = indexAlone ? res : null;
+		let callArgs = [key, arg[1], index, rangeLookup];
+		for (let r = 0; r < dims.row; r++) {
+			res.addRow();
+			for (let c = 0; c < dims.col; c++) {
+				if (indexAlone) {
+					callArgs[2] = index.getValue2(r, c);
+				}
+				// a single row or column stretches, and past the end of the shorter array stands #N/A
+				if (keyDims) {
+					let kr = 1 === keyDims.row ? 0 : r, kc = 1 === keyDims.col ? 0 : c;
+					callArgs[0] = kr < keyDims.row && kc < keyDims.col ? key.getValue2(kr, kc) :
+						new cError(cErrorType.not_available);
+				}
+				if (rangeLookupDims) {
+					let lr = 1 === rangeLookupDims.row ? 0 : r, lc = 1 === rangeLookupDims.col ? 0 : c;
+					callArgs[3] = lr < rangeLookupDims.row && lc < rangeLookupDims.col ? rangeLookup.getValue2(lr, lc) :
+						new cError(cErrorType.not_available);
+				}
+				let elem = this.calculate(callArgs, argument1, ctx, indexIsElement, collapsesCall);
+				if (collapsesCall && elem.collapsesCall === collapsesCall) {
+					return elem;
+				}
+				res.addElement(elem);
+			}
+		}
+		return res;
+	};
+
+	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx, opt_indexIsElement, opt_collapsesCall) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
 		// cBool.tocBool() returns `this` (same .value read), cNumber.tocBool() is new cBool(value !== 0)
 		// whose .value is exactly (value !== 0). Other types keep the original tocBool() path.
-		let _a3 = arg[3], arg3;
+		let _a3 = arg[3], arg3, rangeLookupError = null;
 		if (!_a3) {
 			arg3 = true;
 		} else if (cElementType.bool === _a3.type) {
@@ -3386,7 +3420,15 @@ function (window, undefined) {
 		} else if (cElementType.number === _a3.type) {
 			arg3 = 0 !== _a3.value;
 		} else {
-			arg3 = _a3.tocBool().value;
+			let _a3Val = (cElementType.cell === _a3.type || cElementType.cell3D === _a3.type ? _a3.getValue() : _a3).tocBool();
+			// only a logical, a number or the text TRUE / FALSE converts: any other text is refused (measured)
+			if (cElementType.error === _a3Val.type) {
+				rangeLookupError = _a3Val;
+			} else if (cElementType.bool !== _a3Val.type) {
+				rangeLookupError = new cError(cErrorType.wrong_value_type);
+			} else {
+				arg3 = _a3Val.value;
+			}
 		}
 		let opt_xlookup = arg[4] !== undefined;
 		let opt_arg4, opt_arg5;
@@ -3396,7 +3438,37 @@ function (window, undefined) {
 		}
 		let t = this, number, r, c, res = -1, count;
 
-		if (!opt_xlookup) {
+		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
+			arg0 = arg0.getValue();
+		}
+		let arg0Val;
+		if (cElementType.array === arg0.type) {
+			arg0Val = arg0.getElementRowCol(0, 0);
+		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			arg0Val = arg0.cross(argument1);
+		} else {
+			arg0Val = arg0;
+		}
+		let answer = cElementType.error === arg0Val.type ? arg0Val : null;
+		// a number, a logical or a numeric text is no table either, but it answers after index_num and range_lookup (measured)
+		let notTable = false;
+		if (!answer && !opt_xlookup) {
+			if (cElementType.string === arg0Val.type && arg0Val.getValue().length > 255) {
+				answer = new cError(cErrorType.wrong_value_type);
+			} else if (cElementType.error === arg1.type) {
+				answer = arg1;
+			} else if (cElementType.string === arg1.type) {
+				if ("" !== arg1.getValue() && cElementType.number === arg1.tocNumber().type) {
+					notTable = true;
+				} else {
+					answer = new cError(cErrorType.wrong_value_type);
+				}
+			} else if (cElementType.number === arg1.type || cElementType.bool === arg1.type) {
+				notTable = true;
+			}
+		}
+		if (!answer && !opt_xlookup) {
+			let arg2Type = arg2.type;
 			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
 				arg2 = arg2.getValue();
 			} else if (cElementType.array === arg2.type) {
@@ -3405,43 +3477,38 @@ function (window, undefined) {
 				arg2 = arg2.cross(argument1);
 			}
 
+			let indexNum = arg2.tocNumber();
 			if (cElementType.error === arg2.type) {
-				return arg2;
-			}
-
-			number = arg2.getValue() - 1;
-
-			if (isNaN(number)) {
-				return new cError(cErrorType.bad_reference);
-			}
-			if (number < 0) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
-			arg0 = arg0.getValue();
-		}
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-
-		let arg0Val;
-		if (cElementType.array === arg0.type) {
-			arg0Val = arg0.getElementRowCol(0, 0);
-		} else {
-			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				arg0Val = arg0.cross(argument1);
+				// an error element of an array is an unusable index
+				if (!opt_indexIsElement) {
+					return arg2;
+				}
+				number = NaN;
+			} else if (cElementType.number !== indexNum.type) {
+				// typed text is refused, text read from a reference or an array is unusable like an index past the table
+				if (cElementType.string === arg2Type && !opt_indexIsElement) {
+					answer = new cError(cErrorType.wrong_value_type);
+				}
+				number = NaN;
 			} else {
-				arg0Val = arg0;
+				let indexVal = indexNum.getValue();
+				// truncated toward zero, unless within 2^-22 of an integer - an absolute distance (measured)
+				number = (Math.abs(indexVal - Math.round(indexVal)) < 2.384185791015625e-7 ?
+					Math.round(indexVal) : Math.trunc(indexVal)) - 1;
+			}
+			if (!answer) {
+				answer = rangeLookupError || (notTable ? new cError(cErrorType.not_available) : null);
 			}
 		}
-
-
-		if (cElementType.error === arg0Val.type) {
-			return arg0Val;
+		if (answer) {
+			// a call answering as a whole gets an error of its own, never another call's
+			if (opt_collapsesCall) {
+				answer = new cError(answer.errorType);
+				answer.collapsesCall = opt_collapsesCall;
+			}
+			return answer;
 		}
+
 		if (cElementType.empty === arg0Val.type) {
 			if (!opt_xlookup) {
 				arg0Val = arg0Val.tocNumber();
@@ -3458,43 +3525,48 @@ function (window, undefined) {
 			}
 
 			if (arrayToSearch) {
+				let isText = cElementType.string === arg0ValType;
+				let searchValue = isText ? arg0Val.getValue().toLowerCase() : arg0Val.getValue();
 				if (arg3) {
-					// approximate(binary) search
-					res = _func.lookupBinarySearch(arg0Val, arrayToSearch, false);
-				} else {
-					let searchValue = arg0Val.getValue();
-					if (arg0Val.type === cElementType.string) {
-						searchValue = searchValue.toLowerCase();
+					// approximate: the same search as over a range, over the text lowercased the same way
+					let typed = [], elems = isText ? [] : arrayToSearch;
+					for (let i = 0; i < arrayToSearch.length; i++) {
+						let elem = arrayToSearch[i];
+						if (elem.type === arg0ValType) {
+							typed.push(i);
+						}
+						if (isText) {
+							elems.push(elem.type === arg0ValType ? new cString(elem.getValue().toLowerCase()) : elem);
+						}
 					}
-					// exact (simple) search
+					if (typed.length) {
+						res = this._defaultBinarySearch(isText ? new cString(searchValue) : arg0Val, 0, elems.length - 1,
+							null, null, typed, elems);
+					}
+				} else {
+					// a text key with * ? or ~ is a wildcard pattern
+					let isMask = isText && /[*?~]/.test(searchValue);
 					for (let i = 0; i < arrayToSearch.length; i++) {
 						let elem = arrayToSearch[i];
 						if (elem.type !== arg0ValType) {
 							continue;
 						}
-						let elemValue = elem.getValue();
-	
-						if (elem.type === cElementType.string) {
-							elemValue = elemValue.toLowerCase();
-						}
-	
-						if (elemValue === searchValue) {
+						let elemValue = isText ? elem.getValue().toLowerCase() : elem.getValue();
+						if (isMask ? AscCommonExcel.searchRegExp2(elemValue, searchValue) : elemValue === searchValue) {
 							res = i;
 							break
 						}
 					}
 				}
-
-			}
-
-			if (-1 === res) {
-				return new cError(cErrorType.not_available);
 			}
 
 			let _ldim = arg1.getDimensions();
 			count = this.bHor ? _ldim.row : _ldim.col;
-			if (number > count - 1) {
-				return new cError(cErrorType.bad_reference);
+			if (-1 === res || isNaN(number) || number < 0 || number > count - 1) {
+				let err = new cError(-1 === res ? cErrorType.not_available :
+					number < 0 ? cErrorType.wrong_value_type : cErrorType.bad_reference);
+				err.collapsesCall = opt_collapsesCall;
+				return err;
 			}
 
 			r = this.bHor ? number : res;
@@ -3547,17 +3619,17 @@ function (window, undefined) {
 		}
 
 		count = this.bHor ? (bb.r2 - bb.r1) : (bb.c2 - bb.c1);
-		if (number > count) {
-			return new cError(cErrorType.bad_reference);
-		}
 		res = this._get(arg0Val, arg3, opt_arg4, opt_arg5, ws,
 			this.bHor ? bb.r1 : bb.c1, this.bHor ? bb.c1 : bb.r1, this.bHor ? bb.c2 : bb.r2);
 		if (opt_xlookup) {
 			return res;
 		}
 
-		if (-1 === res) {
-			return new cError(cErrorType.not_available);
+		if (-1 === res || isNaN(number) || number < 0 || number > count) {
+			let err = new cError(-1 === res ? cErrorType.not_available :
+				number < 0 ? cErrorType.wrong_value_type : cErrorType.bad_reference);
+			err.collapsesCall = opt_collapsesCall;
+			return err;
 		}
 
 		r = this.bHor ? bb.r1 + number : res;
@@ -3800,11 +3872,9 @@ function (window, undefined) {
 		return foundCurrent;
 	};
 	/**
-	 * Finds the last occurrence of the same value in a sorted typed array.
-	 * This function is crucial for Excel's VLOOKUP/HLOOKUP approximate match behavior,
-	 * which requires returning the position of the LAST duplicate value when exact matches exist.
-	 * 
-	 * Uses binary search via sortedCache Map to efficiently locate the rightmost occurrence of a value
+	 * Finds the end of the run of values equal to an exact hit of the approximate VLOOKUP/HLOOKUP search.
+	 *
+	 * Uses binary search via sortedCache Map to efficiently locate the end of the run
 	 * within the specified range boundaries.
 	 * 
 	 * @private
@@ -3853,26 +3923,39 @@ function (window, undefined) {
 			return currentIndex;
 		}
 		
-		// Binary search in sameValueIndices for last index in range [currentIndex, maxIndex]
+		// Excel stops at the end of the run of equal values next to the hit, not at a later equal value (measured):
+		// find the hit in sameValueIndices, then the last index that still continues the run without a gap
 		lo = 0;
 		hi = sameValueIndices.length - 1;
-		let result = currentIndex;
-		
+		let first = -1;
 		while (lo <= hi) {
 			const mid = Math.floor((lo + hi) / 2);
-			const midValue = sameValueIndices[mid];
-			
-			if (midValue > maxIndex) {
-				hi = mid - 1;
-			} else if (midValue < currentIndex) {
+			if (sameValueIndices[mid] < currentIndex) {
 				lo = mid + 1;
 			} else {
-				result = midValue;
-				lo = mid + 1;
+				if (sameValueIndices[mid] === currentIndex) {
+					first = mid;
+				}
+				hi = mid - 1;
 			}
 		}
-		
-		return result;
+		if (-1 === first) {
+			return currentIndex;
+		}
+		let last = first;
+		lo = first + 1;
+		hi = sameValueIndices.length - 1;
+		while (lo <= hi) {
+			const mid = Math.floor((lo + hi) / 2);
+			if (sameValueIndices[mid] - mid === currentIndex - first && sameValueIndices[mid] <= maxIndex) {
+				last = mid;
+				lo = mid + 1;
+			} else {
+				hi = mid - 1;
+			}
+		}
+
+		return sameValueIndices[last];
 	};
 	/**
 	 * Performs a binary search to find the position of a value in a sorted range or array.
@@ -3880,7 +3963,7 @@ function (window, undefined) {
 	 * in VLOOKUP and HLOOKUP functions when the range_lookup parameter is TRUE.
 	 * 
 	 * The function searches for the largest value that is less than or equal to the lookup value.
-	 * If an exact match is found, it returns the position of the last occurrence of that value.
+	 * If an exact match is found, it returns the end of the run of equal values next to it.
 	 * The search is optimized using typed arrays for better performance with large datasets.
 	 * 
 	 * @private
@@ -3892,11 +3975,14 @@ function (window, undefined) {
 	 * @param {Uint32Array} typed - Pre-sorted typed array containing indices of cells with matching data types
 	 * @return {number} The index of the found element (0-based), or -1 if no suitable match is found. For approximate matches, returns the index of the largest value that is less than or equal to the search value.
 	 */
-	VHLOOKUPCache.prototype._defaultBinarySearch = function (valueForSearching, startIndex, endIndex, ws, rowCol, typed) {
+	VHLOOKUPCache.prototype._defaultBinarySearch = function (valueForSearching, startIndex, endIndex, ws, rowCol, typed, opt_array) {
 		let i = startIndex;
 		let j = endIndex;
 		const t = this;
 		const getValue = function (index) {
+			if (opt_array) {
+				return opt_array[index];
+			}
 			const cell = ws.getCell3(t.bHor ? rowCol : index, t.bHor ? index : rowCol);
 			return checkTypeCell(cell, true);
 		}
@@ -3928,13 +4014,20 @@ function (window, undefined) {
 				// remember it as potential result
 				resultIndex = k;
 				
-				// KEY FEATURE: if exact match is found,
-				// search for the LAST occurrence of this value in the range
+				// an exact hit answers with the end of its run of equal values
 				if (this._compareValues(val, valueForSearching, "=")) {
+					if (opt_array) {
+						while (k < endIndex && opt_array[k + 1].type === val.type &&
+							this._compareValues(opt_array[k + 1], valueForSearching, "=")) {
+							k++;
+						}
+						resultIndex = k;
+						break;
+					}
 					// Find position in typed array
 					let currentIndexInTyped = this._findIndexInTyped(k, typed);
 					if (currentIndexInTyped !== -1) {
-						// Search for last occurrence of the same value
+						// Search for the end of the run of the same value
 						resultIndex = this._findLastSame(currentIndexInTyped, typed, endIndex, ws, rowCol, valueForSearching);
 					}
 					break;
@@ -4054,6 +4147,19 @@ function (window, undefined) {
 		} else {
 			if (opt_array) {
 				res = this._simpleSearch(valueForSearching, false, ws, startIndex, endIndex, rowCol,opt_arg4, opt_array);
+			} else if (cElementType.string === valueForSearching.type && /[*?~]/.test(valueForSearching.value)) {
+				const typed = this.typedCache.getData(ws, rowCol, cElementType.string, startIndex, endIndex, this.bHor);
+				// the cache can hold the positions of the whole axis: only those inside this table count
+				for (let i = 0; typed && i < typed.length && typed[i] <= endIndex; i++) {
+					if (typed[i] < startIndex) {
+						continue;
+					}
+					const cell = ws.getCell3(t.bHor ? rowCol : typed[i], t.bHor ? typed[i] : rowCol);
+					if (AscCommonExcel.searchRegExp2(checkTypeCell(cell, true).getValue(), valueForSearching.value)) {
+						res = typed[i];
+						break;
+					}
+				}
 			} else {
 				const sorted = this.sortedCache.getData(ws, rowCol, valueForSearching.type, startIndex, endIndex, this.bHor);
 				if (sorted) {
@@ -4900,51 +5006,10 @@ function (window, undefined) {
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cVLOOKUP.prototype.enabledToSingle = {"1": true};
+	//lookup_value and range_lookup shape the result together, index_num only when both are scalars (measured)
+	cVLOOKUP.prototype.resultShapeArgs = [0, 3];
 	cVLOOKUP.prototype.Calculate = function (arg) {
-		let retArr = new cArray();
-
-		if (arg[0].type === cElementType.array) {
-			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
-				arg[2] = arg[2].getValue2(0,0);
-			}
-			let dimension = arg[0].getDimensions(true);
-			let ctx = {};
-			// One shared args array per loop: calculate() reads arg[0..5] into locals synchronously and
-			// never stores or mutates the array, so only the varying slot needs a write per element.
-			let callArgs = [null, arg[1], arg[2], arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[0] = arg[0].getValue2(r, c);
-					retArr.addElement(g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx));
-				}
-			}
-
-			return retArr;
-		}
-
-		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions(true);
-			let ctx = {};
-			// see above: one shared args array, only the varying slot is rewritten per element
-			let callArgs = [arg[0], arg[1], null, arg[3]];
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					callArgs[2] = arg[2].getValue2(r, c);
-					let res = g_oVLOOKUPCache.calculate(callArgs, arguments[1], ctx);
-					if (res.type === cElementType.error) {
-						// the whole result collapses to one error anyway - stop calculating and
-						// building rows for the discarded array right here
-						return new cError(cErrorType.bad_reference);
-					}
-					retArr.addElement(res);
-				}
-			}
-			return retArr;
-		}
-
-		return g_oVLOOKUPCache.calculate(arg, arguments[1]);
+		return g_oVLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
 
 	/**
