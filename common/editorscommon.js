@@ -795,6 +795,79 @@
 	function checkOOXMLSignature(stream) {
 		return null !== getEditorByOOXMLSignature(stream);
 	}
+	function checkOfficeCryptSignature(stream) {
+		// Same rule as COfficeFileFormatChecker::isMS_OFFICECRYPTOFormatFile: a CFB whose root storage has an "EncryptionInfo" entry
+		const cfbSignature = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+		if (!(stream && stream.length >= 512)) {
+			return false;
+		}
+		for (let i = 0; i < cfbSignature.length; ++i) {
+			if (cfbSignature[i] !== stream[i]) {
+				return false;
+			}
+		}
+		const readUInt32 = function(pos) {
+			return (stream[pos] | (stream[pos + 1] << 8) | (stream[pos + 2] << 16) | (stream[pos + 3] << 24)) >>> 0;
+		};
+		const sectorSize = 1 << (stream[30] | (stream[31] << 8));
+		if (512 !== sectorSize && 4096 !== sectorSize) {
+			return false;
+		}
+		// Sector N starts after the header at (N + 1) * sectorSize
+		const maxSectorCount = Math.max(0, Math.floor(stream.length / sectorSize) - 1);
+		const idsPerSector = sectorSize / 4;
+		const getSectorPos = function(sector) {
+			return sector >= 0 && sector < maxSectorCount ? (sector + 1) * sectorSize : -1;
+		};
+		// FAT sector numbers: the first 109 are in the header, the rest in the DIFAT chain
+		const fatSectorCount = Math.min(readUInt32(44), maxSectorCount);
+		const fatSectors = [];
+		for (let i = 0; i < 109 && fatSectors.length < fatSectorCount; ++i) {
+			fatSectors.push(readUInt32(76 + 4 * i));
+		}
+		for (let difatPos = getSectorPos(readUInt32(68)); difatPos >= 0 && fatSectors.length < fatSectorCount;) {
+			for (let i = 0; i < idsPerSector - 1 && fatSectors.length < fatSectorCount; ++i) {
+				fatSectors.push(readUInt32(difatPos + 4 * i));
+			}
+			difatPos = getSectorPos(readUInt32(difatPos + sectorSize - 4));
+		}
+		const getNextSector = function(sector) {
+			const fatPos = getSectorPos(fatSectors[Math.floor(sector / idsPerSector)]);
+			return fatPos >= 0 ? readUInt32(fatPos + 4 * (sector % idsPerSector)) : -1;
+		};
+		const entries = [];
+		for (let sector = readUInt32(48), count = 0; getSectorPos(sector) >= 0 && count < maxSectorCount; sector = getNextSector(sector), ++count) {
+			for (let pos = getSectorPos(sector); pos < getSectorPos(sector) + sectorSize; pos += 128) {
+				entries.push(pos);
+			}
+		}
+		if (0 === entries.length) {
+			return false;
+		}
+		// Walk the red-black tree of the root storage children: child at +76, left and right siblings at +68 and +72
+		const name = "EncryptionInfo";
+		const ids = [readUInt32(entries[0] + 76)];
+		for (let visited = 0; ids.length > 0 && visited < entries.length;) {
+			const id = ids.pop();
+			if (id >= entries.length) {
+				continue;
+			}
+			++visited;
+			const pos = entries[id];
+			let j = 0;
+			const type = stream[pos + 66];
+			if ((1 === type || 2 === type || 5 === type) && 2 * (name.length + 1) === (stream[pos + 64] | (stream[pos + 65] << 8))) {
+				while (j < name.length && name.charCodeAt(j) === (stream[pos + 2 * j] | (stream[pos + 2 * j + 1] << 8))) {
+					++j;
+				}
+			}
+			if (j === name.length) {
+				return true;
+			}
+			ids.push(readUInt32(pos + 68), readUInt32(pos + 72));
+		}
+		return false;
+	}
 	function getEditorByBinSignature(stream, Signature) {
 		if (stream.length > 4) {
 			let signature = typeof stream === 'string' ? stream.slice(0, 4) : AscCommon.UTF8ArrayToString(stream, 0, 4);
@@ -15774,6 +15847,7 @@
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
+	window["AscCommon"].checkOfficeCryptSignature = checkOfficeCryptSignature;
 	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
 	window["AscCommon"].getEditorBySignature = getEditorBySignature;
 	window["AscCommon"].getLTRString = getLTRString;
