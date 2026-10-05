@@ -3047,12 +3047,13 @@
 				this.m_oWordControl.OnUpdateOverlay();
 			}
 		} else if (shape) {
-			this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
 			if ((checkSelectionEnd || this.MouseDownTrack.IsDragged()) && !outlineView.isDecorationMouseDown) {
+				this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
 				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 				shape.selectionSetEnd(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm, 0);
 				shape.updateSelectionState(this.m_oWordControl.m_oDrawingDocument);
 			} else if (this.m_oWordControl.m_oLogicDocument.IsFocusOnOutline()) {
+				this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
 				if (shape.getDocContent().IsSelectionUse()) {
 					this.m_oWordControl.m_oDrawingDocument.SelectShow();
 				} else {
