@@ -24461,7 +24461,7 @@
 		if (null === transparent || transparent < 0 || transparent > 1)
 			throwException(new Error("The transparent parameter must be a number from 0 to 1"));
 
-		this.UniFill.setTransparent(Math.round((1 - transparent) * 255));
+		this.UniFill.setTransparent((1 - transparent) * 255);
 		return true;
 	};
 

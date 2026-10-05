@@ -1293,6 +1293,16 @@
 		return "medium";
 	}
 
+	function getStrokeFillCode(unifill)
+	{
+		let color = unifill.getRGBAColor();
+		let code = "\t\tlet fill = Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + "));\n";
+		if (AscFormat.isRealNumber(unifill.transparent))
+			code += "\t\tfill.SetTransparent(" + (1 - unifill.transparent / 255) + ");\n";
+
+		return code;
+	}
+
 	function getStrokeArrowCode(method, arrow)
 	{
 		if (!arrow)
@@ -1816,10 +1826,10 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.getRGBAColor();
+			strStrokeShape += getStrokeFillCode(line.Fill);
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
 
@@ -2870,11 +2880,11 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.getRGBAColor();
 
+			strStrokeShape += getStrokeFillCode(line.Fill);
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
 
@@ -3421,11 +3431,11 @@
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.getRGBAColor();
 
+			strStrokeShape += getStrokeFillCode(line.Fill);
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
 
