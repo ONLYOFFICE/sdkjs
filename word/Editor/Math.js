@@ -2310,6 +2310,7 @@ ParaMath.prototype.Set_Align = function(Align)
 	{
 		History.Add(new CChangesMathParaJc(this, this.Jc, Align));
 		this.raw_SetAlign(Align);
+		this.private_UpdatePresentationOutline();
 	}
 };
 ParaMath.prototype.raw_SetAlign = function(Align)

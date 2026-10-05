@@ -1472,6 +1472,7 @@ CMathContent.prototype.setCtrPrp = function(oPr)
 
 	History.Add(new CChangesMathContentTextPr(this, this.CtrPrp, oPr));
 	this.CtrPrp = oPr;
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.Is_InclineLetter = function()
 {
@@ -1692,6 +1693,7 @@ CMathContent.prototype.SetArgSize = function(val)
 {
 	AscCommon.History.Add(new CChangesMathContentArgSize(this, this.ArgSize.GetValue(), val));
 	this.ArgSize.SetValue(val);
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.GetArgSize = function()
 {
@@ -2262,6 +2264,7 @@ CMathContent.prototype.Internal_Content_Add = function(Pos, Item, bUpdatePositio
 	this.Content.splice(Pos, 0, Item);
 
 	this.private_UpdatePosOnAdd(Pos, bUpdatePosition);
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.private_UpdatePosOnAdd = function(Pos, bUpdatePosition)
 {
@@ -2387,6 +2390,7 @@ CMathContent.prototype.ConcatToContent = function(Pos, NewItems)
 		var Array_end   = this.Content.slice(Pos);
 
 		this.Content = Array_start.concat(NewItems, Array_end);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMathContent.prototype.Remove_FromContent = function(Pos, Count)
@@ -2405,6 +2409,7 @@ CMathContent.prototype.Remove_FromContent = function(Pos, Count)
 
 	this.private_CorrectCurPos();
 	this.private_UpdatePosOnRemove(Pos, Count);
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.Remove_Content = function(Pos, Count)
 {
@@ -5835,6 +5840,7 @@ CMathContent.prototype.Apply_MenuProps = function(Props, Pos)
 
 			AscCommon.History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
 			this.Recalc_RunsCompiledPr();
+			this.private_UpdatePresentationOutline();
 		}
 	}
 	else if (Props.Action & c_oMathMenuAction.DecreaseArgumentSize)
@@ -5846,6 +5852,7 @@ CMathContent.prototype.Apply_MenuProps = function(Props, Pos)
 
 			AscCommon.History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
 			this.Recalc_RunsCompiledPr();
+			this.private_UpdatePresentationOutline();
 		}
 	}
 

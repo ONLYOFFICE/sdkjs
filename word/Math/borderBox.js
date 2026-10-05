@@ -495,36 +495,42 @@ CBorderBox.prototype.Apply_MenuProps = function(Props)
 		{
 			History.Add(new CChangesMathBorderBoxTop(this, this.Pr.hideTop, Props.HideTop));
 			this.raw_SetTop(Props.HideTop);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideBottom !== undefined && Props.HideBottom !== this.Pr.hideBot)
 		{
 			History.Add(new CChangesMathBorderBoxBot(this, this.Pr.hideBot, Props.HideBottom));
 			this.raw_SetBot(Props.HideBottom);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideLeft !== undefined && Props.HideLeft !== this.Pr.hideLeft)
 		{
 			History.Add(new CChangesMathBorderBoxLeft(this, this.Pr.hideLeft, Props.HideLeft));
 			this.raw_SetLeft(Props.HideLeft);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideRight !== undefined && Props.HideRight !== this.Pr.hideRight)
 		{
 			History.Add(new CChangesMathBorderBoxRight(this, this.Pr.hideRight, Props.HideRight));
 			this.raw_SetRight(Props.HideRight);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideHor !== undefined && Props.HideHor == this.Pr.strikeH) // strikeH - нарисовать горизонтальную линию
 		{
 			History.Add(new CChangesMathBorderBoxHor(this, this.Pr.strikeH, !Props.HideHor));
 			this.raw_SetHor(!Props.HideHor);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideVer !== undefined && Props.HideVer == this.Pr.strikeV) // strikeV - нарисовать вертикальную линию
 		{
 			History.Add(new CChangesMathBorderBoxVer(this, this.Pr.strikeV, !Props.HideVer));
 			this.raw_SetVer(!Props.HideVer);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideTopLTR !== undefined && Props.HideTopLTR == this.Pr.strikeTLBR) // strikeTLBR - нарисовать диагональ из
@@ -532,6 +538,7 @@ CBorderBox.prototype.Apply_MenuProps = function(Props)
 		{
 			History.Add(new CChangesMathBorderBoxTopLTR(this, this.Pr.strikeTLBR, !Props.HideTopLTR));
 			this.raw_SetTopLTR(!Props.HideTopLTR);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideTopRTL !== undefined && Props.HideTopRTL == this.Pr.strikeBLTR)
@@ -542,6 +549,7 @@ CBorderBox.prototype.Apply_MenuProps = function(Props)
 																									   // нижнего угла
 																									   // слева направо
 			this.raw_SetTopRTL(!Props.HideTopRTL);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };
@@ -931,6 +939,7 @@ CBox.prototype.Displace_BreakOperator = function(isForward, bBrkBefore, CountOpe
 			if (AlnAt !== NewAlnAt)
 			{
 				History.Add(new CChangesMathBoxAlnAt(this, AlnAt, NewAlnAt));
+				this.private_UpdatePresentationOutline();
 			}
 		}
 	}
@@ -952,12 +961,14 @@ CBox.prototype.Apply_MenuProps = function(Props)
     {
         History.Add(new CChangesMathBoxForcedBreak(this, false, true));
         this.raw_ForcedBreak(true);
+        this.private_UpdatePresentationOutline();
     }
 
     if(Props.Action & c_oMathMenuAction.DeleteForcedBreak && true == this.Can_DeleteForcedBreak())
     {
         History.Add(new CChangesMathBoxForcedBreak(this, true, false));
         this.raw_ForcedBreak(false);
+        this.private_UpdatePresentationOutline();
     }
 };
 CBox.prototype.Get_InterfaceProps = function()
@@ -1175,6 +1186,7 @@ CBar.prototype.Apply_MenuProps = function(Props)
 		{
 			History.Add(new CChangesMathBarLinePos(this, this.Pr.pos, Pos));
 			this.raw_SetLinePos(Pos);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };

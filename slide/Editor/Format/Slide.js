@@ -219,7 +219,7 @@
 		copy.setSlideSize(this.Width, this.Height);
 
 		if (this.notes) {
-			copy.setNotes(this.notes.createDuplicate());
+			copy.setNotes(this.notes.createDuplicate(undefined, oPr.cacheImage));
 		}
 		if (this.slideComments) {
 			if (!copy.slideComments) {

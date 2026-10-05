@@ -4494,6 +4494,14 @@
 			ctxOverlay.beginPath();
 		}
 
+		if (isDrawOutline)
+		{
+			const outlineView = this.m_oLogicDocument && this.m_oLogicDocument.GetOutlineView();
+			const dragDropManager = outlineView && outlineView.getDragDropManager();
+			if (dragDropManager && dragDropManager.isTrackText())
+				dragDropManager.drawTarget(overlayOutline);
+		}
+
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.CheckTableRules(overlay);
 

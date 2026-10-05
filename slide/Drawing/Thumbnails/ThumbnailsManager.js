@@ -38,6 +38,12 @@
 	function CThumbnailsManagerBase(editorPage) {
 		this.m_oWordControl = editorPage;
 	}
+	CThumbnailsManagerBase.prototype.GoToPageWithoutSelect = function (slideIndex) {
+		const isSelectPageEnabled = this.SelectPageEnabled;
+		this.SelectPageEnabled = false;
+		this.m_oWordControl.GoToPage(slideIndex);
+		this.SelectPageEnabled = isSelectPageEnabled;
+	};
 	CThumbnailsManagerBase.prototype.initEvents = function()
 	{
 		var control = this.m_oWordControl.m_oThumbnails.HtmlElement;
@@ -2575,6 +2581,25 @@
 	COutlineThumbnailsManager.prototype.GetOutlineView = function () {
 		return this.m_oWordControl.m_oLogicDocument && this.m_oWordControl.m_oLogicDocument.GetOutlineView();
 	};
+	COutlineThumbnailsManager.prototype.GetDragDropManager = function () {
+		const outlineView = this.GetOutlineView();
+		return outlineView ? outlineView.getDragDropManager() : null;
+	};
+	COutlineThumbnailsManager.prototype.GoToSelectedOutlineSlide = function () {
+		const outlineView = this.GetOutlineView();
+		const selectedPage = outlineView ? outlineView.getSelectedSlide() : null;
+		if (selectedPage !== null) {
+			this.GoToPageWithoutSelect(selectedPage);
+		}
+	};
+	COutlineThumbnailsManager.prototype.UpdateDragTarget = function () {
+		const dragDropManager = this.GetDragDropManager();
+		if (!dragDropManager || !dragDropManager.isTrackText()) {
+			return;
+		}
+		const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
+		dragDropManager.checkMouseMove(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm);
+	};
 	// events
 	COutlineThumbnailsManager.prototype.getSelectedPage = function () {
 		const outlineView = this.GetOutlineView();
@@ -2641,17 +2666,20 @@
 		if ((global_mouseEvent.Button === 0 || global_mouseEvent.Button === 2) && outlineView) {
 			const outlineXMm = pos.X * g_dKoef_pix_to_mm;
 			const outlineYMm = pos.Y * g_dKoef_pix_to_mm;
-			outlineView.selectionSetStart(global_mouseEvent, outlineXMm, outlineYMm, 0);
-			const selectedPage = outlineView.getSelectedSlide();
-			if (selectedPage !== null) {
-				this.SelectPageEnabled = false;
-				this.m_oWordControl.GoToPage(selectedPage);
-				this.SelectPageEnabled = true;
+			if (outlineView.getDragDropManager().checkMouseDown(global_mouseEvent, outlineXMm, outlineYMm)) {
+				this.OnUpdateOverlay();
+				checkSelectionEnd();
+				return false;
 			}
+			outlineView.selectionSetStart(global_mouseEvent, outlineXMm, outlineYMm, 0);
+			this.GoToSelectedOutlineSlide();
 			if (global_mouseEvent.Button === 2) {
 				this.showContextMenu(false);
 			}
 			this.OnUpdateOverlay();
+			if (outlineView.isDecorationMouseDown) {
+				outlineView.getDragDropManager().checkDecorationMouseDown(global_mouseEvent, outlineXMm, outlineYMm);
+			}
 			checkSelectionEnd();
 		}
 		return false;
@@ -2698,6 +2726,14 @@
 			{
 				if (this.MouseDownTrack.IsMoved(global_mouseEvent.X, global_mouseEvent.Y))
 					this.MouseDownTrack.ResetSimple();
+			}
+			const dragDropManager = this.GetDragDropManager();
+			if (dragDropManager && dragDropManager.isActive())
+			{
+				if (!this.MouseDownTrack.IsSimple())
+					dragDropManager.startTrackText();
+				this.UpdateDragTarget();
+				this.m_oWordControl.m_oThumbnails.HtmlElement.style.cursor = "default";
 			}
 			this.OnUpdateOverlay();
 
@@ -2771,6 +2807,30 @@
 		if (!this.MouseDownTrack.IsStarted())
 			return;
 
+		const dragDropManager = this.GetDragDropManager();
+		if (dragDropManager && dragDropManager.isActive())
+		{
+			this.MouseDownTrack.Reset();
+			if (global_mouseEvent.Sender != control)
+			{
+				dragDropManager.cancelTrackText();
+			}
+			else
+			{
+				const isClick = !dragDropManager.isTrackText();
+				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
+				dragDropManager.checkMouseUp(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm);
+				if (isClick) {
+					this.GoToSelectedOutlineSlide();
+				}
+			}
+			this.m_oWordControl.OnUpdateOverlay();
+			this.OnUpdateOverlay();
+			this.onMouseMove(e);
+			this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			return;
+		}
+
 		if (this.MouseDownTrack.IsSimple())
 		{
 			if (this.MouseDownTrack.IsMoved(global_mouseEvent.X, global_mouseEvent.Y))
@@ -2820,6 +2880,14 @@
 		var control = this.m_oWordControl.m_oThumbnails.HtmlElement;
 		if (global_mouseEvent.IsLocked == true && global_mouseEvent.Sender == control)
 		{
+			const dragDropManager = this.GetDragDropManager();
+			if (dragDropManager && dragDropManager.isActive() && e.keyCode === Asc.c_oAscKeyCodes.Escape)
+			{
+				this.MouseDownTrack.Reset();
+				dragDropManager.cancelTrackText();
+				this.m_oWordControl.OnUpdateOverlay();
+				this.OnUpdateOverlay();
+			}
 			e.preventDefault();
 			return false;
 		}
@@ -2971,13 +3039,21 @@
 
 		outlineView.drawDecorations(this.getOutlineGraphics(context), this.GetSelectedSlideIndexesMap(), this.MouseDownTrack.FocusPage);
 		const shape = outlineView.outlineShape;
-		if (shape) {
+		const dragDropManager = outlineView.getDragDropManager();
+		if (shape && dragDropManager.isActive()) {
 			this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
+			// The drop indicator is drawn on the main overlay; there is nothing to draw before the drag starts.
+			if (dragDropManager.isTrackText()) {
+				this.m_oWordControl.OnUpdateOverlay();
+			}
+		} else if (shape) {
 			if ((checkSelectionEnd || this.MouseDownTrack.IsDragged()) && !outlineView.isDecorationMouseDown) {
+				this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
 				const pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 				shape.selectionSetEnd(global_mouseEvent, pos.X * g_dKoef_pix_to_mm, pos.Y * g_dKoef_pix_to_mm, 0);
 				shape.updateSelectionState(this.m_oWordControl.m_oDrawingDocument);
 			} else if (this.m_oWordControl.m_oLogicDocument.IsFocusOnOutline()) {
+				this.m_oWordControl.m_oDrawingDocument.UpdateTargetTransform(outlineView.getTransformText());
 				if (shape.getDocContent().IsSelectionUse()) {
 					this.m_oWordControl.m_oDrawingDocument.SelectShow();
 				} else {
@@ -3221,6 +3297,8 @@
 
 		this.CalculatePlaces();
 		this.updateOutlineShapeTransform();
+		// Autoscroll during a drag moves the text under the pointer.
+		this.UpdateDragTarget();
 		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
 		this.m_bIsUpdate = true;
 

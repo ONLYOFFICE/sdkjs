@@ -45,9 +45,13 @@
 	function rebuildPos(pos, sourceContent, sourceParagraph) {
 		const newPos = pos.slice();
 		newPos[0] = {Class: sourceContent, Position: sourceParagraph.GetIndex()};
-		newPos[1] = {Class: sourceParagraph, Position: pos[1].Position};
+		newPos[1] = {Class: sourceParagraph, Position: pos[1].Position, Deleted: pos[1].Deleted};
 		for (let i = 2; i < newPos.length; i += 1) {
 			const previousPos = newPos[i - 1];
+			if (previousPos.Deleted) {
+				newPos.length = i;
+				break;
+			}
 			const newClass = previousPos.Class.GetElement(previousPos.Position);
 			if (newClass.Get_Type() === para_Math) {
 				newPos[i].Class = newClass.Root;
@@ -119,12 +123,63 @@
 	SlideUpdateDataCollector.prototype.addSlidesToCheck = function (slideMap) {
 		this.checkSlideMap = Object.assign({}, this.checkSlideMap, slideMap);
 	};
-	function ParagraphUpdateDataCollector(outlineView, paragraphMap, additionalCorrectedContents) {
+	function ParagraphUpdateDataCollector(outlineView, paragraphMap) {
 		this.outlineView = outlineView;
 		this.paragraphMap = paragraphMap;
 		this.additionalCheckSlideMap = {};
-		this.additionalCorrectedContents = additionalCorrectedContents || {};
+		this.shownContentMap = null;
+		this.shownContentCache = {};
 	}
+	ParagraphUpdateDataCollector.prototype.getShownContentMap = function () {
+		if (!this.shownContentMap) {
+			this.shownContentMap = {};
+			for (let id in this.paragraphMap) {
+				const paragraph = this.paragraphMap[id];
+				const content = paragraph.GetParent();
+				if (content && this.outlineView.isShownSourceParagraph(paragraph)) {
+					this.shownContentMap[content.GetId()] = true;
+				}
+			}
+		}
+		return this.shownContentMap;
+	};
+	ParagraphUpdateDataCollector.prototype.isContentShownBefore = function (content) {
+		if (this.getShownContentMap()[content.GetId()]) {
+			return true;
+		}
+		for (let i = 0; i < content.Content.length; i += 1) {
+			if (this.outlineView.isShownSourceParagraph(content.Content[i])) {
+				return true;
+			}
+		}
+		return false;
+	};
+	ParagraphUpdateDataCollector.prototype.isShownContent = function (content) {
+		const contentId = content.GetId();
+		if (this.shownContentCache[contentId] === undefined) {
+			this.shownContentCache[contentId] = this.checkShownContent(content);
+		}
+		return this.shownContentCache[contentId];
+	};
+	ParagraphUpdateDataCollector.prototype.checkShownContent = function (content) {
+		if (!content.Is_Empty()) {
+			return true;
+		}
+		const outlineView = this.outlineView;
+		const paragraph = content.Content[0];
+		if (!paragraph) {
+			return false;
+		}
+		const isParagraphShown = outlineView.isShownSourceParagraph(paragraph);
+		if (!isParagraphShown && outlineView.isHiddenEmptyParagraph(paragraph)) {
+			return false;
+		}
+		const isShown = isParagraphShown || outlineView.isKeptEmptyParagraph(paragraph) || this.isContentShownBefore(content);
+		if (isShown) {
+			outlineView.keepEmptyParagraph(paragraph);
+		}
+		return isShown;
+	};
 	ParagraphUpdateDataCollector.prototype.checkExistingParagraphInOutline = function (paragraph, updateData) {
 		const id = paragraph.Get_Id();
 		const outlineView = this.outlineView;
@@ -152,7 +207,7 @@
 			return;
 		}
 		const content = shape.getDocContent();
-		const isCorrectContent = content && (shape.isTitlePlaceholder() || !content.Is_Empty() || this.additionalCorrectedContents[content.GetId()]);
+		const isCorrectContent = content && (shape.isTitlePlaceholder() || this.isShownContent(content));
 		if (!isCorrectContent) {
 			return;
 		}
@@ -164,8 +219,47 @@
 			this.additionalCheckSlideMap[slideId] = new CheckSlideInfo(slide);
 		}
 	};
+	ParagraphUpdateDataCollector.prototype.isMissingInOutline = function (paragraph, content) {
+		return !this.outlineView.isShownSourceParagraph(paragraph) && this.isShownContent(content);
+	};
+	ParagraphUpdateDataCollector.prototype.getBodyContentOfParagraph = function (paragraph) {
+		const shape = paragraph.GetParentShape();
+		const slide = shape && shape.parent;
+		if (!slide || !AscFormat.isSlideLikeObject(slide) || !slide.isSlide() || !shape.isOutlinePlaceholder() || shape.isTitlePlaceholder()) {
+			return null;
+		}
+		if (this.outlineView.getPresentation().GetSlideIndex(slide) === -1) {
+			return null;
+		}
+		return shape.getDocContent();
+	};
+	ParagraphUpdateDataCollector.prototype.addContentParagraphsToCheck = function () {
+		const checkedContents = {};
+		const missingParagraphs = [];
+		for (let id in this.paragraphMap) {
+			const content = this.getBodyContentOfParagraph(this.paragraphMap[id]);
+			if (!content || checkedContents[content.GetId()]) {
+				continue;
+			}
+			checkedContents[content.GetId()] = true;
+			for (let i = 0; i < content.Content.length; i += 1) {
+				const paragraph = content.Content[i];
+				if (paragraph.IsParagraph() && !this.paragraphMap[paragraph.Get_Id()] && this.isMissingInOutline(paragraph, content)) {
+					missingParagraphs.push(paragraph);
+				}
+			}
+		}
+		if (!missingParagraphs.length) {
+			return;
+		}
+		this.paragraphMap = Object.assign({}, this.paragraphMap);
+		for (let i = 0; i < missingParagraphs.length; i += 1) {
+			this.paragraphMap[missingParagraphs[i].Get_Id()] = missingParagraphs[i];
+		}
+	};
 	ParagraphUpdateDataCollector.prototype.collect = function () {
 		const updateData = new ParagraphUpdateData();
+		this.addContentParagraphsToCheck();
 		for (let id in this.paragraphMap) {
 			const paragraph = this.paragraphMap[id];
 			this.checkExistingParagraphInOutline(paragraph, updateData);
@@ -807,9 +901,48 @@
 	function RemoveOutlineParagraphsManager(outlineView) {
 		this.outlineView = outlineView;
 		this.checkSlidesForRemove = {};
+		this.selectionStartSlide = null;
+		this.contentsToHideWhenEmpty = {};
 		this.saveManager = new SavePosManager(outlineView);
 		this.concatShapesManager = new ConcatShapesManager(outlineView);
 	}
+	RemoveOutlineParagraphsManager.prototype.addContentToHideWhenEmpty = function (content) {
+		this.contentsToHideWhenEmpty[content.GetId()] = content;
+	};
+	RemoveOutlineParagraphsManager.prototype.hideEmptiedContents = function () {
+		for (let id in this.contentsToHideWhenEmpty) {
+			this.outlineView.hideContentIfEmpty(this.contentsToHideWhenEmpty[id]);
+		}
+	};
+	RemoveOutlineParagraphsManager.prototype.getEmptyContentOfParagraph = function (outlineParagraph) {
+		const sourceParagraph = outlineParagraph && this.getSourceParagraph(outlineParagraph);
+		const content = sourceParagraph && sourceParagraph.GetParent();
+		const shape = content && content.Is_DrawingShape(true);
+		if (!shape || shape.isTitlePlaceholder() || !content.Is_Empty()) {
+			return null;
+		}
+		return content;
+	};
+	RemoveOutlineParagraphsManager.prototype.processEmptyContentParagraph = function (direction) {
+		if (direction !== AscWord.Direction.BACKWARD) {
+			return false;
+		}
+		const docContent = this.getDocContent();
+		const outlineParagraph = this.getContentPosParagraph(docContent);
+		const content = this.getEmptyContentOfParagraph(outlineParagraph);
+		if (!content) {
+			return false;
+		}
+		if (content.Content[0].IsPresentationBulleted()) {
+			return false;
+		}
+		const previousOutlineParagraph = docContent.Content[outlineParagraph.Index - 1];
+		if (previousOutlineParagraph) {
+			this.saveManager.saveOutlineParagraphEdgePos(previousOutlineParagraph, false);
+		}
+		this.outlineView.hideEmptyContent(content);
+		return true;
+	};
 	RemoveOutlineParagraphsManager.prototype.getDocContent = function () {
 		return this.outlineView.getDocContent();
 	};
@@ -914,9 +1047,13 @@
 	};
 	RemoveOutlineParagraphsManager.prototype.processSourceSelectedContent = function (content, idx, count, isOnAddText, edgeContents) {
 		const shape = content.Is_DrawingShape(true);
-		const slide = shape.parent;
-		const slideNum = slide.num;
-		this.checkSlidesForRemove[slideNum] = slide;
+		if (shape.isTitlePlaceholder()) {
+			const slide = shape.parent;
+			this.checkSlidesForRemove[slide.num] = slide;
+		}
+		if (count > 1) {
+			this.addContentToHideWhenEmpty(content);
+		}
 		if (content.IsSelectedAll() || content.IsEmpty()) {
 			content.Remove(1, true, false, false);
 		} else {
@@ -945,6 +1082,18 @@
 			}
 		}
 	}
+	RemoveOutlineParagraphsManager.prototype.saveSelectionStartSlide = function (selectProps) {
+		if (selectProps.index !== 0) {
+			return;
+		}
+		if (selectProps.outlineParagraph) {
+			const info = this.outlineView.outlineInfo.getSlideInfoByParagraph(selectProps.outlineParagraph);
+			this.selectionStartSlide = info ? info.slide : null;
+		} else {
+			const shape = selectProps.content.Is_DrawingShape(true);
+			this.selectionStartSlide = shape ? shape.parent : null;
+		}
+	};
 	RemoveOutlineParagraphsManager.prototype.saveMockParagraphSlidePos = function (outlineParagraph) {
 		const info = this.outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
 		if (info) {
@@ -952,13 +1101,13 @@
 		}
 	};
 	RemoveOutlineParagraphsManager.prototype.processSelectedContent = function (isOnAddText) {
-		const savedContentsOnUpdate = {};
 		const outlineView = this.outlineView;
 		const edgeContents = {firstContent: null, lastContent: null, firstOutlineParagraph: null};
 		const oThis = this;
 		let isSingleContent = false;
 		outlineView.forEachSelectedContent(function (selectProps) {
 			oThis.saveFirstOutlineParagraph(edgeContents, selectProps);
+			oThis.saveSelectionStartSlide(selectProps);
 			if (selectProps.outlineParagraph) {
 				const outlineParagraph = selectProps.outlineParagraph;
 				if (isOnAddText && selectProps.count === 1) {
@@ -977,11 +1126,8 @@
 			}
 		});
 
-		if (isOnAddText && edgeContents.firstContent) {
-			savedContentsOnUpdate[edgeContents.firstContent.GetId()] = edgeContents.firstContent;
-		}
 		if (isSingleContent) {
-			return savedContentsOnUpdate;
+			return;
 		}
 
 		if (edgeContents.firstContent && edgeContents.lastContent) {
@@ -992,7 +1138,6 @@
 		} else if (edgeContents.lastContent && edgeContents.firstOutlineParagraph) {
 			this.processLastContent(edgeContents.lastContent, edgeContents.firstOutlineParagraph);
 		}
-		return savedContentsOnUpdate;
 	};
 	RemoveOutlineParagraphsManager.prototype.processLastContent = function (lastContent, firstOutlineParagraph) {
 		const content = lastContent.Content;
@@ -1018,15 +1163,16 @@
 			}
 		}
 		const outlineView = this.outlineView;
-		let savedContentsOnUpdate;
 		if (docContent.IsSelectionUse()) {
-			savedContentsOnUpdate = this.processSelectedContent(isOnAddText);
+			this.processSelectedContent(isOnAddText);
 		} else {
 			const removeDirection = direction === AscWord.Direction.FORWARD ? AscWord.Direction.FORWARD : AscWord.Direction.BACKWARD;
-			this.processNotSelectedContent(removeDirection);
+			if (!this.processEmptyContentParagraph(removeDirection)) {
+				this.processNotSelectedContent(removeDirection);
+			}
 		}
-		outlineView.removeSlides(this.checkSlidesForRemove, isOnAddText, savedContentsOnUpdate);
-		return savedContentsOnUpdate;
+		this.hideEmptiedContents();
+		outlineView.removeSlides(this.checkSlidesForRemove, isOnAddText ? this.selectionStartSlide : null);
 	};
 	function getSourceParagraphStartPos(sourceParagraph) {
 		const contentPos = [{Class: sourceParagraph.GetParent(), Position: sourceParagraph.GetIndex()}];
@@ -1061,6 +1207,21 @@
 	SavePosManager.prototype.saveSlideStartPos = function (slide) {
 		this.outlineView.setSavedPosition(new SavedPosition(new SlidePosition(slide, true)));
 	};
+	SavePosManager.prototype.saveOutlineParagraphEdgePos = function (outlineParagraph, isStart) {
+		const sourceParagraph = this.getSourceParagraph(outlineParagraph);
+		if (sourceParagraph) {
+			if (isStart) {
+				this.saveStartPosSourceParagraph(sourceParagraph);
+			} else {
+				this.saveEndPosSourceParagraph(sourceParagraph);
+			}
+			return;
+		}
+		const info = this.outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
+		if (info) {
+			this.outlineView.setSavedPosition(new SavedPosition(new SlidePosition(info.slide, isStart)));
+		}
+	};
 	SavePosManager.prototype.saveContentPosSourceParagraph = function (sourceContent) {
 		const content = sourceContent;
 		const contentPos = content.GetContentPosition(false, true);
@@ -1093,6 +1254,7 @@
 	}
 	function ChangeOutlineLevelManager(outlineView) {
 		this.outlineView = outlineView;
+		this.mockTitleCopyMap = {};
 	}
 	ChangeOutlineLevelManager.prototype.getSelectedOutlineParagraphs = function () {
 		const docContent = this.outlineView.getDocContent();
@@ -1119,6 +1281,10 @@
 			contents.push(content);
 		}
 		return contents;
+	};
+	ChangeOutlineLevelManager.prototype.getMockTitleCopy = function (outlineParagraph) {
+		const slideInfo = this.outlineView.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
+		return slideInfo ? this.mockTitleCopyMap[slideInfo.slide.GetId()] || null : null;
 	};
 	ChangeOutlineLevelManager.prototype.getShapeDocContent = function (shape, slide) {
 		if (!shape) {
@@ -1158,12 +1324,13 @@
 		if (!sourceParagraphs.length) {
 			return addedParagraphs;
 		}
-		if (targetContent.Is_Empty()) {
+		if (targetContent.Is_Empty() && !this.outlineView.isContentInOutline(targetContent)) {
 			targetContent.ClearContent(false);
 		}
 		for (let i = 0; i < sourceParagraphs.length; i += 1) {
-			const newParagraph = sourceParagraphs[i].Copy2(targetContent);
+			const newParagraph = sourceParagraphs[i] ? sourceParagraphs[i].Copy2(targetContent) : new AscWord.Paragraph(targetContent, true);
 			targetContent.Add_ToContent(targetContent.Content.length, newParagraph);
+			this.outlineView.keepEmptyParagraph(newParagraph);
 			addedParagraphs.push(newParagraph);
 		}
 		return addedParagraphs;
@@ -1295,12 +1462,14 @@
 		} else {
 			sourceContent.Remove_FromContent(startIndex, sourceContent.Content.length - startIndex);
 		}
+		this.outlineView.hideContentIfEmpty(sourceContent);
 
 		const startContentIndex = contentShapes.indexOf(shape) + 1;
 		for (let i = startContentIndex; i < contentShapes.length; i += 1) {
 			const content = contentShapes[i].getDocContent();
 			if (content && !content.Is_Empty()) {
 				content.Clear_Content();
+				this.outlineView.hideContentIfEmpty(content);
 			}
 		}
 	};
@@ -1322,7 +1491,9 @@
 	};
 	ChangeOutlineLevelManager.prototype.mapParagraphCopies = function (paragraphCopyMap, sourceParagraphs, addedParagraphs) {
 		for (let i = 0; i < sourceParagraphs.length; i += 1) {
-			paragraphCopyMap[sourceParagraphs[i].Get_Id()] = addedParagraphs[i];
+			if (sourceParagraphs[i]) {
+				paragraphCopyMap[sourceParagraphs[i].Get_Id()] = addedParagraphs[i];
+			}
 		}
 	};
 	ChangeOutlineLevelManager.prototype.fillSplitSlide = function (newSlide, group, paragraphCopyMap) {
@@ -1361,7 +1532,8 @@
 		}
 		const sourceParagraph = this.outlineView.getSourceParagraph(pos[1].Class);
 		if (!sourceParagraph) {
-			return null;
+			const mockTitleCopy = this.getMockTitleCopy(pos[1].Class);
+			return mockTitleCopy ? rebuildPos(pos, mockTitleCopy.GetParent(), mockTitleCopy) : null;
 		}
 		const targetParagraph = paragraphCopyMap[sourceParagraph.Get_Id()] || sourceParagraph;
 		return rebuildPos(pos, targetParagraph.GetParent(), targetParagraph);
@@ -1411,24 +1583,36 @@
 		if (!previousSlide) {
 			return;
 		}
-		let contents = [];
+		const contents = [];
+		const movedParagraphs = [];
+		const mockTitles = [];
 		const slidesForRemove = {};
 		//todo split removeSlides and getSlidesFromMap
 		for (let i = 0; i < slides.length; i += 1) {
 			const slide = slides[i];
-			this.getSlideOutlineContents(slide, contents);
+			if (!slide.getOutlineSlide().title) {
+				mockTitles.push({slide: slide, index: movedParagraphs.length});
+				movedParagraphs.push(null);
+			}
+			const slideContents = this.getSlideOutlineContents(slide);
+			this.collectContentsParagraphs(slideContents, movedParagraphs);
+			for (let j = 0; j < slideContents.length; j += 1) {
+				contents.push(slideContents[j]);
+			}
 			slidesForRemove[slide.num] = slide;
 		}
-		const movedParagraphs = this.collectContentsParagraphs(contents);
 		const targetContent = this.getSlideJoinContent(previousSlide);
 		const addedParagraphs = this.addParagraphsToContent(targetContent, movedParagraphs);
 		const paragraphCopyMap = {};
 		this.mapParagraphCopies(paragraphCopyMap, movedParagraphs, addedParagraphs);
+		for (let i = 0; i < mockTitles.length; i += 1) {
+			this.mockTitleCopyMap[mockTitles[i].slide.GetId()] = addedParagraphs[mockTitles[i].index];
+		}
 		for (let i = 0; i < contents.length; i += 1) {
 			contents[i].Clear_Content();
 		}
 
-		this.setResultPosition(startParagraph || movedParagraphs[0], paragraphCopyMap);
+		this.setResultPosition(startParagraph || movedParagraphs[0] || addedParagraphs[0], paragraphCopyMap);
 
 		outlineView.removeSlides(slidesForRemove);
 		outlineView.update();
@@ -1589,6 +1773,7 @@
 		if (firstSlide !== lastSlide) {
 			this.processEdgeSlides(firstShape, lastShape, isNeedUseNextShapeForInsert);
 		}
+		this.outlineView.hideContentIfEmpty(lastContent);
 	};
 	ConcatShapesManager.prototype.processEdgeSlides = function (firstShape, lastShape, isNeedUseNextShapeForInsert) {
 		const firstSlide = firstShape.parent;
@@ -1642,6 +1827,7 @@
 		}
 
 		lastContent.Clear_Content();
+		this.outlineView.hideContentIfEmpty(lastContent);
 	}
 
 	RemoveOutlineParagraphsManager.prototype.concatEdgeContents = function (firstContent, lastContent, isSkipConcatParagraph) {
@@ -1652,6 +1838,7 @@
 		const lastSlide = lastShape.parent;
 		const firstContentParagraph = firstContent.Content[firstContent.Content.length - 1];
 		this.saveManager.saveEndPosSourceParagraph(firstContentParagraph);
+		this.addContentToHideWhenEmpty(lastContent);
 		this.concatShapesManager.concatContents(firstContent, lastContent, isSkipConcatParagraph);
 		this.checkRemoveSlides(firstSlide.num + 1, lastSlide.num);
 	};
@@ -1723,17 +1910,17 @@
 	function OutlineContentInsertManager(outlineView) {
 		this.outlineView = outlineView;
 	}
-	OutlineContentInsertManager.prototype.insertIntoSourceContent = function (content, selectedContent) {
+	OutlineContentInsertManager.prototype.insertIntoSourceContent = function (content, selectedContent, isSelect) {
 		const paragraph = content.Content[content.CurPos.ContentPos];
 		if (!paragraph || !paragraph.IsParagraph()) {
 			return false;
 		}
 		const nearPos = {Paragraph: paragraph, ContentPos: paragraph.Get_ParaContentPos(false, false)};
 		paragraph.Check_NearestPos(nearPos);
-		selectedContent.Insert(nearPos);
+		selectedContent.Insert(nearPos, isSelect);
 		return true;
 	};
-	OutlineContentInsertManager.prototype.insert = function (selectedContent) {
+	OutlineContentInsertManager.prototype.insert = function (selectedContent, isSelect) {
 		const outlineView = this.outlineView;
 		const oThis = this;
 		const presentation = outlineView.getPresentation();
@@ -1748,7 +1935,7 @@
 				const shape = content.Is_DrawingShape(true);
 				presentation.PrepareInsertedDocContent(selectedContent, content, shape);
 				selectedContent.EndCollect(outlineView.getPresentation());
-				inserted = oThis.insertIntoSourceContent(content, selectedContent);
+				inserted = oThis.insertIntoSourceContent(content, selectedContent, isSelect);
 				outlineView.setSavedRealContentState(content, selectProps.index, selectProps.count, selectProps.direction);
 			}
 			return inserted;
@@ -1812,14 +1999,18 @@
 			this.resetContentShapeInfoMap();
 		}
 	};
-	OutlineSlideInfo.prototype.getContentShapeInfoMap = function () {
+	OutlineSlideInfo.prototype.isShownContentShape = function (shape, outlineView) {
+		const content = shape.getDocContent();
+		return !!content && shape.isOutlinePlaceholder() && outlineView.isContentInOutline(content);
+	};
+	OutlineSlideInfo.prototype.getContentShapeInfoMap = function (outlineView) {
 		if (this.contentShapeInfoMap === null) {
 			this.contentShapeInfoMap = {};
 			const outlineSlide = this.slide.getOutlineSlide();
 			if (outlineSlide.content.length > 1) {
 				for (let i = 0; i < outlineSlide.content.length; i += 1) {
 					const shape = outlineSlide.content[i];
-					if (shape.isOutlinePlaceholderWithContent()) {
+					if (this.isShownContentShape(shape, outlineView)) {
 						this.contentShapeInfoMap[shape.GetId()] = new OutlineContentShapeInfo(shape, i);
 					}
 				}
@@ -2258,12 +2449,51 @@
 		this.outlineToSourceMap = {};
 		this.sourceToOutlineMap = {};
 		this.outlineInfo = new OutlineInfo();
+		this.keptEmptyParagraphs = {};
+		this.hiddenEmptyParagraphs = {};
 		this.resetMapToCheckParagraphs();
 		this.resetMapToCheckSlides();
 		this.resetPosition();
 	};
 	OutlineView.prototype.getPresentation = function () {
 		return this.api.private_GetLogicDocument();
+	};
+	OutlineView.prototype.isShownSourceParagraph = function (sourceParagraph) {
+		return !!this.sourceToOutlineMap[sourceParagraph.Get_Id()];
+	};
+	OutlineView.prototype.isContentInOutline = function (content) {
+		const paragraph = content.Content[0];
+		return !content.Is_Empty() || !!(paragraph && this.isShownSourceParagraph(paragraph));
+	};
+	OutlineView.prototype.isKeptEmptyParagraph = function (sourceParagraph) {
+		return !!this.keptEmptyParagraphs[sourceParagraph.Get_Id()];
+	};
+	OutlineView.prototype.keepEmptyParagraph = function (sourceParagraph) {
+		if (sourceParagraph.IsEmpty()) {
+			this.keptEmptyParagraphs[sourceParagraph.Get_Id()] = true;
+		}
+	};
+	OutlineView.prototype.isHiddenEmptyParagraph = function (sourceParagraph) {
+		return !!this.hiddenEmptyParagraphs[sourceParagraph.Get_Id()];
+	};
+	OutlineView.prototype.hideEmptyContent = function (content) {
+		let paragraph = content.Content[0];
+		if (!paragraph) {
+			return;
+		}
+		if (this.sourceToOutlineMap[paragraph.Get_Id()] || this.isKeptEmptyParagraph(paragraph)) {
+			const copy = paragraph.Copy(content);
+			content.Add_ToContent(1, copy);
+			content.Remove_FromContent(0, 1);
+			paragraph = copy;
+		}
+		this.hiddenEmptyParagraphs[paragraph.Get_Id()] = true;
+	};
+	OutlineView.prototype.hideContentIfEmpty = function (content) {
+		const shape = content && content.Is_DrawingShape(true);
+		if (shape && !shape.isTitlePlaceholder() && content.Is_Empty()) {
+			this.hideEmptyContent(content);
+		}
 	};
 	OutlineView.prototype.setOutlineShape = function (shape) {
 		this.outlineShape = shape;
@@ -2533,7 +2763,9 @@
 			const contentShapeInfoMap = info.getContentShapeInfoMap(this);
 			for (let contentShapeInfoId in contentShapeInfoMap) {
 				const contentShapeInfo = contentShapeInfoMap[contentShapeInfoId];
-				decoratorDrawer.drawContentDecorations(graphics, contentShapeInfo);
+				if (contentShapeInfo.getOutlineParagraph(this)) {
+					decoratorDrawer.drawContentDecorations(graphics, contentShapeInfo);
+				}
 			}
 		}
 	};
@@ -2639,8 +2871,8 @@
 		const isSelectionUse = docContent && docContent.IsSelectionUse();
 		const removeStartIndex = this.getRemoveStartIndex();
 		const manager = new RemoveOutlineParagraphsManager(this);
-		 const removeInfo = manager.remove(isOnAddText, direction);
-		this.update(removeInfo);
+		manager.remove(isOnAddText, direction);
+		this.update();
 		const isPositionSaved = !this.isEmptySavedPosition();
 		const isPositionApplied = this.applySavedPositionToOutline();
 		if (isPositionSaved && !isPositionApplied && !isOnAddText) {
@@ -2678,7 +2910,7 @@
 		}
 		this.updateSelectionState();
 	};
-	OutlineView.prototype.removeSlides = function (slideForRemoveMap, isOnAddText, savedContentsOnUpdate) {
+	OutlineView.prototype.removeSlides = function (slideForRemoveMap, keptSlide) {
 		const slides = [];
 		let slideNumbers = Object.keys(slideForRemoveMap).map(function (num) {
 			return parseInt(num, 10);
@@ -2687,16 +2919,10 @@
 			return;
 		}
 		let savedMinSlideIndex = null;
-		if (isOnAddText) {
-			let minSlideNumber = slideNumbers[0];
-			for (let i = 1; i < slideNumbers.length; i += 1) {
-				if (minSlideNumber > slideNumbers[i]) {
-					minSlideNumber = slideNumbers[i];
-				}
-			}
-			savedMinSlideIndex = minSlideNumber;
+		if (keptSlide) {
+			savedMinSlideIndex = keptSlide.num;
 			slideNumbers = slideNumbers.filter(function (num) {
-				return num !== minSlideNumber;
+				return num !== keptSlide.num;
 			});
 		}
 		for (let i = 0 ; i < slideNumbers.length; i += 1) {
@@ -2726,7 +2952,7 @@
 		}
 		presentation.updateSlideIndexes();
 		presentation.DrawingDocument.UpdateThumbnailsAttack();
-		this.update(savedContentsOnUpdate);
+		this.update();
 		const lastSlideIndex = presentation.GetSlidesCount() - 1;
 		const currentPage = Math.min(lastSlideIndex, minSlideIndex);
 		presentation.Recalculate();
@@ -2809,9 +3035,9 @@
 		this.applySavedPositionToOutline();
 		this.checkCurrentTextObjectExtends();
 	}
-	OutlineView.prototype.insertContent = function (selectedContent) {
+	OutlineView.prototype.insertContent = function (selectedContent, isSelect) {
 		const manager = new OutlineContentInsertManager(this);
-		const inserted = manager.insert(selectedContent);
+		const inserted = manager.insert(selectedContent, isSelect);
 		this.update();
 		this.applySavedPositionToOutline();
 		return inserted;
@@ -2938,14 +3164,17 @@
 		}
 		return false;
 	};
-	OutlineView.prototype.update = function (savedContentsOnUpdate) {
+	OutlineView.prototype.update = function () {
 		if (!this.isInit) {
 			return;
+		}
+		if (this.dragDropManager) {
+			this.dragDropManager.onOutlineUpdate();
 		}
 		let isRecalculate = this.recalcInfo.recalculateContent;
 
 		const presentation = this.getPresentation();
-		const paragraphUpdateDataCollector = new ParagraphUpdateDataCollector(this, this.mapToCheckParagraphs, savedContentsOnUpdate);
+		const paragraphUpdateDataCollector = new ParagraphUpdateDataCollector(this, this.mapToCheckParagraphs);
 		const paragraphUpdateData = paragraphUpdateDataCollector.collect();
 		isRecalculate |= this.updateParagraphData(paragraphUpdateData);
 		this.resetMapToCheckParagraphs();
@@ -3042,8 +3271,16 @@
 	UpdateExistingParagraphManager.prototype.checkRecalculateContentShapeIndexes = function (outlineParagraph) {
 		const outlineView = this.outlineView;
 		const sourceParagraph = outlineView.getSourceParagraph(outlineParagraph);
-		if (sourceParagraph) {
+		if (!sourceParagraph) {
+			return;
+		}
+		if (sourceParagraph.GetParentShape()) {
 			this.setRecalculateContentShapeIndexes(sourceParagraph);
+			return;
+		}
+		const info = outlineView.getSlideInfoOfOutlineParagraph(outlineParagraph);
+		if (info) {
+			info.resetContentShapeInfoMap();
 		}
 	};
 	UpdateExistingParagraphManager.prototype.checkMoveSlideInfoToTitleParagraph = function (outlineParagraph) {
@@ -3481,6 +3718,19 @@
 		}
 
 		return [];
+	};
+	OutlineView.prototype.getSlideInfoOfOutlineParagraph = function (outlineParagraph) {
+		const docContent = this.getDocContent();
+		if (!docContent || docContent.Content[outlineParagraph.Index] !== outlineParagraph) {
+			return null;
+		}
+		for (let i = outlineParagraph.Index; i >= 0; i -= 1) {
+			const info = this.outlineInfo.getSlideInfoByParagraph(docContent.Content[i]);
+			if (info) {
+				return info;
+			}
+		}
+		return null;
 	};
 	OutlineView.prototype.getSlideIndex = function (outlineParagraph) {
 		const info = this.outlineInfo.getSlideInfoByParagraph(outlineParagraph);
@@ -4345,24 +4595,36 @@
 
 
 
-	OutlineView.prototype.checkSelectedObjectsAndCallback = function (callback, historyPointType, isNeedCheckDrawings, isNeedCheckSlides, isRemoveAction, removeDirection) {
+	OutlineView.prototype.checkSelectedObjectsAndCallback = function (callback, historyPointType, isNeedCheckDrawings, isNeedCheckSlides, isRemoveAction, removeDirection, additionalLockObjects) {
 		const presentation = this.getPresentation();
 		const pointType = AscFormat.isRealNumber(historyPointType) ? historyPointType : AscDFH.historydescription_CommonControllerCheckSelected;
 		isNeedCheckDrawings = typeof isNeedCheckDrawings === "boolean" ? isNeedCheckDrawings : true;
 		isNeedCheckSlides = typeof isNeedCheckSlides === "boolean" ? isNeedCheckSlides : false;
 		let checkType = null;
-		if (isNeedCheckDrawings && isNeedCheckSlides) {
+		if (additionalLockObjects || (isNeedCheckDrawings && isNeedCheckSlides)) {
 			checkType = AscCommon.changestype_OutlineSlideDrawingProps;
 		} else if (isNeedCheckDrawings) {
 			checkType = AscCommon.changestype_Drawing_Props;
 		}
 
-		if(checkType === null || presentation.Document_Is_SelectionLocked(checkType, {isRemoveAction: isRemoveAction, removeDirection: removeDirection}, undefined, null) === false) {
+		const additionalData = {isRemoveAction: isRemoveAction, removeDirection: removeDirection, additionalLockObjects: additionalLockObjects};
+		if(checkType === null || presentation.Document_Is_SelectionLocked(checkType, additionalData, undefined, null) === false) {
 			presentation.StartAction(pointType);
 			callback.call(this);
 			presentation.FinalizeAction();
+			return true;
 		}
+		return false;
 	}
+	OutlineView.prototype.getDragDropManager = function () {
+		if (!this.dragDropManager) {
+			this.dragDropManager = new AscCommonSlide.COutlineDragDropManager(this);
+		}
+		return this.dragDropManager;
+	};
+	OutlineView.prototype.isDragDropActive = function () {
+		return !!this.dragDropManager && this.dragDropManager.isActive();
+	};
 	OutlineView.prototype.paraApplyCallback = function (props) {
 		AscFormat.paraApplyCallback(props, this);
 	};
@@ -4407,4 +4669,7 @@
 	window["AscCommonSlide"].OutlineView = OutlineView;
 	window["AscCommonSlide"].DecoratorDrawer = DecoratorDrawer;
 	window["AscCommonSlide"].OutlineSlidesSelectionManager = OutlineSlidesSelectionManager;
+	window["AscCommonSlide"].SavedPosition = SavedPosition;
+	window["AscCommonSlide"].ContentPosition = ContentPosition;
+	window["AscCommonSlide"].SlidePosition = SlidePosition;
 })();
