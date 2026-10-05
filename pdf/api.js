@@ -1473,7 +1473,7 @@
 			}, AscDFH.historydescription_Pdf_AddAnnot, this);
 		}
 		
-		if (sType == AscPDF.STAMP_TYPES.Signature) {
+		if (sType == AscPDF.STAMP_TYPES.Image) {
 			addStamp();
 		}
 		else {
@@ -1489,11 +1489,11 @@
 		let fApplyCallback = function() {
 			let _img = oApi.ImageLoader.LoadImage(sImageToDownLoad, 1);
 			if (null != _img) {
-				oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+				oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Image, _img);
 			}
 			else {
 				oApi.asyncImageEndLoaded2 = function(_img) {
-					oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Signature, _img);
+					oApi.AddStampAnnot(AscPDF.STAMP_TYPES.Image, _img);
 				};
 			}
 		}
@@ -5666,13 +5666,25 @@
 		let oRoles = oDoc && oDoc.GetFormRoles ? oDoc.GetFormRoles() : null;
 		return !!(oRoles && oRoles.IsAllRolesFilled());
 	};
-	PDFEditorApi.prototype.asc_ClearAllSpecialForms = function() {
+	PDFEditorApi.prototype.asc_ClearAllSpecialForms = function(arrFieldIds) {
 		let oDoc = this.getPDFDoc();
 		if (!oDoc)
 			return false;
 
 		let oRoles = oDoc.GetFormRoles();
-		let aFields = oDoc.GetAllWidgets();
+		let aFields = [];
+		if (undefined == arrFieldIds) {
+			aFields = oDoc.GetAllWidgets();
+		}
+		else {
+			arrFieldIds.forEach(function(id) {
+				let oField = AscCommon.g_oTableId.GetById(id);
+				if (oField && oField.IsForm()) {
+					aFields.push(oField);
+				}
+			});
+		}
+
 		if (oRoles.GetCurrentRole() || oRoles.IsCurrentNoRole()) {
 			aFields = aFields.filter(function(oField) {
 				return oRoles.CanFillField(oField);

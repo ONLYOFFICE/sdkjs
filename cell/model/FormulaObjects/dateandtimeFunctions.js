@@ -832,7 +832,7 @@ function (window, undefined) {
 			res = new cNumber(60);
 		} else {
 			var _num = Math.round(new cDate(Date.UTC(year, month - 1, day)).getExcelDate());
-			if (_num < 0 || _num > 2958465) {
+			if (_num < 0 || _num > AscCommonExcel.getMaxDate()) {
 				return new cError(cErrorType.not_numeric);
 			}
 			res = new cNumber(_num);
@@ -2647,27 +2647,24 @@ function (window, undefined) {
 			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
 				return new cError(cErrorType.wrong_value_type);
 			} else if (curArg.type === cElementType.string) {
+				// only the locale-aware format parser is used: ("31-Feb-2025" -> "03.03.2025")
 				val = curArg.tocNumber();
-				if (val.type === cElementType.error || val.type === cElementType.empty) {
-					let d = new cDate(curArg.getValue());
-					if (isNaN(d)) {
-						return new cError(cErrorType.wrong_value_type);
-					} else {
-						val = Math.floor((d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1)));
-					}
-				} else {
-					val = curArg.tocNumber().getValue();
+				if (val.type === cElementType.error) {
+					return new cError(cErrorType.wrong_value_type);
 				}
+				val = val.getValue();
 			}
 
 			if (val < 0) {
 				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
-			} else {
-				if (AscCommon.bDate1904 && val === 0) {
-					val += 1;
-				}
-				return t.setCalcValue(new cNumber((new cDate((val - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay)).getUTCFullYear()), 0);
 			}
+			// Excel rounds the date-time serial to the nearest second before taking the date part,
+			// so 23:59:59.5 and later already belong to the next day
+			let day = Math.floor(Math.floor((val * c_sPerDay + 0.5).toFixed(cExcelDateTimeDigits)) / c_sPerDay);
+			if (day > AscCommonExcel.getMaxDate()) {
+				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
+			}
+			return t.setCalcValue(new cNumber(new cDate((day - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay).getUTCFullYear()), 0);
 		};
 
 		let arg0 = arg[0], res;

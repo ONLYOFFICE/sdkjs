@@ -75,7 +75,9 @@
 	}
 
 	/**
-	 * Base class.
+	 * The main class of the Spreadsheet API. Use it to get the active workbook, worksheets,
+	 * ranges, and the current selection, and to add worksheets, defined names, and custom
+	 * functions.
 	 * @global
 	 * @class
 	 * @name Api
@@ -103,7 +105,10 @@
 
 	/**
 	 * The callback function which is called when the specified range of the current sheet changes.
-	 * <note>Please note that the event is not called for the undo/redo operations.</note>
+	 *
+	 * :::note
+	 * The event is not called for the undo/redo operations.
+	 * :::
 	 * @event Api#onWorksheetChange
 	 * @param {ApiRange} range - The modified range represented as the ApiRange object.
 	 */
@@ -155,7 +160,7 @@
 	 * @property {number} Count - Returns the rows or columns count.
 	 * @property {string} Address - Returns the range address.
 	 * @property {string} Value - Returns a value from the first cell of the specified range or sets it to this cell.
-	 * @property {string} Formula - Returns a formula from the first cell of the specified range or sets it to this cell.
+	 * @property {string | string[][]} Formula - Returns a formula from the cell of the specified range or an array of formulas by rows from a range of several cells, or sets it to this cell.
 	 * @property {string | null} FormulaArray - Returns the array formula of the specified range or sets it to this range.
 	 * @property {string} Value2 - Returns the value2 (value without format) from the first cell of the specified range or sets it to this cell.
 	 * @property {string} Text - Returns the text from the first cell of the specified range or sets it to this cell.
@@ -281,10 +286,11 @@
 
 	/**
 	 * Possible values for the position of chart tick labels (either horizontal or vertical).
-	 * <b>"none"</b> - does not display the selected tick labels.
-	 * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
-	 * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
-	 * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
+	 *
+	 * - <b>"none"</b> - does not display the selected tick labels.
+	 * - <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+	 * - <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+	 * - <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
@@ -339,7 +345,6 @@
 	 * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
 	 */
 
-
 	/**
 	 * Standard numeric format.
 	 * @typedef {("General" | "0" | "0.00" | "#,##0" | "#,##0.00" | "0%" | "0.00%" |
@@ -373,10 +378,10 @@
 	 */
 
 	/**
-	* Specifies how to shift cells to replace deleted cells.
-	* @typedef {("up" | "left")} DeleteShiftDirection
-	* @see office-js-api/Examples/Enumerations/DeleteShiftDirection.js
-	*/
+	 * Specifies how to shift cells to replace deleted cells.
+	 * @typedef {("up" | "left")} DeleteShiftDirection
+	 * @see office-js-api/Examples/Enumerations/DeleteShiftDirection.js
+	 */
 
 	/**
      * Any valid drawing element.
@@ -486,6 +491,54 @@
 	function ApiHyperlink(oElem, oWorksheet) {
 		this._elem = oElem;
 		this._ws   = oWorksheet;
+	}
+
+	/**
+	 * Class representing the collection of table styles of the workbook.
+	 * @undocumented
+	 * @constructor
+	 * @property {number} Count - Returns the number of table styles in the workbook.
+	 */
+	function ApiTableStyles(workbook) {
+		this.workbook = workbook;
+	}
+
+	/**
+	 * Class representing a single custom or built-in table style.
+	 * @undocumented
+	 * @constructor
+	 * @property {string} Name - Returns the name of the table style.
+	 * @property {boolean} BuiltIn - Returns whether the table style is a built-in style.
+	 * @property {boolean} ShowAsAvailableTableStyle - Returns or sets whether the style is shown in the table style gallery.
+	 * @property {boolean} ShowAsAvailablePivotTableStyle - Returns or sets whether the style is shown in the pivot table style gallery.
+	 * @property {ApiTableStyleElements} TableStyleElements - Returns the collection of formatted parts of the table style.
+	 */
+	function ApiTableStyle(workbook, name) {
+		this.workbook = workbook;
+		this.name = name;
+	}
+
+	/**
+	 * Class representing the collection of formatted parts (header row, stripes, total row, etc.) of a table style.
+	 * @undocumented
+	 * @constructor
+	 */
+	function ApiTableStyleElements(tableStyle) {
+		this.tableStyle = tableStyle;
+	}
+
+	/**
+	 * Class representing a single formatted part of a table style.
+	 * @undocumented
+	 * @constructor
+	 * @property {ApiFont} Font - Returns the font of the table style element.
+	 * @property {ApiColor | 'No Fill'} FillColor - Returns or sets the background color of the table style element.
+	 * @property {boolean} HasFormat - Returns whether the element carries any explicit formatting.
+	 * @property {number} StripeSize - Returns or sets the number of rows or columns in one stripe of the element.
+	 */
+	function ApiTableStyleElement(tableStyle, type) {
+		this.tableStyle = tableStyle;
+		this.type = type;
 	}
 
 	/**
@@ -667,6 +720,19 @@
 		this._object = object;
 	}
 
+	// true for the two owners whose font lives inside a dxf (a format condition rule or a table style element)
+	function private_IsDxfFontOwner(obj) {
+		return obj instanceof ApiFormatCondition || obj instanceof ApiTableStyleElement;
+	}
+
+	// returns the current dxf-carrying rule/element for a dxf font owner, read fresh from its model every call
+	function private_GetFontDxfRule(obj) {
+		if (obj instanceof ApiFormatCondition) {
+			return obj.rule;
+		}
+		return obj.private_getDxfRule();
+	}
+
 	/**
 	 * Class representing freeze panes.
 	 * @constructor
@@ -760,6 +826,7 @@
 
 	/**
 	 * Creates a new custom function.
+	 *
 	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
 	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
@@ -868,6 +935,7 @@
 
 	/**
 	 * Registers a new custom functions library (see the <b>SetCustomFunctions</b> plugin method).
+	 *
 	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
 	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
@@ -905,7 +973,9 @@
 	};
 
 	/**
-	 * Creates a new worksheet. The new worksheet becomes the active sheet.
+	 * Creates a new worksheet.
+	 *
+	 * The new worksheet becomes the active sheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name of a new worksheet.
@@ -1012,6 +1082,30 @@
 	};
 
 	/**
+	 * Returns an object by its internal ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} id - The internal ID of the object.
+	 * @returns {ApiDrawing | ApiDocumentContent | ApiParagraph | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetByInternalId.js
+	 */
+	Api.GetByInternalId = function (id) {
+		let obj = AscCommon.g_oTableId.Get_ById(id);
+		if (!obj)
+			return null;
+
+		if (obj instanceof AscWord.CDocumentContent)
+			return new AscBuilder.ApiDocumentContent(obj);
+		else if (obj instanceof AscWord.Paragraph)
+			return new AscBuilder.ApiParagraph(obj);
+		else if (obj instanceof AscFormat.CGraphicObjectBase)
+			return GetApiDrawing(obj);
+
+		return null;
+	};
+
+	/**
 	 * Returns a list of all the available theme colors for the spreadsheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -1084,6 +1178,7 @@
 
 	/**
 	 * Returns the ApiRange object that represents the rectangular intersection of two or more ranges.
+	 *
 	 * If one or more ranges from a different worksheet are specified, an error will be returned.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -2227,7 +2322,9 @@
 		return this.private_calculateFunction("REPLACEB", arguments);
 	};
 	/**
-	 * Repeats text a given number of times. Use this function to fill a cell with a number of instances of a text string.
+	 * Repeats text a given number of times.
+	 *
+	 * Use this function to fill a cell with a number of instances of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - The text that will be repeated.
@@ -2617,7 +2714,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
-	 * @param {ApiRange | ApiName | number} arg2- The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {ApiRange | ApiName | number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHISQ_INV.js
 	 */
@@ -2996,13 +3093,14 @@
 	// };
 	/**
 	 * A numeric value that specifies which function should be used to aggregate identical time values in the timeline data range.
-	 * <b>1</b> (or omitted) - AVERAGE.
-	 * <b>2</b> - COUNT.
-	 * <b>3</b> - COUNTA.
-	 * <b>4</b> - MAX.
-	 * <b>5</b> - MEDIAN.
-	 * <b>6</b> - MIN.
-	 * <b>7</b> - SUM.
+	 *
+	 * - <b>1</b> (or omitted) - AVERAGE.
+	 * - <b>2</b> - COUNT.
+	 * - <b>3</b> - COUNTA.
+	 * - <b>4</b> - MAX.
+	 * - <b>5</b> - MEDIAN.
+	 * - <b>6</b> - MIN.
+	 * - <b>7</b> - SUM.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7)} Aggregation
 	 * @see office-js-api/Examples/Enumerations/Aggregation.js
 	 */
@@ -3062,14 +3160,15 @@
 
 	/**
 	 * A numeric value between 1 and 8 that specifies which statistic will be returned.
-	 * <b>1</b> - Alpha parameter of ETS algorithm - the base value parameter.
-	 * <b>2</b> - Beta parameter of ETS algorithm - the trend value parameter.
-	 * <b>3</b> - Gamma parameter of ETS algorithm - the seasonality value parameter.
-	 * <b>4</b> - MASE (mean absolute scaled error) metric - a measure of the accuracy of forecasts.
-	 * <b>5</b> - SMAPE (symmetric mean absolute percentage error) metric - a measure of the accuracy based on percentage errors.
-	 * <b>6</b> - MAE (mean absolute error) metric - a measure of the accuracy of forecasts.
-	 * <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
-	 * <b>8</b> - Step size detected in the timeline.
+	 *
+	 * - <b>1</b> - Alpha parameter of ETS algorithm - the base value parameter.
+	 * - <b>2</b> - Beta parameter of ETS algorithm - the trend value parameter.
+	 * - <b>3</b> - Gamma parameter of ETS algorithm - the seasonality value parameter.
+	 * - <b>4</b> - MASE (mean absolute scaled error) metric - a measure of the accuracy of forecasts.
+	 * - <b>5</b> - SMAPE (symmetric mean absolute percentage error) metric - a measure of the accuracy based on percentage errors.
+	 * - <b>6</b> - MAE (mean absolute error) metric - a measure of the accuracy of forecasts.
+	 * - <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
+	 * - <b>8</b> - Step size detected in the timeline.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)} StatisticType
 	 * @see office-js-api/Examples/Enumerations/StatisticType.js
 	 */
@@ -3335,7 +3434,9 @@
 		return this.private_calculateFunction("KURT", arguments);
 	};
 	/**
-	 * Returns the k-th largest value in a data set. For example, the fifth largest number.
+	 * Returns the k-th largest value in a data set.
+	 *
+	 * For example, the fifth largest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - The array or range of data for which the k-th largest value will be determined.
@@ -3952,7 +4053,9 @@
 	// 	return this.private_calculateFunction("SLOPE", arguments);
 	// };
 	/**
-	 * Returns the k-th smallest value in a data set. For example, the fifth smallest number.
+	 * Returns the k-th smallest value in a data set.
+	 *
+	 * For example, the fifth smallest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - An array or range of numerical data for which the k-th smallest value will be determined.
@@ -4001,7 +4104,9 @@
 		return this.private_calculateFunction("STDEV.S", arguments);
 	};
 	/**
-	 * Estimates standard deviation based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
+	 * Estimates standard deviation based on a sample, including logical values and text.
+	 *
+	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number[] | number | string | boolean | ApiRange | ApiName} args - Up to 255 values for which the standard deviation will be calculated.
@@ -4038,6 +4143,7 @@
 	};
 	/**
 	 * Calculates standard deviation based on the entire population, including logical values and text.
+	 *
 	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
@@ -4217,7 +4323,9 @@
 		return this.private_calculateFunction("VAR", arguments);
 	};
 	/**
-	 * Estimates variance based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
+	 * Estimates variance based on a sample, including logical values and text.
+	 *
+	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values for which the variance will be calculated.
@@ -4265,7 +4373,9 @@
 		return this.private_calculateFunction("VAR.S", arguments);
 	};
 	/**
-	 * Calculates variance based on the entire population, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
+	 * Calculates variance based on the entire population, including logical values and text.
+	 *
+	 * Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | Array<number | string | boolean> | ApiRange | ApiName} args - Up to 255 values for which the variance will be calculated.
@@ -4459,7 +4569,7 @@
 	 * Returns the month, a number from 1 (January) to 12 (December).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1- A number in the date-time code.
+	 * @param {ApiRange | ApiName | number} arg1 - A number in the date-time code.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MONTH.js
 	 */
@@ -4528,7 +4638,9 @@
 		return this.private_calculateFunction("TIME", arguments);
 	};
 	/**
-	 * Converts a text time to a serial number for a time, a number from 0 (12:00:00 AM) to 0.999988426 (11:59:59 PM). Format the number with a time format after entering the formula.
+	 * Converts a text time to a serial number for a time, a number from 0 (12:00:00 AM) to 0.999988426 (11:59:59 PM).
+	 *
+	 * Format the number with a time format after entering the formula.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} arg1 - A text string that represents a time in one of the time formats (date information in the string is ignored).
@@ -4831,7 +4943,9 @@
 		return this.private_calculateFunction("DEC2OCT", arguments);
 	};
 	/**
-	 * Tests whether two numbers are equal. The function returns 1 if the numbers are equal and 0 otherwise.
+	 * Tests whether two numbers are equal.
+	 *
+	 * The function returns 1 if the numbers are equal and 0 otherwise.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The first number.
@@ -4888,7 +5002,9 @@
 		return this.private_calculateFunction("ERFC.PRECISE", arguments);
 	};
 	/**
-	 * Tests whether a number is greater than a threshold value. The function returns 1 if the number is greater than or equal to the threshold value and 0 otherwise.
+	 * Tests whether a number is greater than a threshold value.
+	 *
+	 * The function returns 1 if the number is greater than or equal to the threshold value and 0 otherwise.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The value to test against step.
@@ -5240,7 +5356,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The octal number to convert.
-	 * @param {ApiRange | ApiName | number} [arg2] -The number of characters to use.
+	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2HEX.js
 	 */
@@ -5277,7 +5393,7 @@
 	 * Counts nonblank cells in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName} arg1- The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {ApiRange | ApiName} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
 	 * @param {ApiRange | ApiName | number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {ApiRange | ApiName} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
 	 * @returns {number}
@@ -6019,7 +6135,9 @@
 		return this.private_calculateFunction("PV", arguments);
 	};
 	/**
-	 * Returns the interest rate per period for a loan or an investment. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * Returns the interest rate per period for a loan or an investment.
+	 *
+	 * For example, use 6%/4 for quarterly payments at 6% APR.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The total number of payment periods for the loan or investment.
@@ -6190,7 +6308,9 @@
 		return this.private_calculateFunction("YIELD", arguments);
 	};
 	/**
-	 * Returns the annual yield for a discounted security. For example, a Treasury bill.
+	 * Returns the annual yield for a discounted security.
+	 *
+	 * For example, a Treasury bill.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
@@ -6232,7 +6352,9 @@
 		return this.private_calculateFunction("ABS", arguments);
 	};
 	/**
-	 * Returns the arccosine of a number, in radians in the range from 0 to Pi. The arccosine is the angle whose cosine is a number specified in the parameters.
+	 * Returns the arccosine of a number, in radians in the range from 0 to Pi.
+	 *
+	 * The arccosine is the angle whose cosine is a number specified in the parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The angle cosine. It must be from -1 to 1.
@@ -6401,7 +6523,7 @@
 		return this.private_calculateFunction("CEILING.MATH", arguments);
 	};
 	/**
-	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance. The number is always rounded up regardless of its sing.
+	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance. The number is always rounded up regardless of its sign.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The value to round up.
@@ -6549,7 +6671,9 @@
 		return this.private_calculateFunction("EVEN", arguments);
 	};
 	/**
-	 * Returns the <b>e</b> constant raised to the power of a given number. The <b>e</b> constant is equal to <b>2.71828182845904</b>, the base of the natural logarithm.
+	 * Returns the <b>e</b> constant raised to the power of a given number.
+	 *
+	 * The <b>e</b> constant is equal to <b>2.71828182845904</b>, the base of the natural logarithm.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The exponent applied to the base <b>e</b>.
@@ -6643,7 +6767,8 @@
 	};
 	/**
 	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance regardless of the sign of the number.
-	 * The number is always rounded up regardless of its sing.
+	 *
+	 * The number is always rounded up regardless of its sign.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The numeric value to round up.
@@ -7229,7 +7354,9 @@
 		return this.private_calculateFunction("INDEX", arguments);
 	};
 	/**
-	 * Looks up a value either from a one-row or one-column range. Provided for backwards compatibility.
+	 * Looks up a value either from a one-row or one-column range.
+	 *
+	 * Provided for backwards compatibility.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | ApiName} arg1 - A value that is searched for in the first vector. It can be a number, text, a logical value, or a name or reference to a value.
@@ -7244,11 +7371,12 @@
 
 	/**
 	 * The match type.
-	 * * <b>-1</b> - The values must be sorted in descending order. If the exact match is not found, the function will return the smallest value that is greater than the searched value.
-	 * * <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the *#N/A* error.
-	 * * <b>1</b> (or omitted) - The values must be sorted in ascending order. If the exact match is not found, the function will return the largest value that is less than the searched value.
+	 *
+	 * - <b>-1</b> - The values must be sorted in descending order. If the exact match is not found, the function will return the smallest value that is greater than the searched value.
+	 * - <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the *#N/A* error.
+	 * - <b>1</b> (or omitted) - The values must be sorted in ascending order. If the exact match is not found, the function will return the largest value that is less than the searched value.
 	 * @typedef {("-1" | "0" | "1")} MatchType
-	 * */
+	 */
 
 	/**
 	 * Returns the relative position of an item in a range that matches the specified value in the specified order.
@@ -7286,7 +7414,9 @@
 		return this.private_calculateFunction("TRANSPOSE", arguments);
 	};
 	/**
-	 * Looks for a value in the leftmost column of a table and then returns a value in the same row from the specified column. By default, the table must be sorted in an ascending order.
+	 * Looks for a value in the leftmost column of a table and then returns a value in the same row from the specified column.
+	 *
+	 * By default, the table must be sorted in an ascending order.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | ApiName} arg1 - The value to be found in the first column of the table. It can be a value, a reference, or a text string.
@@ -7303,15 +7433,16 @@
 
 	/**
 	 * The error value.
-	 * * <b>"#NULL!"</b> - 1
-	 * * <b>"#DIV/0!"</b> - 2
-	 * * <b>"#VALUE!"</b> - 3
-	 * * <b>"#REF!"</b> - 4
-	 * * <b>"#NAME?"</b> - 5
-	 * * <b>"#NUM!"</b> - 6
-	 * * <b>"#N/A"</b> - 7
-	 * * <b>"#GETTING_DATA"</b> - 8
-	 * * <b>"Other"</b> - "#N/A"
+	 *
+	 * - <b>"#NULL!"</b> - 1
+	 * - <b>"#DIV/0!"</b> - 2
+	 * - <b>"#VALUE!"</b> - 3
+	 * - <b>"#REF!"</b> - 4
+	 * - <b>"#NAME?"</b> - 5
+	 * - <b>"#NUM!"</b> - 6
+	 * - <b>"#N/A"</b> - 7
+	 * - <b>"#GETTING_DATA"</b> - 8
+	 * - <b>"Other"</b> - "#N/A"
 	 * @typedef {("#NULL!" | "#DIV/0!" | "#VALUE!" | "#REF!" | "#NAME?" | "#NUM!" | "#N/A" | "#GETTING_DATA")} ErrorValue
 	 * */
 
@@ -7579,7 +7710,9 @@
 		return this.private_calculateFunction("NOT", arguments);
 	};
 	/**
-	 * Checks whether any of the arguments are <b>true</b>. Returns <b>false</b> only if all arguments are <b>false</b>.
+	 * Checks whether any of the arguments are <b>true</b>.
+	 *
+	 * Returns <b>false</b> only if all arguments are <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | ApiName | boolean} args - A condition to check.
@@ -7600,7 +7733,9 @@
 		return this.private_calculateFunction("TRUE", arguments);
 	};
 	/**
-	 * Returns the logical <b>Exclusive Or</b> value of all arguments. The function returns <b>true</b> when the number of <b>true</b> inputs is odd and <b>false</b> when the number of <b>true</b> inputs is even.
+	 * Returns the logical <b>Exclusive Or</b> value of all arguments.
+	 *
+	 * The function returns <b>true</b> when the number of <b>true</b> inputs is odd and <b>false</b> when the number of <b>true</b> inputs is even.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | boolean | boolean[]} args - The conditions to check.
@@ -7993,35 +8128,6 @@
 	});
 
 	/**
-	 * Subscribes to the specified event and calls the callback function when the event fires.
-	 * @function
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {string} eventName - The event name.
-	 * @param {function} callback - Function to be called when the event fires.
-	 * @fires Api#onWorksheetChange
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
-	 */
-	Api.attachEvent = function(eventName, callback)
-	{
-		Asc.editor.attachEvent(eventName, callback);
-	};
-
-	/**
-	 * Unsubscribes from the specified event.
-	 * @function
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {string} eventName - The event name.
-	 * @fires Api#onWorksheetChange
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
-	 */
-	Api.detachEvent = function(eventName)
-	{
-		Asc.editor.detachEvent(eventName);
-	};
-
-	/**
 	 * Adds a comment to the current workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -8239,17 +8345,18 @@
 
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document has been created with.
-	 * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * <b>Created</b> - the parsed date and time when the file was created.
-	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Authors</b> - the persons who has created the file.
-	 * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 *
+	 * - <b>Application</b> - the application the document has been created with.
+	 * - <b>CreatedRaw</b> - the date and time when the file was created.
+	 * - <b>Created</b> - the parsed date and time when the file was created.
+	 * - <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * - <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * - <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * - <b>Authors</b> - the persons who has created the file.
+	 * - <b>Title</b> - this property allows you to simplify your documents classification.
+	 * - <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * - <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * - <b>Comment</b> - this property allows you to simplify your documents classification.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {object}
@@ -8321,6 +8428,7 @@
 
 	/**
 	 * Returns the core properties interface for the workbook.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof Api
 	 * @returns {ApiCore}
@@ -8356,7 +8464,6 @@
 
 	/**
 	 * Saves changes to the specified document.
-	 *
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -8368,7 +8475,6 @@
 
 	/**
 	 * Returns a sheet collection that represents all the sheets in the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet[]}
@@ -8381,7 +8487,6 @@
 
 	/**
 	 * Returns all pivot tables in the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiPivotTable[]}
@@ -8394,7 +8499,6 @@
 
 	/**
 	 * Returns the custom properties of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiCustomProperties}
 	 * @typeofeditors ["CSE"]
@@ -8407,7 +8511,6 @@
 
 	/**
 	 * Returns the theme of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiTheme}
 	 * @typeofeditors ["CSE"]
@@ -8420,7 +8523,6 @@
 
 	/**
 	 * Returns the name of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {string}
 	 * @typeofeditors ["CSE"]
@@ -8433,7 +8535,6 @@
 
 	/**
 	 * Returns the active sheet of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiWorksheet}
 	 * @typeofeditors ["CSE"]
@@ -8474,7 +8575,6 @@
 
 	/**
 	 * Returns the active chart of the workbook.
-	 *
 	 * @memberof ApiWorkbook
 	 * @returns {ApiChart | null}
 	 * @typeofeditors ["CSE"]
@@ -8518,6 +8618,766 @@
 		}
 		return allDrawings.filter(function(drawing) {
 			return ids.includes(drawing.GetName());
+		});
+	};
+
+	/**
+	 * Returns the collection of table styles of the workbook.
+	 * @undocumented
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiTableStyles}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetTableStyles.js
+	 */
+	ApiWorkbook.prototype.GetTableStyles = function () {
+		return new ApiTableStyles(this);
+	};
+
+	Object.defineProperty(ApiWorkbook.prototype, "TableStyles", {
+		get: function () {
+			return this.GetTableStyles();
+		}
+	});
+
+	/**
+	 * Returns the paths of the other workbooks registered as external links of the current workbook, including links no formula uses any longer.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {string[]} - An empty array if the workbook has no links to other workbooks.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetLinkSources.js
+	 */
+	ApiWorkbook.prototype.GetLinkSources = function () {
+		let res = [];
+		let links = this.Workbook.getExternalReferences() || [];
+		for (let i = 0; i < links.length; i++) {
+			let path = links[i].asc_getPath();
+			if (path) {
+				res.push(path);
+			}
+		}
+		return res;
+	};
+
+	/**
+	 * Breaks the link to the specified workbook: the formulas that refer to it are replaced with their current values, and the link is removed from the workbook.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - The path of the linked workbook as returned by the {@link ApiWorkbook#GetLinkSources} method.
+	 * @returns {boolean} - Returns false if the workbook has no link with the specified path, or if a defined name refers to that workbook; such a name has to be changed or deleted first.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/BreakLink.js
+	 */
+	ApiWorkbook.prototype.BreakLink = function (sName) {
+		return typeof sName === "string" && this.Workbook.breakExternalLink(sName);
+	};
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiTableStyles / ApiTableStyle / ApiTableStyleElements / ApiTableStyleElement
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Table style element type. xlGrandTotalRow is the same element as xlTotalRow, xlGrandTotalColumn is the same element as xlLastColumn.
+	 * @undocumented
+	 * @typedef {("xlWholeTable" | "xlHeaderRow" | "xlTotalRow" | "xlGrandTotalRow" | "xlFirstColumn" | "xlLastColumn" | "xlGrandTotalColumn" | "xlRowStripe1" | "xlRowStripe2" | "xlColumnStripe1" | "xlColumnStripe2" | "xlFirstHeaderCell" | "xlLastHeaderCell" | "xlFirstTotalCell" | "xlLastTotalCell" | "xlSubtotalColumn1" | "xlSubtotalColumn2" | "xlSubtotalColumn3" | "xlSubtotalRow1" | "xlSubtotalRow2" | "xlSubtotalRow3" | "xlBlankRow" | "xlColumnSubheading1" | "xlColumnSubheading2" | "xlColumnSubheading3" | "xlRowSubheading1" | "xlRowSubheading2" | "xlRowSubheading3" | "xlPageFieldLabels" | "xlPageFieldValues")} XlTableStyleElementType
+	 * @see office-js-api/Examples/Enumerations/XlTableStyleElementType.js
+	 */
+
+	// maps the public XlTableStyleElementType name to the internal ETableStyleType enum; unmapped values (slicer/timeline types, unknown strings) return null
+	function private_XlTableStyleElementTypeToInternal(sType) {
+		switch (sType) {
+			case "xlWholeTable": return Asc.ETableStyleType.tablestyletypeWholeTable;
+			case "xlHeaderRow": return Asc.ETableStyleType.tablestyletypeHeaderRow;
+			case "xlTotalRow": return Asc.ETableStyleType.tablestyletypeTotalRow;
+			case "xlGrandTotalRow": return Asc.ETableStyleType.tablestyletypeTotalRow;
+			case "xlFirstColumn": return Asc.ETableStyleType.tablestyletypeFirstColumn;
+			case "xlLastColumn": return Asc.ETableStyleType.tablestyletypeLastColumn;
+			case "xlGrandTotalColumn": return Asc.ETableStyleType.tablestyletypeLastColumn;
+			case "xlRowStripe1": return Asc.ETableStyleType.tablestyletypeFirstRowStripe;
+			case "xlRowStripe2": return Asc.ETableStyleType.tablestyletypeSecondRowStripe;
+			case "xlColumnStripe1": return Asc.ETableStyleType.tablestyletypeFirstColumnStripe;
+			case "xlColumnStripe2": return Asc.ETableStyleType.tablestyletypeSecondColumnStripe;
+			case "xlFirstHeaderCell": return Asc.ETableStyleType.tablestyletypeFirstHeaderCell;
+			case "xlLastHeaderCell": return Asc.ETableStyleType.tablestyletypeLastHeaderCell;
+			case "xlFirstTotalCell": return Asc.ETableStyleType.tablestyletypeFirstTotalCell;
+			case "xlLastTotalCell": return Asc.ETableStyleType.tablestyletypeLastTotalCell;
+			case "xlSubtotalColumn1": return Asc.ETableStyleType.tablestyletypeFirstSubtotalColumn;
+			case "xlSubtotalColumn2": return Asc.ETableStyleType.tablestyletypeSecondSubtotalColumn;
+			case "xlSubtotalColumn3": return Asc.ETableStyleType.tablestyletypeThirdSubtotalColumn;
+			case "xlSubtotalRow1": return Asc.ETableStyleType.tablestyletypeFirstSubtotalRow;
+			case "xlSubtotalRow2": return Asc.ETableStyleType.tablestyletypeSecondSubtotalRow;
+			case "xlSubtotalRow3": return Asc.ETableStyleType.tablestyletypeThirdSubtotalRow;
+			case "xlBlankRow": return Asc.ETableStyleType.tablestyletypeBlankRow;
+			case "xlColumnSubheading1": return Asc.ETableStyleType.tablestyletypeFirstColumnSubheading;
+			case "xlColumnSubheading2": return Asc.ETableStyleType.tablestyletypeSecondColumnSubheading;
+			case "xlColumnSubheading3": return Asc.ETableStyleType.tablestyletypeThirdColumnSubheading;
+			case "xlRowSubheading1": return Asc.ETableStyleType.tablestyletypeFirstRowSubheading;
+			case "xlRowSubheading2": return Asc.ETableStyleType.tablestyletypeSecondRowSubheading;
+			case "xlRowSubheading3": return Asc.ETableStyleType.tablestyletypeThirdRowSubheading;
+			case "xlPageFieldLabels": return Asc.ETableStyleType.tablestyletypePageFieldLabels;
+			case "xlPageFieldValues": return Asc.ETableStyleType.tablestyletypePageFieldValues;
+		}
+		return null;
+	}
+
+	// true when at least one explicit font property is set on the dxf font (null means unset, false still counts)
+	function private_FontHasContent(font) {
+		return !!font && (null !== font.b || null !== font.i || null !== font.u || null !== font.s ||
+			null !== font.c || null !== font.fn || null !== font.fs || null !== font.va);
+	}
+
+	// true when the dxf fill carries a pattern or a gradient
+	function private_FillHasContent(fill) {
+		return !!fill && !!(fill.patternFill || fill.gradientFill);
+	}
+
+	// true when at least one edge or inside line has a non-None style; Border.prototype.notEmpty ignores ih/iv
+	function private_BorderHasContent(border) {
+		return !!border && ((border.l && !border.l.isEmpty()) || (border.r && !border.r.isEmpty()) ||
+			(border.t && !border.t.isEmpty()) || (border.b && !border.b.isEmpty()) ||
+			(border.ih && !border.ih.isEmpty()) || (border.iv && !border.iv.isEmpty()));
+	}
+
+	// throws unless the name is a non-empty string that no custom or built-in style uses, compared case-insensitively
+	function private_CheckNewTableStyleName(tableStyles, name) {
+		if (typeof name !== 'string' || 0 === name.length) {
+			private_MakeError('Invalid name.');
+			return false;
+		}
+		let lower = name.toLowerCase();
+		for (let key in tableStyles.AllStyles) {
+			if (key.toLowerCase() === lower) {
+				private_MakeError('A table style with this name already exists.');
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// style names in Excel's TableStyles order: built-in table, pivot and other (slicer) styles, then custom styles sorted by name
+	function private_GetTableStyleNames(tableStyles) {
+		let tableNames = [], pivotNames = [], otherNames = [], customNames = [];
+		for (let name in tableStyles.AllStyles) {
+			let style = tableStyles.AllStyles[name];
+			if (tableStyles.CustomStyles[name]) {
+				customNames.push(name);
+			} else if (style.table) {
+				tableNames.push(name);
+			} else if (style.pivot) {
+				pivotNames.push(name);
+			} else {
+				otherNames.push(name);
+			}
+		}
+		customNames.sort(function (a, b) {
+			let la = a.toLowerCase(), lb = b.toLowerCase();
+			return la < lb ? -1 : (la > lb ? 1 : 0);
+		});
+		return tableNames.concat(pivotNames, otherNames, customNames);
+	}
+
+	/**
+	 * Adds a new custom table style to the workbook.
+	 * @undocumented
+	 * @memberof ApiTableStyles
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - The name of the new table style. Must be unique among the custom and built-in style names (case-insensitive).
+	 * @returns {ApiTableStyle}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyles/Methods/Add.js
+	 */
+	ApiTableStyles.prototype.Add = function (name) {
+		let wb = this.workbook.Workbook;
+		if (!private_CheckNewTableStyleName(wb.TableStyles, name)) {
+			return;
+		}
+		let style = new Asc.CTableStyle();
+		style.name = name;
+		style.displayName = name;
+		style.pivot = false;
+		style.table = false;
+		wb.setCustomTableStyle(name, style, true);
+		return new ApiTableStyle(this.workbook, name);
+	};
+
+	/**
+	 * Returns the number of table styles in the workbook, built-in and custom.
+	 * @undocumented
+	 * @memberof ApiTableStyles
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyles/Methods/GetCount.js
+	 */
+	ApiTableStyles.prototype.GetCount = function () {
+		return private_GetTableStyleNames(this.workbook.Workbook.TableStyles).length;
+	};
+
+	Object.defineProperty(ApiTableStyles.prototype, "Count", {
+		get: function () {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Returns a table style by its name or by its index. Built-in table, pivot table and slicer styles come first, custom styles last in name order.
+	 * @undocumented
+	 * @memberof ApiTableStyles
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} nameOrIndex - The table style name (case-insensitive; custom styles are searched before built-in ones) or its 1-based index.
+	 * @returns {ApiTableStyle | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyles/Methods/GetItem.js
+	 */
+	ApiTableStyles.prototype.GetItem = function (nameOrIndex) {
+		let wb = this.workbook.Workbook;
+		if (typeof nameOrIndex === 'number') {
+			let names = private_GetTableStyleNames(wb.TableStyles);
+			return (nameOrIndex % 1 === 0 && nameOrIndex >= 1 && nameOrIndex <= names.length) ? new ApiTableStyle(this.workbook, names[nameOrIndex - 1]) : null;
+		}
+		if (typeof nameOrIndex !== 'string' || 0 === nameOrIndex.length) {
+			return null;
+		}
+		let lower = nameOrIndex.toLowerCase();
+		for (let key in wb.TableStyles.CustomStyles) {
+			if (key.toLowerCase() === lower) {
+				return new ApiTableStyle(this.workbook, key);
+			}
+		}
+		for (let key in wb.TableStyles.AllStyles) {
+			if (key.toLowerCase() === lower) {
+				return new ApiTableStyle(this.workbook, key);
+			}
+		}
+		return null;
+	};
+
+	/**
+	 * Returns the name of the table style.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetName.js
+	 */
+	ApiTableStyle.prototype.GetName = function () {
+		return this.name;
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		}
+	});
+
+	/**
+	 * Returns whether the table style is a built-in style.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetBuiltIn.js
+	 */
+	ApiTableStyle.prototype.GetBuiltIn = function () {
+		let wb = this.workbook.Workbook;
+		return !wb.TableStyles.CustomStyles[this.name];
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "BuiltIn", {
+		get: function () {
+			return this.GetBuiltIn();
+		}
+	});
+
+	/**
+	 * Returns whether the table style is shown in the table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetShowAsAvailableTableStyle.js
+	 */
+	ApiTableStyle.prototype.GetShowAsAvailableTableStyle = function () {
+		let model = this.private_getModel();
+		return model ? model.table : null;
+	};
+
+	/**
+	 * Sets whether the table style is shown in the table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Specifies whether the style is shown in the table style gallery.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/SetShowAsAvailableTableStyle.js
+	 */
+	ApiTableStyle.prototype.SetShowAsAvailableTableStyle = function (show) {
+		if (typeof show !== 'boolean') {
+			private_MakeError('Invalid type of "show".');
+			return;
+		}
+		this.private_changeStyle(function (style) {
+			style.table = show;
+		});
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "ShowAsAvailableTableStyle", {
+		get: function () {
+			return this.GetShowAsAvailableTableStyle();
+		},
+		set: function (show) {
+			this.SetShowAsAvailableTableStyle(show);
+		}
+	});
+
+	/**
+	 * Returns whether the table style is shown in the pivot table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetShowAsAvailablePivotTableStyle.js
+	 */
+	ApiTableStyle.prototype.GetShowAsAvailablePivotTableStyle = function () {
+		let model = this.private_getModel();
+		return model ? model.pivot : null;
+	};
+
+	/**
+	 * Sets whether the table style is shown in the pivot table style gallery.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Specifies whether the style is shown in the pivot table style gallery.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/SetShowAsAvailablePivotTableStyle.js
+	 */
+	ApiTableStyle.prototype.SetShowAsAvailablePivotTableStyle = function (show) {
+		if (typeof show !== 'boolean') {
+			private_MakeError('Invalid type of "show".');
+			return;
+		}
+		this.private_changeStyle(function (style) {
+			style.pivot = show;
+		});
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "ShowAsAvailablePivotTableStyle", {
+		get: function () {
+			return this.GetShowAsAvailablePivotTableStyle();
+		},
+		set: function (show) {
+			this.SetShowAsAvailablePivotTableStyle(show);
+		}
+	});
+
+	/**
+	 * Returns the collection of formatted parts of the table style, or a single part when its type is passed.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTableStyleElementType} [type] - The table style element type to return instead of the whole collection.
+	 * @returns {ApiTableStyleElements | ApiTableStyleElement | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/GetTableStyleElements.js
+	 */
+	ApiTableStyle.prototype.GetTableStyleElements = function (type) {
+		let elements = new ApiTableStyleElements(this);
+		return undefined === type ? elements : elements.GetItem(type);
+	};
+
+	Object.defineProperty(ApiTableStyle.prototype, "TableStyleElements", {
+		get: function () {
+			return this.GetTableStyleElements();
+		}
+	});
+
+	/**
+	 * Deletes the custom table style. Formatted tables and pivot tables that use it switch to the workbook default styles.
+	 * If the style is itself a workbook default, that default is reset to TableStyleMedium2 or PivotStyleLight16 first.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/Delete.js
+	 */
+	ApiTableStyle.prototype.Delete = function () {
+		let wb = this.workbook.Workbook;
+		let tableStyles = wb.TableStyles;
+		let name = this.name;
+		if (!this.private_getModel()) {
+			private_MakeError('The table style does not exist.');
+			return;
+		}
+		if (this.GetBuiltIn()) {
+			private_MakeError('Cannot delete a built-in table style.');
+			return;
+		}
+		// a custom style that shadows a built-in one leaves the built-in in place, so only an unshadowed name needs a fallback
+		let builtInLeft = tableStyles.DefaultStyles.hasOwnProperty(name) || tableStyles.DefaultStylesPivot.hasOwnProperty(name);
+		AscCommon.History.Create_NewPoint();
+		AscCommon.History.StartTransaction();
+		try {
+			if (!builtInLeft) {
+				// Excel resets a deleted workbook default to its own defaults before tables and pivots fall back to it
+				if (tableStyles.DefaultTableStyle === name) {
+					wb.setDefaultTableStyle("TableStyleMedium2", true);
+				}
+				if (tableStyles.DefaultPivotStyle === name) {
+					wb.setDefaultPivotStyle("PivotStyleLight16", true);
+				}
+				for (let i = 0; i < wb.aWorksheets.length; ++i) {
+					let ws = wb.aWorksheets[i];
+					let refs = [], pivots = [];
+					for (let j = 0; j < ws.TableParts.length; ++j) {
+						if (ws.TableParts[j].TableStyleInfo && ws.TableParts[j].TableStyleInfo.Name === name) {
+							refs.push(ws.TableParts[j].Ref);
+						}
+					}
+					for (let j = 0; j < ws.pivotTables.length; ++j) {
+						let styleInfo = ws.pivotTables[j].asc_getStyleInfo();
+						if (styleInfo && styleInfo.asc_getName() === name) {
+							pivots.push(ws.pivotTables[j]);
+						}
+					}
+					for (let j = 0; j < refs.length; ++j) {
+						ws.autoFilters.changeTableStyleInfo(tableStyles.DefaultTableStyle, refs[j]);
+					}
+					for (let j = 0; j < pivots.length; ++j) {
+						pivots[j].asc_getStyleInfo().asc_setName(Asc.editor, pivots[j], tableStyles.DefaultPivotStyle);
+					}
+				}
+			}
+			wb.setCustomTableStyle(name, null, true);
+		} finally {
+			AscCommon.History.EndTransaction();
+		}
+	};
+
+	/**
+	 * Creates a custom copy of the table style with all its formatting and gallery flags.
+	 * @undocumented
+	 * @memberof ApiTableStyle
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - The name of the copy. Must be unique among the custom and built-in style names (case-insensitive).
+	 * @returns {ApiTableStyle}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyle/Methods/Duplicate.js
+	 */
+	ApiTableStyle.prototype.Duplicate = function (name) {
+		let wb = this.workbook.Workbook;
+		let model = this.private_getModel();
+		if (!model) {
+			private_MakeError('The table style does not exist.');
+			return;
+		}
+		if (!private_CheckNewTableStyleName(wb.TableStyles, name)) {
+			return;
+		}
+		let copy = model.clone();
+		copy.name = name;
+		copy.displayName = name;
+		wb.setCustomTableStyle(name, copy, true);
+		return new ApiTableStyle(this.workbook, name);
+	};
+
+	// returns the live model style for this name, custom styles first, then built-in, or null if it no longer exists
+	ApiTableStyle.prototype.private_getModel = function () {
+		let wb = this.workbook.Workbook;
+		return wb.TableStyles.CustomStyles[this.name] || wb.TableStyles.AllStyles[this.name] || null;
+	};
+
+	// clones the current custom style, lets the callback mutate the clone, then stores it as one history item; throws for a built-in or missing style
+	ApiTableStyle.prototype.private_changeStyle = function (callback) {
+		let wb = this.workbook.Workbook;
+		let model = this.private_getModel();
+		if (!model) {
+			private_MakeError('The table style does not exist.');
+			return;
+		}
+		if (this.GetBuiltIn()) {
+			private_MakeError('Cannot modify a built-in table style.');
+			return;
+		}
+		let s = model.clone();
+		callback(s);
+		wb.setCustomTableStyle(this.name, s, true);
+	};
+
+	/**
+	 * Returns a table style element by its type.
+	 * @undocumented
+	 * @memberof ApiTableStyleElements
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTableStyleElementType} type - The table style element type.
+	 * @returns {ApiTableStyleElement | null}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElements/Methods/GetItem.js
+	 */
+	ApiTableStyleElements.prototype.GetItem = function (type) {
+		let internalType = private_XlTableStyleElementTypeToInternal(type);
+		if (null === internalType) {
+			return null;
+		}
+		return new ApiTableStyleElement(this.tableStyle, internalType);
+	};
+
+	/**
+	 * Returns the font of the table style element. Its Size, Name, Subscript and Superscript cannot be set.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFont}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetFont.js
+	 */
+	ApiTableStyleElement.prototype.GetFont = function () {
+		return new ApiFont(this);
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "Font", {
+		get: function () {
+			return this.GetFont();
+		}
+	});
+
+	/**
+	 * Sets the background color of the table style element. Pass null or 'No Fill' to remove the fill.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor | 'No Fill' | null} color - The fill color, or null / 'No Fill' to remove the fill.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/SetFillColor.js
+	 */
+	ApiTableStyleElement.prototype.SetFillColor = function (color) {
+		let noFill = ('No Fill' === color || null === color);
+		let coreColor = noFill ? null : toCoreColor(color);
+		if (!noFill && !coreColor) {
+			private_MakeError('Invalid color.');
+			return;
+		}
+		this.private_changeStyle(function (wrap) {
+			if (noFill) {
+				wrap.dxf.fill = null;
+				return;
+			}
+			wrap.dxf.fill = new AscCommonExcel.Fill();
+			wrap.dxf.fill.fromColor(coreColor);
+		}, true);
+	};
+
+	/**
+	 * Returns the background color of the table style element. Returns 'No Fill' when no fill is set.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | 'No Fill'}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetFillColor.js
+	 */
+	ApiTableStyleElement.prototype.GetFillColor = function () {
+		let el = this.private_getDxfRule();
+		if (!el || !el.dxf || !el.dxf.fill) {
+			return 'No Fill';
+		}
+		let oColor = el.dxf.fill.bg();
+		return oColor ? toApiColor(oColor) : 'No Fill';
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "FillColor", {
+		get: function () {
+			return this.GetFillColor();
+		},
+		set: function (color) {
+			this.SetFillColor(color);
+		}
+	});
+
+	/**
+	 * Sets the border style for the table style element. Only the Left, Top, Bottom, Right, InsideHorizontal and InsideVertical positions are supported.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
+	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
+	 * @param {ApiColor} color - The color object which specifies the color to be set to the cell border.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/SetBorders.js
+	 */
+	ApiTableStyleElement.prototype.SetBorders = function (bordersIndex, lineStyle, color) {
+		let index = (typeof bordersIndex === 'string') ? bordersIndex.toLowerCase() : bordersIndex;
+		if ('left' !== index && 'top' !== index && 'bottom' !== index && 'right' !== index &&
+			'insidehorizontal' !== index && 'insidevertical' !== index) {
+			private_MakeError('Unable to set the Borders property of the TableStyleElement class.');
+			return;
+		}
+		this.private_changeStyle(function (wrap) {
+			if (!wrap.dxf.border) {
+				wrap.dxf.border = new AscCommonExcel.Border();
+			}
+			let borders = wrap.dxf.border;
+			switch (index) {
+				case 'left':
+					borders.l = private_MakeBorder(lineStyle, color);
+					break;
+				case 'top':
+					borders.t = private_MakeBorder(lineStyle, color);
+					break;
+				case 'bottom':
+					borders.b = private_MakeBorder(lineStyle, color);
+					break;
+				case 'right':
+					borders.r = private_MakeBorder(lineStyle, color);
+					break;
+				case 'insidehorizontal':
+					borders.ih = private_MakeBorder(lineStyle, color);
+					break;
+				case 'insidevertical':
+					borders.iv = private_MakeBorder(lineStyle, color);
+					break;
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns whether the table style element carries any explicit formatting.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetHasFormat.js
+	 */
+	ApiTableStyleElement.prototype.GetHasFormat = function () {
+		let el = this.private_getDxfRule();
+		let dxf = el && el.dxf;
+		if (!dxf) {
+			return false;
+		}
+		if (private_FontHasContent(dxf.font)) {
+			return true;
+		}
+		if (private_FillHasContent(dxf.fill)) {
+			return true;
+		}
+		if (private_BorderHasContent(dxf.border)) {
+			return true;
+		}
+		return !!(dxf.num || dxf.align);
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "HasFormat", {
+		get: function () {
+			return this.GetHasFormat();
+		}
+	});
+
+	/**
+	 * Removes all the explicit formatting from the table style element, keeping its stripe size.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/Clear.js
+	 */
+	ApiTableStyleElement.prototype.Clear = function () {
+		let elementType = this.type;
+		this.tableStyle.private_changeStyle(function (style) {
+			let current = style.getElementByType(elementType);
+			if (!current) {
+				return;
+			}
+			if (1 === current.size) {
+				style.setElementByType(elementType, null);
+			} else {
+				let el = current.clone();
+				el.dxf = null;
+				style.setElementByType(elementType, el);
+			}
+		});
+	};
+
+	/**
+	 * Returns the number of rows or columns in one stripe of the table style element.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/GetStripeSize.js
+	 */
+	ApiTableStyleElement.prototype.GetStripeSize = function () {
+		let el = this.private_getDxfRule();
+		return el ? el.size : 1;
+	};
+
+	/**
+	 * Sets the number of rows or columns in one stripe of the table style element. It affects the row and column stripe elements.
+	 * @undocumented
+	 * @memberof ApiTableStyleElement
+	 * @typeofeditors ["CSE"]
+	 * @param {number} size - An integer from 1 to 9.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableStyleElement/Methods/SetStripeSize.js
+	 */
+	ApiTableStyleElement.prototype.SetStripeSize = function (size) {
+		if (typeof size !== 'number' || size % 1 !== 0 || size < 1 || size > 9) {
+			private_MakeError('Invalid stripe size.');
+			return;
+		}
+		let elementType = this.type;
+		this.tableStyle.private_changeStyle(function (style) {
+			let current = style.getElementByType(elementType);
+			let el = current ? current.clone() : new Asc.CTableStyleElement();
+			el.size = size;
+			style.setElementByType(elementType, (1 === size && !el.dxf) ? null : el);
+		});
+	};
+
+	Object.defineProperty(ApiTableStyleElement.prototype, "StripeSize", {
+		get: function () {
+			return this.GetStripeSize();
+		},
+		set: function (size) {
+			this.SetStripeSize(size);
+		}
+	});
+
+	// returns the current model element for this slot, or null; read fresh from the model on every call
+	ApiTableStyleElement.prototype.private_getDxfRule = function () {
+		let style = this.tableStyle.private_getModel();
+		return style ? style.getElementByType(this.type) : null;
+	};
+
+	// clones the slot element and its dxf, lets the callback mutate the clone, then drops empty font/fill/border and stores the element
+	ApiTableStyleElement.prototype.private_changeStyle = function (callback, notInitFont) {
+		let elementType = this.type;
+		this.tableStyle.private_changeStyle(function (style) {
+			let current = style.getElementByType(elementType);
+			let el = current ? current.clone() : new Asc.CTableStyleElement();
+			let dxf = el.dxf ? el.dxf.clone() : new AscCommonExcel.CellXfs();
+			if (!dxf.font && !notInitFont) {
+				dxf.font = new AscCommonExcel.Font();
+			}
+			callback({dxf: dxf});
+			if (dxf.font && !private_FontHasContent(dxf.font)) {
+				dxf.font = null;
+			}
+			if (dxf.fill && !private_FillHasContent(dxf.fill)) {
+				dxf.fill = null;
+			}
+			if (dxf.border && !private_BorderHasContent(dxf.border)) {
+				dxf.border = null;
+			}
+			el.dxf = (dxf.font || dxf.fill || dxf.border || dxf.num || dxf.align) ? dxf : null;
+			style.setElementByType(elementType, el);
 		});
 	};
 	//------------------------------------------------------------------------------------------------------------------
@@ -8833,7 +9693,9 @@
 	});
 
 	/**
-	 * Returns an object that represents the selected range of the current sheet. Can be a single cell - <b>A1</b>, or cells
+	 * Returns an object that represents the selected range of the current sheet.
+	 *
+	 * Can be a single cell - <b>A1</b>, or cells
 	 * from a single row - <b>A1:E1</b>, or cells from a single column - <b>A1:A10</b>, or cells from several rows and columns - <b>A1:E10</b>.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -8888,7 +9750,10 @@
 
 	/**
 	 * Formats the selected range of cells from the current sheet as a table (with the first row formatted as a header).
-	 * <note>As the first row is always formatted as a table header, you need to select at least two rows for the table to be formed correctly.</note>
+	 *
+	 * :::note
+	 * As the first row is always formatted as a table header, you need to select at least two rows for the table to be formed correctly.
+	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range of cells from the current sheet which will be formatted as a table.
@@ -8907,6 +9772,7 @@
 
 	/**
 	 * Sets the width of the specified column.
+	 *
 	 * One unit of column width is equal to the width of one character in the Normal style.
 	 * For proportional fonts, the width of the character 0 (zero) is used.
 	 * @memberof ApiWorksheet
@@ -8948,6 +9814,7 @@
 
 	/**
 	 * Sets the height of the specified row measured in points.
+	 *
 	 * A point is 1/72 inch.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9275,7 +10142,7 @@
 	ApiWorksheet.prototype.GetDefName = function (defName) {
 		if (defName && typeof defName === "string") {
 			defName = this.worksheet.workbook.getDefinesNames(defName, this.worksheet.getId());
-			return new ApiName(defName);
+			return defName ? new ApiName(defName) : null;
 		}
 
 		return null;
@@ -9337,27 +10204,27 @@
 	 * Adds a hyperlink to the specified range.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sRange - The range where the hyperlink will be added to.
-	 * @param {string} sAddress - The link address.
+	 * @param {string} range - The range where the hyperlink will be added to.
+	 * @param {string} address - The link address.
 	 * @param {string} [subAddress] - The link subaddress to insert internal sheet hyperlinks.
-	 * @param {string} [sScreenTip] - The screen tip text.
-	 * @param {string} [sTextToDisplay] - The link text that will be displayed on the sheet.
+	 * @param {string} [screenTip] - The screen tip text.
+	 * @param {string} [textToDisplay] - The link text that will be displayed on the sheet.
 	 * @returns {boolean} - returns true if the hyperlink was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetHyperlink.js
 	 */
-	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
+	ApiWorksheet.prototype.SetHyperlink = function (range, address, subAddress, screenTip, textToDisplay) {
 		// Validate required parameters
-		if (!sRange || sAddress == null) {
+		if (!range || address == null) {
 			throwException(new Error('Incorrect required parameters'));
 			return false;
 		}
 
-		var range = new ApiRange(this.worksheet.getRange2(sRange));
-		var address;
-		if (range && range.range.isOneCell()) {
-			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
-			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				throwException(new Error('Incorrect "sAddress".'));
+		var apiRange = new ApiRange(this.worksheet.getRange2(range));
+		var subAddressParts;
+		if (apiRange.range) {
+			var externalLink = address ? AscCommon.rx_allowedProtocols.test(address) : false;
+			if (externalLink && AscCommonExcel.getFullHyperlinkLength(address) > Asc.c_nMaxHyperlinkLength) {
+				throwException(new Error('Incorrect "address".'));
 				return false;
 			}
 			if (!externalLink) {
@@ -9366,40 +10233,43 @@
 					return false;
 				}
 
-				address = subAddress.split("!");
-				if (address.length === 1) {
-					address.unshift(this.GetName());
-				} else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
+				subAddressParts = subAddress.split("!");
+				if (subAddressParts.length === 1) {
+					subAddressParts.unshift(this.GetName());
+				} else if (this.worksheet.workbook.getWorksheetByName(subAddressParts[0]) === null) {
 					throwException(new Error('Invalid "subAddress".'));
 					return false;
 				}
-				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
+				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, subAddressParts[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
 					throwException(new Error('Invalid "subAddress".'));
 					return false;
 				}
 			}
-			this.worksheet.selectionRange.assign2(range.range.bbox);
+			this.worksheet.selectionRange.assign2(apiRange.range.bbox);
 			var Hyperlink = new Asc.asc_CHyperlink();
-			if (sTextToDisplay) {
-				Hyperlink.asc_setText(sTextToDisplay);
+			if (textToDisplay) {
+				Hyperlink.asc_setText(textToDisplay);
 			} else {
-				Hyperlink.asc_setText((externalLink ? sAddress : subAddress));
+				Hyperlink.asc_setText((externalLink ? address : subAddress));
 			}
-			if (sScreenTip) {
-				Hyperlink.asc_setTooltip(sScreenTip);
+			if (screenTip) {
+				Hyperlink.asc_setTooltip(screenTip);
 			}
 			if (externalLink) {
-				Hyperlink.asc_setHyperlinkUrl(sAddress);
+				Hyperlink.asc_setHyperlinkUrl(address);
 				// As in MS: an external URL keeps the subaddress ("URL#subaddress").
 				if (subAddress) {
 					Hyperlink.asc_setLocation(subAddress);
 				}
 			} else {
-				Hyperlink.asc_setRange(address[1]);
-				Hyperlink.asc_setSheet(address[0]);
+				Hyperlink.asc_setRange(subAddressParts[1]);
+				Hyperlink.asc_setSheet(subAddressParts[0]);
 			}
 			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink, this.GetIndex());
+		} else {
+			throwException(new Error('Invalid "range".'));
+			return false;
 		}
 		return true;
 	};
@@ -9425,8 +10295,12 @@
 
 	/**
 	 * Creates a chart of the specified type from the selected data range of the current sheet.
-	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of the specified column and
-	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 *
+	 * :::note
+	 * The horizontal and vertical offsets are calculated within the limits of the specified column and
+	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
+	 * :::
+	 *
 	 * :::note
 	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
@@ -9477,12 +10351,15 @@
 
 	/**
 	 * Adds a shape to the current sheet with the parameters specified.
-	 * <note>Please note that the horizontal and vertical offsets are
+	 *
+	 * :::note
+	 * The horizontal and vertical offsets are
 	 * calculated within the limits of the specified column and row cells
-	 * only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
+	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
+	 * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry. The "textRect" type creates a text box as the editor inserts it: a light fill and a thin black outline.
 	 * @param {EMU} nWidth - The shape width in English measure units.
 	 * @param {EMU} nHeight - The shape height in English measure units.
 	 * @param {ApiFill} [oFill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
@@ -9500,8 +10377,8 @@
 			return null;
 		}
 		sType = sType || "rect";
-		if (!AscFormat.isValidShapeType(sType)) sType = "rect";
-		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
+		if (sType !== "textRect" && !AscFormat.isValidShapeType(sType)) sType = "rect";
+		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet, this.worksheet);
 		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiShape(oShape);
 	};
@@ -9559,8 +10436,8 @@
 		nRotAngle = typeof (nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
 		nWidth = typeof (nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
 		nHeight = typeof (nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
-		oFill = oFill && oFill.UniFill ? oFill.UniFill : Asc.editor.CreateNoFill().UniFill;
-		oStroke = oStroke && oStroke.Ln ? oStroke.Ln : Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill()).Ln;
+		oFill = oFill && oFill.UniFill ? oFill.UniFill : Api.CreateNoFill().UniFill;
+		oStroke = oStroke && oStroke.Ln ? oStroke.Ln : Api.CreateStroke(0, Api.CreateNoFill()).Ln;
 		nFromCol = typeof (nFromCol) === "number" && nFromCol > 0 ? nFromCol : 0;
 		nFromRow = typeof (nFromRow) === "number" && nFromRow > 0 ? nFromRow : 0;
 		nColOffset = typeof (nColOffset) === "number" && nColOffset > 0 ? nColOffset : 0;
@@ -9686,6 +10563,7 @@
 		if (!oGroup)
 			return null;
 
+		oController.drawingObjects.getWorksheet().setSelectionShape(true);
 		return new ApiGroup(oGroup);
 	};
 
@@ -10031,6 +10909,7 @@
 
 	/**
 	 * Retrieves the custom XML manager associated with the current sheet.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -10072,6 +10951,11 @@
 	 * Specifies whether the first row of the sort range contains the header information.
 	 * @typedef {("xlNo" | "xlYes")} SortHeader
 	 * @see office-js-api/Examples/Enumerations/SortHeader.js
+	 */
+
+	/**
+	 * Specifies whether the first row of the range contains the header information or it is detected automatically.
+	 * @typedef {("xlNo" | "xlYes" | "xlGuess")} XlYesNoGuess
 	 */
 
 	/**
@@ -10232,7 +11116,9 @@
 	});
 
 	/**
-	 * Returns a Range object that represents the rows in the specified range. If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
+	 * Returns a Range object that represents the rows in the specified range.
+	 *
+	 * If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The row number (starts counting from 1, the 0 value returns an error).
@@ -10571,7 +11457,7 @@
 				break;
 
 			case Asc.c_oAscSelectionType.RangeMax:
-				count = range.r2 * range.c2;
+				count = (range.c2 - range.c1 + 1) * (range.r2 - range.r1 + 1);
 				break;
 		}
 		return count;
@@ -10615,7 +11501,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string | boolean | number | Array<string | boolean | number> | Array<Array<string | boolean | number>>} data - The general value for the cell or cell range.
-	 * @returns {boolean} - returns false if such a range does not exist.
+	 * @returns {boolean} - returns false if such a range does not exist or a formula was not accepted (the cell keeps its content).
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetValue.js
 	 */
 	ApiRange.prototype.SetValue = function (data) {
@@ -10625,6 +11511,12 @@
 				return false;
 
 			let worksheet = oThis.range.worksheet;
+			// the model calls back with false when it drops a formula it cannot parse, the cell keeps its content
+			let rejected = false;
+			let onParsed = function (isOk) {
+				if (isOk === false)
+					rejected = true;
+			};
 
 			if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([oThis.range.bbox])) {
 				//throwException(new Error('Cannot modify protected sheet'));
@@ -10655,14 +11547,14 @@
 									cell = oThis.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
 								value = checkFormat(value.toString());
-								cell.setValue(value.toString());
+								cell.setValue(value.toString(), onParsed);
 								if (value.type === AscCommonExcel.cElementType.number)
 									cell.setNumFormat(AscCommon.getShortDateFormat());
 							}
 						}
 						worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [oThis.range.bbox], true);
 						worksheet.workbook.oApi.onWorksheetChange(oThis.range.bbox);
-						return true;
+						return !rejected;
 					}
 				}
 			}
@@ -10680,17 +11572,17 @@
 			if (bOffsetFormula) {
 				let anchor = new AscCommon.CellBase(range.bbox.r1, range.bbox.c1);
 				AscCommonExcel.executeInR1C1Mode(false, function () {
-					range.setValue(sValue, null, null, null, undefined, undefined, anchor);
+					range.setValue(sValue, onParsed, null, null, undefined, undefined, anchor);
 				});
 			} else {
-				range.setValue(sValue);
+				range.setValue(sValue, onParsed);
 			}
 			if (data.type === AscCommonExcel.cElementType.number)
 				range.setNumFormat(AscCommon.getShortDateFormat());
 
 			worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
 			worksheet.workbook.oApi.onWorksheetChange(range.bbox);
-			return true;
+			return !rejected;
 		});
 	};
 
@@ -10707,10 +11599,23 @@
 	 * Returns a formula of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @returns {string | string[][]} - return Value2 property (value without format) if formula doesn't exist.
+	 * @returns {string | string[][]} - return Value2 property (value without format) if formula doesn't exist; a range of several cells returns an array of them by rows, as GetValue2 does.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormula.js
 	 */
 	ApiRange.prototype.GetFormula = function () {
+		if (!this.range.isOneCell()) {
+			let bbox = this.range.bbox;
+			let res = [];
+			for (let row = bbox.r1; row <= bbox.r2; row++) {
+				let rowFormulas = [];
+				for (let col = bbox.c1; col <= bbox.c2; col++) {
+					let cell = this.range.worksheet.getRange3(row, col, row, col);
+					rowFormulas.push(cell.isFormula() ? "=" + cell.getFormula() : cell.getValueWithoutFormat());
+				}
+				res.push(rowFormulas);
+			}
+			return res;
+		}
 		if (this.range.isFormula())
 			return "=" + this.range.getFormula();
 		else
@@ -10827,7 +11732,9 @@
 	});
 
 	/**
-	 * Returns the value hiding property. The specified range must span an entire column or row.
+	 * Returns the value hiding property.
+	 *
+	 * The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - returns true if the values in the range specified are hidden.
@@ -10849,7 +11756,9 @@
 		}
 	};
 	/**
-	 * Sets the value hiding property. The specified range must span an entire column or row.
+	 * Sets the value hiding property.
+	 *
+	 * The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isHidden - Specifies if the values in the current range are hidden or not.
@@ -10903,6 +11812,7 @@
 	};
 	/**
 	 * Sets the width of all the columns in the current range.
+	 *
 	 * One unit of column width is equal to the width of one character in the Normal style.
 	 * For proportional fonts, the width of the character 0 (zero) is used.
 	 * @memberof ApiRange
@@ -11118,7 +12028,6 @@
 
 	/**
 	 * Sets the direction (reading order) of the text in the current cell range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {'context' | 'ltr' | 'rtl'} direction - The direction (reading order) that will be applied to the cell contents.
@@ -11288,6 +12197,7 @@
 
 	/**
 	 * Sets the background color to the current cell range with the previously created color object.
+	 *
 	 * Sets 'No Fill' when the previously created color object is 'No Fill' or null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -11303,7 +12213,9 @@
 		return true;
 	};
 	/**
-	 * Returns the background color for the current cell range. Returns 'No Fill' when the color of the background in the cell / cell range is null.
+	 * Returns the background color for the current cell range.
+	 *
+	 * Returns 'No Fill' when the color of the background in the cell / cell range is null.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - return 'No Fill' when the color to the background in the cell / cell range is null.
@@ -11547,7 +12459,9 @@
 	};
 
 	/**
-	 * Returns the Worksheet object that represents the worksheet containing the specified range. It will be available in the read-only mode.
+	 * Returns the Worksheet object that represents the worksheet containing the specified range.
+	 *
+	 * It will be available in the read-only mode.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet}
@@ -11799,6 +12713,59 @@
 		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, sortRange);
 	};
 
+	/**
+	 * Removes the rows with duplicate values from the range, as the Remove Duplicates command does.
+	 * A range inside a table stands for the whole table, and the autofilter range or one cell of it stands for the filtered range.
+	 * Rows are duplicates when the displayed values of the compared columns are equal, case-insensitively; the first of them is kept.
+	 * The other rows of the range move up in place of the removed ones; the cells outside the range stay in place.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {number | number[]} [aColumns] - The 1-based indexes of the columns to compare, counted from the first column of the range, or of the table or the autofilter that the range stands for. If omitted, all the columns are compared.
+	 * @param {XlYesNoGuess} [sHeader="xlNo"] - Specifies whether the first row is a header row, which is kept and not compared, or "xlGuess" to detect it as the command does. The value may be in any case and without "xl", e.g. "yes"; other values throw an error. The header row of a table or an autofilter is always kept.
+	 * @returns {number | null} - The number of removed rows, or null if the rows cannot be removed: the range has one row only, has merged cells of different sizes, crosses a table, an array formula or a pivot table, or other users are editing the document.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/RemoveDuplicates.js
+	 */
+	ApiRange.prototype.RemoveDuplicates = function (aColumns, sHeader) {
+		if (!this._checkProtection()) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
+		// the selection of one area comes with that area in the list of areas
+		if (this.areas && this.areas.length > 1) {
+			private_MakeError('The range must be a single area.');
+		}
+		let columns = typeof aColumns === "number" ? [aColumns] : aColumns;
+		if (columns != null && (!Array.isArray(columns) || !columns.length)) {
+			private_MakeError('"aColumns" must be a column index or a non-empty array of 1-based column indexes.');
+		}
+
+		let ws = this.range.worksheet;
+		let wsView = ws.workbook.oApi.wb && ws.workbook.oApi.wb.getWorksheet(ws.getIndex());
+		let header = sHeader == null ? "no" : typeof sHeader === "string" ? sHeader.toLowerCase().replace(/^xl/, "") : "";
+		if ("yes" !== header && "no" !== header && "guess" !== header) {
+			private_MakeError('"sHeader" must be "xlYes", "xlNo" or "xlGuess".');
+		}
+		let props = wsView && wsView.getRemoveDuplicates(false, this.range.bbox.clone(), "guess" === header ? undefined : "yes" === header);
+		if (!props) {
+			return null;
+		}
+
+		let columnList = props.asc_getColumnList();
+		for (let i = 0; columns && i < columnList.length; i++) {
+			columnList[i].asc_setVisible(false);
+		}
+		for (let i = 0; columns && i < columns.length; i++) {
+			if (!Number.isInteger(columns[i]) || !columnList[columns[i] - 1]) {
+				private_MakeError('Column index ' + columns[i] + ' is outside the range, which has ' + columnList.length + ' columns.');
+			}
+			columnList[columns[i] - 1].asc_setVisible(true);
+		}
+
+		wsView.setRemoveDuplicates(props);
+		return props.asc_getDuplicateValues();
+	};
+
 	/*Object.defineProperty(ApiRange.prototype, "Sort", {
 		set: function (obj) {
 			return this.SetSort(obj.Key1, obj.Order1, obj.Key2, obj.Type, obj.Order2, obj.Key3, obj.Order3, obj.Header,
@@ -11882,8 +12849,8 @@
 	 * Changes the width of the columns or the height of the rows in the range to achieve the best fit.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} [bRows] - Specifies if the width of the columns will be autofit.
-	 * @param {boolean} [bCols] - Specifies if the height of the rows will be autofit.
+	 * @param {boolean} [bRows] - Specifies if the height of the rows will be autofit.
+	 * @param {boolean} [bCols] - Specifies if the width of the columns will be autofit.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AutoFit.js
 	 */
 	ApiRange.prototype.AutoFit = function (bRows, bCols) {
@@ -12288,7 +13255,9 @@
 	};
 
 	/**
-	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the next cell that matches those same conditions and returns the ApiRange object that represents that cell. This does not affect the selection or the active cell.
+	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the next cell that matches those same conditions and returns the ApiRange object that represents that cell.
+	 *
+	 * This does not affect the selection or the active cell.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} After - The cell after which the search will start. If this argument is not specified, the search starts from the last cell found.
@@ -12325,7 +13294,9 @@
 	};
 
 	/**
-	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the previous cell that matches those same conditions and returns the ApiRange object that represents that cell. This does not affect the selection or the active cell.
+	 * Continues a search that was begun with the {@link ApiRange#Find} method. Finds the previous cell that matches those same conditions and returns the ApiRange object that represents that cell.
+	 *
+	 * This does not affect the selection or the active cell.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Before - The cell before which the search will start. If this argument is not specified, the search starts from the last cell found.
@@ -12450,7 +13421,9 @@
 	};
 
 	/**
-	 * Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
+	 * Returns the ApiCharacters object that represents a range of characters within the object text.
+	 *
+	 * Use the ApiCharacters object to format characters within a text string.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Start - The first character to be returned. If this argument is either 1 or omitted, this property returns a range of characters starting with the first character.
@@ -13413,6 +14386,7 @@
 
 	/**
 	 * Returns a Range object that represents a cell or a range of cells.
+	 *
 	 * When applied to a Range object, the property is relative to that Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -13485,7 +14459,9 @@
 		}
 	});
 	/**
-	 * Returns the data validation object associated with this range. If no validation object exists yet, it will be created.
+	 * Returns the data validation object associated with this range.
+	 *
+	 * If no validation object exists yet, it will be created.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiValidation}
@@ -13575,8 +14551,11 @@
 
 	/**
 	 * Changes the position for the drawing object.
-	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of
-	 * the specified column and row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 *
+	 * :::note
+	 * The horizontal and vertical offsets are calculated within the limits of
+	 * the specified column and row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.
+	 * :::
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nFromCol - The number of the column where the beginning of the drawing object will be placed.
@@ -13703,6 +14682,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
@@ -13782,6 +14762,18 @@
 		}
 
 		return null;
+	};
+
+	/**
+	 * Returns an internal ID of the current drawing object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetInternalId.js
+	 */
+	ApiDrawing.prototype.GetInternalId = function () {
+		return this.Drawing.GetId();
 	};
 
 
@@ -13932,14 +14924,7 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @deprecated since 9.3.0 version.
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
-	 */
-	/**
-	 * Selects the current graphic object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CSE"]
-	 * @since 9.3.0
+	 * @since 9.1.0
 	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */
@@ -13953,6 +14938,7 @@
 			oController.resetSelection();
 
 		oController.selectObject(oDrawing, 0);
+		oController.drawingObjects.getWorksheet().setSelectionShape(true);
 		oController.updateSelectionState();
 		oController.updateOverlay();
 	};
@@ -13973,6 +14959,9 @@
 		if (!oController)
 			return false
 		oController.deselectObject(oDrawing);
+		const worksheet = oController.drawingObjects.getWorksheet();
+		if (!worksheet.objectRender.selectedGraphicObjectsExists() && worksheet._endSelectionShape())
+			worksheet._updateSelectionNameAndInfo();
 		oController.updateSelectionState();
 		oController.updateOverlay();
 		return true
@@ -14364,6 +15353,7 @@
 
 		this.Drawing.recalculate();
 		oController.unGroupCallback();
+		oController.drawingObjects.getWorksheet().setSelectionShape(true);
 		return GetApiDrawings(aChildren);
 	};
 
@@ -14647,7 +15637,9 @@
 	};
 
 	/**
-	 * Sets the x-axis values from the specified range to the specified series. It is used with the scatter charts only.
+	 * Sets the x-axis values from the specified range to the specified series.
+	 *
+	 * It is used with the scatter charts only.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - A range of cells from the sheet with series x-axis values. For example:
@@ -14864,13 +15856,23 @@
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRef    - The range reference which must contain the sheet name, followed by sign ! and a range of cells.
-	 * Example: "Sheet1!$A$1:$B$2".
-	 * @returns {boolean} - returns true if the reference was set successfully.
+	 * Example: "Sheet1!$A$1:$B$2". A constant or a formula is accepted as well, and so is a leading "=", as in the Excel RefersTo form.
+	 * @returns {boolean} - returns true if the reference was set successfully, false if it is not a valid formula.
 	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/SetRefersTo.js
 	 */
 	ApiName.prototype.SetRefersTo = function (sRef) {
-		this.DefName.setRef(sRef);
-		return true;
+		if (!this.DefName || typeof sRef !== "string")
+			return false;
+		// the very string that is stored is parsed, and it is applied as SetName is, so the change is undoable and reaches co-authors
+		let ref = sRef.trim().replace(/^=/, "");
+		let wb = this.DefName.wb;
+		let ws = (this.DefName.sheetId && wb.getWorksheetById(this.DefName.sheetId)) || wb.getActiveWs();
+		if (!ref || !new AscCommonExcel.parserFormula(ref, null, ws).parse(false))
+			return false;
+		let oldName = this.DefName.getAscCDefName(false);
+		let newName = this.DefName.getAscCDefName(false);
+		newName.Ref = ref;
+		return !!wb.editDefinesNames(oldName, newName);
 	};
 
 	/**
@@ -16032,7 +17034,6 @@
 
 	/**
 	 * Returns a type of the ApiTheme class.
-	 *
 	 * @memberof ApiTheme
 	 * @typeofeditors ["CSE"]
 	 * @returns {"theme"}
@@ -16045,7 +17046,6 @@
 
 	/**
 	 * Returns the name of the theme.
-	 *
 	 * @memberof ApiTheme
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The theme name.
@@ -16113,10 +17113,11 @@
 				isBold = null;
 			}
 			return isBold;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isBold = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isBold = this._object.rule.dxf.font.b;
+			if (rule && rule.dxf && rule.dxf.font) {
+				isBold = rule.dxf.font.b;
 			}
 			return isBold;
 		}
@@ -16124,7 +17125,10 @@
 
 	/**
 	 * Sets the bold property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the text characters are displayed bold.
@@ -16132,7 +17136,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetBold.js
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
-		if (typeof isBold !== 'boolean') {
+		let isTableStyleElement = this._object instanceof ApiTableStyleElement;
+		if (typeof isBold !== 'boolean' && !(isTableStyleElement && null === isBold)) {
 			throwException(new Error('Invalid type of parametr "isBold".'));
 			return;
 		}
@@ -16160,18 +17165,19 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentBold = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.b;
-			let newBold = isBold ? true : null;
-			
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentBold = rule && rule.dxf && rule.dxf.font && rule.dxf.font.b;
+			let newBold = isTableStyleElement ? isBold : (isBold ? true : null);
+
 			if (currentBold === newBold) {
 				return;
 			}
-			
+
 			this._object.private_changeStyle(function (_newRule) {
 				_newRule.dxf.font.b = newBold;
 			});
-		} 
+		}
 	};
 	Object.defineProperty(ApiFont.prototype, "Bold", {
 		get: function () {
@@ -16212,10 +17218,11 @@
 				isItalic = null;
 			}
 			return isItalic;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isItalic = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isItalic = this._object.rule.dxf.font.i;
+			if (rule && rule.dxf && rule.dxf.font) {
+				isItalic = rule.dxf.font.i;
 			}
 			return isItalic;
 		}
@@ -16223,7 +17230,10 @@
 
 	/**
 	 * Sets the italic property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the text characters are displayed italic.
@@ -16231,7 +17241,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetItalic.js
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
-		if (typeof isItalic !== 'boolean') {
+		let isTableStyleElement = this._object instanceof ApiTableStyleElement;
+		if (typeof isItalic !== 'boolean' && !(isTableStyleElement && null === isItalic)) {
 			throwException(new Error('Invalid type of parametr "isItalic".'));
 			return;
 		}
@@ -16259,14 +17270,15 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentItalic = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.i;
-			let newItalic = isItalic ? true : null;
-			
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentItalic = rule && rule.dxf && rule.dxf.font && rule.dxf.font.i;
+			let newItalic = isTableStyleElement ? isItalic : (isItalic ? true : null);
+
 			if (currentItalic === newItalic) {
 				return;
 			}
-			
+
 			this._object.private_changeStyle(function (_newRule) {
 				_newRule.dxf.font.i = newItalic;
 			});
@@ -16312,10 +17324,11 @@
 				size = null;
 			}
 			return size;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let fontSize = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				fontSize = this._object.rule.dxf.font.fs;
+			if (rule && rule.dxf && rule.dxf.font) {
+				fontSize = rule.dxf.font.fs;
 			}
 			return fontSize;
 		}
@@ -16323,7 +17336,10 @@
 
 	/**
 	 * Sets the font size property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Size - The font size value measured in points.
@@ -16331,6 +17347,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSize.js
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Size property of the Font class.'));
+			return;
+		}
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
 			throwException(new Error('Invalid type of parametr "Size".'));
 			return;
@@ -16411,10 +17431,11 @@
 				isStrikethrough = null;
 			}
 			return isStrikethrough;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isStrikethrough = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isStrikethrough = this._object.rule.dxf.font.s;
+			if (rule && rule.dxf && rule.dxf.font) {
+				isStrikethrough = rule.dxf.font.s;
 			}
 			return isStrikethrough;
 		}
@@ -16422,7 +17443,10 @@
 
 	/**
 	 * Sets the strikethrough property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikethrough - Specifies that the text characters are displayed strikethrough.
@@ -16430,7 +17454,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetStrikethrough.js
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
-		if (typeof isStrikethrough !== 'boolean') {
+		let isTableStyleElement = this._object instanceof ApiTableStyleElement;
+		if (typeof isStrikethrough !== 'boolean' && !(isTableStyleElement && null === isStrikethrough)) {
 			throwException(new Error('Invalid type of parametr "isStrikethrough".'));
 			return;
 		}
@@ -16458,9 +17483,10 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentStrike = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.s;
-			let newStrike = isStrikethrough ? true : null;
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentStrike = rule && rule.dxf && rule.dxf.font && rule.dxf.font.s;
+			let newStrike = isTableStyleElement ? isStrikethrough : (isStrikethrough ? true : null);
 
 			if (currentStrike === newStrike) {
 				return;
@@ -16543,10 +17569,11 @@
 			}
 
 			return Underline;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let underlineType = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				underlineType = this._object.rule.dxf.font.u;
+			if (rule && rule.dxf && rule.dxf.font) {
+				underlineType = rule.dxf.font.u;
 			}
 
 			 switch (underlineType) {
@@ -16566,7 +17593,10 @@
 
 	/**
 	 * Sets an underline of the type specified in the request to the current font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {XlUnderlineStyle} Underline - Underline type.
@@ -16627,8 +17657,9 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentUnderline = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.u;
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentUnderline = rule && rule.dxf && rule.dxf.font && rule.dxf.font.u;
 			if (currentUnderline === Underline) {
 				return;
 			}
@@ -16677,10 +17708,11 @@
 				isSubscript = null;
 			}
 			return isSubscript;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isSubscript = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isSubscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SubScript; // 2 = subscript
+			if (rule && rule.dxf && rule.dxf.font) {
+				isSubscript = rule.dxf.font.va === AscCommon.vertalign_SubScript; // 2 = subscript
 			}
 			return isSubscript;
 		}
@@ -16688,7 +17720,10 @@
 
 	/**
 	 * Sets the subscript property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSubscript - Specifies that the text characters are displayed subscript.
@@ -16696,6 +17731,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSubscript.js
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Subscript property of the Font class.'));
+			return;
+		}
 		if (typeof isSubscript !== 'boolean') {
 			throwException(new Error('Invalid type of parametr "isSubscript".'));
 			return;
@@ -16777,10 +17816,11 @@
 				isSuperscript = null;
 			}
 			return isSuperscript;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let isSuperscript = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				isSuperscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SuperScript; // 1 = superscript
+			if (rule && rule.dxf && rule.dxf.font) {
+				isSuperscript = rule.dxf.font.va === AscCommon.vertalign_SuperScript; // 1 = superscript
 			}
 			return isSuperscript;
 		}
@@ -16788,7 +17828,10 @@
 
 	/**
 	 * Sets the superscript property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSuperscript - Specifies that the text characters are displayed superscript.
@@ -16796,6 +17839,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSuperscript.js
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Superscript property of the Font class.'));
+			return;
+		}
 		if (typeof isSuperscript !== 'boolean') {
 			throwException(new Error('Invalid type of parametr "isSuperscript".'));
 			return;
@@ -16877,10 +17924,11 @@
 				FontName = null;
 			}
 			return FontName;
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let fontName = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
-				fontName = this._object.rule.dxf.font.fn;
+			if (rule && rule.dxf && rule.dxf.font) {
+				fontName = rule.dxf.font.fn;
 			}
 			return fontName;
 		}
@@ -16888,7 +17936,10 @@
 
 	/**
 	 * Sets the font name property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {string} FontName - Font name.
@@ -16896,6 +17947,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetName.js
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
+		if (this._object instanceof ApiTableStyleElement) {
+			throwException(new Error('Unable to set the Name property of the Font class.'));
+			return;
+		}
 		if (typeof FontName !== 'string') {
 			throwException(new Error('Invalid type of parametr "FontName".'));
 			return;
@@ -16977,10 +18032,11 @@
 				color = null;
 			}
 			return (color !== null ? toApiColor(color) : null);
-		} else if (this._object instanceof ApiFormatCondition) {
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
 			let fontColor = null;
-			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c) {
-				fontColor = this._object.rule.dxf.font.c;
+			if (rule && rule.dxf && rule.dxf.font && rule.dxf.font.c) {
+				fontColor = rule.dxf.font.c;
 			}
 			return fontColor ? toApiColor(fontColor) : null;
 		}
@@ -16988,7 +18044,10 @@
 
 	/**
 	 * Sets the font color property to the specified font.
-	 * <note>This method will work only with the text format of the cell.</note>
+	 *
+	 * :::note
+	 * This method will work only with the text format of the cell.
+	 * :::
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} Color - Font color.
@@ -17025,8 +18084,9 @@
 					}
 				}
 			}
-		} else if (this._object instanceof ApiFormatCondition) {
-			let currentColor = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c;
+		} else if (private_IsDxfFontOwner(this._object)) {
+			let rule = private_GetFontDxfRule(this._object);
+			let currentColor = rule && rule.dxf && rule.dxf.font && rule.dxf.font.c;
 			let newColor = coreColor;
 
 			if (currentColor === newColor) {
@@ -17056,7 +18116,9 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to the cells that will be frozen in the top- and left-most pane.
+	 * Sets the frozen cells in the active worksheet view.
+	 *
+	 * The range provided corresponds to the cells that will be frozen in the top- and left-most pane.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen.
@@ -18629,7 +19691,6 @@
 	 * @see office-js-api/Examples/Enumerations/ProtectedRangeUserType.js
 	 */
 
-
 	/**
 	 * Sets a user to the current protected range.
 	 * @memberof ApiProtectedRange
@@ -18648,7 +19709,7 @@
 		if (isValidTitle && isValidIdTitle) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
-				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true, true);
 
 				let newUser = new Asc.CUserProtectedRangeUserInfo();
 				newUser.asc_setId(sId);
@@ -18661,17 +19722,23 @@
 				}
 				newUser.asc_setType(nType);
 
-				let users = this.protectedRange.asc_getUsers();
-				if (!users) {
-					users = [];
+				let users = newProtectedRange.asc_getUsers() || [];
+				let existing = newProtectedRange.getUserById(sId);
+				if (existing) {
+					users[existing.index] = newUser;
+				} else {
+					users.push(newUser);
 				}
-				users.push(newUser);
 				newProtectedRange.asc_setUsers(users);
 				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
 				if (typeof editRes === "object") {
 					this.protectedRange = editRes;
 				}
-				result = new ApiProtectedRangeUserInfo(newUser, this.protectedRange);
+				if (editRes) {
+					// the model keeps a copy of the new range, so the user returned is the stored one
+					let stored = this.protectedRange.getUserById(sId);
+					result = new ApiProtectedRangeUserInfo(stored ? stored.obj : newUser, this.protectedRange);
+				}
 			}
 		}
 		return result;
@@ -18705,7 +19772,12 @@
 						}
 						newProtectedRange.asc_setUsers(newUsers);
 
-						if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+						// keep the edited range, as the other setters do, or the next edit brings the user back
+						let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+						if (typeof editRes === "object") {
+							this.protectedRange = editRes;
+						}
+						if (editRes) {
 							result = true;
 						}
 					}
@@ -18925,7 +19997,7 @@
 			}
 		}
 
-		if (!options.addToTable) {
+		if (!options['addToTable']) {
 			const pivotFields = this.GetPivotFields()
 			pivotFields.forEach(function (pivotField) {
 				pivotField.Remove()
@@ -19786,9 +20858,10 @@
 
 	/**
 	 * Sets the pivot table style name.
+	 * Built-in pivot table style names: PivotStyleLight1-28, PivotStyleMedium1-28, PivotStyleDark1-28.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {string} name - The pivot table style name.
+	 * @param {string} name - The name of a built-in pivot table style (for example, "PivotStyleMedium9"), or a custom style defined in the workbook.
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiPivotTable/Methods/SetStyleName.js
 	 */
@@ -21188,6 +22261,80 @@
 	});
 
 	/**
+	 * Groups the dates of the pivot table field by periods or its numbers by intervals, as VBA Range.Group does for a cell of the field.
+	 * The field must be in the rows or columns; grouping again replaces the previous grouping of the field.
+	 * For dates, the field shows the shortest period, and a new field is added next to it for every longer one.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean | number | Date} [start=true] - The first value to group, or true for the first value of the field. A date is a Date object or its serial number.
+	 * @param {boolean | number | Date} [end=true] - The last value to group, or true for the last value of the field.
+	 * @param {number} [by] - The size of each group of numbers, or the number of days in each group when the dates are grouped by days alone. If omitted, the size of the number groups is chosen automatically and each day is a group.
+	 * @param {boolean[]} [periods] - Seven values which specify whether the dates are grouped by seconds, minutes, hours, days, months, quarters and years. If omitted, the dates are grouped by months. The numbers ignore it.
+	 * @returns {boolean} - Returns true if the field is grouped, or false if it is not in the rows or columns, has values that are neither dates nor numbers, the pivot table has no source records, the grouped report would cover other cells, or other users are editing the document.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/Group.js
+	 */
+	ApiPivotField.prototype.Group = function (start, end, by, periods) {
+		const pivot = this.table.pivot;
+		// a field that an earlier grouping removed is no longer in the pivot table
+		if (!pivot.asc_getPivotFields()[this.index]) {
+			return false;
+		}
+		const groupType = pivot.getGroupFieldType(this.index);
+		if (null === groupType) {
+			return false;
+		}
+		const isDate = Asc.c_oAscGroupType.Date === groupType;
+		const groupBy = Asc.c_oAscGroupBy;
+		// the order of the periods of VBA
+		const periodTypes = [groupBy.Seconds, groupBy.Minutes, groupBy.Hours, groupBy.Days, groupBy.Months, groupBy.Quarters, groupBy.Years];
+		let dateTypes = isDate ? [groupBy.Months] : null;
+		if (isDate && periods !== undefined) {
+			if (!Array.isArray(periods) || periods.length !== periodTypes.length) {
+				private_MakeError('"periods" must be an array of 7 booleans for seconds, minutes, hours, days, months, quarters and years.');
+			}
+			dateTypes = [];
+			for (let i = 0; i < periodTypes.length; i++) {
+				if (typeof periods[i] !== "boolean") {
+					private_MakeError('"periods" must be an array of 7 booleans for seconds, minutes, hours, days, months, quarters and years.');
+				}
+				if (periods[i]) {
+					dateTypes.push(periodTypes[i]);
+				}
+			}
+			if (!dateTypes.length) {
+				private_MakeError('At least one of the "periods" must be true.');
+			}
+		}
+		// VBA ignores the size of a group of dates unless they are grouped by days alone
+		let interval = null;
+		if (by !== undefined && (!isDate || (1 === dateTypes.length && groupBy.Days === dateTypes[0]))) {
+			if (typeof by !== "number" || !(by > 0) || (isDate ? !Number.isInteger(by) || by > 32767 : !isFinite(by))) {
+				private_MakeError(isDate ? '"by" must be a whole number of days from 1 to 32767.' : '"by" must be a positive number.');
+			}
+			interval = by;
+		}
+		const toValue = function (bound, name) {
+			if (bound === undefined || bound === true) {
+				return null;
+			}
+			const value = bound instanceof Date ? new Asc.cDate(bound.getTime()).getExcelDateWithTime(true) : bound;
+			// a date is a serial number from 0 to the last day of the year 9999, which the 1904 date system counts 1462 days less
+			if (typeof value !== "number" || !isFinite(value) || (isDate && (value < 0 || value >= (AscCommon.bDate1904 ? 2957004 : 2958466)))) {
+				private_MakeError('"' + name + '" must be true, a number or a valid date.');
+			}
+			return value;
+		};
+		const startValue = toValue(start, "start");
+		const endValue = toValue(end, "end");
+		if (null !== startValue && null !== endValue && endValue < startValue) {
+			private_MakeError('"end" must not be less than "start".');
+		}
+		const rangePr = pivot.createGroupRangePrByBounds(this.index, startValue, endValue, interval);
+		return !!rangePr && true === pivot.groupPivot(this.table.api, {fld: this.index}, false, null, rangePr, dateTypes, true);
+	};
+
+	/**
 	 * The layout type of the pivot table report.
 	 * @typedef {"Tabular" | "Outline"} PivotLayoutType
 	 */
@@ -22021,7 +23168,9 @@
 	 */
 
 	/**
-	 * Adds a new filter to the pivot field. This method is VBA-compatible and follows the PivotFilters.Add signature from Excel VBA.
+	 * Adds a new filter to the pivot field.
+	 *
+	 * This method is VBA-compatible and follows the PivotFilters.Add signature from Excel VBA.
 	 * Supports all major filter types including label filters, value filters, top/bottom filters, and date filters.
 	 * @memberof ApiPivotFilters
 	 * @typeofeditors ["CSE"]
@@ -22341,7 +23490,10 @@
 
 	/**
 	 * Sets the visibility of the pivot item.
-	 * <note> At least one item must remain visible when hiding others. </note>
+	 *
+	 * :::note
+	 * At least one item must remain visible when hiding others.
+	 * :::
 	 * @memberof ApiPivotItem
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} visible - Specifies whether the pivot item is visible.
@@ -25684,6 +26836,7 @@
 
 	/**
 	 * Sets the background color to the format condition with the previously created color object.
+	 *
 	 * Sets 'No Fill' when previously created color object is null.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
@@ -25711,7 +26864,9 @@
 	};
 
 	/**
-	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
+	 * Returns the background color for the format condition.
+	 *
+	 * Returns 'No Fill' when the background color of the format condition is null.
 	 * @memberof ApiFormatCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
@@ -25990,7 +27145,9 @@
 	ApiAboveAverage.prototype.SetNumberFormat = ApiFormatCondition.prototype.SetNumberFormat;
 
 	/**
-	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
+	 * Returns the background color for the format condition.
+	 *
+	 * Returns 'No Fill' when the background color of the format condition is null.
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
@@ -26001,6 +27158,7 @@
 
 	/**
 	 * Sets the background color to the format condition with the previously created color object.
+	 *
 	 * Sets 'No Fill' when previously created color object is null.
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
@@ -27478,7 +28636,7 @@
 			return 100;
 		}
 
-		return dataBarElement.MaxLength || 100;
+		return dataBarElement.MaxLength == null ? 100 : dataBarElement.MaxLength;
 	};
 
 	/**
@@ -27927,7 +29085,7 @@
 			return null;
 		}
 
-		return ToXlIconSetFrom(iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights2);
+		return ToXlIconSetFrom(iconSetElement.IconSet == null ? Asc.EIconSetType.Traffic3Lights2 : iconSetElement.IconSet);
 	};
 
 	function getIconSetCount(iconSetType) {
@@ -30186,7 +31344,6 @@
      * it does not change the currently defined filter conditions; it only
      * reevaluates which rows should be visible based on the active filters.
      * If no AutoFilter is defined for the worksheet, the method does nothing.
-     *
      * @memberof ApiAutoFilter
      * @typeofeditors ["CSE"]
      * @returns {void}
@@ -30212,7 +31369,6 @@
      * it removes any active filtering from the worksheet while preserving the
      * AutoFilter drop-downs on the header row. If no AutoFilter is defined
      * for the worksheet, the method does nothing.
-     *
      * @memberof ApiAutoFilter
      * @typeofeditors ["CSE"]
      * @returns {void}
@@ -30322,8 +31478,6 @@
 
     /**
      * Returns the first criteria associated with the filter for this column.
-     *
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {string|string[]|number|XlDynamicFilterCriteria|null} The first criteria for the filter.
@@ -30389,7 +31543,6 @@
 
     /**
      * Returns the second criteria associated with the filter for this column.
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {string|null} The second criteria for the filter, or null if not applicable.
@@ -30435,12 +31588,12 @@
      *
      * The property is true when at least one of the following underlying
      * structures is present for the column:
+     *
      * - Filters
      * - CustomFiltersObj
      * - DynamicFilter
      * - ColorFilter
      * - Top10
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {boolean} True if a filter is applied; otherwise, false.
@@ -30462,7 +31615,6 @@
 
     /**
      * Returns the operator used for the filter on this column.
-     *
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {XlAutoFilterOperator|null} The operator for the current filter.
@@ -30540,6 +31692,7 @@
 	Api["GetLocale"]             = Api.GetLocale;
 	Api["SetLocale"]             = Api.SetLocale;
 	Api["GetSheet"]              = Api.GetSheet;
+	Api["GetByInternalId"]       = Api.GetByInternalId;
 	Api["GetThemesColors"]       = Api.GetThemesColors;
 	Api["SetThemeColors"]        = Api.SetThemeColors;
 	Api["CreateNewHistoryPoint"] = Api.CreateNewHistoryPoint;
@@ -30582,8 +31735,6 @@
 	Api["GetPivotByName"] = Api.GetPivotByName;
 	Api["RefreshAllPivots"] = Api.RefreshAllPivots;
 	Api["GetAllPivotTables"] = Api.GetAllPivotTables;
-	Api["attachEvent"] = Api.attachEvent;
-	Api["detachEvent"] = Api.detachEvent;
 
 	ApiWorkbook.prototype["Save"] = ApiWorkbook.prototype.Save;
 	ApiWorkbook.prototype["GetSheets"] = ApiWorkbook.prototype.GetSheets;
@@ -30596,6 +31747,34 @@
 	ApiWorkbook.prototype["Redraw"] = ApiWorkbook.prototype.Redraw;
 	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
 	ApiWorkbook.prototype["GetDrawingsByName"] = ApiWorkbook.prototype.GetDrawingsByName;
+	ApiWorkbook.prototype["GetTableStyles"] = ApiWorkbook.prototype.GetTableStyles;
+	ApiWorkbook.prototype["GetLinkSources"] = ApiWorkbook.prototype.GetLinkSources;
+	ApiWorkbook.prototype["BreakLink"] = ApiWorkbook.prototype.BreakLink;
+
+	ApiTableStyles.prototype["Add"] = ApiTableStyles.prototype.Add;
+	ApiTableStyles.prototype["GetItem"] = ApiTableStyles.prototype.GetItem;
+	ApiTableStyles.prototype["GetCount"] = ApiTableStyles.prototype.GetCount;
+
+	ApiTableStyle.prototype["GetName"] = ApiTableStyle.prototype.GetName;
+	ApiTableStyle.prototype["GetBuiltIn"] = ApiTableStyle.prototype.GetBuiltIn;
+	ApiTableStyle.prototype["GetShowAsAvailableTableStyle"] = ApiTableStyle.prototype.GetShowAsAvailableTableStyle;
+	ApiTableStyle.prototype["SetShowAsAvailableTableStyle"] = ApiTableStyle.prototype.SetShowAsAvailableTableStyle;
+	ApiTableStyle.prototype["GetShowAsAvailablePivotTableStyle"] = ApiTableStyle.prototype.GetShowAsAvailablePivotTableStyle;
+	ApiTableStyle.prototype["SetShowAsAvailablePivotTableStyle"] = ApiTableStyle.prototype.SetShowAsAvailablePivotTableStyle;
+	ApiTableStyle.prototype["GetTableStyleElements"] = ApiTableStyle.prototype.GetTableStyleElements;
+	ApiTableStyle.prototype["Delete"] = ApiTableStyle.prototype.Delete;
+	ApiTableStyle.prototype["Duplicate"] = ApiTableStyle.prototype.Duplicate;
+
+	ApiTableStyleElements.prototype["GetItem"] = ApiTableStyleElements.prototype.GetItem;
+
+	ApiTableStyleElement.prototype["GetFont"] = ApiTableStyleElement.prototype.GetFont;
+	ApiTableStyleElement.prototype["SetFillColor"] = ApiTableStyleElement.prototype.SetFillColor;
+	ApiTableStyleElement.prototype["GetFillColor"] = ApiTableStyleElement.prototype.GetFillColor;
+	ApiTableStyleElement.prototype["SetBorders"] = ApiTableStyleElement.prototype.SetBorders;
+	ApiTableStyleElement.prototype["GetHasFormat"] = ApiTableStyleElement.prototype.GetHasFormat;
+	ApiTableStyleElement.prototype["Clear"] = ApiTableStyleElement.prototype.Clear;
+	ApiTableStyleElement.prototype["GetStripeSize"] = ApiTableStyleElement.prototype.GetStripeSize;
+	ApiTableStyleElement.prototype["SetStripeSize"] = ApiTableStyleElement.prototype.SetStripeSize;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -30742,6 +31921,7 @@
 	ApiRange.prototype["SetOrientation"] = ApiRange.prototype.SetOrientation;
 	ApiRange.prototype["GetOrientation"] = ApiRange.prototype.GetOrientation;
 	ApiRange.prototype["SetSort"] = ApiRange.prototype.SetSort;
+	ApiRange.prototype["RemoveDuplicates"] = ApiRange.prototype.RemoveDuplicates;
 	ApiRange.prototype["Delete"] = ApiRange.prototype.Delete;
 	ApiRange.prototype["Insert"] = ApiRange.prototype.Insert;
 	ApiRange.prototype["AutoFit"] = ApiRange.prototype.AutoFit;
@@ -30783,6 +31963,7 @@
 	ApiDrawing.prototype["GetLockValue"]               =  ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]               =  ApiDrawing.prototype.SetLockValue;
 	ApiDrawing.prototype["GetParentSheet"]             =  ApiDrawing.prototype.GetParentSheet;
+	ApiDrawing.prototype["GetInternalId"]              =  ApiDrawing.prototype.GetInternalId;
 	ApiDrawing.prototype["SetRotation"]                =  ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]                =  ApiDrawing.prototype.GetRotation;
 	ApiDrawing.prototype["GetFlipH"]                   =  ApiDrawing.prototype.GetFlipH;
@@ -31596,6 +32777,7 @@
 	ApiPivotField.prototype["GetParent"]                 = ApiPivotField.prototype.GetParent;
 	ApiPivotField.prototype["GetLayoutCompactRow"]       = ApiPivotField.prototype.GetLayoutCompactRow;
 	ApiPivotField.prototype["SetLayoutCompactRow"]       = ApiPivotField.prototype.SetLayoutCompactRow;
+	ApiPivotField.prototype["Group"]                     = ApiPivotField.prototype.Group;
 	ApiPivotField.prototype["GetLayoutForm"]             = ApiPivotField.prototype.GetLayoutForm;
 	ApiPivotField.prototype["SetLayoutForm"]             = ApiPivotField.prototype.SetLayoutForm;
 	ApiPivotField.prototype["GetLayoutPageBreak"]        = ApiPivotField.prototype.GetLayoutPageBreak;

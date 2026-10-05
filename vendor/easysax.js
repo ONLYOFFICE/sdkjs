@@ -1506,6 +1506,36 @@ StaxParser.prototype.GetValueDecodeXml = function () {
 StaxParser.prototype.GetValueDecodeXmlExt = function () {
     return this.GetValueDecodeXml();
 };
+StaxParser.prototype.GetValueDecodeXmlEntities = function () {
+    return this.DecodeXmlEntities(this.text);
+};
+// Plain XML decoding: literal line ends become LF first, then named and numeric character references are decoded, _xHHHH_ stays literal text
+StaxParser.prototype.DecodeXmlEntities = function (text) {
+    if (-1 !== text.indexOf('\r')) {
+        text = text.replace(/\r\n?/g, '\n');
+    }
+    if (-1 === text.indexOf('&')) {
+        return text;
+    }
+    return text.replace(/&(lt|gt|amp|quot|apos|#x[0-9A-Fa-f]+|#[0-9]+);/g, function (match, name) {
+        switch (name) {
+            case 'lt': return '<';
+            case 'gt': return '>';
+            case 'amp': return '&';
+            case 'quot': return '"';
+            case 'apos': return "'";
+        }
+        var code = 'x' === name.charAt(1) ? parseInt(name.substring(2), 16) : parseInt(name.substring(1), 10);
+        if (!(code > 0 && code <= 0x10FFFF)) {
+            return match;
+        }
+        if (code < 0x10000) {
+            return String.fromCharCode(code);
+        }
+        code -= 0x10000;
+        return String.fromCharCode(0xD800 | (code >> 10), 0xDC00 | (code & 0x3FF));
+    });
+};
 StaxParser.prototype.DecodeXml = function (text) {
     // Detect &amp; and _xHHHH_ patterns
     const len = text.length;

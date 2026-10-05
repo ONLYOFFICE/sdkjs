@@ -3760,6 +3760,71 @@
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
 			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
 	};
+	Workbook.prototype.setCustomTableStyle = function (name, style, addToHistory) {
+		let tableStyles = this.TableStyles;
+		let oldStyle = tableStyles.CustomStyles[name] || null;
+		if (style) {
+			tableStyles.CustomStyles[name] = style;
+			tableStyles.AllStyles[name] = style;
+		} else {
+			delete tableStyles.CustomStyles[name];
+			delete tableStyles.AllStyles[name];
+			//a removed custom style may have shadowed a built-in style of the same name
+			if (tableStyles.DefaultStyles.hasOwnProperty(name)) {
+				tableStyles.AllStyles[name] = tableStyles.DefaultStyles[name];
+			} else if (tableStyles.DefaultStylesPivot.hasOwnProperty(name)) {
+				tableStyles.AllStyles[name] = tableStyles.DefaultStylesPivot[name];
+			}
+		}
+		if (addToHistory) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_TableStyle,
+				null, null, new UndoRedoData_FromTo(oldStyle, style));
+		}
+		this.updateTableStylesByName(name);
+	};
+	Workbook.prototype.setDefaultTableStyle = function (name, addToHistory) {
+		let oldName = this.TableStyles.DefaultTableStyle;
+		this.TableStyles.DefaultTableStyle = name;
+		if (addToHistory) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefaultTableStyle,
+				null, null, new UndoRedoData_FromTo(oldName, name));
+		}
+	};
+	Workbook.prototype.setDefaultPivotStyle = function (name, addToHistory) {
+		let oldName = this.TableStyles.DefaultPivotStyle;
+		this.TableStyles.DefaultPivotStyle = name;
+		if (addToHistory) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefaultPivotStyle,
+				null, null, new UndoRedoData_FromTo(oldName, name));
+		}
+	};
+	//re-renders every table and pivot table that references this style name after its definition changed
+	Workbook.prototype.updateTableStylesByName = function (name) {
+		for (let i = 0; i < this.aWorksheets.length; ++i) {
+			let ws = this.aWorksheets[i];
+			for (let j = 0; j < ws.TableParts.length; ++j) {
+				let tablePart = ws.TableParts[j];
+				if (tablePart.TableStyleInfo && tablePart.TableStyleInfo.Name === name) {
+					ws.autoFilters._cleanStyleTable(tablePart.Ref);
+					ws.autoFilters._setColorStyleTable(tablePart.Ref, tablePart);
+					if (this.handlers) {
+						this.handlers.trigger("cleanCellCache", ws.getId(), [tablePart.Ref], true);
+					}
+				}
+			}
+			for (let j = 0; j < ws.pivotTables.length; ++j) {
+				let pivotTable = ws.pivotTables[j];
+				let styleInfo = pivotTable.asc_getStyleInfo();
+				if (styleInfo && styleInfo.asc_getName() === name) {
+					ws.updatePivotTablesStyle(pivotTable.getRange());
+					if (this.handlers) {
+						//the report ranges include the page field cells, which sit outside the pivot body range
+						this.handlers.trigger("cleanCellCache", ws.getId(), pivotTable.getReportRanges(), true);
+					}
+				}
+			}
+		}
+	};
 	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
 		if (obj && undefined !== obj.id && aImages.length === 1 && aImages[0].Image) {
@@ -6018,7 +6083,8 @@
 			}
 
 			for (let i = res.length - 1; i >= 0; i--) {
-				if (res[i] === lastSlash || res[i] === ":" || (res[i] === "\\" && res.indexOf(":") !== -1)) {
+				// a file link may use either slash, and Excel splits file:///C:/a/b.xlsx as it splits file:///C:\a\b.xlsx
+				if (res[i] === lastSlash || (prefixFile && res[i] === "/") || res[i] === ":" || (res[i] === "\\" && res.indexOf(":") !== -1)) {
 					return {path: prefixFile + res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
 				}
 			}
@@ -6172,33 +6238,28 @@
 				var eRIndex = this.getExternalLinkIndexByName(arr[i].externalReference.Id);
 				if (eRIndex != null) {
 
-					//TODO on undo items are added to array in reverse order - need to always add in same order
+					//TODO need to replace all cells with just values where there are formulas referencing this workbook
+					// the formulas become values while the link still exists, so an undo brings the link back before the formulas that use it
+					var cells = this._getExternalLinkUsers(arr[i].externalReference).cells;
+					for (var k = 0; k < cells.length; k++) {
+						//need to remove the formula from this cell
+						cells[k].ws._getCellNoEmpty(cells[k].row, cells[k].col, function(cell) {
+							if (cell && cell.isFormula()) {
+								var valueData = cell.getValueData();
+								valueData.formula = null;
+								cell.setValueData(valueData);
+							}
+							//cell.setFormulaInternal(null);
+						});
+					}
+
 					this.removeExternalReference(eRIndex, true);
 					isChanged = true;
 
-					//TODO need to replace all cells with just values where there are formulas referencing this workbook
 					for (var j in arr[i].externalReference.worksheets) {
 						var removedSheet = arr[i].externalReference.worksheets[j];
 						if (removedSheet) {
-
-							var removedSheetId = removedSheet.getId();
-							this.dependencyFormulas.forEachSheetListeners(removedSheetId, function (parsed) {
-								if (parsed) {
-									var cell = parsed.parent;
-									if (cell && cell.nCol != null && cell.nRow != null) {
-										//need to remove the formula from this cell
-										parsed.ws._getCellNoEmpty(cell.nRow, cell.nCol, function(cell) {
-											var valueData = cell.getValueData();
-											valueData.formula = null;
-											cell.setValueData(valueData);
-											//cell.setFormulaInternal(null);
-										});
-									}
-								}
-							});
-
-
-							var prepared = this.dependencyFormulas.prepareChangeSheet(removedSheetId, {remove: removedSheetId});
+							var prepared = this.dependencyFormulas.prepareChangeSheet(removedSheet.getId(), {remove: removedSheet.getId()});
 							this.dependencyFormulas.removeSheet(prepared);
 						}
 					}
@@ -6212,6 +6273,46 @@
 		}
 	};
 
+	// all cells are collected before any changes, as a shared or array formula listens once for all its cells
+	Workbook.prototype._getExternalLinkUsers = function (externalReference) {
+		var res = {cells: [], usedOutsideCells: false};
+		for (var j in externalReference.worksheets) {
+			var sheet = externalReference.worksheets[j];
+			sheet && this.dependencyFormulas.forEachSheetListeners(sheet.getId(), function (parsed) {
+				var parent = parsed && parsed.parent;
+				if (!parent) {
+					return;
+				}
+				if (parent.nRow == null || parent.nCol == null) {
+					res.usedOutsideCells = true;
+					return;
+				}
+				var shared = parsed.getShared && parsed.getShared();
+				var ref = shared && shared.ref ? shared.ref : (parsed.getArrayFormulaRef && parsed.getArrayFormulaRef());
+				if (!ref) {
+					res.cells.push({ws: parsed.ws, row: parent.nRow, col: parent.nCol});
+					return;
+				}
+				parsed.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2)._foreachNoEmpty(function (cell) {
+					if (cell.getFormulaParsed() === parsed) {
+						res.cells.push({ws: parsed.ws, row: cell.nRow, col: cell.nCol});
+					}
+				});
+			});
+		}
+		return res;
+	};
+
+	// only cell formulas become values, and a defined name left on the link would point at another workbook once the links are renumbered
+	Workbook.prototype.breakExternalLink = function (path) {
+		var externalReference = this.getExternalLinkByName(path);
+		if (!externalReference || !externalReference.getAscLink || this._getExternalLinkUsers(externalReference).usedOutsideCells) {
+			return false;
+		}
+		this.removeExternalReferences([externalReference.getAscLink()]);
+		return true;
+	};
+
 	Workbook.prototype.removeExternalReference = function (index, addToHistory) {
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
@@ -6219,7 +6320,19 @@
 			this._removeExternalReference(index - 1);
 			if (addToHistory) {
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
-					null, null, new UndoRedoData_FromTo(from, null));
+					null, null, new UndoRedoData_FromTo(from, null, undefined, undefined, index - 1));
+			}
+		}
+	};
+
+	// puts a link back at the 0-based place it was removed from; the links from there on take back their old numbers
+	Workbook.prototype._insertExternalReference = function (index, externalReference) {
+		// the new numbers must exist before the formulas are renumbered, as they are assembled at once
+		this.externalReferences.splice(index, 0, externalReference);
+		for (let i = this.externalReferences.length - 1; i > index; i--) {
+			for (let j in this.externalReferences[i].worksheets) {
+				let prepared = this.dependencyFormulas.prepareChangeSheet(this.externalReferences[i].worksheets[j].getId(), {from: i, to: i + 1});
+				this.dependencyFormulas.changeExternalLink(prepared);
 			}
 		}
 	};
@@ -6936,6 +7049,7 @@
 		this.workbook = wb;
 		this.sName = this.workbook.getUniqueSheetNameFrom(g_sNewSheetNamePattern, false);
 		this.bHidden = false;
+		this.bVeryHidden = false;
 		this.oSheetFormatPr = new AscCommonExcel.SheetFormatPr();
 		this.index = _index;
 		this.Id = null != sId ? sId : AscCommon.g_oIdCounter.Get_NewId();//todo AscCommon.g_oTableId.Add
@@ -7203,6 +7317,7 @@
 		var t = this;
 		this.sName = this.workbook.checkValidSheetName(sName) ? sName : this.workbook.getUniqueSheetNameFrom(wsFrom.sName, true);
 		this.bHidden = wsFrom.bHidden;
+		this.bVeryHidden = !!wsFrom.bVeryHidden;
 		this.oSheetFormatPr = wsFrom.oSheetFormatPr.clone();
 		//this.index = wsFrom.index;
 		this.nRowsCount = wsFrom.nRowsCount;
@@ -8102,6 +8217,9 @@
 	Worksheet.prototype.setHidden = function (hidden) {
 		var bOldHidden = this.bHidden, wb = this.workbook, wsActive = wb.getActiveWs(), oVisibleWs = null;
 		this.bHidden = hidden;
+		// hiding a shown sheet again makes it a normal hidden sheet, while an undo of the show keeps it very hidden
+		if (hidden && !bOldHidden && !wb.bUndoChanges)
+			this.bVeryHidden = false;
 		if (bOldHidden != hidden) {
 			if (true == this.bHidden && this.getIndex() == wsActive.getIndex()) {
 				oVisibleWs = wb.findSheetNoHidden(this.getIndex());
@@ -11898,7 +12016,7 @@
 				}
 				if (stripe2.dxf && start + stripe1.size <= pivotRange.r2) {
 					cells = this.getRange3(start + stripe1.size, pivotRange.c1, pivotRange.r2, pivotRange.c2);
-					cells.setTableStyle(stripe1.dxf, new Asc.CTableStyleStripe(stripe2.size, stripe1.size, true));
+					cells.setTableStyle(stripe2.dxf, new Asc.CTableStyleStripe(stripe2.size, stripe1.size, true));
 				}
 			}
 
@@ -12360,6 +12478,34 @@
 		this.lastFindOptions = null;
 		this.workbook.handlers && this.workbook.handlers.trigger("clearFindResults", this.index);
 	};
+	// used range for empty cell search; a style equal to the column style is not counted
+	Worksheet.prototype._getUsedRangeForFind = function () {
+		var t = this, r2 = -1, c2 = -1;
+		this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0)._foreachNoEmpty(function (cell) {
+			var used = !cell.isNullText(true) || cell.formulaParsed;
+			if (!used && cell.xfs) {
+				var col = t._getColNoEmptyWithAll(cell.nCol);
+				used = !(col && col.xfs && col.xfs.getIndexNumber() === cell.xfs.getIndexNumber());
+			}
+			if (used) {
+				r2 = Math.max(r2, cell.nRow);
+				c2 = Math.max(c2, cell.nCol);
+			}
+		});
+		return r2 < 0 ? null : {r2: r2, c2: c2};
+	};
+	var foreachCellInRange = function (action) {
+		var ws = this.worksheet, bbox = this.bbox;
+		var r, c;
+		var callAction = function (cell) {
+			action(cell, r, c);
+		};
+		for (r = bbox.r1; r <= bbox.r2; ++r) {
+			for (c = bbox.c1; c <= bbox.c2; ++c) {
+				ws._getCellNoEmpty(r, c, callAction);
+			}
+		}
+	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
 		//***searchEngine
 		if (options.findWhat == null) {
@@ -12373,9 +12519,10 @@
 		if (findEmptyStr) {
 			options.findWhat = new RegExp("^$", "g");
 		} else if(options.isWholeWord) {
+			// The search string is user text and goes into a pattern, so it has to be escaped
 			var length = options.findWhat.length;
-			options.findWhat = '\\b' + options.findWhat + '\\b';
-			options.findWhat = new RegExp(options.findWhat, "g");
+			options.findWhat = new RegExp('\\b' + AscCommon.escapeRegExp(options.findWhat) + '\\b', "g");
+			// isWholeCell compares the search string length with the cell text, so carry it on the RegExp
 			options.findWhat.length = length;
 		}
 		var isWholeWordTrue = null;
@@ -12417,8 +12564,9 @@
 					func = findRange._foreachDataOnly;
 				}
 			} else {
-				findRange = this.getRange3(0, 0, maxRowsCount - 1, maxColsCount - 1);
-				func = findRange._foreach2;
+				var usedRange = this._getUsedRangeForFind();
+				findRange = usedRange ? this.getRange3(0, 0, usedRange.r2, usedRange.c2) : this.getRange3(0, 0, 0, 0);
+				func = usedRange ? foreachCellInRange : findRange._foreachDataOnly;
 			}
 		} else {
 			findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
@@ -12433,16 +12581,21 @@
 
 		var oldResults = this.lastFindOptions && this.lastFindOptions.findResults.isNotEmpty();
 		var result = new AscCommonExcel.findResults(), tmp;
-		var emptyCell, t = this;
+		var emptyCell, emptyCellEqual, t = this;
 		func.apply(findRange, [function (cell, r, c) {
+			var isEqual;
 			if (cell === null) {
 				if (!emptyCell) {
 					emptyCell = new Cell(t);
 					emptyCell._isTransient = true;
+					emptyCellEqual = emptyCell.isEqual(options);
 				}
 				cell = emptyCell;
+				isEqual = emptyCellEqual;
+			} else {
+				isEqual = cell.isEqual(options);
 			}
-			if (cell && cell.isEqual(options)) {
+			if (isEqual) {
 				if (!options.scanByRows) {
 					tmp = r;
 					r = c;

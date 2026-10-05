@@ -8371,20 +8371,25 @@ CStyles.prototype =
 			&& (styletype_Paragraph === Type || styletype_Table === Type))
 		{
 			let oNumbering = oLogicDocument.GetNumbering();
-			let sNumId     = Style.ParaPr.NumPr.NumId;
-			if (0 !== sNumId && "0" !== sNumId)
+			let numId      = Style.ParaPr.NumPr.NumId;
+			
+			// Follow MS Behaviour (78570)
+			if (undefined === numId)
+				numId = this.GetHeadingNumId(StyleId);
+			
+			if (0 !== numId && "0" !== numId)
 			{
-				if (undefined === sNumId && Pr.ParaPr.NumPr)
-					sNumId = Pr.ParaPr.NumPr.NumId;
+				if (undefined === numId && Pr.ParaPr.NumPr)
+					numId = Pr.ParaPr.NumPr.NumId;
 
-				let oNum = oNumbering.GetNum(sNumId);
+				let oNum = oNumbering.GetNum(numId);
 				if (oNum)
 				{
 					var nLvl = oNum.GetLvlByStyle(StyleId);
 					if (-1 !== nLvl)
-						Pr.ParaPr.Merge(oNumbering.GetParaPr(sNumId, nLvl));
+						Pr.ParaPr.Merge(oNumbering.GetParaPr(numId, nLvl));
 					else if (undefined !== Style.ParaPr.NumPr.Lvl)
-						Pr.ParaPr.Merge(oNumbering.GetParaPr(sNumId, Style.ParaPr.NumPr.Lvl));
+						Pr.ParaPr.Merge(oNumbering.GetParaPr(numId, Style.ParaPr.NumPr.Lvl));
 					else
 						Pr.ParaPr.NumPr = undefined;
 				}
@@ -8406,7 +8411,6 @@ CStyles.prototype =
 			{
 				Pr.ParaPr.Merge(Style.ParaPr);
 				Pr.TextPr.Merge(Style.TextPr);
-
 				break;
 			}
 			case styletype_Numbering:
@@ -8448,6 +8452,24 @@ CStyles.prototype =
 				break;
 			}
 		}
+	},
+	
+	GetHeadingNumId : function(styleId)
+	{
+		let numId = undefined;
+		let headingLvl = this.GetHeadingLevelById(styleId);
+		for (let nLvl = headingLvl - 1; nLvl >= 0 && undefined === numId; --nLvl)
+		{
+			let _prevStyle = this.Get(this.GetDefaultHeading(nLvl));
+			if (_prevStyle 
+				&& _prevStyle.ParaPr.NumPr
+				&& undefined !== _prevStyle.ParaPr.NumPr.NumId)
+			{
+				numId = _prevStyle.ParaPr.NumPr.NumId;
+				break;
+			}
+		}
+		return numId;
 	},
 
     Document_Get_AllFontNames : function(AllFonts)
@@ -12783,10 +12805,12 @@ CRFonts.prototype.IsEqualSlot = function(rFonts, fontSlot)
 	
 	return this.IsEqual(rFonts);
 };
-CRFonts.prototype.private_IsEqual = function(oFont1, oFont2)
+CRFonts.prototype.private_IsEqual = function(font1, font2)
 {
-	return ((undefined === oFont1 && undefined === oFont2)
-		|| (undefined !== oFont1 && undefined !== oFont2 && oFont1.Name === oFont2.Name));
+	if (undefined === font1 || null === font1 || undefined === font2 || null === font2)
+		return font1 === font2;
+
+	return font1.Name === font2.Name;
 };
 CRFonts.prototype.Is_Equal = function(oRFonts)
 {

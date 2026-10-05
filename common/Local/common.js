@@ -320,8 +320,12 @@ if (isOverrideDocumentUrls)
 	};
 }
 
+var oldSendImgUrls = AscCommon.sendImgUrls;
 AscCommon.sendImgUrls = function(api, images, callback)
 {
+	// TODO: new scheme must be supported (local desktop sdkjs => native tools without AscDesktopEditor)
+	if (!window["AscDesktopEditor"])
+		return oldSendImgUrls(api, images, callback);
 	var _data = [];
 	for (var i = 0; i < images.length; i++)
 	{

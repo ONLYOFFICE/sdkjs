@@ -4355,10 +4355,11 @@
 				if (d.IsNeedRecalc()) {
 					d.Recalculate();
 					if (d.bounds) {
-						oDirtyBoundsMM.l = Math.min(oDirtyBoundsMM.l, d.bounds.l - extMM);
-						oDirtyBoundsMM.t = Math.min(oDirtyBoundsMM.t, d.bounds.t - extMM);
-						oDirtyBoundsMM.r = Math.max(oDirtyBoundsMM.r, d.bounds.r + extMM);
-						oDirtyBoundsMM.b = Math.max(oDirtyBoundsMM.b, d.bounds.b + extMM);
+						let drawingBounds = d.getBoundsByDrawing();
+						oDirtyBoundsMM.l = Math.min(oDirtyBoundsMM.l, drawingBounds.l - extMM);
+						oDirtyBoundsMM.t = Math.min(oDirtyBoundsMM.t, drawingBounds.t - extMM);
+						oDirtyBoundsMM.r = Math.max(oDirtyBoundsMM.r, drawingBounds.r + extMM);
+						oDirtyBoundsMM.b = Math.max(oDirtyBoundsMM.b, drawingBounds.b + extMM);
 					}
 				}
 			});

@@ -3681,12 +3681,16 @@
                 this.memory.WriteLong(customElement.size);
             }
             var dxfs = this.InitSaveManager.getDxfs();
-            if(null != customElement.dxf && null != dxfs)
+            var dxf = customElement.dxf;
+            //x2t drops a table style element without dxfId when writing xlsx, so a stripe that only sets its size gets an empty dxf
+            if(null == dxf && null != customElement.size && 1 !== customElement.size)
+                dxf = new AscCommonExcel.CellXfs();
+            if(null != dxf && null != dxfs)
             {
                 this.memory.WriteByte(c_oSer_TableStyleElement.DxfId);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
                 this.memory.WriteLong(dxfs.length);
-                dxfs.push(customElement.dxf);
+                dxfs.push(dxf);
             }
         };
         this.WriteTimelineStyles = function (oTimelineStyles) {
@@ -5827,7 +5831,7 @@
                 this.memory.WriteByte(c_oSerWorksheetPropTypes.State);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 if(true == ws.bHidden)
-                    this.memory.WriteByte(EVisibleType.visibleHidden);
+                    this.memory.WriteByte(ws.bVeryHidden ? EVisibleType.visibleVeryHidden : EVisibleType.visibleHidden);
                 else
                     this.memory.WriteByte(EVisibleType.visibleVisible);
             }
@@ -8934,7 +8938,7 @@
         {
             var oThis = this;
             var oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
-                aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null, oTimelineStyles: null};
+                aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: Object.create(null), oCustomSlicerStyles: null, oTimelineStyles: null};
             var res = this.bcr.ReadTable(function (t, l) {
                 return oThis.ReadStylesContent(t, l, oStyleObject);
             });
@@ -9570,7 +9574,7 @@
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
                     return oThis.ReadTableCustomStyleElement(t,l, oNewStyleElement);
                 });
-                if(null != oNewStyleElement.Type && null != oNewStyleElement.DxfId)
+                if(null != oNewStyleElement.Type)
                     aElements.push(oNewStyleElement);
             }
             else
@@ -12083,7 +12087,7 @@
                 switch(this.stream.GetUChar())
                 {
                     case EVisibleType.visibleHidden: oWorksheet.bHidden = true;break;
-                    case EVisibleType.visibleVeryHidden: oWorksheet.bHidden = true;break;
+                    case EVisibleType.visibleVeryHidden: oWorksheet.bHidden = true; oWorksheet.bVeryHidden = true; break;
                     case EVisibleType.visibleVisible: oWorksheet.bHidden = false;break;
                 }
             }
@@ -14208,10 +14212,10 @@
     {
         this.DefaultTableStyle = "TableStyleMedium2";
         this.DefaultPivotStyle = "PivotStyleLight16";
-        this.CustomStyles = {};
+        this.CustomStyles = Object.create(null);
         this.DefaultStyles = {};
 		this.DefaultStylesPivot = {};
-        this.AllStyles = {};
+        this.AllStyles = Object.create(null);
     }
     CTableStyles.prototype =
     {
@@ -14571,6 +14575,172 @@
 			if (undefined !== val) {
 				this.dxf = AscCommon.openXml.SaxParserDataTransfer.dxfs[tableStyle.pivot ? val - 0 : val - 1] || null;
 			}
+		}
+	};
+	CTableStyleElement.prototype.clone = function() {
+		var res = new CTableStyleElement();
+		res.size = this.size;
+		res.dxf = this.dxf;
+		return res;
+	};
+	//explicit switch keeps every access dotted, safe under Closure ADVANCED renaming
+	CTableStyle.prototype.getElementByType = function(type) {
+		switch(type)
+		{
+			case ETableStyleType.tablestyletypeBlankRow: return this.blankRow;
+			case ETableStyleType.tablestyletypeFirstColumn: return this.firstColumn;
+			case ETableStyleType.tablestyletypeFirstColumnStripe: return this.firstColumnStripe;
+			case ETableStyleType.tablestyletypeFirstColumnSubheading: return this.firstColumnSubheading;
+			case ETableStyleType.tablestyletypeFirstHeaderCell: return this.firstHeaderCell;
+			case ETableStyleType.tablestyletypeFirstRowStripe: return this.firstRowStripe;
+			case ETableStyleType.tablestyletypeFirstRowSubheading: return this.firstRowSubheading;
+			case ETableStyleType.tablestyletypeFirstSubtotalColumn: return this.firstSubtotalColumn;
+			case ETableStyleType.tablestyletypeFirstSubtotalRow: return this.firstSubtotalRow;
+			case ETableStyleType.tablestyletypeFirstTotalCell: return this.firstTotalCell;
+			case ETableStyleType.tablestyletypeHeaderRow: return this.headerRow;
+			case ETableStyleType.tablestyletypeLastColumn: return this.lastColumn;
+			case ETableStyleType.tablestyletypeLastHeaderCell: return this.lastHeaderCell;
+			case ETableStyleType.tablestyletypeLastTotalCell: return this.lastTotalCell;
+			case ETableStyleType.tablestyletypePageFieldLabels: return this.pageFieldLabels;
+			case ETableStyleType.tablestyletypePageFieldValues: return this.pageFieldValues;
+			case ETableStyleType.tablestyletypeSecondColumnStripe: return this.secondColumnStripe;
+			case ETableStyleType.tablestyletypeSecondColumnSubheading: return this.secondColumnSubheading;
+			case ETableStyleType.tablestyletypeSecondRowStripe: return this.secondRowStripe;
+			case ETableStyleType.tablestyletypeSecondRowSubheading: return this.secondRowSubheading;
+			case ETableStyleType.tablestyletypeSecondSubtotalColumn: return this.secondSubtotalColumn;
+			case ETableStyleType.tablestyletypeSecondSubtotalRow: return this.secondSubtotalRow;
+			case ETableStyleType.tablestyletypeThirdColumnSubheading: return this.thirdColumnSubheading;
+			case ETableStyleType.tablestyletypeThirdRowSubheading: return this.thirdRowSubheading;
+			case ETableStyleType.tablestyletypeThirdSubtotalColumn: return this.thirdSubtotalColumn;
+			case ETableStyleType.tablestyletypeThirdSubtotalRow: return this.thirdSubtotalRow;
+			case ETableStyleType.tablestyletypeTotalRow: return this.totalRow;
+			case ETableStyleType.tablestyletypeWholeTable: return this.wholeTable;
+		}
+		return null;
+	};
+	//explicit switch keeps every access dotted, safe under Closure ADVANCED renaming
+	CTableStyle.prototype.setElementByType = function(type, element) {
+		switch(type)
+		{
+			case ETableStyleType.tablestyletypeBlankRow: this.blankRow = element; break;
+			case ETableStyleType.tablestyletypeFirstColumn: this.firstColumn = element; break;
+			case ETableStyleType.tablestyletypeFirstColumnStripe: this.firstColumnStripe = element; break;
+			case ETableStyleType.tablestyletypeFirstColumnSubheading: this.firstColumnSubheading = element; break;
+			case ETableStyleType.tablestyletypeFirstHeaderCell: this.firstHeaderCell = element; break;
+			case ETableStyleType.tablestyletypeFirstRowStripe: this.firstRowStripe = element; break;
+			case ETableStyleType.tablestyletypeFirstRowSubheading: this.firstRowSubheading = element; break;
+			case ETableStyleType.tablestyletypeFirstSubtotalColumn: this.firstSubtotalColumn = element; break;
+			case ETableStyleType.tablestyletypeFirstSubtotalRow: this.firstSubtotalRow = element; break;
+			case ETableStyleType.tablestyletypeFirstTotalCell: this.firstTotalCell = element; break;
+			case ETableStyleType.tablestyletypeHeaderRow: this.headerRow = element; break;
+			case ETableStyleType.tablestyletypeLastColumn: this.lastColumn = element; break;
+			case ETableStyleType.tablestyletypeLastHeaderCell: this.lastHeaderCell = element; break;
+			case ETableStyleType.tablestyletypeLastTotalCell: this.lastTotalCell = element; break;
+			case ETableStyleType.tablestyletypePageFieldLabels: this.pageFieldLabels = element; break;
+			case ETableStyleType.tablestyletypePageFieldValues: this.pageFieldValues = element; break;
+			case ETableStyleType.tablestyletypeSecondColumnStripe: this.secondColumnStripe = element; break;
+			case ETableStyleType.tablestyletypeSecondColumnSubheading: this.secondColumnSubheading = element; break;
+			case ETableStyleType.tablestyletypeSecondRowStripe: this.secondRowStripe = element; break;
+			case ETableStyleType.tablestyletypeSecondRowSubheading: this.secondRowSubheading = element; break;
+			case ETableStyleType.tablestyletypeSecondSubtotalColumn: this.secondSubtotalColumn = element; break;
+			case ETableStyleType.tablestyletypeSecondSubtotalRow: this.secondSubtotalRow = element; break;
+			case ETableStyleType.tablestyletypeThirdColumnSubheading: this.thirdColumnSubheading = element; break;
+			case ETableStyleType.tablestyletypeThirdRowSubheading: this.thirdRowSubheading = element; break;
+			case ETableStyleType.tablestyletypeThirdSubtotalColumn: this.thirdSubtotalColumn = element; break;
+			case ETableStyleType.tablestyletypeThirdSubtotalRow: this.thirdSubtotalRow = element; break;
+			case ETableStyleType.tablestyletypeTotalRow: this.totalRow = element; break;
+			case ETableStyleType.tablestyletypeWholeTable: this.wholeTable = element; break;
+		}
+	};
+	CTableStyle.prototype.clone = function() {
+		var res = new CTableStyle();
+		res.name = this.name;
+		res.pivot = this.pivot;
+		res.table = this.table;
+		res.displayName = this.displayName;
+		for(var type = ETableStyleType.tablestyletypeBlankRow; type <= ETableStyleType.tablestyletypeWholeTable; ++type)
+		{
+			var element = this.getElementByType(type);
+			if(null != element)
+				res.setElementByType(type, element.clone());
+		}
+		return res;
+	};
+	CTableStyle.prototype.getType = function() {
+		return AscCommonExcel.UndoRedoDataTypes.TableStyle;
+	};
+	CTableStyle.prototype.Write_ToBinary2 = function(w) {
+		if(null != this.name)
+		{
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		}
+		else
+			w.WriteBool(false);
+		if(null != this.displayName)
+		{
+			w.WriteBool(true);
+			w.WriteString2(this.displayName);
+		}
+		else
+			w.WriteBool(false);
+		w.WriteBool(this.pivot);
+		w.WriteBool(this.table);
+
+		var elementTypes = [];
+		var type;
+		for(type = ETableStyleType.tablestyletypeBlankRow; type <= ETableStyleType.tablestyletypeWholeTable; ++type)
+		{
+			if(null != this.getElementByType(type))
+				elementTypes.push(type);
+		}
+		w.WriteLong(elementTypes.length);
+		for(var i = 0; i < elementTypes.length; ++i)
+		{
+			type = elementTypes[i];
+			var element = this.getElementByType(type);
+			w.WriteLong(type);
+			w.WriteLong(element.size);
+			if(null != element.dxf)
+			{
+				w.WriteBool(true);
+				var dxf = element.dxf;
+				var styleWriter = new BinaryStylesTableWriter(w);
+				styleWriter.bs.WriteItem(0, function(){styleWriter.WriteDxf(dxf);});
+			}
+			else
+				w.WriteBool(false);
+		}
+	};
+	CTableStyle.prototype.Read_FromBinary2 = function(r) {
+		if(r.GetBool())
+			this.name = r.GetString2();
+		if(r.GetBool())
+			this.displayName = r.GetString2();
+		this.pivot = r.GetBool();
+		this.table = r.GetBool();
+
+		var count = r.GetLong();
+		for(var i = 0; i < count; ++i)
+		{
+			var type = r.GetLong();
+			var element = new CTableStyleElement();
+			element.size = r.GetLong();
+			if(r.GetBool())
+			{
+				//same dxf read sequence as CConditionalFormattingRule.Read_FromBinary2
+				var api = Asc['editor'];
+				var wb = api ? api.wbModel : null;
+				var bsr = new Binary_StylesTableReader(r, wb);
+				var bcr = new Binary_CommonReader(r);
+				var oDxf = new AscCommonExcel.CellXfs();
+				r.GetUChar();
+				var dxfLength = r.GetULongLE();
+				bcr.Read1(dxfLength, function(t,l){return bsr.ReadDxf(t,l,oDxf);});
+				//intern through the shared style cache, same as the file-open path
+				element.dxf = g_StyleCache.addXf(oDxf);
+			}
+			this.setElementByType(type, element);
 		}
 	};
     function ReadDefTableStyles(wb)
@@ -15490,47 +15660,47 @@
         for(var j = 0, length2 = elems.length; j < length2; ++j)
         {
             var elem = elems[j];
+            var Dxf = null;
             if(null != elem.DxfId)
             {
-                var Dxf = Dxfs[elem.DxfId];
-                if(null != Dxf)
-                {
-                    var oTableStyleElement = new CTableStyleElement();
-                    oTableStyleElement.dxf = Dxf;
-                    if(null != elem.Size)
-                        oTableStyleElement.size = elem.Size;
-                    switch(elem.Type)
-                    {
-                        case ETableStyleType.tablestyletypeBlankRow: style.blankRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstColumn: style.firstColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstColumnStripe: style.firstColumnStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstColumnSubheading: style.firstColumnSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstHeaderCell: style.firstHeaderCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstRowStripe: style.firstRowStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstRowSubheading: style.firstRowSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstSubtotalColumn: style.firstSubtotalColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstSubtotalRow: style.firstSubtotalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstTotalCell: style.firstTotalCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeHeaderRow: style.headerRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeLastColumn: style.lastColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeLastHeaderCell: style.lastHeaderCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeLastTotalCell: style.lastTotalCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypePageFieldLabels: style.pageFieldLabels = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypePageFieldValues: style.pageFieldValues = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondColumnStripe: style.secondColumnStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondColumnSubheading: style.secondColumnSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondRowStripe: style.secondRowStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondRowSubheading: style.secondRowSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondSubtotalColumn: style.secondSubtotalColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondSubtotalRow: style.secondSubtotalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdColumnSubheading: style.thirdColumnSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdRowSubheading: style.thirdRowSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdSubtotalColumn: style.thirdSubtotalColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdSubtotalRow: style.thirdSubtotalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeTotalRow: style.totalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeWholeTable: style.wholeTable = oTableStyleElement;break;
-                    }
-                }
+                Dxf = Dxfs[elem.DxfId];
+                if(null == Dxf)
+                    continue;
+            }
+            var oTableStyleElement = new CTableStyleElement();
+            oTableStyleElement.dxf = Dxf;
+            if(null != elem.Size)
+                oTableStyleElement.size = elem.Size;
+            switch(elem.Type)
+            {
+                case ETableStyleType.tablestyletypeBlankRow: style.blankRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstColumn: style.firstColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstColumnStripe: style.firstColumnStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstColumnSubheading: style.firstColumnSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstHeaderCell: style.firstHeaderCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstRowStripe: style.firstRowStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstRowSubheading: style.firstRowSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstSubtotalColumn: style.firstSubtotalColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstSubtotalRow: style.firstSubtotalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstTotalCell: style.firstTotalCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeHeaderRow: style.headerRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeLastColumn: style.lastColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeLastHeaderCell: style.lastHeaderCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeLastTotalCell: style.lastTotalCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypePageFieldLabels: style.pageFieldLabels = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypePageFieldValues: style.pageFieldValues = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondColumnStripe: style.secondColumnStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondColumnSubheading: style.secondColumnSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondRowStripe: style.secondRowStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondRowSubheading: style.secondRowSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondSubtotalColumn: style.secondSubtotalColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondSubtotalRow: style.secondSubtotalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdColumnSubheading: style.thirdColumnSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdRowSubheading: style.thirdRowSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdSubtotalColumn: style.thirdSubtotalColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdSubtotalRow: style.thirdSubtotalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeTotalRow: style.totalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeWholeTable: style.wholeTable = oTableStyleElement;break;
             }
         }
     };

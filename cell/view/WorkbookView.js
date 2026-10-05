@@ -2644,7 +2644,7 @@
       // selected for the formula
       if (!this._checkStopCellEditorInFormulas()) {
           index = this.copyActiveSheet;
-      } else {
+      } else if (this.selectionDialogMode) {
 		// todo at this moment information doesn't come from the interface about the SHIFT key is pressed
 		// in the future we need to add an additional argument in the current open formula, according with the bug 59698
 		let wsByIndex = this.model.getWorksheet(index);
@@ -4877,7 +4877,7 @@
 	var blackColor = new CColor(0, 0, 0);
 
 	var defaultColor;
-	if (!style || !style.wholeTable || !style.wholeTable.dxf.font) {
+	if (!style || !style.wholeTable || !style.wholeTable.dxf || !style.wholeTable.dxf.font) {
 		defaultColor = blackColor;
 	} else {
 		defaultColor = style.wholeTable.dxf.font.getColor();

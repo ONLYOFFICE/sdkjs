@@ -139,6 +139,10 @@
 			else
 				Context.FillText(X, Y, String.fromCharCode(0x00B7));
 		}
+		else
+		{
+			Context.DrawSpace(X, Y, this.GetWidthVisible(), this.Value);
+		}
 	};
 	CRunSpace.prototype.SetWidth = function(width, textPr)
 	{

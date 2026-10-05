@@ -4600,17 +4600,14 @@
 		this.Thumbnails.UpdateLimits(true);
 		this.CheckRetinaDisplay();
 
-		if (GlobalSkin.SupportNotes) {
-			const _pos = this.Height - ((this.splitters[1].position * g_dKoef_mm_to_pix) >> 0);
-			const _min = 30 * g_dKoef_mm_to_pix;
-			const isDesktopVersion = window["AscDesktopEditor"] !== undefined;
-			if (_pos < _min && !isDesktopVersion) {
-
-				const dPos = (this.Height - _min) * g_dKoef_pix_to_mm;
-
-				const notesSplitterPosition = this.splitters[1].position >= this.splitters[1].minPosition
-					? Math.max(this.splitters[2].position + HIDDEN_PANE_HEIGHT, dPos)
-					: 1;
+		const isDesktopVersion = window["AscDesktopEditor"] !== undefined;
+		if (GlobalSkin.SupportNotes && this.splitters[1].position > 0 && !isDesktopVersion) {
+			const maxPosition = (this.Height - 30 * g_dKoef_mm_to_pix) * g_dKoef_pix_to_mm;
+			const position = Math.min(this.splitters[1].savedPosition, maxPosition);
+			const notesSplitterPosition = position >= this.splitters[1].minPosition
+				? Math.max(this.splitters[2].position + HIDDEN_PANE_HEIGHT, position)
+				: 1;
+			if (notesSplitterPosition !== this.splitters[1].position) {
 				this.splitters[1].setPosition(notesSplitterPosition, false, true);
 
 				this.UpdateBottomControlsParams();

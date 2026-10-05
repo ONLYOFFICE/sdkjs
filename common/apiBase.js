@@ -49,6 +49,9 @@
 	var c_oAscAsyncAction     = Asc.c_oAscAsyncAction;
 	var c_oAscAsyncActionType = Asc.c_oAscAsyncActionType;
 
+	// Formats the server returns as origin for opening in the browser
+	const c_aOpenOnClientFormats = ['docx', 'xlsx', 'pptx', 'vsdx'];
+
 	/** @constructor */
 	function baseEditorsApi(config, editorId)
 	{
@@ -1403,17 +1406,25 @@
 	{
 		this.sendEvent("asc_onPrint");
 	};
+	baseEditorsApi.prototype._isOpenOoxmlOnClient = function()
+	{
+		return !!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml");
+	};
+	baseEditorsApi.prototype._isOpenOnClientFormat = function()
+	{
+		return this._isOpenOoxmlOnClient() && -1 !== c_aOpenOnClientFormats.indexOf(this.documentFormat);
+	};
 	baseEditorsApi.prototype._getOpenCmd = function()
 	{
 		var rData                  = null;
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()))
 		{
 			var lcid = !window['NATIVE_EDITOR_ENJINE'] && this.asc_getLocaleLCID() || undefined;
-			let isOpenOoxml = !!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml");
+			let isOpenOoxml = this._isOpenOoxmlOnClient();
 			let outputformat = this._getOpenFormatByEditorId(this.editorId, false);//false to avoid ooxml->ooxml conversion
 			let convertToOrigin = '';
 			if (isOpenOoxml) {
-				convertToOrigin = '.docx.xlsx.pptx.vsdx';
+				convertToOrigin = '.' + c_aOpenOnClientFormats.join('.');
 			}
 			rData = {
 				"c"             : 'open',
@@ -1513,6 +1524,11 @@
 			this.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
 			return;
 		}
+		if (AscCommon.checkOfficeCryptSignature(stream))
+		{
+			this._onOpenPasswordProtectedOnClient(stream);
+			return;
+		}
 
 		var file = new AscCommon.OpenFileResult();
 		file.bSerFormat = AscCommon.checkStreamSignature(stream, AscCommon.c_oSerFormat.Signature);
@@ -1522,6 +1538,11 @@
 	};
 	baseEditorsApi.prototype._onNeedParams                       = function(data, opt_isPassword)
 	{
+	};
+	baseEditorsApi.prototype._onOpenPasswordProtectedOnClient    = function(opt_stream)
+	{
+		// TODO: get the encrypted OOXML bytes if not passed, ask the password on the client, decrypt locally and continue opening
+		this.sendEvent("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
 	};
 	baseEditorsApi.prototype.asyncServerIdEndLoaded              = function(openedAt)
 	{
@@ -2304,7 +2325,12 @@
 								t._onNeedParams(input["data"]);
 								break;
 							case "needpassword":
-								t._onNeedParams(null, true);
+								// The DRM dialog reopens through server conversion, which cannot open the file on the client
+								if (t._isOpenOnClientFormat()) {
+									t._onOpenPasswordProtectedOnClient();
+								} else {
+									t._onNeedParams(null, true);
+								}
 								break;
 							case "err":
 								t.sendEvent("asc_onError",

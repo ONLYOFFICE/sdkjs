@@ -59,23 +59,25 @@
 
     /**
      * The editors which the plugin is available for:
-	 * <b>word</b> - text document editor,
-	 * <b>cell</b> - spreadsheet editor,
-	 * <b>slide</b> - presentation editor,
-	 * <b>pdf</b> - pdf editor.
+	 *
+	 * - <b>word</b> - text document editor,
+	 * - <b>cell</b> - spreadsheet editor,
+	 * - <b>slide</b> - presentation editor,
+	 * - <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
     /**
 	 * The data type selected in the editor and sent to the plugin:
-     * <b>text</b> - the text data,
-	 * <b>html</b> - HTML formatted code,
-	 * <b>ole</b> - OLE object data,
-     * <b>desktop</b> - the desktop editor data,
-     * <b>desktop-external</b> - the main page data of the desktop app (system messages),
-     * <b>none</b> - no data will be send to the plugin from the editor,
-	 * <b>sign</b> - the sign for the keychain plugin.
+     *
+     * - <b>text</b> - the text data,
+	 * - <b>html</b> - HTML formatted code,
+	 * - <b>ole</b> - OLE object data,
+     * - <b>desktop</b> - the desktop editor data,
+     * - <b>desktop-external</b> - the main page data of the desktop app (system messages),
+     * - <b>none</b> - no data will be send to the plugin from the editor,
+	 * - <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "desktop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
@@ -355,9 +357,14 @@
 		}, options);
 	};
 	Api.prototype._pluginMethod_PasteHtml = function(htmlText, callback, options) {
+		// the native engine: used only by the slide SetParagraphHtml / SetParagraphRangeHtml
+		if (window["NATIVE_EDITOR_ENJINE"] && this.editorId === AscCommon.c_oEditorId.Presentation)
+			return this._pluginMethod_PasteHtmlNative(htmlText, callback);
+
+		let pasteFrame = document.getElementById("pmpastehtmlframe");
 		if (!AscCommon.g_clipboardBase
 			|| !this.canEdit()
-			|| document.getElementById("pmpastehtml"))
+			|| (pasteFrame && pasteFrame.contentWindow.document.getElementById("pmpastehtml")))
 		{
 			if (callback)
 				callback();
@@ -365,7 +372,29 @@
 			return null;
 		}
 		
-		let _elem = document.createElement("div");
+		if (!pasteFrame) {
+			pasteFrame = document.createElement("iframe");
+			pasteFrame.id = "pmpastehtmlframe";
+			pasteFrame.setAttribute("sandbox", "allow-same-origin");
+			pasteFrame.setAttribute("tabindex", "-1");
+			pasteFrame.setAttribute("aria-hidden", "true");
+			pasteFrame.style.cssText = "position:absolute;left:0;top:-100%;width:100%;height:100%;border:0;z-index:-1000;";
+			document.body.appendChild(pasteFrame);
+		}
+		
+		let styles = "";
+		let styleElems = document.getElementsByTagName("style");
+		for (let i = 0; i < styleElems.length; ++i)
+			styles += styleElems[i].outerHTML;
+		
+		let pasteDoc = pasteFrame.contentWindow.document;
+		pasteDoc.open();
+		pasteDoc.write("<!DOCTYPE html><html><head><meta charset=\"utf-8\">" + styles + "</head><body></body></html>");
+		pasteDoc.close();
+		for (let i = 0; i < document.body.attributes.length; ++i)
+			pasteDoc.body.setAttribute(document.body.attributes[i].name, document.body.attributes[i].value);
+		
+		let _elem = pasteDoc.createElement("div");
 		_elem.id = "pmpastehtml";
 		_elem.style.color = "rgb(0,0,0)";
 		
@@ -399,13 +428,13 @@
 		this.executeGroupActionsStart();
 
 		_elem.innerHTML = htmlText;
-		document.body.appendChild(_elem);
+		pasteDoc.body.appendChild(_elem);
 		this.incrementCounterLongAction();
 		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
 		AscCommon.g_clipboardBase.bSaveFormat = false;
 		let _t = this;
 
-		let logicDocument = this.private_GetLogicDocument();
+		let logicDocument = this.getLogicDocument();
 		let isMergeLast   = !!(options && options["MergeLast"]) && logicDocument && logicDocument.IsDocumentEditor();
 		let oldMergeLast  = isMergeLast ? logicDocument.MergeLastOnInsertContent : false;
 		if (isMergeLast)
@@ -421,7 +450,7 @@
 				
 				let fCallback = function()
 				{
-					document.body.removeChild(_elem);
+					pasteDoc.body.removeChild(_elem);
 					_elem = null;
 					
 					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
@@ -450,6 +479,44 @@
 				}
 			}
 		);
+	};
+
+	Api.prototype._pluginMethod_PasteHtmlNative = function(htmlText, callback) {
+		if (!this.canEdit())
+		{
+			if (callback)
+				callback();
+
+			return null;
+		}
+
+		let style  = "color:rgb(0,0,0);";
+		let textPr = this.get_TextProps();
+		if (textPr && textPr.TextPr) {
+			if (undefined !== textPr.TextPr.FontSize)
+				style += "font-size:" + textPr.TextPr.FontSize + "pt;";
+
+			style += "font-weight:" + ((true === textPr.TextPr.Bold) ? "bold" : "normal") + ";";
+			style += "font-style:" + ((true === textPr.TextPr.Italic) ? "italic" : "normal") + ";";
+
+			let _color = textPr.TextPr.Color;
+			if (_color)
+				style += "color:rgb(" + _color.r + "," + _color.g + "," + _color.b + ");";
+		}
+
+		let result = null;
+		this.executeGroupActionsStart();
+		this.asc_PasteHtmlAsText('<div style="' + style + '">' + htmlText + '</div>', function() {
+			if (callback)
+				result = callback();
+		}, undefined, true);
+
+		// the paste helper has no api here, so it does not end the paste
+		AscCommon.g_specialPasteHelper.pasteStart = false;
+		AscFonts.IsCheckSymbols = false;
+
+		this.executeGroupActionsEnd();
+		return result;
 	};
 
     /**
@@ -955,8 +1022,13 @@
 	 */
 	
 	/**
-	 * Configures plugins from an external source. The settings can be set for all plugins or for a specific plugin.
-	 * For example, this method can be used to pass an authorization token to the plugin. This method can be used only with the connector class.
+	 * Configures plugins from an external source.
+	 *
+	 * The settings can be set for all plugins or for a specific plugin. For example, this method can be used to pass an authorization token to the plugin.
+	 *
+	 * :::note
+	 * This method can be used only with the {@link /docs/docs-api/usage-api/automation-api/connector-class connector class}.
+	 * :::
 	 * @memberof Api
 	 * @alias SetPluginsOptions
 	 * @param {PluginOptions} options - Plugin options.
@@ -1382,7 +1454,9 @@
 	 */
 
 	/**
-     * Returns the image data from the first of the selected drawings. If there are no drawings selected, the method returns a white rectangle.
+     * Returns the image data from the first of the selected drawings.
+     *
+     * If there are no drawings selected, the method returns a white rectangle.
      * @memberof Api
      * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
      * @alias GetImageDataFromSelection
@@ -1395,14 +1469,15 @@
 		return this.getImageDataFromSelection();
 	};
 	/**
-     * Replaces the first selected drawing with the image specified in the parameters.
-     * If there are no drawings selected, the method inserts the image at the current position.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
-     * @alias PutImageDataToSelection
-     * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
-     * @since 7.2.0
-     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
+	 * Replaces the first selected drawing with the image specified in the parameters.
+	 *
+	 * If there are no drawings selected, the method inserts the image at the current position.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE", "CSE", "CPE"]
+	 * @alias PutImageDataToSelection
+	 * @param {ImageData} oImageData - The information about the base64 encoded *png* image.
+	 * @since 7.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PutImageDataToSelection.js
 	 */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
@@ -1453,6 +1528,20 @@
 	AscCommon.getLocalStorageItem = getLocalStorageItem;
 	AscCommon.setLocalStorageItem = setLocalStorageItem;
 
+	const nonRemovablePlugins = Object.create(null);
+	nonRemovablePlugins["asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}"] = true;
+
+	function getRemovedPlugins()
+	{
+		let removed = getLocalStorageItem("asc_plugins_removed");
+		if (removed)
+		{
+			for (let guid in nonRemovablePlugins)
+				delete removed[guid];
+		}
+		return removed;
+	}
+
 	function installPlugin(config, loadFuncName)
 	{
 		if (!config)
@@ -1496,7 +1585,7 @@
 		currentInstalledPlugins[config["guid"]] = config;
 		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
 
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 		if (currentRemovedPlugins && currentRemovedPlugins[config["guid"]])
 		{
 			delete currentRemovedPlugins[config["guid"]];
@@ -1575,6 +1664,7 @@
 			services = JSON.parse(window.localStorage.getItem("asc_plugins_background_stopped"));
 			if (!services)
 				services = [];
+			services = services.filter(function(guid) { return !nonRemovablePlugins[guid]; });
 		}
 		catch (e)
 		{
@@ -1627,7 +1717,7 @@
 		let isInstalledPresent = window.g_asc_plugins.loadExtensionPlugins(arrayPlugins, undefined, true);
 
 		let isRemovedPresent = false;
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 
 		if (currentRemovedPlugins)
 		{
@@ -1678,7 +1768,7 @@
 			}
 		}
 
-		localStorageItems = getLocalStorageItem("asc_plugins_removed");
+		localStorageItems = getRemovedPlugins();
 		if (localStorageItems)
 		{
 			for (let item in localStorageItems)
@@ -1807,7 +1897,7 @@
 			return returnArray;
 
 		// need to also send removed plugins. since a removed plugin may not be in the store. then there's no way to install it back
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 
 		if (currentRemovedPlugins)
 		{
@@ -1864,7 +1954,7 @@
 		
 		if (removedPlugin)
 		{
-			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+			let currentRemovedPlugins = getRemovedPlugins();
 			if (!currentRemovedPlugins)
 				currentRemovedPlugins = {};
 			currentRemovedPlugins[removedPlugin.guid] = removedPlugin.serialize();

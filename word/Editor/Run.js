@@ -8104,7 +8104,7 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 
 	if (undefined !== TextPr.Lang && undefined !== TextPr.Lang.Val)
 	{
-		let lcid = TextPr.Lang.Val;
+		let lcid = null === TextPr.Lang.Val ? undefined : TextPr.Lang.Val;
 		let dirFlag = this.GetDirectionFlagInRange(0, this.Content.length);
 		if (AscBidi.DIRECTION_FLAG.None === dirFlag)
 		{

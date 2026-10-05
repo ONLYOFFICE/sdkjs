@@ -583,8 +583,9 @@ var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
 var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
-var c_nMaxDate1900 = 2958465;
-var c_nMaxDate1904 = c_nMaxDate1900 - (c_Date1900Const - c_Date1904Const) + 1;
+// 31.12.9999 in the 1904 date system: the 1904 epoch is 1462 days later (1461 real days + fake 29.02.1900)
+var c_nMaxDate1900 = 2958465; // 31.12.9999 in the 1900 date system
+var c_nMaxDate1904 = c_nMaxDate1900 - (c_Date1900Const - c_Date1904Const) - 1; // 2957003
 const aLinkTypes =  [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D,
 	cElementType.name, cElementType.name3D, cElementType.table];
 
@@ -1013,6 +1014,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cError.prototype = Object.create(cBaseType.prototype);
 	cError.prototype.constructor = cError;
 	cError.prototype.type = cElementType.error;
+	cError.prototype.collapsesCall = null;
 	cError.prototype.tocNumber = cError.prototype.tocString = cError.prototype.tocBool = function () {
 		return this;
 	};
@@ -3043,6 +3045,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//used when the tail is not a constant (e.g. ROW()/COLUMN() over a clamped full-column/row reference).
 		//takes priority over missedValue. signature: (row, col) -> cElement
 		this.missedValueFn = null;
+		this.collapsedError = null;
 	}
 
 	cArray.prototype = Object.create(cBaseType.prototype);
@@ -4146,6 +4149,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.excludeErrorsVal = false;
 	cBaseFunction.prototype.excludeNestedStAg = false;
 	cBaseFunction.prototype.bArrayFormula = null;
+	//argument positions that shape the broadcast together: when one of them is an array or a range, the others do not count
+	cBaseFunction.prototype.resultShapeArgs = null;
 	//necessary for array formulas
 	//arrayIndexes - map, where key is the argument that is passed to the function as array,area,area3d (i.e. unchanged)
 	//and value is either boolean or object
@@ -4157,6 +4162,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.inheritFormat = null;
 	cBaseFunction.prototype.name = null;
 	cBaseFunction.prototype.argumentsType = null;
+	//Calculate(arg, opt_bbox, opt_defName, ws, bIsSpecialFunction, opt_row, opt_col, opt_argInfo): the array
+	//broadcast passes opt_argInfo, where a non-zero opt_argInfo[i].mode marks an argument fed element by element
 	cBaseFunction.prototype.Calculate = function () {
 		return new cError(cErrorType.wrong_name);
 	};
@@ -4729,7 +4736,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			//first iterate over all arguments and convert from cellsRange to array or value depending on how the function should work
-			var tempArgs = [], tempArg, firstArray, _checkArrayIndex, maxArrayRows = 1, maxArrayCols = 1;
+			var tempArgs = [], tempArg, firstArray, _checkArrayIndex, maxArrayRows = 1, maxArrayCols = 1, _arrayArgs = 0;
 			//stored extent of the same arguments - the head that has to be computed cell by cell
 			var headRows = 0, headCols = 0;
 			for (var j = 0; j < argumentsCount; j++) {
@@ -4770,6 +4777,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						} else {
 							//use LOGICAL dims (realSize) so a full-column arg drives the result shape even when it has no data
 							var _taR = tempArg.getRowCount(), _taC = tempArg.getCountElementInRow();
+							_arrayArgs++;
 							maxArrayRows = Math.max(maxArrayRows, _taR);
 							maxArrayCols = Math.max(maxArrayCols, _taC);
 							headRows = Math.max(headRows, tempArg.rowCount);
@@ -4791,6 +4799,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				tempArgs.push(tempArg);
 			}
 
+			if (this.resultShapeArgs && _arrayArgs > 1) {
+				var _shapeArray = null, _shapeRows = 1, _shapeCols = 1, _shapeHeadRows = 0, _shapeHeadCols = 0;
+				for (var _si = 0; _si < this.resultShapeArgs.length; _si++) {
+					var _shapeArg = tempArgs[this.resultShapeArgs[_si]];
+					if (_shapeArg && cElementType.array === _shapeArg.type) {
+						var _sR = _shapeArg.getRowCount(), _sC = _shapeArg.getCountElementInRow();
+						_shapeRows = Math.max(_shapeRows, _sR);
+						_shapeCols = Math.max(_shapeCols, _sC);
+						_shapeHeadRows = Math.max(_shapeHeadRows, _shapeArg.rowCount);
+						_shapeHeadCols = Math.max(_shapeHeadCols, _shapeArg.countElementInRow.length ? _shapeArg.countElementInRow[0] : 0);
+						//the largest one is iterated; when none covers the broadcast, a dense target is built below
+						if (!_shapeArray || _sR * _sC > _shapeArray.getRowCount() * _shapeArray.getCountElementInRow()) {
+							_shapeArray = _shapeArg;
+						}
+					}
+				}
+				if (_shapeArray) {
+					maxArrayRows = _shapeRows;
+					maxArrayCols = _shapeCols;
+					headRows = _shapeHeadRows;
+					headCols = _shapeHeadCols;
+					firstArray = _shapeArray;
+				}
+			}
 
 			//for row/column functions with zero arguments, need to calculate
 			//the value for each cell of the array, changing opt_bbox
@@ -4856,6 +4888,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						rows: (cElementType.array === _ta.type) ? _ta.getRowCount() : 0,
 						cols: (cElementType.array === _ta.type) ? _ta.getCountElementInRow() : 0,
 						dimensions: _isRange ? _ta.getDimensions() : null,
+						//the argument itself, for a function that reads another element of it
+						arg: _ta,
 						mode: 0
 					};
 					// 0=scalar; 1..4=array shapes; 5..8=range shapes.
@@ -4908,11 +4942,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					if (_needBboxPerElem) {
 						temp_opt_bbox = new Asc.Range(c + parserFormula.ref.c1, r + parserFormula.ref.r1, c + parserFormula.ref.c1, r + parserFormula.ref.r1);
 					}
-					let _elem = t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row ? _row : r, _col ? _col : c);
+					let _elem = t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row ? _row : r, _col ? _col : c, _argInfo);
 					if (_elem.type === cElementType.array) {
 						_elem = _elem.getElementRowCol(0, 0);
 					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
 						_elem = _elem.getValueByRowCol(0, 0, true);
+					}
+					if (!array.collapsedError && _elem.type === cElementType.error && _elem.collapsesCall === _argInfo) {
+						array.collapsedError = _elem;
 					}
 					array.addElement(_elem);
 				};
@@ -4955,7 +4992,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					if (_needBboxPerElem) {
 						_tbbox = new Asc.Range(col + parserFormula.ref.c1, row + parserFormula.ref.r1, col + parserFormula.ref.c1, row + parserFormula.ref.r1);
 					}
-					var _elem = t.Calculate(newArgs, _tbbox, opt_defName, parserFormula.ws, null, row, col);
+					var _elem = t.Calculate(newArgs, _tbbox, opt_defName, parserFormula.ws, null, row, col, _argInfo);
 					if (_elem.type === cElementType.array) {
 						_elem = _elem.getElementRowCol(0, 0);
 					} else if (_elem.type === cElementType.cellsRange || _elem.type === cElementType.cellsRange3D) {
@@ -5024,9 +5061,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					}
 					var _tailRes = null;
 					if (_composable) {
-						_tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws);
+						_tailRes = t.Calculate(_tailArgs, opt_bbox, opt_defName, parserFormula.ws, null, undefined, undefined, _argInfo);
 						if (_tailRes && _tailRes.type === cElementType.array) {
 							_tailRes = _tailRes.getElementRowCol(0, 0);
+						}
+						if (_tailRes && !array.collapsedError && _tailRes.type === cElementType.error && _tailRes.collapsesCall === _argInfo &&
+							(_realSz.row > _headRows || _realSz.col > _headCols)) {
+							array.collapsedError = _tailRes;
 						}
 					}
 					if (_tailRes) {
@@ -5138,6 +5179,24 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		let width = 1, height = 1;
+		if (this.resultShapeArgs) {
+			let shaped = false;
+			for (let i = 0; i < this.resultShapeArgs.length; i++) {
+				let shapeArg = arg[this.resultShapeArgs[i]];
+				if (shapeArg && (cElementType.array === shapeArg.type || cElementType.cellsRange === shapeArg.type ||
+					cElementType.cellsRange3D === shapeArg.type)) {
+					let objSize = shapeArg.getDimensions(true);
+					if (objSize) {
+						height = Math.max(objSize.row, height);
+						width = Math.max(objSize.col, width);
+						shaped = true;
+					}
+				}
+			}
+			if (shaped) {
+				return width !== 1 || height !== 1 ? {width: width, height: height} : null;
+			}
+		}
 		for (let i = 0; i < arg.length; i++) {
 			if (!this.arrayIndexes || !this.getArrayIndex(i, arg[i].type)) {
 				let objSize = arg[i].getDimensions(true);
@@ -5656,8 +5715,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var doOperation = function (_arg0, _arg1) {
 			_arg0 = _arg0.tocString();
 			_arg1 = _arg1.tocString();
-			return _arg0 instanceof cError ? _arg0 :
-				_arg1 instanceof cError ? _arg1 : new cString(_arg0.toString().concat(_arg1.toString()))
+			if (_arg0 instanceof cError) {
+				return _arg0;
+			}
+			if (_arg1 instanceof cError) {
+				return _arg1;
+			}
+			// Excel keeps the beginning of a string past the cell limit; the pieces are cut so the long one is never built
+			var s0 = _arg0.toString(), s1 = _arg1.toString();
+			var maxLen = Asc.c_oAscMaxCellOrCommentLength;
+			if (s0.length + s1.length > maxLen) {
+				if (s0.length > maxLen) {
+					s0 = s0.substring(0, maxLen);
+				}
+				s1 = s1.substring(0, maxLen - s0.length);
+			}
+			return new cString(s0 + s1);
 		};
 
 		if(bIsSpecialFunction){
@@ -10675,6 +10748,10 @@ function parserFormula( formula, parent, _ws ) {
 							elemArr.pop();
 						}
 						let _elem = elemArr.pop();
+						//a call that collapsed reaches the next function as its error, not as an array
+						if (_elem && cElementType.array === _elem.type && _elem.collapsedError) {
+							_elem = _elem.collapsedError;
+						}
 						arg[_argCount - 1 - ind] = _elem;
 						if (fIsPromise(_elem)) {
 							_isPromise = true;
@@ -10864,6 +10941,7 @@ function parserFormula( formula, parent, _ws ) {
 			this._endCalculate();
 		} else {
 			let res = elemArr.pop();
+			// TODO add to EXPECTED_MAX_ARRAY check here to prevent bufferAllocation problem?
 
 			if (this.replaceFormulaAfterCalc === cReplaceFormulaType.formula) {
 				if (res && res.type === cElementType.string) {
@@ -12491,7 +12569,9 @@ function parserFormula( formula, parent, _ws ) {
 				if (!oIndexNumValue) {
 					continue;
 				}
-				if (oIndexNumValue.type === cElementType.func || oIndexNumValue.type === cElementType.operator) {
+				// the offsets above assume one token per argument: a function call in range_lookup leaves its
+				// argument count there, so the arguments are known only after the calculation
+				if ("object" !== typeof oIndexNumValue || oIndexNumValue.type === cElementType.func || oIndexNumValue.type === cElementType.operator) {
 					g_cCalcRecursion.setRecheckFormula(true);
 					g_cCalcRecursion.addRecheckingFormulaData('parserFormula', this);
 					g_cCalcRecursion.addRecheckingFormulaData('formulaName', oOutStackElem.name);
@@ -13810,6 +13890,15 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					nSLastIndex = nSIndex + 1;
 					nMaskLastIndex = nMaskIndex;
+				} else if ('~' === cCurMask && nMaskIndex + 1 < nMaskLength) {
+					// after a * too, a tilde makes the next character match only itself
+					if (mask[nMaskIndex + 1] === s[nSIndex]) {
+						nSIndex++;
+						nMaskIndex += 2;
+					} else {
+						nMaskIndex = nMaskLastIndex;
+						nSIndex = nSLastIndex++;
+					}
 				} else if (cCurMask !== s[nSIndex] && '?' !== cCurMask) {
 					nMaskIndex = nMaskLastIndex;
 					nSIndex = nSLastIndex++;

@@ -59,9 +59,9 @@
 	 * Axis-aligned rectangle represented as a tuple.
 	 *
 	 * Invariants:
-	 *  - rect[0] < rect[2] (x1 < x2)
-	 *  - rect[1] < rect[3] (y1 < y2)
 	 *
+	 * - <code>rect[0] < rect[2]</code> (x1 < x2)
+	 * - <code>rect[1] < rect[3]</code> (y1 < y2)
 	 * @typedef {pt[]} Rect
 	 * @property {pt} 0 - x1 (left)
 	 * @property {pt} 1 - y1 (top)
@@ -89,13 +89,17 @@
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
 	 */
 
-    /**
-     * Base class.
-     * @global
-     * @class
-     * @name Api
-     */
-    let Api = window["PDFEditorApi"];
+	/**
+	 * The PDF API lists the methods and events a plugin can use when working with a PDF file in
+	 * ONLYOFFICE Docs. To work with the PDF content directly, such as pages and annotations, run
+	 * Office API code in <code>callCommand</code>. See
+	 * {@link /docs/office-api/usage-api/pdf-api/pdf-api PDF API}.
+	 * @global
+	 * @class
+	 * @name Api
+	 * @typeofeditors ["PDFE"]
+	 */
+	let Api = window["PDFEditorApi"];
 
 	/**
      * Returns the current page index.

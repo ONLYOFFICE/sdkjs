@@ -882,6 +882,10 @@
 	{
 	};
 
+	CGraphicsBase.prototype.DrawSpace = function(x, y, width, codePoint)
+	{
+	};
+
 	// IMAGES
 	CGraphicsBase.prototype.isVectorImage = function(img)
 	{

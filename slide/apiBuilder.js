@@ -37,6 +37,8 @@
 (function (window, builder) {
 
     /**
+     * The main class of the Presentation API. Use it to get the current presentation and to
+     * create slides and slide elements, such as shapes, images, tables, and charts.
      * @global
      * @class
      * @name Api
@@ -379,7 +381,6 @@
      * @see office-js-api/Examples/Enumerations/pt.js
 	 */
 
-
     /**
      * English measure unit. 1 mm = 36000 EMUs, 1 inch = 914400 EMUs.
      * @typedef {number} EMU
@@ -388,7 +389,7 @@
 
     /**
      * This type specifies the preset shape geometry that will be used for a shape.
-     * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" | "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" | "actionButtonHelp" | "actionButtonHome" | "actionButtonInformation" | "actionButtonMovie" | "actionButtonReturn" | "actionButtonSound" | "arc" | "bentArrow" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "bentUpArrow" | "bevel" | "blockArc" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "bracePair" | "bracketPair" | "callout1" | "callout2" | "callout3" | "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" | "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" | "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
+     * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" | "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" | "actionButtonHelp" | "actionButtonHome" | "actionButtonInformation" | "actionButtonMovie" | "actionButtonReturn" | "actionButtonSound" | "arc" | "bentArrow" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "bentUpArrow" | "bevel" | "blockArc" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "bracePair" | "bracketPair" | "callout1" | "callout2" | "callout3" | "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" | "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" | "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "textRect" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
      * @see office-js-api/Examples/Enumerations/ShapeType.js
 	 */
 
@@ -397,7 +398,6 @@
     * @typedef {("None" | "ArabicPeriod"  | "ArabicParenR"  | "RomanUcPeriod" | "RomanLcPeriod" | "AlphaLcParenR" | "AlphaLcPeriod" | "AlphaUcParenR" | "AlphaUcPeriod")} BulletType
     * @see office-js-api/Examples/Enumerations/BulletType.js
 	 */
-
 
     /**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
@@ -434,21 +434,22 @@
      * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
-
     /**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * <b>"none"</b> - not display the selected tick labels.
-     * <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
-     * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
-     * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
+     *
+     * - <b>"none"</b> - not display the selected tick labels.
+     * - <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
+     * - <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
+     * - <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
      * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
     /**
      * The type of a fill which uses an image as a background.
-     * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     *
+     * - <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * - <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
@@ -458,8 +459,6 @@
      * @typedef {"cross" | "dashDnDiag" | "dashHorz" | "dashUpDiag" | "dashVert" | "diagBrick" | "diagCross" | "divot" | "dkDnDiag" | "dkHorz" | "dkUpDiag" | "dkVert" | "dnDiag" | "dotDmnd" | "dotGrid" | "horz" | "horzBrick" | "lgCheck" | "lgConfetti" | "lgGrid" | "ltDnDiag" | "ltHorz" | "ltUpDiag" | "ltVert" | "narHorz" | "narVert" | "openDmnd" | "pct10" | "pct20" | "pct25" | "pct30" | "pct40" | "pct5" | "pct50" | "pct60" | "pct70" | "pct75" | "pct80" | "pct90" | "plaid" | "shingle" | "smCheck" | "smConfetti" | "smGrid" | "solidDmnd" | "sphere" | "trellis" | "upDiag" | "vert" | "wave" | "wdDnDiag" | "wdUpDiag" | "weave" | "zigZag"} PatternType
      * @see office-js-api/Examples/Enumerations/PatternType.js
 	 */
-
-
 
     /**
      * The available types of tick mark appearance.
@@ -604,7 +603,7 @@
 	 * "effectSwivel" |
 	 * "effectZoomBottom" | "effectZoomCenter" | "effectZoomIn" | "effectZoomInSlightly" | "effectZoomOut" | "effectZoomOutSlightly"
 	 * )}
-	*/
+	 */
 
 	/**
 	 * @typedef {Object} TableLook
@@ -792,7 +791,6 @@
 
 	/**
 	 * Creates a new theme color scheme.
-	 *
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
 	 *
@@ -987,11 +985,11 @@
      * Creates a shape with the parameters specified.
      * @memberof Api
      * @typeofeditors ["CPE"]
-     * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
+     * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry. The "textRect" type creates a text box: it has no fill and no outline, uses the theme text color, and its height follows the text.
      * @param {EMU} [nWidth = 914400] - The shape width in English measure units.
 	 * @param {EMU} [nHeight = 914400] - The shape height in English measure units.
-	 * @param {ApiFill} [oFill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
-	 * @param {ApiStroke} [oStroke] - The stroke used to draw the shape outline. If not specified, the default shape style outline (theme accent) is used.
+	 * @param {ApiFill} [oFill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used, a text box has no fill.
+	 * @param {ApiStroke} [oStroke] - The stroke used to draw the shape outline. If not specified, the default shape style outline (theme accent) is used, a text box has no outline.
      * @returns {ApiShape}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
@@ -999,22 +997,26 @@
         let curSlide = private_GetCurrentSlide();
 		let presentation = private_GetPresentation();
         sType   = sType   || "rect";
-        if (!AscFormat.isValidShapeType(sType)) sType = "rect";
+        if (sType !== "textRect" && !AscFormat.isValidShapeType(sType)) sType = "rect";
         nWidth  = nWidth  || 914400;
 	    nHeight = nHeight || 914400;
         let theme = presentation.Get_Theme();
-        return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, curSlide, theme, private_GetDrawingDocument(), false));
+        let shape = AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill ? oFill.UniFill : null, oStroke ? oStroke.Ln : null, curSlide, theme, private_GetDrawingDocument(), false, null, curSlide);
+        if (sType === "textRect")
+            Asc.editor.addBuilderEndAction(function() { shape.checkExtentsByDocContent(true, true); });
+        return new ApiShape(shape);
     };
 
     
     /**
      * Creates a chart with the parameters specified.
+     *
      * :::note
      * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
      * :::
      * @memberof Api
      * @typeofeditors ["CPE"]
-     * @param {ChartType} [sType="bar"] - The chart type used for the chart display.
+     * @param {ChartType} [sType="ColumnClustered"] - The chart type used for the chart display.
      * @param {number[][]} aSeries - The array of the data used to build the chart from.
      * @param {number[] | string[]} aSeriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
      * @param {number[] | string[]} aCatNames - The array of the names (the source table row names) used for the data which the chart will be build from.
@@ -1074,6 +1076,7 @@
 
     /**
      * Creates a table.
+	 *
 	 * :::danger[Breaking Change]
 	 * Starting from version 9.4.0, the parameter order has been changed from `Api.CreateTable(cols, rows)` to `Api.CreateTable(rows, cols)`.
 	 * :::
@@ -1136,6 +1139,7 @@
 
     /**
 	 * Checks for duplicate placeholders and sets indexes.
+	 *
      * Called when a placeholder is added to a shape.
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
@@ -1206,8 +1210,8 @@
 
 		var oArt = this.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
 
-        nIndLeft  = typeof(nIndLeft) === "number" && nIndLeft > -1 ? nIndLeft : (oPres.GetWidthMM() - oArt.spPr.xfrm.extX) / 2;
-        nIndTop  = typeof(nIndTop) === "number" && nIndTop > -1 ? nIndTop : (oPres.GetHeightMM() - oArt.spPr.xfrm.extY) / 2;
+        nIndLeft  = typeof(nIndLeft) === "number" && nIndLeft > -1 ? nIndLeft / 36000 : (oPres.GetWidthMM() - oArt.spPr.xfrm.extX) / 2;
+        nIndTop  = typeof(nIndTop) === "number" && nIndTop > -1 ? nIndTop / 36000 : (oPres.GetHeightMM() - oArt.spPr.xfrm.extY) / 2;
 
         oArt.spPr.xfrm.setOffX(nIndLeft);
         oArt.spPr.xfrm.setOffY(nIndTop);
@@ -1217,7 +1221,6 @@
 
 	/**
 	 * Creates a new slide show transition object.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -1478,7 +1481,6 @@
 
 	/**
 	 * Creates a new hyperlink object to be used for setting hyperlinks on drawing objects (shapes or images).
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 *
@@ -1498,34 +1500,7 @@
 		return apiHyperlink;
 	};
 
-    /**
-	 * Subscribes to the specified event and calls the callback function when the event fires.
-     * @function
-	 * @memberof Api
-	 * @typeofeditors ["CPE"]
-	 * @param {string} eventName - The event name.
-	 * @param {function} callback - Function to be called when the event fires.
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
-	 */
-	Api.attachEvent = function(eventName, callback)
-	{
-		Asc.editor.attachEvent(eventName, callback);
-	};
-
-	/**
-	 * Unsubscribes from the specified event.
-     * @function
-	 * @memberof Api
-	 * @typeofeditors ["CPE"]
-	 * @param {string} eventName - The event name.
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
-	 */
-	Api.detachEvent = function(eventName)
-	{
-		Asc.editor.detachEvent(eventName);
-	};
-
-    //------------------------------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiPresentation
     //
@@ -1755,6 +1730,7 @@
 	 */
     ApiPresentation.prototype.GetMaster = function(nPos)
     {
+        nPos = GetIntParameter(nPos, -1);
         if (nPos < 0 || nPos >= this.Presentation.slideMasters.length)
             return null;
 
@@ -1765,9 +1741,9 @@
      * Adds the slide master to the presentation slide masters collection.
      * @memberof ApiPresentation
      * @typeofeditors ["CPE"]
-     * @param {number} [pos = ApiPresentation.GetMastersCount()] - The position where the slide master will be added.
+     * @param {number} [pos = ApiPresentation.GetMastersCount()] - The position where the slide master will be added. If the position is invalid, the slide master is added to the end.
      * @param {ApiMaster} apiMaster - The slide master to be added.
-     * @returns {boolean} - return false if position is invalid or apiMaster doesn't exist.
+     * @returns {boolean} - returns false if apiMaster isn't a slide master or is already in the presentation.
      * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMaster.js
 	 */
     ApiPresentation.prototype.AddMaster = function(pos, apiMaster)
@@ -1797,7 +1773,7 @@
     ApiPresentation.prototype.ApplyTheme = function(oApiTheme){
        if (this.Presentation && oApiTheme.GetClassType && oApiTheme.GetClassType() === "theme")
         {
-           this.Presentation.changeTheme(oApiTheme.ThemeInfo);
+           this.Presentation.changeTheme(oApiTheme.ThemeInfo, this.Presentation.GetAllSlideIndexes());
            return true;
         }
 
@@ -1805,6 +1781,7 @@
     };
     /**
 	 * Removes a range of slides from the presentation.
+	 *
      * Deletes all the slides from the presentation if no parameters are specified.
 	 * @memberof ApiPresentation
      * @param {Number} [nStart=0] - The starting position for the deletion range.
@@ -1815,8 +1792,8 @@
 	 */
     ApiPresentation.prototype.RemoveSlides = function(nStart, nCount)
 	{
-        nStart = nStart || 0;
-        nCount = nCount || this.GetSlidesCount();
+        nStart = nStart == undefined ? 0 : GetIntParameter(nStart, null);
+        nCount = nCount == undefined ? this.GetSlidesCount() : GetIntParameter(nCount, null);
         if (AscFormat.isRealNumber(nStart) && nStart > -1 && nStart < this.GetSlidesCount())
         {
             if (AscFormat.isRealNumber(nCount) && nCount > 0)
@@ -1919,7 +1896,7 @@
      * @param {boolean} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not (bWriteMaster is false if bWriteLayout === false).
      * @param {boolean} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
      * @param {boolean} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
-	 * @returns {JSON[]}
+	 * @returns {JSON | null} - returns null if the slide range is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SlidesToJSON.js
 	 */
     ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
@@ -2102,17 +2079,18 @@
 
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document has been created with.
-	 * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * <b>Created</b> - the parsed date and time when the file was created.
-	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * <b>Authors</b> - the persons who has created the file.
-	 * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 *
+	 * - <b>Application</b> - the application the document has been created with.
+	 * - <b>CreatedRaw</b> - the date and time when the file was created.
+	 * - <b>Created</b> - the parsed date and time when the file was created.
+	 * - <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * - <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * - <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * - <b>Authors</b> - the persons who has created the file.
+	 * - <b>Title</b> - this property allows you to simplify your documents classification.
+	 * - <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * - <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * - <b>Comment</b> - this property allows you to simplify your documents classification.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {object}
@@ -2186,6 +2164,7 @@
 
 	/**
 	 * Returns the core properties interface for the current presentation.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof ApiPresentation
 	 * @returns {ApiCore}
@@ -2210,15 +2189,15 @@
 	};
 
 	/**
-	* Adds a math equation to the current presentation.
-	* @memberof ApiPresentation
-	* @typeofeditors ["CPE"]
-	* @param {string} sText - The math equation text.
-	* @param {string} sFormat - The math equation format. Possible values are "unicode", "latex", and "mathml".
-	* @returns {boolean}
-	* @since 9.0.0
-	* @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
-	*/
+	 * Adds a math equation to the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @param {string} sText - The math equation text.
+	 * @param {string} sFormat - The math equation format. Possible values are "unicode", "latex", and "mathml".
+	 * @returns {boolean}
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMathEquation.js
+	 */
 	ApiPresentation.prototype.AddMathEquation = function (sText, sFormat) {
 		if (!Asc.editor) {
 			return false;
@@ -2284,6 +2263,7 @@
 
     /**
 	 * Retrieves the custom XML manager associated with the presentation.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the presentation.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
@@ -2298,7 +2278,6 @@
 
 	/**
 	 * Returns whether the presentation loops continuously until the user stops it.
-	 *
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -2342,7 +2321,6 @@
 
 	/**
 	 * Sets whether the presentation loops continuously until the user stops it.
-	 *
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -2628,11 +2606,12 @@
 
 	/**
 	 * Replaces the current sentence or a part of the current sentence at the cursor with the specified text.
+	 * If there is no sentence at the cursor, for example, in an empty paragraph, the specified text is inserted at the cursor position.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @param {string} text - The text to replace the current sentence with.
 	 * @param {undefined | "before" | "after"} part - The part of the sentence to replace. If omitted, the whole sentence is replaced.
-	 * @returns {boolean} - returns false if there is no sentence at the cursor or some text is selected.
+	 * @returns {boolean} - returns false if the cursor is not in the text or some text is selected.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ReplaceCurrentSentence.js
 	 */
@@ -3110,8 +3089,10 @@
 
 	/**
 	 * Deletes the specified object from the parent if it exists.
-	 * Note: Master can't be deleted if it's the last one in the presentation.
 	 *
+	 * :::note
+	 * Master can't be deleted if it's the last one in the presentation.
+	 * :::
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean} - return false if master doesn't exist or is not in the presentation or couldn't be deleted (e.g. the last master).
@@ -3162,6 +3143,7 @@
 
     /**
      * Sets a theme to the slide master.
+     *
      * Sets a copy of the theme object.
      * @memberof ApiMaster
      * @typeofeditors ["CPE"]
@@ -3253,7 +3235,6 @@
 
 	/**
 	 * Returns an array with all tables from the slide master.
-	 *
 	 * @memberof ApiMaster
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the slide master.
@@ -3539,6 +3520,7 @@
 
     /**
      * Creates a copy of the specified slide layout object.
+     *
      * Copies without master slide.
      * @memberof ApiLayout
      * @typeofeditors ["CPE"]
@@ -3699,7 +3681,6 @@
 
 	/**
 	 * Returns an array with all tables from the current slide layout.
-	 *
 	 * @memberof ApiLayout
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current slide layout.
@@ -4132,20 +4113,25 @@
      * Changes a color in the theme color scheme.
      * @memberof ApiThemeColorScheme
      * @typeofeditors ["CPE"]
-     * @param {number} nPos - Color position in the color scheme which will be changed.
-     * @param {ApiColor | ApiUniColor | ApiRGBColor} oColor - New color of the theme color scheme.
+     * @param {number} nPos - Color position in the color scheme which will be changed:
+     * 0-5 - accent1-accent6, 6 - dk1, 7 - dk2, 8 - folHlink, 9 - hlink, 10 - lt1, 11 - lt2.
+     * @param {ApiColor | ApiUniColor | ApiRGBColor} oColor - New color of the theme color scheme. A theme color is saved as its current RGB value.
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/ChangeColor.js
 	 */
     ApiThemeColorScheme.prototype.ChangeColor = function(nPos, oColor)
     {
-        if (nPos < 0 || nPos > 12)
+        nPos = GetIntParameter(nPos, -1);
+        if (nPos < 0 || nPos > 11)
             return false;
+
+        if (oColor && oColor.Unicolor && oColor.Unicolor.color instanceof AscFormat.CSchemeColor)
+            oColor = Api.Color(oColor);
 
         let unicolor;
         if (oColor instanceof AscBuilder.ApiColor)
             unicolor = private_ApiColorToUniColor(oColor);
-        else if (oColor.GetClassType() === "rgbColor" || oColor.GetClassType() === "uniColor")
+        else if (oColor && oColor.Unicolor)
             unicolor = oColor.Unicolor;
 
         if (!unicolor)
@@ -4611,7 +4597,6 @@
 
 	/**
 	 * Adds a comment to the current slide.
-	 *
 	 * @typeofeditors ["CPE"]
 	 * @memberof ApiSlide
 	 * @param {number} posX - The X position (in EMU) of the comment (defaults to 0).
@@ -4785,6 +4770,7 @@
 
     /**
      * Applies the specified layout to the current slide.
+     *
      * The layout must be in slide master.
      * @memberof ApiSlide
      * @typeofeditors ["CPE"]
@@ -5199,7 +5185,6 @@
 
 	/**
 	 * Returns an array with all tables from the current slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable[]} An array with all tables from the current slide.
@@ -5372,7 +5357,6 @@
 
 	/**
 	 * Returns the slide show transition of the current slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5389,7 +5373,6 @@
 
 	/**
 	 * Sets the slide show transition to the current slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5408,7 +5391,6 @@
 
 	/**
 	 * Returns the animation timeline for the slide.
-	 *
 	 * @memberof ApiSlide
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5434,7 +5416,6 @@
 
 	/**
 	 * Returns the type of the ApiNotesPage class.
-	 *
 	 * @memberof ApiNotesPage
 	 * @typeofeditors ["CPE"]
 	 * @returns {"notesPage"}
@@ -5496,7 +5477,6 @@
 
 	/**
 	 * Returns the text from the body shape of the current notes page.
-	 *
 	 * @typeofeditors ["CPE"]
 	 * @memberof ApiNotesPage
 	 * @returns {string} The text from the body shape.
@@ -5542,7 +5522,6 @@
 
 	/**
 	 * Returns the type of the ApiSlideShowTransition class.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5765,7 +5744,6 @@
 
 	/**
 	 * Returns the entry effect for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5827,7 +5805,6 @@
 
 	/**
 	 * Sets the entry effect for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5867,7 +5844,6 @@
 
 	/**
 	 * Returns the transition duration in milliseconds for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5881,7 +5857,6 @@
 
 	/**
 	 * Sets the transition duration in milliseconds for the slide show transition.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5891,7 +5866,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetDuration.js
 	 */
 	ApiSlideShowTransition.prototype.SetDuration = function (duration) {
-		if (this.Transition && AscFormat.isRealNumber(duration)) {
+		if (this.Transition && AscFormat.isRealNumber(duration) && duration >= 0) {
 			const copy = this.Transition.createDuplicate();
 			copy.put_TransitionDuration(duration);
 			return this.private_ApplyModified(copy);
@@ -5925,11 +5900,12 @@
 
 	/**
 	 * Returns the transition speed.
+	 *
 	 * Maps duration to speed based on OOXML spd attribute logic:
+	 *
 	 * - fast: duration <= 500ms
 	 * - medium: 500ms < duration <= 750ms
 	 * - slow: duration > 750ms
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5944,11 +5920,12 @@
 
 	/**
 	 * Sets the transition speed.
+	 *
 	 * Converts speed to duration based on standard values:
+	 *
 	 * - fast = 500ms
 	 * - medium = 750ms
 	 * - slow = 1000ms
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5971,7 +5948,6 @@
 
 	/**
 	 * Returns whether the slide advances on mouse click.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -5985,7 +5961,6 @@
 
 	/**
 	 * Sets whether the slide advances on mouse click.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6005,7 +5980,6 @@
 
 	/**
 	 * Returns whether the slide advances after a specified time.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6019,7 +5993,6 @@
 
 	/**
 	 * Sets whether the slide advances after a specified time.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6039,7 +6012,6 @@
 
 	/**
 	 * Returns the slide advance time in milliseconds.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6056,7 +6028,6 @@
 
 	/**
 	 * Sets the slide advance time in milliseconds.
-	 *
 	 * @memberof ApiSlideShowTransition
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6066,7 +6037,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetAdvanceTime.js
 	 */
 	ApiSlideShowTransition.prototype.SetAdvanceTime = function (advanceTime) {
-		if (this.Transition && AscFormat.isRealNumber(advanceTime)) {
+		if (this.Transition && AscFormat.isRealNumber(advanceTime) && advanceTime >= 0) {
 			const copy = this.Transition.createDuplicate();
 			copy.put_SlideAdvanceDuration(advanceTime);
 			return this.private_ApplyModified(copy);
@@ -6143,7 +6114,6 @@
 
 	/**
 	 * Returns the type of the ApiTimeLine class.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6157,7 +6127,6 @@
 
 	/**
 	 * Returns the main animation sequence for the slide.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6172,7 +6141,6 @@
 
 	/**
 	 * Returns all interactive animation sequences for the slide.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6192,7 +6160,6 @@
 
 	/**
 	 * Creates an interactive animation sequence triggered by clicking on a specified object.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6212,7 +6179,6 @@
 
 	/**
 	 * Returns all animation effects for the slide.
-	 *
 	 * @memberof ApiTimeLine
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6544,7 +6510,6 @@
 
 	/**
 	 * Returns the type of the ApiAnimationSequence class.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6558,7 +6523,6 @@
 
 	/**
 	 * Returns the number of effects in the sequence.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6582,7 +6546,6 @@
 
 	/**
 	 * Returns the effect at the specified index.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6611,7 +6574,6 @@
 
 	/**
 	 * Adds an animation effect to the sequence.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6665,7 +6627,6 @@
 
 	/**
 	 * Removes all effects from the sequence.
-	 *
 	 * @memberof ApiAnimationSequence
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6738,7 +6699,6 @@
 
 	/**
 	 * Returns the type of the ApiAnimationEffect class.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6752,7 +6712,6 @@
 
 	/**
 	 * Returns the animation effect type.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6772,7 +6731,6 @@
 
 	/**
 	 * Returns the trigger type for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6790,7 +6748,6 @@
 
 	/**
 	 * Sets the trigger type for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6817,7 +6774,6 @@
 
 	/**
 	 * Returns the duration of the animation effect in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6835,12 +6791,11 @@
 
 	/**
 	 * Sets the duration of the animation effect in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
 	 *
-	 * @param {number} duration - The duration in milliseconds.
+	 * @param {number} duration - The duration in milliseconds. The minimum duration is 10 ms, a smaller value is set to 10 ms.
 	 * @returns {boolean} - True if the duration was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetDuration.js
 	 */
@@ -6855,7 +6810,6 @@
 
 	/**
 	 * Returns the delay before the animation effect starts in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6873,12 +6827,11 @@
 
 	/**
 	 * Sets the delay before the animation effect starts in milliseconds.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
 	 *
-	 * @param {number} delay - The delay in milliseconds.
+	 * @param {number} delay - The delay in milliseconds. The maximum delay is 65536000 ms, a larger value is set to 65536000 ms.
 	 * @returns {boolean} - True if the delay was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetDelay.js
 	 */
@@ -6893,7 +6846,6 @@
 
 	/**
 	 * Returns the animated drawing object.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6936,7 +6888,6 @@
 
 	/**
 	 * Deletes the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -6970,7 +6921,6 @@
 
 	/**
 	 * Moves the animation effect to the specified position in the sequence.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -7013,7 +6963,6 @@
 
 	/**
 	 * Returns the repeat count for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -7032,7 +6981,6 @@
 
 	/**
 	 * Sets the repeat count for the animation effect.
-	 *
 	 * @memberof ApiAnimationEffect
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
@@ -7273,6 +7221,15 @@
 	 */
     ApiDrawing.prototype.Delete = function()
     {
+        const drawing = this.Drawing;
+        const controller = drawing && drawing.group && drawing.parent && drawing.parent.graphicObjects;
+        if (controller)
+        {
+            this.private_ResetSelection();
+            controller.removeInGroup(drawing.getMainGroup(), [drawing]);
+            return true;
+        }
+
         var oParent = this.GetParent();
         if (this.Drawing && oParent)
         {
@@ -7339,7 +7296,7 @@
                 drawingNvPr = this.Drawing.nvGraphicFramePr.nvPr;
                 break;
             case AscDFH.historyitem_type_GroupShape:
-                drawingNvPr = this.Drawing.nvGrpSpPr;
+                drawingNvPr = this.Drawing.nvGrpSpPr.nvPr;
                 break;
             case AscDFH.historyitem_type_ImageShape:
             case AscDFH.historyitem_type_OleObject:
@@ -7425,6 +7382,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
@@ -7585,15 +7543,7 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-	 * @deprecated since 9.3.0 version.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
-	 */
-	/**
-	 * Selects the current graphic object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CPE"]
-	 * @since 9.3.0
+	 * @since 8.2.0
 	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
@@ -7894,8 +7844,8 @@
 
 	/**
 	 * Sets a hyperlink to the current drawing object (shape or image).
-	 * Pass null to remove the hyperlink.
 	 *
+	 * Pass null to remove the hyperlink.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 *
@@ -7943,7 +7893,6 @@
 
 	/**
 	 * Returns the hyperlink from the current drawing object (shape or image).
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 *
@@ -8237,25 +8186,21 @@
         if (!this.Drawing || !this.Drawing.IsUseInDocument())
             return null;
 
-        let oPresentation = Asc.editor.getLogicDocument();
-        let nSlideIdx = this.Drawing.getSlideIndex();
-        let oSlide = oPresentation.GetSlide(nSlideIdx);
-        if (!oSlide) {
+        const controller = this.Drawing.parent && this.Drawing.parent.graphicObjects;
+        if (!controller)
             return null;
-        }
 
-        let oGraphicObjects = oSlide.graphicObjects;
-        let aChildren = this.Drawing.spTree.slice();
+        const children = this.Drawing.spTree.slice();
 
-        oGraphicObjects.resetSelection();
-        oGraphicObjects.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
-        
-        if (!oGraphicObjects.canUnGroup())
+        controller.resetSelection();
+        controller.selectObject(this.Drawing, this.Drawing.GetAbsolutePage())
+
+        if (!controller.canUnGroup())
             return null;
 
         this.Drawing.recalculate();
-        oGraphicObjects.unGroupCallback();
-        return GetApiDrawings(aChildren);
+        controller.unGroupCallback();
+        return GetApiDrawings(children);
     };
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -8759,8 +8704,13 @@
     };
 
     /**
-     * Merges an array of cells. If merge is successful, it will return merged cell, otherwise "null".
-     * <b>Warning</b>: The number of cells in any row and the number of rows in the current table may be changed.
+     * Merges an array of cells.
+     *
+     * If merge is successful, it will return merged cell, otherwise "null".
+     *
+     * :::warning
+     * The number of cells in any row and the number of rows in the current table may be changed.
+     * :::
      * @memberof ApiTable
      * @typeofeditors ["CPE"]
      * @param {ApiTableCell[]} aCells - The array of cells.
@@ -8869,12 +8819,12 @@
 		let oTableLook = this.Table.Get_TableLook();
 
 		return {
-			firstCol:	oTableLook.IsFirstCol(),
-			firstRow:	oTableLook.IsFirstRow(),
-			lastCol:	oTableLook.IsLastCol(),
-			lastRow:	oTableLook.IsLastRow(),
-			bandHor:	oTableLook.IsBandHor(),
-			bandVer:	oTableLook.IsBandVer()
+			"firstCol":	oTableLook.IsFirstCol(),
+			"firstRow":	oTableLook.IsFirstRow(),
+			"lastCol":	oTableLook.IsLastCol(),
+			"lastRow":	oTableLook.IsLastRow(),
+			"bandHor":	oTableLook.IsBandHor(),
+			"bandVer":	oTableLook.IsBandVer()
 		}
 	};
     /**
@@ -9131,7 +9081,6 @@
 
 	/**
 	 * Sets the width of the specified column in the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 *
@@ -9180,7 +9129,6 @@
 
 	/**
 	 * Returns the width of the specified column (by index) of the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 *
@@ -9570,7 +9518,6 @@
 
 	/**
 	 * Sets the height to the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 *
@@ -9594,7 +9541,6 @@
 
 	/**
 	 * Returns the height of the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 *
@@ -10903,8 +10849,6 @@
     Api["CreateNumbering"]                      = Api.CreateNumbering;
     Api["CreateParagraph"]                      = Api.CreateParagraph;
     Api["CreateHyperlink"]                      = Api.CreateHyperlink;
-    Api["attachEvent"]                      	= Api.attachEvent;
-    Api["detachEvent"]                      	= Api.detachEvent;
     Api["Save"]                                 = Api.Save;
     Api["CreateMaster"]                         = Api.CreateMaster;
     Api["CreateDefaultMasterSlide"]             = Api.CreateDefaultMasterSlide;

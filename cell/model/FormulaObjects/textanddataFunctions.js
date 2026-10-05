@@ -47,6 +47,10 @@ function (window, undefined) {
 	var oNumFormatCache = AscCommon.oNumFormatCache;
 	var CellFormat = AscCommon.CellFormat;
 	var cErrorType = AscCommonExcel.cErrorType;
+	//TEXT is limited to this many characters of RESULT - its own limit, deliberately not the cell limit
+	//nor the widest column (which happens to be 255 too)
+	var MAX_FORMAT_TEXT = 255;
+	var MAX_CELL_TEXT = Asc.c_oAscMaxCellOrCommentLength;
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
 	var cBool = AscCommonExcel.cBool;
@@ -620,6 +624,18 @@ function (window, undefined) {
 		// return new cNumber(arg0.toLocaleString().charCodeAt());
 	};
 
+	function appendCapped(acc, s, n) {
+		const room = MAX_CELL_TEXT - acc.length;
+		if (room <= 0 || 0 === s.length) {
+			return acc;
+		}
+		if (n > 1) {
+			n = Math.min(n, Math.ceil(room / s.length));
+			s = 1 === n ? s : s.repeat(n);
+		}
+		return s.length > room ? acc + s.substring(0, room) : acc + s;
+	}
+	
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -649,8 +665,7 @@ function (window, undefined) {
 			if (argI instanceof cError) {
 				return argI;
 			} else if (argI instanceof cArray) {
-				//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
-				//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+				//reduceLogical folds head + constant tail; the tail string is repeated n times
 				sResult = argI.reduceLogical(function (acc, elem, n) {
 					if (errElem) {
 						return acc;
@@ -659,18 +674,13 @@ function (window, undefined) {
 						errElem = elem;
 						return acc;
 					}
-					var s = elem.toLocaleString();
-					if (s.length > 0 && acc.length + s.length * n > 32767) {
-						errElem = new cError(cErrorType.wrong_value_type);
-						return acc;
-					}
-					return acc + (n === 1 ? s : s.repeat(n));
+					return appendCapped(acc, elem.toLocaleString(), n);
 				}, sResult);
 				if (errElem) {
 					return errElem;
 				}
 			} else {
-				sResult += argI.toLocaleString();
+				sResult = appendCapped(sResult, argI.toLocaleString(), 1);
 			}
 		}
 		return new cString(sResult);
@@ -695,7 +705,8 @@ function (window, undefined) {
 	cCONCAT.prototype.enabledToSingle = {"*": true};
 	cCONCAT.prototype.Calculate = function (arg) {
 		// Accumulate into a primitive string and box once, removing the per-element cString creation.
-		let maxStringLength = 32767, sResult = "", argI, errRes = null;
+		//past the cell limit CONCAT answers #CALC!, unlike "&" and CONCATENATE which truncate (measured)
+		let maxStringLength = MAX_CELL_TEXT, sResult = "", argI, errRes = null;
 
 		for (let i = 0; i < arg.length; i++) {
 			argI = arg[i];
@@ -705,7 +716,7 @@ function (window, undefined) {
 				for (let j = 0; j < _arrVal.length; j++) {
 					sResult += _arrVal[j].toLocaleString();
 					if (sResult.length > maxStringLength) {
-						return new cError(cErrorType.wrong_value_type)
+						return new cError(cErrorType.array_not_calc)
 					}
 				}
 			} else if (cElementType.cell === argI.type || cElementType.cell3D === argI.type) {
@@ -718,8 +729,8 @@ function (window, undefined) {
 				if (cElementType.error === argI.type) {
 					return argI;
 				} else if (cElementType.array === argI.type) {
-					//reduceLogical folds head + constant tail; the tail string is repeated n times. A finite lazy
-					//range stays small; a full column trips the 32767 cap -> #VALUE (checked before building).
+					//reduceLogical folds head + constant tail; the tail string is repeated n times. Past the
+					//cell limit CONCAT answers #CALC!.
 					sResult = argI.reduceLogical(function (acc, elem, n) {
 						if (errRes) {
 							return acc;
@@ -730,7 +741,7 @@ function (window, undefined) {
 						}
 						let s = elem.toLocaleString();
 						if (s.length > 0 && acc.length + s.length * n > maxStringLength) {
-							errRes = new cError(cErrorType.wrong_value_type);
+							errRes = new cError(cErrorType.array_not_calc);
 							return acc;
 						}
 						return acc + (n === 1 ? s : s.repeat(n));
@@ -745,7 +756,7 @@ function (window, undefined) {
 		}
 
 		if (sResult.length > maxStringLength) {
-			return new cError(cErrorType.wrong_value_type)
+			return new cError(cErrorType.array_not_calc)
 		}
 
 		return new cString(sResult);
@@ -3317,7 +3328,8 @@ function (window, undefined) {
 		let a = g_oFormatParser.parse(arg0.toLocaleString(true) + ""), aText;
 		aText = oFormat.format(a ? a.value : arg0.toLocaleString(),
 			(arg0.type === cElementType.number || a) ? CellValueType.Number : CellValueType.String,
-			AscCommon.gc_nMaxDigCountView);
+			//opt_noWidthLimit: the column-width cap is for display; without it a long result becomes "#"
+			AscCommon.gc_nMaxDigCountView, undefined, undefined, undefined, undefined, true);
 		let text = "";
 
 		for (let i = 0, length = aText.length; i < length; ++i) {
@@ -3331,6 +3343,10 @@ function (window, undefined) {
 			}
 
 			text += aText[i].text;
+		}
+
+		if (text.length > MAX_FORMAT_TEXT) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		let res = new cString(text);
@@ -3421,7 +3437,7 @@ function (window, undefined) {
 			let type = argI.type;
 			if (cElementType.array === type) {
 				//reduceLogical folds head + constant tail; concatString is applied n times for the tail (the
-				//delimiter cycles naturally). A finite lazy range stays small; a full column trips the 32767 cap.
+				//delimiter cycles naturally). Past the cell limit TEXTJOIN answers #CALC!.
 				let errRes = null;
 				acc = argI.reduceLogical(function (a, elem, cnt) {
 					if (errRes) {
@@ -3437,8 +3453,8 @@ function (window, undefined) {
 					}
 					for (let n = 0; n < cnt; n++) {
 						a = concatString(a, s);
-						if (a.length > 32767) {
-							errRes = new cError(cErrorType.wrong_value_type);
+						if (a.length > MAX_CELL_TEXT) {
+							errRes = new cError(cErrorType.array_not_calc);
 							return a;
 						}
 					}
@@ -3478,6 +3494,9 @@ function (window, undefined) {
 			}
 		}
 
+		if (acc.length > MAX_CELL_TEXT) {
+			return new cError(cErrorType.array_not_calc);
+		}
 		return new cString(acc);
 	};
 
@@ -3917,6 +3936,12 @@ function (window, undefined) {
 			let colCount = 0, i, j;
 			for (i = 0; i < rowCount; i++) {
 				colCount = Math.max(colCount, array[i].length)
+			}
+
+			//MS returns "out of resources" here; we have no such error, so #VALUE!
+			const EXPECTED_MAX_ARRAY = 10223960;
+			if (rowCount * colCount > EXPECTED_MAX_ARRAY) {
+				return new cError(cErrorType.wrong_value_type);
 			}
 
 			let newArray = [];

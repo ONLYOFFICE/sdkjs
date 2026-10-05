@@ -38,7 +38,8 @@
 (function(window, builder)
 {
 	/**
-	 * Base class
+	 * The main class of the Document API. Use it to get the current document and to create
+	 * document elements, such as paragraphs, tables, images, and charts.
 	 * @global
 	 * @class
 	 * @name Api
@@ -201,8 +202,7 @@
 	 *   "storeItemID": "testXmlPart"
 	 * }
 	 */
-	
-	
+
 	/**
 	 * Class representing a bookmark in the document.
 	 * @constructor
@@ -1896,7 +1896,9 @@
 	};
 
 	/**
-	 * Returns a new range that goes beyond the specified range in any direction and spans a different range. The current range has not changed.
+	 * Returns a new range that goes beyond the specified range in any direction and spans a different range.
+	 *
+	 * The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be expanded.
@@ -1926,7 +1928,9 @@
 	};
 
 	/**
-	 * Returns a new range as the intersection of the current range with another range. The current range has not changed.
+	 * Returns a new range as the intersection of the current range with another range.
+	 *
+	 * The current range has not changed.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRange} oRange - The range that will be intersected with the current range.
@@ -2003,7 +2007,9 @@
 		let nIntersectStartPos, nIntersectEndPos;
 
 		// if start and end pos of ranges in table
-		if (oThisStartParentTable === oRangeStartParentTable && oThisEndParentTable === oRangeEndParentTable)
+		if (oThisStartParentTable
+			&& oThisStartParentTable === oRangeStartParentTable
+			&& oThisEndParentTable === oRangeEndParentTable)
 		{
 			const aStartEndParas = [
 				findFirstPara(this.StartPos),
@@ -2136,7 +2142,6 @@
 
 	/**
 	 * Sets the text color to the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
@@ -2151,12 +2156,11 @@
 	 */
 	/**
 	 * Sets the text color to the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | null} color - The text color. Pass <em>null</em> to remove the text color.
 	 * @return {ApiRange | null} - returns null if can't apply color.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
@@ -2206,6 +2210,9 @@
 
 		if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
+		}
+		else if (null === color) {
+			paraTextPrOptions = { Color : null, Unifill : null, TextFill : null };
 		}
 
 		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr(paraTextPrOptions));
@@ -2303,7 +2310,6 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
@@ -2318,7 +2324,6 @@
 	 */
 	/**
 	 * Specifies the shading applied to the contents of the current text Range.
-	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 *
@@ -2519,11 +2524,11 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @returns {ApiRange | null} - returns null if can't apply spacing.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetSpacing.js
 	 */
-	ApiRange.prototype.SetSpacing = function(nSpacing)
+	ApiRange.prototype.SetSpacing = function(spacing)
 	{
 		private_RefreshRangesPosition();
 
@@ -2542,7 +2547,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : private_Twips2MM(nSpacing)});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({Spacing : null === spacing ? null : private_Twips2MM(spacing)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2591,16 +2596,17 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the Range contents in relation to the default appearance of the Range text:
-	 * <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
+	 *
+	 * - <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
+	 * - <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
+	 * - <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
 	 * @returns {ApiRange | null} - returns null if can't apply align.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetVertAlign.js
 	 */
-	ApiRange.prototype.SetVertAlign = function(sType)
+	ApiRange.prototype.SetVertAlign = function(type)
 	{
 		private_RefreshRangesPosition();
 
@@ -2612,12 +2618,14 @@
 
 		var value = undefined;
 
-		if (sType === "baseline")
+		if (type === "baseline")
 			value = AscCommon.vertalign_Baseline;
-		else if (sType === "subscript")
+		else if (type === "subscript")
 			value = AscCommon.vertalign_SubScript;
-		else if (sType === "superscript")
+		else if (type === "superscript")
 			value = AscCommon.vertalign_SuperScript;
+		else if (type === null)
+			value = null;
 		else 
 			return null;
 
@@ -2644,12 +2652,12 @@
 	 * baseline of the surrounding non-positioned text.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
+	 * @param {hps | null} position - Specifies a positive (raised text) or negative (lowered text)
+	 * measurement in half-points (1/144 of an inch). Pass <em>null</em> to remove the position.
 	 * @returns {ApiRange | null} - returns null if can't set position.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetPosition.js
 	 */
-	ApiRange.prototype.SetPosition = function(nPosition)
+	ApiRange.prototype.SetPosition = function(position)
 	{
 		private_RefreshRangesPosition();
 
@@ -2659,7 +2667,7 @@
 		this.Select();
 		private_TrackRangesPositions();
 
-		if (typeof nPosition !== "number")
+		if (null !== position && typeof position !== "number")
 			return null;
 
 		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -2671,7 +2679,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : private_PtToMM(private_GetHps(nPosition))});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({Position : null === position ? null : private_PtToMM(private_GetHps(position))});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2684,7 +2692,7 @@
 	 * Sets the font size to the characters of the current text Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} fontSize - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @returns {ApiRange | null} - returns null if can't set font size.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
@@ -2707,7 +2715,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)});
+		var ParaTextPr = new AscCommonWord.ParaTextPr({FontSize : null === fontSize ? null : private_GetHps(fontSize)});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2720,18 +2728,22 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sFontFamily - The font family or families used for the current text Range.
+	 * @param {string | null} [fontFamily] - The font family or families used for the current text Range. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {ApiRange | null} - returns null if can't set font family.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontFamily.js
 	 */
-	ApiRange.prototype.SetFontFamily = function(sFontFamily)
+	ApiRange.prototype.SetFontFamily = function(fontFamily)
 	{
 		private_RefreshRangesPosition();
 
-		if (typeof sFontFamily !== "string")
+		if (undefined === fontFamily)
+			fontFamily = null;
+
+		if (null !== fontFamily && typeof fontFamily !== "string")
 			return null;
 		
-		LoadFont(sFontFamily);
+		if (null !== fontFamily)
+			LoadFont(fontFamily);
 		
 		var Document			= private_GetLogicDocument();
 		let oldSelectionInfo = Document.SaveDocumentState();
@@ -2740,7 +2752,7 @@
 		private_TrackRangesPositions();
 
 		var FontFamily = {
-			Name : sFontFamily,
+			Name : fontFamily,
 			Index : -1
 		};
 
@@ -2753,7 +2765,7 @@
 			return null;
 		}
 
-		var ParaTextPr = new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
+		var ParaTextPr = null === fontFamily ? private_GetRemoveFontFamilyTextPr() : new AscCommonWord.ParaTextPr({FontFamily : FontFamily});
 		Document.AddToParagraph(ParaTextPr);
 		
 		Document.LoadDocumentState(oldSelectionInfo);
@@ -2766,15 +2778,15 @@
 	 * the contents of the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @returns {ApiRange | null} - returns null if the language identifier is not supported or the language can't be set.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetLanguage.js
 	 */
 	ApiRange.prototype.SetLanguage = function(langId)
 	{
-		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		const lcid = null === langId ? null : Asc.g_oLcidNameToIdMap[langId];
 		if (undefined === lcid)
 			return null;
 
@@ -3233,6 +3245,7 @@
 
 	/**
 	 * Moves a cursor to a specified position of the current range object.
+	 *
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRange
 	 * @param {number} [nPos=0] - The desired cursor position.
@@ -3254,7 +3267,10 @@
 
 	/**
 	 * Adds a field to the specified range by the field instruction code.
-	 * <note> This method removes text within a range. </note>
+	 *
+	 * :::note
+	 * This method removes text within a range.
+	 * :::
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sCode - The field instruction code.
@@ -4297,8 +4313,9 @@
 
 	/**
 	 * A border type which will be added to the document element.
-     * <b>"none"</b> - no border will be added to the created element or the selected element side.
-     * <b>"single"</b> - a single border will be added to the created element or the selected element side.
+     *
+     * - <b>"none"</b> - no border will be added to the created element or the selected element side.
+     * - <b>"single"</b> - a single border will be added to the created element or the selected element side.
 	 * @typedef {("none" | "single")} BorderType
 	 * @see office-js-api/Examples/Enumerations/BorderType.js
 	 */
@@ -4355,38 +4372,41 @@
 
 	/**
 	 * Header and footer types which can be applied to the document sections.
-     * <b>"default"</b> - a header or footer which can be applied to any default page.
-     * <b>"title"</b> - a header or footer which is applied to the title page.
-     * <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
+     *
+     * - <b>"default"</b> - a header or footer which can be applied to any default page.
+     * - <b>"title"</b> - a header or footer which is applied to the title page.
+     * - <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
 	 * @typedef {("default" | "title" | "even")} HdrFtrType
 	 * @see office-js-api/Examples/Enumerations/HdrFtrType.js
 	 */
 
 	/**
 	 * The possible values for the units of the width property are defined by a specific table or table cell width property.
-     * <b>"auto"</b> - sets the table or table cell width to auto width.
-     * <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
-     * <b>"nul"</b> - sets the table or table cell width to be of a zero value.
-     * <b>"percent"</b> - sets the table or table cell width to be measured in percent to the parent container.
+     *
+     * - <b>"auto"</b> - sets the table or table cell width to auto width.
+     * - <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
+     * - <b>"nul"</b> - sets the table or table cell width to be of a zero value.
+     * - <b>"percent"</b> - sets the table or table cell width to be measured in percent to the parent container.
 	 * @typedef {("auto" | "twips" | "nul" | "percent")} TableWidth
 	 * @see office-js-api/Examples/Enumerations/TableWidth.js
 	 */
 
 	/**
 	 * This simple type specifies possible values for the table sections to which the current conditional formatting properties will be applied when this selected table style is used.
-	 * <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
-	 * <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
-	 * <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
-	 * <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
-	 * <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
-	 * <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
-	 * <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
-	 * <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
-	 * <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
-	 * <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
-	 * <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
-	 * <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
-	 * <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
+	 *
+	 * - <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
+	 * - <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
+	 * - <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
+	 * - <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
+	 * - <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
+	 * - <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
+	 * - <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
+	 * - <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
+	 * - <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
+	 * - <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
+	 * - <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
+	 * - <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
+	 * - <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
 	 * @typedef {("topLeftCell" | "topRightCell" | "bottomLeftCell" | "bottomRightCell" | "firstRow" | "lastRow" |
 	 *     "firstColumn" | "lastColumn" | "bandedColumn" | "bandedColumnEven" | "bandedRow" | "bandedRowEven" |
 	 *     "wholeTable")} TableStyleOverrideType
@@ -4453,7 +4473,7 @@
 	 *     "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" |
 	 *     "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" |
 	 *     "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" |
-	 *     "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
+	 *     "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "textRect" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
 	 * @see office-js-api/Examples/Enumerations/ShapeType.js
 	 */
 
@@ -4462,9 +4482,6 @@
 	 * @typedef {("*\/" | "+-" | "+\/" | "?:" | "abs" | "at2" | "cat2" | "cos" | "max" | "min" | "mod" | "pin" | "sat2" | "sin" | "sqrt" | "tan" | "val")} GeometryFormulaType
 	 * @see office-js-api/Examples/Enumerations/GeometryFormulaType.js
 	 */
-
-
-
 
 	/**
 	 * This type specifies the available chart types which can be used to create a new chart.
@@ -4507,22 +4524,17 @@
 	 * @see office-js-api/Examples/Enumerations/DrawingLockType.js
 	 */
 
-
-
-
 	/**
 	 * The path fill type.
 	 * @typedef {("none" | "norm" | "lighten" | "lightenLess" | "darken" | "darkenLess")} PathFillType
 	 * @see office-js-api/Examples/Enumerations/PathFillType.js
 	 */
 
-
 	/**
 	 * The path command types.
 	 * @typedef {("moveTo" | "lineTo" | "bezier3" | "bezier4" | "arcTo" | "close")} PathCommandType
 	 * @see office-js-api/Examples/Enumerations/PathCommandType.js
 	 */
-
 
 	/**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
@@ -4551,7 +4563,7 @@
 	 */
 
 	/**
-	* The available color scheme identifiers.
+	 * The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
 	 *     | "folHlink" | "hlink" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
 	 * @see office-js-api/Examples/Enumerations/SchemeColorId.js
@@ -4573,21 +4585,22 @@
 	 * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
-
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * <b>"none"</b> - not display the selected tick labels.
-     * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
-     * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
-     * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
+     *
+     * - <b>"none"</b> - not display the selected tick labels.
+     * - <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+     * - <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+     * - <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
 	/**
      * The type of a fill which uses an image as a background.
-     * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     *
+     * - <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * - <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
 	 * @typedef {"tile" | "stretch"} BlipFillType
 	 * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
@@ -4624,6 +4637,7 @@
 
 	/**
 	 * Form type.
+	 *
 	 * The available form types.
 	 * @typedef {"textForm" | "comboBoxForm" | "dropDownForm" | "checkBoxForm" | "radioButtonForm" | "pictureForm" | "complexForm" | "dateForm" | "signatureForm"} FormType
 	 * @see office-js-api/Examples/Enumerations/FormType.js
@@ -4676,67 +4690,73 @@
 
 	/**
 	 * Available values of the "numbered" reference type:
-	 * <b>"pageNum"</b> - the numbered item page number;
-     * <b>"paraNum"</b> - the numbered item paragraph number;
-	 * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
-     * <b>"fullCtxParaNum"</b> - the full paragraph number, e.g. "4.1.1";
-	 * <b>"text"</b> - the paragraph text value, e.g. if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"pageNum"</b> - the numbered item page number;
+     * - <b>"paraNum"</b> - the numbered item paragraph number;
+	 * - <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * - <b>"fullCtxParaNum"</b> - the full paragraph number, e.g. "4.1.1";
+	 * - <b>"text"</b> - the paragraph text value, e.g. if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "text" | "aboveBelow"} numberedRefTo
 	 * @see office-js-api/Examples/Enumerations/numberedRefTo.js
 	 */
 
 	/**
 	 * Available values of the "heading" reference type:
-	 * <b>"text"</b> - the entire heading text;
-	 * <b>"pageNum"</b> - the heading page number;
-     * <b>"headingNum"</b> - the heading sequence number;
-	 * <b>"noCtxHeadingNum"</b> - the abbreviated heading number. Make sure the cursor pointer is in the section you are referencing to, e.g. you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
-     * <b>"fullCtxHeadingNum"</b> - the full heading number even if the cursor pointer is in the same section;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"text"</b> - the entire heading text;
+	 * - <b>"pageNum"</b> - the heading page number;
+     * - <b>"headingNum"</b> - the heading sequence number;
+	 * - <b>"noCtxHeadingNum"</b> - the abbreviated heading number. Make sure the cursor pointer is in the section you are referencing to, e.g. you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
+     * - <b>"fullCtxHeadingNum"</b> - the full heading number even if the cursor pointer is in the same section;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "headingNum" | "noCtxHeadingNum" | "fullCtxHeadingNum" | "aboveBelow"} headingRefTo
 	 * @see office-js-api/Examples/Enumerations/headingRefTo.js
 	 */
 
 	/**
 	 * Available values of the "bookmark" reference type:
-	 * <b>"text"</b> - the entire bookmark text;
-	 * <b>"pageNum"</b> - the bookmark page number;
-     * <b>"paraNum"</b> - the bookmark paragraph number;
-	 * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
-     * <b>"fullCtxParaNum</b> - the full paragraph number, e.g. "4.1.1";
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"text"</b> - the entire bookmark text;
+	 * - <b>"pageNum"</b> - the bookmark page number;
+     * - <b>"paraNum"</b> - the bookmark paragraph number;
+	 * - <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * - <b>"fullCtxParaNum</b> - the full paragraph number, e.g. "4.1.1";
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "aboveBelow"} bookmarkRefTo
 	 * @see office-js-api/Examples/Enumerations/bookmarkRefTo.js
 	 */
 
 	/**
 	 * Available values of the "footnote" reference type:
-	 * <b>"footnoteNum"</b> - the footnote number;
-	 * <b>"pageNum"</b> - the page number of the footnote;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
-	 * <b>"formFootnoteNum"</b> - the form number formatted as a footnote. The numbering of the actual footnotes is not affected.
+	 *
+	 * - <b>"footnoteNum"</b> - the footnote number;
+	 * - <b>"pageNum"</b> - the page number of the footnote;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
+	 * - <b>"formFootnoteNum"</b> - the form number formatted as a footnote. The numbering of the actual footnotes is not affected.
 	 * @typedef {"footnoteNum" | "pageNum" | "aboveBelow" | "formFootnoteNum"} footnoteRefTo
 	 * @see office-js-api/Examples/Enumerations/footnoteRefTo.js
 	 */
 
 	/**
 	 * Available values of the "endnote" reference type:
-	 * <b>"endnoteNum"</b> - the endnote number;
-	 * <b>"pageNum"</b> - the endnote page number;
-     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
-	 * <b>"formEndnoteNum"</b> - the form number formatted as an endnote. The numbering of the actual endnotes is not affected.
+	 *
+	 * - <b>"endnoteNum"</b> - the endnote number;
+	 * - <b>"pageNum"</b> - the endnote page number;
+     * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
+	 * - <b>"formEndnoteNum"</b> - the form number formatted as an endnote. The numbering of the actual endnotes is not affected.
 	 * @typedef {"endnoteNum" | "pageNum" | "aboveBelow" | "formEndnoteNum"} endnoteRefTo
 	 * @see office-js-api/Examples/Enumerations/endnoteRefTo.js
 	 */
 
 	/**
 	 * Available values of the "equation"/"figure"/"table" reference type:
-	 * <b>"entireCaption"</b>- the entire caption text;
-	 * <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
-     * <b>"captionText"</b> - the caption text only;
-	 * <b>"pageNum"</b> - the page number containing the referenced object;
-	 * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 *
+	 * - <b>"entireCaption"</b>- the entire caption text;
+	 * - <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
+     * - <b>"captionText"</b> - the caption text only;
+	 * - <b>"pageNum"</b> - the page number containing the referenced object;
+	 * - <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
 	 * @see office-js-api/Examples/Enumerations/captionRefTo.js
 	 */
@@ -4766,22 +4786,24 @@
 
 	/**
      * Possible values for the caption numbering format.
-     * <b>"ALPHABETIC"</b> - upper letter.
-     * <b>"alphabetic"</b> - lower letter.
-     * <b>"Roman"</b> - upper Roman.
-     * <b>"roman"</b> - lower Roman.
-	 * <b>"Arabic"</b> - arabic.
+     *
+     * - <b>"ALPHABETIC"</b> - upper letter.
+     * - <b>"alphabetic"</b> - lower letter.
+     * - <b>"Roman"</b> - upper Roman.
+     * - <b>"roman"</b> - lower Roman.
+	 * - <b>"Arabic"</b> - arabic.
 	 * @typedef {("ALPHABETIC" | "alphabetic" | "Roman" | "roman" | "Arabic")} CaptionNumberingFormat
 	 * @see office-js-api/Examples/Enumerations/CaptionNumberingFormat.js
 	 */
 
 	/**
      * Possible values for the caption separator.
-     * <b>"hyphen"</b> - the "-" punctuation mark.
-     * <b>"period"</b> - the "." punctuation mark.
-     * <b>"colon"</b> - the ":" punctuation mark.
-     * <b>"longDash"</b> - the "—" punctuation mark.
-	 * <b>"dash"</b> - the "-" punctuation mark.
+     *
+     * - <b>"hyphen"</b> - the "-" punctuation mark.
+     * - <b>"period"</b> - the "." punctuation mark.
+     * - <b>"colon"</b> - the ":" punctuation mark.
+     * - <b>"longDash"</b> - the "—" punctuation mark.
+	 * - <b>"dash"</b> - the "-" punctuation mark.
 	 * @typedef {("hyphen" | "period" | "colon" | "longDash" | "dash")} CaptionSep
 	 * @see office-js-api/Examples/Enumerations/CaptionSep.js
 	 */
@@ -4822,8 +4844,7 @@
 	 * @typedef {Object} TocBuildFromPr
 	 * @property {number} [OutlineLvlStart=1] - The highest heading level included in the table of contents (the start of the outline range).
 	 * @property {number} [OutlineLvls=9] - The lowest heading level included in the table of contents (the end of the outline range).
-	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]).
-	 * <note>If StylesLvls.length > 0, then the OutlineLvls property will be ignored.</note>
+	 * @property {TocStyleLvl[]} StylesLvls - Style levels (for example, [{Name: "Heading 1", Lvl: 2}, {Name: "Heading 2", Lvl: 3}]). If <em>StylesLvls.length</em> is greater than 0, the <em>OutlineLvls</em> property is ignored.
 	 * @see office-js-api/Examples/Enumerations/TocBuildFromPr.js
 	 */
 
@@ -4837,9 +4858,10 @@
 
 	/**
 	 * Possible values for the table of contents leader:
-	 * <b>"dot"</b> - "......."
-	 * <b>"dash"</b> - "-------"
-	 * <b>"underline"</b> - "_______"
+	 *
+	 * - <b>"dot"</b> - "......."
+	 * - <b>"dash"</b> - "-------"
+	 * - <b>"underline"</b> - "_______"
      * @typedef {("dot" | "dash" | "underline" | "none")} TocLeader
 	 * @see office-js-api/Examples/Enumerations/TocLeader.js
 	 */
@@ -4975,6 +4997,7 @@
 	};
 	/**
 	 * Creates an element range.
+	 *
 	 * If you do not specify the start and end positions, the range will be taken from the entire element.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -5011,7 +5034,6 @@
 	 * :::danger[Breaking Change]
 	 * Starting from version 9.4.0, the parameter order has been changed from `Api.CreateTable(cols, rows)` to `Api.CreateTable(rows, cols)`.
 	 * :::
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {number} rows - Number of rows. Must be a positive integer.
@@ -5146,7 +5168,7 @@
 	 * Creates a shape with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ShapeType} [shapeType="rect"] - The shape type which specifies the preset shape geometry.
+	 * @param {ShapeType} [shapeType="rect"] - The shape type which specifies the preset shape geometry. The "textRect" type creates a text box as the editor inserts it: a light fill and a thin black outline.
 	 * @param {EMU} [width = 914400] - The shape width in English measure units.
 	 * @param {EMU} [height = 914400] - The shape height in English measure units.
 	 * @param {ApiFill} [fill] - The color or pattern used to fill the shape. If not specified, the default shape style fill (theme accent) is used.
@@ -5159,7 +5181,7 @@
 		var oLogicDocument = private_GetLogicDocument();
 		var oDrawingDocuemnt = private_GetDrawingDocument();
 		shapeType = shapeType || "rect";
-		if (!AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
+		if (shapeType !== "textRect" && !AscFormat.isValidShapeType(shapeType)) shapeType = "rect";
 		width     = width || 914400;
 		height    = height || 914400;
 		var nW = private_EMU2MM(width);
@@ -5234,12 +5256,13 @@
 
 	/**
 	 * Creates a chart with the parameters specified.
+	 *
 	 * :::note
 	 * Values of <em>styleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
 	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {ChartType} [chartType="bar"] - The chart type used for the chart display.
+	 * @param {ChartType} [chartType="ColumnClustered"] - The chart type used for the chart display.
 	 * @param {number[][]} series - The array of the data used to build the chart from.
 	 * @param {number[] | string[]} seriesNames - The array of the names (the source table column names) used for the data which the chart will be build from.
 	 * @param {number[] | string[]} catNames - The array of the names (the source table row names) used for the data which the chart will be build from.
@@ -5370,7 +5393,6 @@
 
 	/**
 	 * Creates an auto-color.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiColor} Instance of ApiColor with 'auto' type.
@@ -5382,7 +5404,6 @@
 
 	/**
 	 * Creates an RGB color from red, green and blue components.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {byte} r - Red component (0-255).
@@ -5398,7 +5419,6 @@
 
 	/**
 	 * Creates an RGBA color from red, green, blue and alpha components.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {byte} r - Red component (0-255).
@@ -5415,7 +5435,6 @@
 
 	/**
 	 * Creates a color from a HEX string.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} hexString - The HEX string representing a color.
@@ -5432,7 +5451,6 @@
 
 	/**
 	 * Creates a theme color.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {SchemeColorId} [name="tx1"] The theme color name. If the provided name is not supported, the 'tx1' color will be used.
@@ -5457,17 +5475,21 @@
 	}
 
 	/**
-	 * Creates an ApiColor from a universal input. The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
-	 * <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
-	 * <b>Packed integer</b>: "Api.Color(0xRRGGBB)" creates an RGB color from a 24-bit integer.
-	 * <b>Full HEX string</b>: "Api.Color('#RRGGBB')" or "Api.Color('RRGGBB')" creates a HEX color; the leading "#" is optional.
-	 * <b>Short HEX string</b>: "Api.Color('#RGB')" expands each digit by duplication, so "#F0A" becomes "#FF00AA".
-	 * <b>Theme color name</b>: "Api.Color('accent1')" creates a theme color; any value of SchemeColorId is accepted.
-	 * <b>Preset color name</b>: "Api.Color('aliceBlue')" resolves any value of PresetColor to its RGB equivalent.
-	 * <b>Auto color</b>: "Api.Color('auto')" creates an auto color.
-	 * For a single string argument, the resolution priority is: "auto", a string starting with "#", a theme name, a preset name, a bare 6-digit HEX. Theme and preset palettes do not overlap. A 3-digit shorthand is accepted only with the leading "#".
-	 * Unsupported inputs (objects, arrays, an existing ApiColor, unknown strings, no arguments) return a black color (#000000).
+	 * Creates an ApiColor from a universal input.
 	 *
+	 * The method recognizes several call signatures and either delegates to a narrower factory or constructs an ApiColor directly.
+	 *
+	 * - <b>Numeric components</b>: "Api.Color(r, g, b)" or "Api.Color(r, g, b, a)" creates an RGB or RGBA color from byte components (0-255).
+	 * - <b>Packed integer</b>: "Api.Color(0xRRGGBB)" creates an RGB color from a 24-bit integer.
+	 * - <b>Full HEX string</b>: "Api.Color('#RRGGBB')" or "Api.Color('RRGGBB')" creates a HEX color; the leading "#" is optional.
+	 * - <b>Short HEX string</b>: "Api.Color('#RGB')" expands each digit by duplication, so "#F0A" becomes "#FF00AA".
+	 * - <b>Theme color name</b>: "Api.Color('accent1')" creates a theme color; any value of SchemeColorId is accepted.
+	 * - <b>Preset color name</b>: "Api.Color('aliceBlue')" resolves any value of PresetColor to its RGB equivalent.
+	 * - <b>Auto color</b>: "Api.Color('auto')" creates an auto color.
+	 *
+	 * For a single string argument, the resolution priority is: "auto", a string starting with "#", a theme name, a preset name, a bare 6-digit HEX. Theme and preset palettes do not overlap. A 3-digit shorthand is accepted only with the leading "#".
+	 *
+	 * Unsupported inputs (objects, arrays, an existing ApiColor, unknown strings, no arguments) return a black color (#000000).
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number | string | byte | SchemeColorId | PresetColor} r - The universal color input. With three or four arguments, the red component (0-255).
@@ -5545,7 +5567,6 @@
 
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5557,7 +5578,6 @@
 	 */
 	/**
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5606,7 +5626,6 @@
 
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5620,7 +5639,6 @@
 	 */
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5672,24 +5690,9 @@
 
 	/**
 	 * Creates a stroke adding shadows to the element.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
-	 * @deprecated since 9.3.0 version.
-	 * @param {EMU} width - The width of the shadow measured in English measure units.
-	 * @param {ApiFill} fill - The fill type used to create the shadow.
-	 * @returns {ApiStroke}
-	 *
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStroke.js
-	 */
-	/**
-	 * Creates a stroke adding shadows to the element.
-	 *
-	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 *
-	 * @since 9.3.0
 	 * @param {EMU} width - The width of the shadow measured in English measure units.
 	 * @param {ApiFill} fill - The fill type used to create the shadow.
 	 * @param {DashType} [sDash="solid"] - The type of line dash.
@@ -5706,7 +5709,7 @@
 	/**
 	 * Properties used to create a shadow.
 	 * @typedef {Object} ShadowSettings
-	 * @property {ApiColor | ApiUniColor} [color] - The shadow color (black by default).
+	 * @property {ApiColor} [color] - The shadow color (black by default).
 	 * @property {number} [transparency=0] - The shadow transparency from 0.0 (opaque) to 1.0 (clear).
 	 * @property {number} [offsetX=0] - The horizontal offset of the shadow measured in points (a positive value offsets to the right).
 	 * @property {number} [offsetY=0] - The vertical offset of the shadow measured in points (a positive value offsets downwards).
@@ -5770,7 +5773,6 @@
 
 	/**
 	 * Creates a gradient stop used for different types of gradients.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -5783,7 +5785,6 @@
 	 */
 	/**
 	 * Creates a gradient stop used for different types of gradients.
-	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
@@ -6386,7 +6387,7 @@
 				oResult = new ApiStyle(oStyle);
 				break;
 			case "tableStylePr":
-				oResult = new ApiTableStylePr(oParsedObj.styleType, null, oReader.TableStylePrFromJSON(oParsedObj));
+				oResult = new ApiTableStylePr(oParsedObj["styleType"], null, oReader.TableStylePrFromJSON(oParsedObj));
 				break;
 		}
 
@@ -6524,10 +6525,9 @@
 	 * Subscribes to the specified event and calls the callback function when the event fires.
 	 * @function
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} eventName - The event name.
 	 * @param {function} callback - Function to be called when the event fires.
-	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
 	Api.attachEvent = function(eventName, callback)
@@ -6539,9 +6539,8 @@
 	 * Unsubscribes from the specified event.
 	 * @function
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} eventName - The event name.
-	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
 	Api.detachEvent = function(eventName)
@@ -6679,8 +6678,11 @@
 	};
 	/**
 	 * Removes all the elements from the current document or from the current document element.
-	 * <note>When all elements are removed, a new empty paragraph is automatically created. If you want to add
-	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.</note>
+	 *
+	 * :::note
+	 * When all elements are removed, a new empty paragraph is automatically created. If you want to add
+	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.
+	 * :::
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
@@ -7035,7 +7037,9 @@
 		return (docContent === this.Document && docContent.IsEndnote());
 	};
 	/**
-	 * Select the reference to this footnote/endnote. If this document content is not a footnote/endnote, do nothing.
+	 * Selects the reference to this footnote/endnote.
+	 *
+	 * If this document content is not a footnote/endnote, do nothing.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @since 9.3.0
@@ -7051,7 +7055,9 @@
 		return ref && ref.SelectThisElement();
 	};
 	/**
-	 * Moves the cursor to the reference of this footnote/endnote in the main document. If this document content is not a footnote/endnote, does nothing.
+	 * Moves the cursor to the reference of this footnote/endnote in the main document.
+	 *
+	 * If this document content is not a footnote/endnote, does nothing.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 * @since 9.4.0
@@ -7511,6 +7517,7 @@
 
 	/**
 	 * Returns the inner text of the current node and its child nodes.
+	 *
 	 * For example: `<text>123<one>4</one></text>` returns `"1234"`.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7652,6 +7659,7 @@
 
 	/**
 	 * Sets an attribute for the custom XML node.
+	 *
 	 * If the attribute already exists, it will not be modified.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7676,6 +7684,7 @@
 
 	/**
 	 * Updates the value of an existing attribute in the custom XML node.
+	 *
 	 * If the attribute doesn't exist, the update will not occur.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7699,6 +7708,7 @@
 
 	/**
 	 * Deletes an attribute from the custom XML node.
+	 *
 	 * If the attribute exists, it will be removed.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7721,6 +7731,7 @@
 
 	/**
 	 * Retrieves the attribute value from the custom XML node.
+	 *
 	 * If the attribute doesn't exist, it returns `false`.
 	 * @memberof ApiCustomXmlNode
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
@@ -7781,7 +7792,9 @@
 		return new ApiStyle(styles.Get(styleId));
 	};
 	/**
-	 * Creates a new style with the specified type and name. If a style with the specified name already exists, it will be returned without creating a new one.
+	 * Creates a new style with the specified type and name.
+	 *
+	 * If a style with the specified name already exists, it will be returned without creating a new one.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} styleName - The name of the style which will be created.
@@ -7876,7 +7889,9 @@
 		return new ApiSection(this.Document.SectPr);
 	};
 	/**
-	 * Creates a new document section which ends at the specified paragraph. Allows to set local parameters to the current
+	 * Creates a new document section which ends at the specified paragraph.
+	 *
+	 * Allows to set local parameters to the current
 	 * section - page size, footer, header, columns, etc.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -8103,8 +8118,6 @@
 	 * }
 	 */
 
-	
-	
 	/**
 	 * Returns a report about all the comments added to the document.
 	 * @memberof ApiDocument
@@ -8198,7 +8211,6 @@
 	 * }
 	 */
 
-	
 	/**
 	 * Returns a report about every change which was made to the document in the review mode.
 	 * @memberof ApiDocument
@@ -8574,7 +8586,9 @@
 		return Object.keys(keys);
 	};
 	/**
-	 * Returns the form value for the specified key. For a group of radio buttons returns Choice, i.e. the name of the selected item.
+	 * Returns the form value for the specified key.
+	 *
+	 * For a group of radio buttons returns Choice, i.e. the name of the selected item.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param key {string} - The form key.
@@ -8676,6 +8690,7 @@
 	 */
 	/**
 	 * Returns the data from all forms present in the current document.
+	 *
 	 * If a form was created and not assigned to any part of the document, it won't appear in this list.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
@@ -8717,6 +8732,7 @@
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
 		this.Document.SetGlobalTrackRevisions(isTrack, true);
+		this.Document.SetLocalTrackRevisions(null, true);
 		return true;
 	};
 	
@@ -8724,7 +8740,8 @@
 		name : "",
 		userId : "",
 		isTrack : false,
-		isUser : false
+		isUser : false,
+		isLocalTrack : null
 	};
 	/**
 	 * Enables or disables AI-assisted change tracking in the document.
@@ -8739,8 +8756,10 @@
 	{
 		if (isTrack)
 		{
-			trackRevisionBuffer.isTrack = this.Document.IsTrackRevisions();
-			this.Document.SetGlobalTrackRevisions(true);
+			trackRevisionBuffer.isTrack      = this.Document.IsTrackRevisions();
+			trackRevisionBuffer.isLocalTrack = this.Document.GetLocalTrackRevisions();
+			this.Document.SetGlobalTrackRevisions(true, true);
+			this.Document.SetLocalTrackRevisions(null, true);
 			
 			let userInfo = Asc.editor.DocInfo.get_UserInfo();
 			if (!userInfo)
@@ -8765,8 +8784,9 @@
 		}
 		else
 		{
-			this.Document.SetGlobalTrackRevisions(trackRevisionBuffer.isTrack);
-			
+			this.Document.SetGlobalTrackRevisions(trackRevisionBuffer.isTrack, true);
+			this.Document.SetLocalTrackRevisions(trackRevisionBuffer.isLocalTrack, true);
+
 			if (trackRevisionBuffer.isUser)
 			{
 				let userInfo = Asc.editor.DocInfo.get_UserInfo();
@@ -8931,8 +8951,11 @@
 	};
 	/**
 	 * Returns a collection of tables on a given absolute page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 *
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nPage - The page index.
@@ -8955,8 +8978,11 @@
 	};
 	/**
 	 * Adds a drawing to the specified page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 *
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiDrawing} oDrawing - A drawing to add to the page.
@@ -9004,7 +9030,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a document object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -9460,7 +9488,6 @@
 
 	/**
 	 * Sets the highlight to the forms in the document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -9475,7 +9502,6 @@
 	 */
 	/**
 	 * Sets the highlight to the forms in the document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -9780,7 +9806,6 @@
 
 	/**
 	 * Returns all the selected drawings in the current document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
@@ -9901,7 +9926,6 @@
 
 	/**
 	 * Sets the highlight to the content controls from the current document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
@@ -9916,7 +9940,6 @@
 	 */
 	/**
 	 * Sets the highlight to the content controls from the current document.
-	 *
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
@@ -10000,8 +10023,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @deprecated since 10.0.0 version.
-	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
-	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
+	 * @param {TofPr} [oTofPr={}] - Table of figures properties. Undefined properties are filled with the default values.
 	 * @param {boolean} [bReplace=true] - Specifies whether to replace the selected table of figures instead of adding a new one.
 	 * @returns {ApiTableOfFigures}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
@@ -10024,11 +10046,12 @@
 	};
 	/**
 	 * Returns the document statistics represented as an object with the following parameters:
-	 * <b>PageCount</b> - number of pages;
-	 * <b>WordsCount</b> - number of words;
-	 * <b>ParagraphCount</b> - number of paragraphs;
-	 * <b>SymbolsCount</b> - number of symbols;
-	 * <b>SymbolsWSCount</b> - number of symbols with spaces.
+	 *
+	 * - <b>PageCount</b> - number of pages;
+	 * - <b>WordsCount</b> - number of words;
+	 * - <b>ParagraphCount</b> - number of paragraphs;
+	 * - <b>SymbolsCount</b> - number of symbols;
+	 * - <b>SymbolsWSCount</b> - number of symbols with spaces.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
@@ -10070,8 +10093,11 @@
 	};
 	/**
 	 * Returns a number of pages in the current document.
-	 * <note>This method can be slow for large documents because it runs the document calculation
-	 * process before the full recalculation.</note>
+	 *
+	 * :::note
+	 * This method can be slow for large documents because it runs the document calculation
+	 * process before the full recalculation.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @return {number}
@@ -10126,17 +10152,18 @@
 	};
 	/**
 	 * Returns the document information:
-	 * <b>Application</b> - the application the document was created with.
-	 * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * <b>Created</b> - the parsed date and time when the file was created.
-	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * <b>LastModifiedBy</b> - the name of the user who made the latest change to the document.
-	 * <b>Authors</b> - the persons who created the file.
-	 * <b>Title</b> - the document title (this property allows you to simplify your documents classification).
-	 * <b>Tags</b> - the document tags (this property allows you to simplify your documents classification).
-	 * <b>Subject</b> - the document subject (this property allows you to simplify your documents classification).
-	 * <b>Comment</b> - the comment to the document (this property allows you to simplify your documents classification).
+	 *
+	 * - <b>Application</b> - the application the document was created with.
+	 * - <b>CreatedRaw</b> - the date and time when the file was created.
+	 * - <b>Created</b> - the parsed date and time when the file was created.
+	 * - <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * - <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * - <b>LastModifiedBy</b> - the name of the user who made the latest change to the document.
+	 * - <b>Authors</b> - the persons who created the file.
+	 * - <b>Title</b> - the document title (this property allows you to simplify your documents classification).
+	 * - <b>Tags</b> - the document tags (this property allows you to simplify your documents classification).
+	 * - <b>Subject</b> - the document subject (this property allows you to simplify your documents classification).
+	 * - <b>Comment</b> - the comment to the document (this property allows you to simplify your documents classification).
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
@@ -10436,6 +10463,7 @@
 
 	/**
 	 * Moves a cursor to a specified position of the current document.
+	 *
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiDocument
 	 * @param {number} [nPos=0] - The desired cursor position.
@@ -10545,6 +10573,7 @@
 	
 	/**
 	 * Retrieves the custom XML manager associated with the document.
+	 *
 	 * This manager allows manipulation and access to custom XML parts within the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -10559,6 +10588,7 @@
 
 	/**
 	 * Retrieves the core properties interface for the current document.
+	 *
 	 * This method is used to view or modify standard metadata such as title, author, and keywords.
 	 * @memberof ApiDocument
 	 * @returns {ApiCore} - The core document properties object.
@@ -11093,7 +11123,9 @@
 		return new ApiRun(oRun);
 	};
 	/**
-	 * Returns the text properties of the paragraph mark which is used to mark the paragraph end. The mark can also acquire
+	 * Returns the text properties of the paragraph mark which is used to mark the paragraph end.
+	 *
+	 * The mark can also acquire
 	 * common text properties like bold, italic, underline, etc.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
@@ -11198,9 +11230,12 @@
 	};
 	/**
 	 * Removes an element using the position specified.
-	 * <note>If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
+	 *
+	 * :::note
+	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
      * a new empty run is automatically created. If you want to add
-	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The element position which we want to remove from the paragraph.
@@ -11218,8 +11253,11 @@
 	};
 	/**
 	 * Removes all the elements from the current paragraph.
-	 * <note>When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
-	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
+	 *
+	 * :::note
+	 * When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
+	 * content to this run, use the {@link ApiParagraph#GetElement} method.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
@@ -11299,7 +11337,9 @@
         return null;
 	};
 	/**
-	 * Creates a paragraph copy. Ingnore comments, footnote references, complex fields.
+	 * Creates a paragraph copy.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiParagraph}
@@ -11409,7 +11449,10 @@
 	};
 	/**
 	 * Adds a comment to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -11478,6 +11521,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
+	 *
 	 * The paragraph must be attached to the document before calling this method.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
@@ -11627,7 +11671,6 @@
 
 	/**
 	 * Sets the text color to the current paragraph.
-	 *
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 *
@@ -11642,12 +11685,11 @@
 	 */
 	/**
 	 * Sets the text color to the current paragraph.
-	 *
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | null} color - The text color. Pass <em>null</em> to remove the text color.
 	 * @return {ApiParagraph} this
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
@@ -11683,6 +11725,9 @@
 		if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
+		else if (null === color) {
+			paraTextPrOptions = { Color : null, Unifill : null, TextFill : null };
+		}
 
 		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.Add(new AscCommonWord.ParaTextPr(paraTextPrOptions));
@@ -11709,20 +11754,24 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sFontFamily - The font family or families used for the current paragraph.
+	 * @param {string | null} [fontFamily] - The font family or families used for the current paragraph. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {?ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontFamily.js
 	 */
-	ApiParagraph.prototype.SetFontFamily = function(sFontFamily)
+	ApiParagraph.prototype.SetFontFamily = function(fontFamily)
 	{
-		if (typeof sFontFamily !== "string")
+		if (undefined === fontFamily)
+			fontFamily = null;
+
+		if (null !== fontFamily && typeof fontFamily !== "string")
 			return null;
 		
-		LoadFont(sFontFamily);
+		if (null !== fontFamily)
+			LoadFont(fontFamily);
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({
+		this.Paragraph.Add(null === fontFamily ? private_GetRemoveFontFamilyTextPr() : new AscCommonWord.ParaTextPr({
 			FontFamily : {
-				Name  : sFontFamily,
+				Name  : fontFamily,
 				Index : -1
 			}
 		}));
@@ -11746,14 +11795,14 @@
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} fontSize - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
 	 */
 	ApiParagraph.prototype.SetFontSize = function(fontSize)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : private_GetHps(fontSize)}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({FontSize : null === fontSize ? null : private_GetHps(fontSize)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -11818,15 +11867,15 @@
 	 * baseline of the surrounding non-positioned text.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
+	 * @param {hps | null} position - Specifies a positive (raised text) or negative (lowered text)
+	 * measurement in half-points (1/144 of an inch). Pass <em>null</em> to remove the position.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetPosition.js
 	 */
-	ApiParagraph.prototype.SetPosition = function(nPosition)
+	ApiParagraph.prototype.SetPosition = function(position)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : private_PtToMM(private_GetHps(nPosition))}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Position : null === position ? null : private_PtToMM(private_GetHps(position))}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -11855,14 +11904,14 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSpacing.js
 	 */
-	ApiParagraph.prototype.SetSpacing = function(nSpacing)
+	ApiParagraph.prototype.SetSpacing = function(spacing)
 	{
 		this.Paragraph.SetApplyToAll(true);
-		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : private_Twips2MM(nSpacing)}));
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr({Spacing : null === spacing ? null : private_Twips2MM(spacing)}));
 		this.Paragraph.SetApplyToAll(false);
 		
 		return this;
@@ -11905,25 +11954,28 @@
 	};
 	/**
 	 * Specifies the alignment which will be applied to the contents of this paragraph in relation to the default appearance of the paragraph text:
-	 * <b>"baseline"</b> - the characters in the current paragraph will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current paragraph will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
+	 *
+	 * - <b>"baseline"</b> - the characters in the current paragraph will be aligned by the default text baseline.
+	 * - <b>"subscript"</b> - the characters in the current paragraph will be aligned below the default text baseline.
+	 * - <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
-	 * @returns {ApiParagraph | null} - returns null is sType is invalid.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
+	 * @returns {ApiParagraph | null} - returns null is type is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetVertAlign.js
 	 */
-	ApiParagraph.prototype.SetVertAlign = function(sType)
+	ApiParagraph.prototype.SetVertAlign = function(type)
 	{
 		var value = undefined;
 
-		if (sType === "baseline")
+		if (type === "baseline")
 			value = AscCommon.vertalign_Baseline;
-		else if (sType === "subscript")
+		else if (type === "subscript")
 			value = AscCommon.vertalign_SubScript;
-		else if (sType === "superscript")
+		else if (type === "superscript")
 			value = AscCommon.vertalign_SuperScript;
+		else if (type === null)
+			value = null;
 		else 
 			return null;
 
@@ -11938,15 +11990,15 @@
 	 * the contents of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @returns {ApiParagraph | null} - returns null if the language identifier is not supported.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetLanguage.js
 	 */
 	ApiParagraph.prototype.SetLanguage = function(langId)
 	{
-		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		const lcid = null === langId ? null : Asc.g_oLcidNameToIdMap[langId];
 		if (undefined === lcid)
 			return null;
 
@@ -11958,10 +12010,12 @@
 	};
 	/**
 	 * Specifies the reading order for the current paragraph.
+	 *
 	 * Possible values are:
-	 * <b>null</b> - use the standart direction parameter;
-	 * <b>"ltr"</b> - left-to-right text direction;
-	 * <b>"rtl"</b> - right-to-left text direction.
+	 *
+	 * - <b>null</b> - use the standart direction parameter;
+	 * - <b>"ltr"</b> - left-to-right text direction;
+	 * - <b>"rtl"</b> - right-to-left text direction.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {?ReadingOrder} [readingOrder = undefined] - The reading order.
@@ -12215,13 +12269,24 @@
 	 * Sets the font family of the drop cap letter.
 	 * @memberof ApiDropCap
 	 * @typeofeditors ["CDE"]
-	 * @param {string} fontFamily - The font family name used for the drop cap letter.
+	 * @param {string | null} [fontFamily] - The font family name used for the drop cap letter. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {ApiDropCap}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDropCap/Methods/SetFontFamily.js
 	 */
 	ApiDropCap.prototype.SetFontFamily = function(fontFamily)
 	{
+		if (null === fontFamily || undefined === fontFamily)
+		{
+			if (!this.private_GetLogicDocument() || !this.private_IsValid())
+				return this;
+
+			this.Paragraph.SetApplyToAll(true);
+			this.Paragraph.Add(private_GetRemoveFontFamilyTextPr());
+			this.Paragraph.SetApplyToAll(false);
+			return this;
+		}
+
 		fontFamily = AscBuilder.GetStringParameter(fontFamily, null);
 		if (null === fontFamily)
 			throwException(new Error('Invalid type of parameter "fontFamily".'));
@@ -12674,7 +12739,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a paragraph object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a paragraph object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -12744,7 +12811,10 @@
 
 	/**
 	 * Adds a numbered cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {numberedRefTo} sRefType - The text or numeric value of a numbered reference you want to insert.
@@ -12810,7 +12880,10 @@
 
 	/**
 	 * Adds a heading cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {headingRefTo} sRefType - The text or numeric value of a heading reference you want to insert.
@@ -12867,7 +12940,10 @@
 
 	/**
 	 * Adds a bookmark cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {bookmarkRefTo} sRefTo - The text or numeric value of a bookmark reference you want to insert.
@@ -12930,7 +13006,10 @@
 
 	/**
 	 * Adds a footnote cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {footnoteRefTo} sRefType - The text or numeric value of a footnote reference you want to insert.
@@ -12987,7 +13066,10 @@
 
 	/**
 	 * Adds an endnote cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {endnoteRefTo} sRefType - The text or numeric value of an endnote reference you want to insert.
@@ -13044,7 +13126,10 @@
 
 	/**
 	 * Adds a caption cross-reference to the current paragraph.
-	 * <note>Please note that this paragraph must be in the document.</note>
+	 *
+	 * :::note
+	 * This paragraph must be in the document.
+	 * :::
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {CaptionLabel | string} sCaption - The caption label ("Equation", "Figure", "Table", or another caption label).
@@ -13172,8 +13257,11 @@
 
 	/**
      * Adds a caption paragraph after (or before) the current paragraph.
-	 * <note>Please note that the current paragraph must be in the document (not in the footer/header).
-	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 *
+	 * :::note
+	 * The current paragraph must be in the document (not in the footer/header).
+	 * And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
      * @param {string} sAdditional - The additional text.
@@ -13181,8 +13269,7 @@
 	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current paragraph (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddCaption.js
@@ -13601,6 +13688,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified run.
+	 *
 	 * The run must be attached to the document before calling this method.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
@@ -13845,7 +13933,10 @@
 
 	/**
 	 * Adds a comment to the current run.
-	 * <note>Please note that this run must be in the document.</note>
+	 *
+	 * :::note
+	 * This run must be in the document.
+	 * :::
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -13903,6 +13994,7 @@
 	
 	/**
 	 * Moves a cursor to a specified position of the current text run.
+	 *
 	 * If the current run is not assigned to any document part, then <b>false</b> is returned. Otherwise, this method returns <b>true</b>.
 	 * If there is any selection in the document, it will be removed.
 	 * @memberof ApiRun
@@ -14018,29 +14110,33 @@
 
 	/**
 	 * The section break type which defines how the contents of the current section are placed relative to the previous section.
+	 *
 	 * WordprocessingML supports five distinct types of section breaks:
-	 * <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
-	 * <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
-	 * <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
-	 * <b>Continuous</b> ("continuous") - starts a new section in the next paragraph.
-	 * This means that continuous section breaks might not specify certain page-level section properties,
-	 * since they shall be inherited from the following section.
-	 * However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
-	 * <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
+	 *
+	 * - <b>Next page</b> ("nextPage") - starts a new section on the next page (the default value).
+	 * - <b>Odd</b> ("oddPage") - starts a new section on the next odd-numbered page.
+	 * - <b>Even</b> ("evenPage") - starts a new section on the next even-numbered page.
+	 * - <b>Continuous</b> ("continuous") - starts a new section in the next paragraph.
+	 *   This means that continuous section breaks might not specify certain page-level section properties,
+	 *   since they shall be inherited from the following section.
+	 *   However, these breaks can specify other section properties, such as line numbering and footnote/endnote settings.
+	 * - <b>Column</b> ("nextColumn") - starts a new section in the next column on the page.
 	 * @typedef {("nextPage" | "oddPage" | "evenPage" | "continuous" | "nextColumn")} SectionBreakType
-	* @see office-js-api/Examples/Enumerations/SectionBreakType.js
-	*/
-
+	 * @see office-js-api/Examples/Enumerations/SectionBreakType.js
+	 */
 
 	/**
 	 * The coordinate value for the geometry paths.
+	 *
 	 * Can be a guide name from "gdLst", a numeric value, or a string representation of a number.
 	 * @typedef {string | number} GeometryCoordinate
 	 * @see office-js-api/Examples/Enumerations/GeometryCoordinate.js
 	 */
 
 	/**
-	 * Specifies a type of the current section. The section type defines how the contents of the current 
+	 * Specifies a type of the current section.
+	 *
+	 * The section type defines how the contents of the current
 	 * section are placed relative to the previous section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14117,7 +14213,9 @@
 		return true;
 	};
 	/**
-	 * Specifies that all the columns in the current section have the different widths. Number of columns is equal 
+	 * Specifies that all the columns in the current section have the different widths.
+	 *
+	 * Number of columns is equal
 	 * to the length of the aWidth array. The length of the aSpaces array MUST BE equal to (aWidth.length - 1).
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14390,7 +14488,9 @@
 		return new ApiDocumentContent(oHeader.Get_DocumentContent());
 	};
 	/**
-	 * Removes the header of the specified type from the current section. After removal, the header will be inherited from
+	 * Removes the header of the specified type from the current section.
+	 *
+	 * After removal, the header will be inherited from
 	 * the previous section, or if this is the first section in the document, no header of the specified type will be presented.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14452,7 +14552,9 @@
 		return null;
 	};
 	/**
-	 * Removes the footer of the specified type from the current section. After removal, the footer will be inherited from 
+	 * Removes the footer of the specified type from the current section.
+	 *
+	 * After removal, the footer will be inherited from
 	 * the previous section, or if this is the first section in the document, no footer of the specified type will be presented.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -14597,7 +14699,9 @@
 		return this.Section.GetPageNumStart();
 	};
 	/**
-	 * Specifies the page margins for all the pages in this section. Alias for {@link ApiSection#SetPageMargins}.
+	 * Specifies the page margins for all the pages in this section.
+	 *
+	 * Alias for {@link ApiSection#SetPageMargins}.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @param {twips} left - The left margin width measured in twentieths of a point (1/1440 of an inch).
@@ -14752,8 +14856,13 @@
 		return new ApiTableCell(row.GetCell(cellIndex));
 	};
 	/**
-	 * Merges an array of cells. If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
-	 * <note>The number of cells in any row and the number of rows in the current table may be changed.</note>
+	 * Merges an array of cells.
+	 *
+	 * If the merge is done successfully, it will return the resulting merged cell, otherwise the result will be "null".
+	 *
+	 * :::warning
+	 * The number of cells in any row and the number of rows in the current table may be changed.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell[]} aCells - The array of cells to be merged.
@@ -14868,12 +14977,12 @@
 		let oTableLook = this.Table.Get_TableLook();
 
 		return {
-			firstCol:	oTableLook.IsFirstCol(),
-			firstRow:	oTableLook.IsFirstRow(),
-			lastCol:	oTableLook.IsLastCol(),
-			lastRow:	oTableLook.IsLastRow(),
-			bandHor:	oTableLook.IsBandHor(),
-			bandVer:	oTableLook.IsBandVer()
+			"firstCol":	oTableLook.IsFirstCol(),
+			"firstRow":	oTableLook.IsFirstRow(),
+			"lastCol":	oTableLook.IsLastCol(),
+			"lastRow":	oTableLook.IsLastRow(),
+			"bandHor":	oTableLook.IsBandHor(),
+			"bandVer":	oTableLook.IsBandVer()
 		}
 	};
 
@@ -15216,6 +15325,7 @@
 	};
 	/**
      * Sets the table paddings.
+     *
 	 * If table is inline, then only left padding is applied.
      * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
@@ -15414,7 +15524,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a table object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -15467,7 +15579,6 @@
 
 	/**
 	 * Sets the background color to all cells in the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 *
@@ -15482,7 +15593,6 @@
 	 */
 	/**
 	 * Sets the background color to all cells in the current table.
-	 *
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 *
@@ -15594,7 +15704,10 @@
 
 	/**
 	 * Adds a comment to all contents of the current table.
-	 * <note>Please note that this table must be in the document.</note>
+	 *
+	 * :::note
+	 * This table must be in the document.
+	 * :::
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -15824,8 +15937,11 @@
 	};
 	/**
      * Adds a caption paragraph after (or before) the current table.
-	 * <note>Please note that the current table must be in the document (not in the footer/header).
-	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 *
+	 * :::note
+	 * The current table must be in the document (not in the footer/header).
+	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
      * @memberof ApiTable
      * @typeofeditors ["CDE"]
      * @param {string} sAdditional - The additional text.
@@ -15833,8 +15949,7 @@
 	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current table (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
      * @returns {boolean}
      * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddCaption.js
@@ -16297,7 +16412,9 @@
 		return true;
 	};
 	/**
-	 * Searches for a scope of a table row object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table row object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -16344,7 +16461,6 @@
 
 	/**
 	 * Sets the background color to all cells in the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16359,7 +16475,6 @@
 	 */
 	/**
 	 * Sets the background color to all cells in the current table row.
-	 *
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16563,7 +16678,9 @@
 		return oTable.RemoveRow(this);
 	};
 	/**
-	 * Searches for a scope of a table cell object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a table cell object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} sText - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -16723,7 +16840,6 @@
 
 	/**
 	 * Sets the background color to the current table cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16738,7 +16854,6 @@
 	 */
 	/**
 	 * Sets the background color to the current table cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16761,7 +16876,6 @@
 
 	/**
 	 * Returns the background color of the current table cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiColor}
@@ -16796,7 +16910,6 @@
 
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -16811,7 +16924,6 @@
 	 */
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
-	 *
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CDE"]
 	 *
@@ -17205,8 +17317,11 @@
 	};
 	/**
 	 * The text style base method.
-	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
-	 * the selected or created style to the text.</note>
+	 *
+	 * :::note
+	 * This method is not used by itself, as it only forms the basis for the {@link ApiRun#SetStyle} method which sets
+	 * the selected or created style to the text.
+	 * :::
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @param {?(ApiStyle | string)} style - The style which must be applied to the text character, or the name of an existing style, or <em>undefined</em>/<em>null</em> to remove the style.
@@ -17394,12 +17509,19 @@
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {string} sFontFamily - The font family or families used for the current text run.
+	 * @param {string | null} [sFontFamily] - The font family or families used for the current text run. Pass <em>null</em> or omit it to remove the font family.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetFontFamily.js
 	 */
 	ApiTextPr.prototype.SetFontFamily = function(sFontFamily)
 	{
+		if (null === sFontFamily || undefined === sFontFamily)
+		{
+			this.TextPr.RFonts = new CRFonts();
+			this.private_OnChange();
+			return this;
+		}
+
 		LoadFont(sFontFamily);
 		this.TextPr.RFonts.SetAll(sFontFamily, -1);
 		this.private_OnChange();
@@ -17408,6 +17530,7 @@
 
 	/**
 	 * Returns the font family from the current text properties.
+	 *
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
@@ -17444,13 +17567,13 @@
 	 * Sets the font size to the characters of the current text run.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} size - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetFontSize.js
 	 */
-	ApiTextPr.prototype.SetFontSize = function(nSize)
+	ApiTextPr.prototype.SetFontSize = function(size)
 	{
-		this.TextPr.FontSize = private_GetHps(nSize);
+		this.TextPr.FontSize = null === size ? undefined : private_GetHps(size);
 		this.private_OnChange();
 		return this;
 	};
@@ -17474,7 +17597,6 @@
 
 	/**
 	 * Sets the text color to the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -17489,17 +17611,23 @@
 	 */
 	/**
 	 * Sets the text color to the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color - The text color.
+	 * @param {ApiColor | null} color - The text color. Pass <em>null</em> to remove the text color.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
 	ApiTextPr.prototype.SetColor = function(color) {
+		if (null === color) {
+			this.TextPr.Color = undefined;
+			this.TextPr.Unifill = undefined;
+			this.private_OnChange();
+			return this;
+		}
+
 		let r, g, b;
 		let isAuto, isTheme;
 
@@ -17566,23 +17694,26 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the contents of the run in relation to the default appearance of the run text:
-	 * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
-	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
-	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
+	 *
+	 * - <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
+	 * - <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
+	 * - <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetVertAlign.js
 	 */
-	ApiTextPr.prototype.SetVertAlign = function(sType)
+	ApiTextPr.prototype.SetVertAlign = function(type)
 	{
-		if ("baseline" === sType)
+		if ("baseline" === type)
 			this.TextPr.VertAlign = AscCommon.vertalign_Baseline;
-		else if ("subscript" === sType)
+		else if ("subscript" === type)
 			this.TextPr.VertAlign = AscCommon.vertalign_SubScript;
-		else if ("superscript" === sType)
+		else if ("superscript" === type)
 			this.TextPr.VertAlign = AscCommon.vertalign_SuperScript;
+		else if (null === type)
+			this.TextPr.VertAlign = undefined;
 
 		this.private_OnChange();
 		return this;
@@ -17667,13 +17798,13 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
-	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetSpacing.js
 	 */
-	ApiTextPr.prototype.SetSpacing = function(nSpacing)
+	ApiTextPr.prototype.SetSpacing = function(spacing)
 	{
-		this.TextPr.Spacing = private_Twips2MM(nSpacing);
+		this.TextPr.Spacing = null === spacing ? undefined : private_Twips2MM(spacing);
 		this.private_OnChange();
 		return this;
 	};
@@ -17786,14 +17917,14 @@
 	 * baseline of the surrounding non-positioned text.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
-	 * measurement in half-points (1/144 of an inch).
+	 * @param {hps | null} position - Specifies a positive (raised text) or negative (lowered text)
+	 * measurement in half-points (1/144 of an inch). Pass <em>null</em> to remove the position.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetPosition.js
 	 */
-	ApiTextPr.prototype.SetPosition = function(nPosition)
+	ApiTextPr.prototype.SetPosition = function(position)
 	{
-		this.TextPr.Position = private_PtToMM(private_GetHps(nPosition));
+		this.TextPr.Position = null === position ? undefined : private_PtToMM(private_GetHps(position));
 		this.private_OnChange();
 		return this;
 	};
@@ -17822,17 +17953,17 @@
 	 * the contents of the text run.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetLanguage.js
 	 */
-	ApiTextPr.prototype.SetLanguage = function(sLangId)
+	ApiTextPr.prototype.SetLanguage = function(langId)
 	{
-		var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
-		if (undefined !== nLcid)
+		const lcid = null === langId ? undefined : Asc.g_oLcidNameToIdMap[langId];
+		if (null === langId || undefined !== lcid)
 		{
-			this.TextPr.Lang.Val = nLcid;
+			this.TextPr.Lang.Val = lcid;
 			this.private_OnChange();
 			return this;
 		}
@@ -17860,7 +17991,6 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -17875,7 +18005,6 @@
 	 */
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
-	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -18116,7 +18245,10 @@
 	};
 	/**
 	 * The paragraph style base method.
-	 * <note>This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.</note>
+	 *
+	 * :::note
+	 * This method is not used by itself, as it only forms the basis for the {@link ApiParagraph#SetStyle} method which sets the selected or created style for the paragraph.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @param {?(ApiStyle | string)} style - The style of the paragraph to be set, or the name of an existing style, or <em>undefined</em>/<em>null</em> to remove the style.
@@ -18391,7 +18523,9 @@
 		return this.GetEffectiveParaPr().PageBreakBefore;
 	};
 	/**
-	 * Sets the paragraph line spacing. If the value of the sLineRule parameter is either 
+	 * Sets the paragraph line spacing.
+	 *
+	 * If the value of the sLineRule parameter is either
 	 * "atLeast" or "exact", then the value of nLine will be interpreted as twentieths of a point. If 
 	 * the value of the sLineRule parameter is "auto", then the value of the 
 	 * nLine parameter will be interpreted as 240ths of a line.
@@ -18484,7 +18618,9 @@
 		return spacing ? GetRule(spacing.LineRule) : undefined;
 	};
 	/**
-	 * Sets the spacing before the current paragraph. If the value of the isBeforeAuto parameter is true, then 
+	 * Sets the spacing before the current paragraph.
+	 *
+	 * If the value of the isBeforeAuto parameter is true, then
 	 * any value of the nBefore is ignored. If isBeforeAuto parameter is not specified, then 
 	 * it will be interpreted as false.
 	 * @memberof ApiParaPr
@@ -18518,7 +18654,9 @@
 		return undefined !== before ? private_MM2Twips(before) : undefined;
 	};
 	/**
-	 * Sets the spacing after the current paragraph. If the value of the isAfterAuto parameter is true, then 
+	 * Sets the spacing after the current paragraph.
+	 *
+	 * If the value of the isAfterAuto parameter is true, then
 	 * any value of the nAfter is ignored. If isAfterAuto parameter is not specified, then it 
 	 * will be interpreted as false.
 	 * @memberof ApiParaPr
@@ -18554,7 +18692,6 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
-	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -18570,7 +18707,6 @@
 	 */
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
-	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 *
@@ -18667,8 +18803,11 @@
 	};
 	/**
 	 * Specifies the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added
-	 * to the whole block rather than to every paragraph in this block.</note>
+	 *
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added
+	 * to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @deprecated since 10.0.0 version.
@@ -18806,7 +18945,10 @@
 	};
 	/**
 	 * Specifies the border which will be displayed above a set of paragraphs which have the same set of paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.</note>
+	 *
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @deprecated since 10.0.0 version.
@@ -18925,7 +19067,10 @@
 	};
 	/**
 	 * Specifies a sequence of custom tab stops which will be used for any tab characters in the current paragraph.
-	 * <b>Warning</b>: The lengths of aPos array and aVal array <b>MUST BE</b> equal to each other.
+	 *
+	 * :::warning
+	 * The lengths of the aPos and aVal arrays must be equal to each other.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips[]} aPos - An array of the positions of custom tab stops with respect to the current page margins
@@ -19027,7 +19172,10 @@
 		let numLvl = undefined;
 
 		if (this.Parent instanceof ApiParagraph)
-			numLvl = Math.min(8, Math.max(0, (lvl ? lvl : 0)));
+		{
+			numLvl = Math.floor(GetNumberParameter(lvl, 0));
+			numLvl = isNaN(numLvl) ? 0 : Math.min(8, Math.max(0, numLvl));
+		}
 
 		this.ParaPr.NumPr = new AscWord.NumPr(numId, numLvl);
 		this.private_OnChange();
@@ -19216,7 +19364,10 @@
 	};
 	/**
 	 * Returns the text properties which will be applied to the text in the current numbering level itself, not to the text in the subsequent paragraph.
-	 * <note>To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.</note>
+	 *
+	 * :::note
+	 * To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.
+	 * :::
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTextPr}
@@ -19330,7 +19481,9 @@
 		return true;
 	};
 	/**
-	 * Specifies a one-based index which determines when a numbering level should restart to its starting value. A numbering level restarts when an instance of the specified numbering level which is higher (earlier than this level) is used in the given document contents. By default this value is true.
+	 * Specifies a one-based index which determines when a numbering level should restart to its starting value.
+	 *
+	 * A numbering level restarts when an instance of the specified numbering level which is higher (earlier than this level) is used in the given document contents. By default this value is true.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} isRestart - The true value means that a numbering level will be restarted to its starting value.
@@ -19343,7 +19496,9 @@
 		return true;
 	};
 	/**
-	 * Specifies the starting value for the numbering used by the parent numbering level within a given numbering level definition. By default this value is 1.
+	 * Specifies the starting value for the numbering used by the parent numbering level within a given numbering level definition.
+	 *
+	 * By default this value is 1.
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nStart - The starting value for the numbering used by the parent numbering level.
@@ -19356,7 +19511,9 @@
 		return true;
 	};
 	/**
-	 * Specifies the content which will be added between the given numbering level text and the text of every numbered paragraph which references that numbering level. By default this value is "tab".
+	 * Specifies the content which will be added between the given numbering level text and the text of every numbered paragraph which references that numbering level.
+	 *
+	 * By default this value is "tab".
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
 	 * @param {("space" | "tab" | "none")} sType - The content added between the numbering level text and the text in the numbered paragraph.
@@ -19824,7 +19981,10 @@
 	};
 	/**
 	 * Sets the preferred width to the current table.
-	 * <note>Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.</note>
+	 *
+	 * :::note
+	 * Tables are created with the {@link ApiTable#SetWidth} method properties set by default, which always override the {@link ApiTablePr#SetWidth} method properties. That is why there is no use to try and apply {@link ApiTablePr#SetWidth}. We recommend you to use the  {@link ApiTablePr#SetWidth} method instead.
+	 * :::
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @param {TableWidth} sType - Type of the width value from one of the available width values types.
@@ -20360,7 +20520,9 @@
 		return true;
 	};
 	/**
-	 * Specifies how the current table cell is laid out when the parent table is displayed in a document. This setting
+	 * Specifies how the current table cell is laid out when the parent table is displayed in a document.
+	 *
+	 * This setting
 	 * only affects the behavior of the cell when the {@link ApiTablePr#SetTableLayout} table layout for this table is set to use the <code>"autofit"</code> algorithm.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
@@ -20698,15 +20860,20 @@
 		return true;
 	};
 	/**
-	 * Sets the wrapping type of the current object (image, shape, chart). One of the following wrapping style types can be set:
-	 * <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
+	 * Sets the wrapping type of the current object (image, shape, chart).
+	 *
+	 * One of the following wrapping style types can be set:
+	 *
+	 * - <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
+	 *
 	 * If one of the following styles is selected, the object can be moved independently of the text and positioned on the page exactly:
-	 * <b>"square"</b> - the text wraps the rectangular box that bounds the object.
-	 * <b>"tight"</b> - the text wraps the actual object edges.
-	 * <b>"through"</b> - the text wraps around the object edges and fills in the open white space within the object.
-	 * <b>"topAndBottom"</b> - the text is only above and below the object.
-	 * <b>"behind"</b> - the text overlaps the object.
-	 * <b>"inFront"</b> - the object overlaps the text.
+	 *
+	 * - <b>"square"</b> - the text wraps the rectangular box that bounds the object.
+	 * - <b>"tight"</b> - the text wraps the actual object edges.
+	 * - <b>"through"</b> - the text wraps around the object edges and fills in the open white space within the object.
+	 * - <b>"topAndBottom"</b> - the text is only above and below the object.
+	 * - <b>"behind"</b> - the text overlaps the object.
+	 * - <b>"inFront"</b> - the object overlaps the text.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {"inline" | "square" | "tight" | "through" | "topAndBottom" | "behind" | "inFront"} sType - The wrapping style type available for the object.
@@ -20808,24 +20975,9 @@
 	};
 	/**
 	 * Sets the absolute measurement for the horizontal positioning of the floating object.
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @deprecated since 9.3.0 version.
-	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
-	 * @param {EMU} nDistance - The distance from the right side of the document element to the floating object measured in English measure units.
-	 * @returns {boolean}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorPosition.js
-	 */
-	/**
-	 * Sets the absolute measurement for the horizontal positioning of the floating object.
-	 *
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @since 9.3.0
 	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
 	 * @param {EMU|number} nDistance - The distance from the right side of the document element to the floating object. Use EMU for absolute distance or a number for percent (1 = 1%) when bPercent=true.
 	 * @param {boolean} [bPercent=false] - The option defining whether the horizontal alignment offset is specified in percent.
@@ -20842,24 +20994,9 @@
 	};
 	/**
 	 * Sets the absolute measurement for the vertical positioning of the floating object.
-	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 *
-	 * @deprecated since 9.3.0 version.
-	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
-	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
-	 * @returns {boolean}
-	 *
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetVerPosition.js
-	 */
-	/**
-	 * Sets the absolute measurement for the vertical positioning of the floating object.
-	 *
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE"]
-	 *
-	 * @since 9.3.0
 	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {EMU|number} nDistance - The distance from the bottom part of the document element to the floating object. Use EMU for absolute units or a number (1 = 1%) when bPercent=true for percent relative positioning.
 	 * @param {boolean} [bPercent=false] - The option defining whether the vertical alignment offset is specified in percent.
@@ -21116,16 +21253,7 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @deprecated since 9.3.0 version.
-	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
-	 */
-	/**
-	 * Selects the current graphic object.
-	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE"]
-	 * @since 9.3.0
-	 * @param {boolean} [isReplace=true] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
+	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */
@@ -21749,6 +21877,7 @@
 	};
 	/**
 	 * Sets the name of the current drawing.
+	 *
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * OLE objects do not support a custom name, so for them this method always returns false.
 	 * @memberof ApiDrawing
@@ -21817,6 +21946,7 @@
 
 	/**
      * Sets the properties from another drawing to the current drawing.
+     *
 	 * The following properties will be copied: horizontal and vertical alignment, distance between the edges of the current drawing object and any subsequent text, wrapping style, drawing name, title and description.
      * @memberof ApiDrawing
      * @param {ApiDrawing} oAnotherDrawing - The drawing which properties will be set to the current drawing.
@@ -23690,7 +23820,9 @@
 	};
 
 	/**
-	 * Sets the x-axis values to all chart series. It is used with the scatter charts only.
+	 * Sets the x-axis values to all chart series.
+	 *
+	 * It is used with the scatter charts only.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {string[]} aValues - The array of the data which will be set to the x-axis data points.
@@ -23793,6 +23925,7 @@
 
 	/**
 	 * Sets the fill to the specified chart series.
+	 * <note>The fill is not applied to 2D line and scatter series. Use the SetSeriesOutLine method to change their line and the SetMarkerFill method to change their markers.</note>
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
@@ -24092,7 +24225,12 @@
 	};
 
 	/**
-	 * Tries to change the series type. Returns true if successful.
+	 * Tries to change the series type.
+	 *
+	 * Returns true if successful.
+	 *
+	 * Throws: Error if the chart type is not supported.
+	 *
 	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ChartType} sType - Chart type.
@@ -24107,6 +24245,10 @@
 			return false;
 		}
 		let nType = AscFormat.ChartBuilderTypeToInternal(sType);
+		if(!AscFormat.isRealNumber(nType))
+		{
+			throwException(new Error('Unsupported chart type "' + sType + '"'));
+		}
 		let nResult = oSeries.tryChangeChartType(nType);
 		return nResult === Asc.c_oAscError.ID.No;
 	};
@@ -24319,7 +24461,7 @@
 		if (null === transparent || transparent < 0 || transparent > 1)
 			throwException(new Error("The transparent parameter must be a number from 0 to 1"));
 
-		this.UniFill.setTransparent(Math.round((1 - transparent) * 255));
+		this.UniFill.setTransparent((1 - transparent) * 255);
 		return true;
 	};
 
@@ -24380,23 +24522,9 @@
 		let shadow = this.Shadow;
 		let settings = {};
 
-		let uniColor = shadow.color ? shadow.color.createDuplicate() : AscFormat.CreateUniColorRGB(0, 0, 0);
-		let alpha = null;
-		if (uniColor.Mods && Array.isArray(uniColor.Mods.Mods))
-		{
-			let mods = [];
-			for (let i = 0; i < uniColor.Mods.Mods.length; ++i)
-			{
-				if (uniColor.Mods.Mods[i].name === "alpha")
-					alpha = uniColor.Mods.Mods[i].val;
-				else
-					mods.push(uniColor.Mods.Mods[i]);
-			}
-			uniColor.Mods.Mods = mods;
-		}
-
-		settings["color"] = new ApiUniColor(uniColor);
-		settings["transparency"] = (typeof alpha === "number") ? (1 - alpha / 100000) : 0;
+		let uniColor = shadow.color && shadow.color.isCorrect() ? shadow.color : AscFormat.CreateUniColorRGB(0, 0, 0);
+		settings["color"] = private_UniColorToApiColor(new ApiUniColor(uniColor));
+		settings["transparency"] = uniColor.getTransparency() / 100;
 
 		let dist = (typeof shadow.dist === "number") ? shadow.dist : 0;
 		let dir = (typeof shadow.dir === "number") ? shadow.dir : 0;
@@ -24926,7 +25054,6 @@
 
 	/**
 	 * Returns a type of the ApiColor class.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -24952,7 +25079,6 @@
 
 	/**
 	 * Returns true if the color is set to auto.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE"]
 	 * @since 9.1.0
@@ -24965,7 +25091,6 @@
 
 	/**
 	 * Returns true if the color is a theme color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -24978,7 +25103,6 @@
 
 	/**
 	 * Gets the RGB components of the color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -24996,7 +25120,6 @@
 
 	/**
 	 * Gets the RGBA components of the color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -25015,7 +25138,6 @@
 
 	/**
 	 * Gets the HEX string representation of the color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
@@ -25060,7 +25182,6 @@
 
 	/**
 	 * Gets the theme color name if the color is a theme color.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
@@ -25083,7 +25204,6 @@
 
 	/**
 	 * Converts the ApiColor object into the JSON object.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
@@ -25131,7 +25251,6 @@
 
 	/**
 	 * Converts the JSON object into the ApiColor object.
-	 *
 	 * @memberof ApiColor
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
@@ -25140,12 +25259,13 @@
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/FromJSON.js
 	 */
 	ApiColor.prototype.FromJSON = function (jsonObject) {
-		if (!jsonObject || jsonObject.type !== 'color' || !jsonObject.color) {
+		if (!jsonObject || jsonObject['type'] !== 'color' || !jsonObject['color']) {
 			return null;
 		}
 
+		const color = jsonObject['color'];
 		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
-		const colorType = jsonObject.color.type;
+		const colorType = color['type'];
 		
 		if (typeof colorType !== 'string' || allowedTypes.indexOf(colorType) === -1) {
 			return null;
@@ -25155,11 +25275,11 @@
 			return new ApiColor('auto');
 		}
 
-		const value = jsonObject.color.value;
+		const value = color['value'];
 
 		if (colorType === 'theme') {
 			if (AscFormat.isRealNumber(value)) {
-				return new ApiColor('theme', value, jsonObject.color.tintAndShade);
+				return new ApiColor('theme', value, color['tintAndShade']);
 			}
 		}
 
@@ -25175,9 +25295,9 @@
 
 		if (colorType === 'rgb' || colorType === 'rgba') {
 			if (value && typeof value === 'object') {
-				const r = value.red;
-				const g = value.green;
-				const b = value.blue;
+				const r = value['red'];
+				const g = value['green'];
+				const b = value['blue'];
 
 				if (AscFormat.isRealNumber(r) && AscFormat.isRealNumber(g) && AscFormat.isRealNumber(b)) {
 
@@ -25187,7 +25307,7 @@
 					}
 
 					if (colorType === 'rgba') {
-						const a = value.alpha;
+						const a = value['alpha'];
 						if (AscFormat.isRealNumber(a)) {
 							const rgbaValue = ((r & 0xFF) << 24) | ((g & 0xFF) << 16) | ((b & 0xFF) << 8) | (a & 0xFF);
 							return new ApiColor('rgba', rgbaValue);
@@ -25339,10 +25459,11 @@
 	
 	/**
 	 * Sets the lock to the current inline text content control:
-	 * <b>"unlocked"</b> - content can be edited and the container can be deleted.
-	 * <b>"contentLocked"</b> - content cannot be edited.
-	 * <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
-	 * <b>"sdtLocked"</b> - the container cannot be deleted.
+	 *
+	 * - <b>"unlocked"</b> - content can be edited and the container can be deleted.
+	 * - <b>"contentLocked"</b> - content cannot be edited.
+	 * - <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
+	 * - <b>"sdtLocked"</b> - the container cannot be deleted.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {"unlocked" | "contentLocked" | "sdtContentLocked" | "sdtLocked"} lockType - The lock type applied to the inline text content control.
@@ -25475,7 +25596,9 @@
 	};
 
 	/**
-	 * Returns a number of elements in the current inline text content control. The text content 
+	 * Returns a number of elements in the current inline text content control.
+	 *
+	 * The text content
      * control is created with one text run present in it by default, so even without any 
      * element added this method will return the value of '1'.
 	 * @memberof ApiInlineLvlSdt
@@ -25656,7 +25779,9 @@
 	};
 
 	/**
-	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
+	 * Removes a content control and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
@@ -25855,7 +25980,9 @@
 	};
 
 	/**
-	 * Creates a copy of an inline content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of an inline content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiInlineLvlSdt}
@@ -25904,7 +26031,10 @@
 
 	/**
 	 * Sets the placeholder text to the current inline content control.
-	 * *Can't be set to checkbox or radio button*
+	 *
+	 * :::note
+	 * The placeholder text can't be set for checkbox or radio button content controls.
+	 * :::
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText - The text that will be set to the current inline content control.
 	 * @typeofeditors ["CDE"]
@@ -25937,7 +26067,10 @@
 
 	/**
 	 * Adds a comment to the current inline content control.
-	 * <note>Please note that this inline content control must be in the document.</note>
+	 *
+	 * :::note
+	 * This inline content control must be in the document.
+	 * :::
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text.
@@ -26004,7 +26137,6 @@
 	
 	/**
 	 * Sets the border color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26019,7 +26151,6 @@
 	 */
 	/**
 	 * Sets the border color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26051,7 +26182,6 @@
 	};
 	/**
 	 * Returns the border color of the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
@@ -26069,7 +26199,6 @@
 
 	/**
 	 * Sets the background color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26084,7 +26213,6 @@
 	 */
 	/**
 	 * Sets the background color to the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 *
@@ -26117,7 +26245,6 @@
 	
 	/**
 	 * Returns the background color of the current content control.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
@@ -26240,7 +26367,6 @@
 
 	/**
 	 * Sets the checkbox value for the content control.
-	 * This method updates the checkbox state of the content control to either checked or unchecked.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26265,7 +26391,6 @@
 	 * Determines whether a checkbox content control is currently checked or unchecked.
 	 *
 	 * Throws: Error if the content control is not a checkbox.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26282,7 +26407,6 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
-	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26296,7 +26420,6 @@
 
 	/**
 	 * Sets the size for the picture in a content control.
-	 * This method adjusts the width and height of the image if the content control is a picture.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26329,7 +26452,7 @@
 
 	/**
 	 * Sets the content (image) for the picture content control.
-	 * This method updates the picture inside a content control by setting an image from a provided URL.
+	 *
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -26519,7 +26642,6 @@
 	 * Retrieves the selected date value from a date picker content control and returns it as a Date object.
 	 *
 	 * Throws: Error if the content control is not a date picker.
-	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -26540,7 +26662,7 @@
 
 	/**
 	 * Sets the date format for the datepicker content control.
-	 * This method allows setting the format in which the date should be displayed in the datepicker content control.
+	 *
 	 * The format string should be specified using common date format patterns (e.g., "mm.dd.yyyy").
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -27052,10 +27174,11 @@
 	};
 	/**
 	 * Sets the lock to the current block text content control:
-	 * <b>"unlocked"</b> - content can be edited and the container can be deleted.
-	 * <b>"contentLocked"</b> - content cannot be edited.
-	 * <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
-	 * <b>"sdtLocked"</b> - the container cannot be deleted.
+	 *
+	 * - <b>"unlocked"</b> - content can be edited and the container can be deleted.
+	 * - <b>"contentLocked"</b> - content cannot be edited.
+	 * - <b>"sdtContentLocked"</b> - content cannot be edited and the container cannot be deleted.
+	 * - <b>"sdtLocked"</b> - the container cannot be deleted.
 	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -27174,7 +27297,7 @@
 
 	/**
 	 * Sets the content (image) for the picture content control.
-	 * This method updates the picture inside a content control by setting an image from a provided URL.
+	 *
 	 * The URL should be an internet link to the image.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -27227,7 +27350,6 @@
 
 	/**
 	 * Checks whether the content control is a picture control.
-	 * This method verifies if the content control is specifically a picture control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.0.0
@@ -27367,8 +27489,11 @@
 
 	/**
 	 * Returns a collection of tables on a given absolute page.
-	 * <note>This method can be a little bit slow, because it runs the document calculation
-	 * process to arrange tables on the specified page.</note>
+	 *
+	 * :::note
+	 * This method can be a little bit slow, because it runs the document calculation
+	 * process to arrange tables on the specified page.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param page - Page number. If it is not specified, an empty array will be returned.
@@ -27406,7 +27531,9 @@
 	};
 
 	/**
-	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
+	 * Removes a content control and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
@@ -27646,7 +27773,9 @@
 	};
 	
 	/**
-	 * Creates a copy of a block content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of a block content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt}
@@ -27665,7 +27794,9 @@
 		return new ApiBlockLvlSdt(oBlockSdt);
 	};
 	/**
-	 * Searches for a scope of a content control object. The search results are a collection of ApiRange objects.
+	 * Searches for a scope of a content control object.
+	 *
+	 * The search results are a collection of ApiRange objects.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string | RegExp} text - Search string, or a regular expression to match. When a RegExp is passed, the isMatchCase parameter is ignored (control case sensitivity with the "i" flag instead).
@@ -27808,7 +27939,10 @@
 
 	/**
 	 * Adds a comment to the current block content control.
-	 * <note>Please note that the current block content control must be in the document.</note>
+	 *
+	 * :::note
+	 * The current block content control must be in the document.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} text - The comment text.
@@ -27846,8 +27980,11 @@
 	
 	/**
 	 * Adds a caption paragraph after (or before) the current content control.
-	 * <note>Please note that the current content control must be in the document (not in the footer/header).
-	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+	 *
+	 * :::note
+	 * The current content control must be in the document (not in the footer/header).
+	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.
+	 * :::
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} additionalText - The additional text.
@@ -27855,8 +27992,7 @@
 	 * @param {boolean} [excludeLabel=false] - Specifies whether to exclude the label from the caption.
 	 * @param {CaptionNumberingFormat} [numFormat="Arabic"] - The possible caption numbering format.
 	 * @param {boolean} [isBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
-	 * @param {Number} [headingLvl=undefined] - The heading level (used if you want to specify the chapter number).
-	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {Number} [headingLvl=undefined] - The heading level (used if you want to specify the chapter number). The value is zero-based: 0 is "Heading 1", 1 is "Heading 2", and so on.
 	 * @param {CaptionSep} [captionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/AddCaption.js
@@ -27970,7 +28106,9 @@
 	};
 
 	/**
-	 * Creates a copy of an block content control. Ignores comments, footnote references, complex fields.
+	 * Creates a copy of a block content control.
+	 *
+	 * Ignores comments, footnote references, complex fields.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiBlockLvlSdt}
@@ -28036,7 +28174,6 @@
 	
 	/**
 	 * Sets the visualization of the content control.
-	 *
 	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -28048,7 +28185,6 @@
 	
 	/**
 	 * Gets the visualization of the content control.
-	 *
 	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -28321,7 +28457,10 @@
 	};
 	/**
 	 * Converts the current form to an inline form.
-	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
+	 *
+	 * :::note
+	 * A picture form can't be converted to an inline form, as it's always a fixed-size object.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -28340,7 +28479,6 @@
 
 	/**
 	 * Sets the border color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28355,7 +28493,6 @@
 	 */
 	/**
 	 * Sets the border color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28406,7 +28543,6 @@
 	};
 	/**
 	 * Returns the border color of the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {?ApiColor}
@@ -28426,7 +28562,6 @@
 
 	/**
 	 * Sets the background color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28441,7 +28576,6 @@
 	 */
 	/**
 	 * Sets the background color to the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
@@ -28498,7 +28632,6 @@
 
 	/**
 	 * Returns the background color of the current form.
-	 *
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {?ApiColor}
@@ -28571,6 +28704,7 @@
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
+	 *
 	 * The null value will be returned for the inline forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -28588,7 +28722,10 @@
     };
 	/**
 	 * Sets the placeholder text to the current form.
-	 * *Can't be set to checkbox or radio button.*
+	 *
+	 * :::note
+	 * The placeholder text can't be set for checkbox or radio button forms.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -28621,7 +28758,10 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *Used if possible for this type of form*
+	 *
+	 * :::note
+	 * Used if possible for this type of form.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} textPr - The text properties that will be set to the current form.
@@ -28638,7 +28778,10 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *Used if possible for this type of form*
+	 *
+	 * :::note
+	 * Used if possible for this type of form.
+	 * :::
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -28759,7 +28902,9 @@
 	};
 	
 	/**
-	 * Removes a form and its content. If keepContent is true, the content is not deleted.
+	 * Removes a form and its content.
+	 *
+	 * If keepContent is true, the content is not deleted.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @since 9.2.0
@@ -29002,6 +29147,7 @@
 	};
 	/**
 	 * Specifies if the text field should be a comb of characters with the same cell width.
+	 *
 	 * The maximum number of characters must be set to a positive value.
 	 * @memberof ApiTextForm
 	 * @param {boolean} bComb - Defines if the text field is a comb of characters (true) or not (false).
@@ -29102,7 +29248,9 @@
 		return this.Sdt.GetTextFormPr().GetFormatSymbols();
 	};
 	/**
-	 * Sets the allowed symbols for the current text field. Only the specified characters will be accepted as input.
+	 * Sets the allowed symbols for the current text field.
+	 *
+	 * Only the specified characters will be accepted as input.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {string} symbols - A string of allowed characters.
@@ -29293,9 +29441,10 @@
 	};
 	/**
 	 * Sets the picture position inside the current form:
-	 * <b>0</b> - the picture is placed on the left/top;
-	 * <b>50</b> - the picture is placed in the center;
-	 * <b>100</b> - the picture is placed on the right/bottom.
+	 *
+	 * - <b>0</b> - the picture is placed on the left/top;
+	 * - <b>50</b> - the picture is placed in the center;
+	 * - <b>100</b> - the picture is placed on the right/bottom.
 	 * @memberof ApiPictureForm
 	 * @param {percentage} nShiftX - Horizontal position measured in percent.
 	 * @param {percentage} nShiftY - Vertical position measured in percent.
@@ -29608,7 +29757,10 @@
 	};
 	/**
 	 * Sets the text to the current combo box.
-	 * *Available only for editable combo box forms.*
+	 *
+	 * :::note
+	 * Available only for editable combo box forms.
+	 * :::
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -29636,7 +29788,9 @@
 		}, this);
 	};
 	/**
-	 * Checks if the combo box text can be edited. If it is not editable, then this form is a drop-down list.
+	 * Checks if the combo box text can be edited.
+	 *
+	 * If it is not editable, then this form is a drop-down list.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -29659,7 +29813,9 @@
 		return this.Sdt.GetInnerText();
 	};
 	/**
-	 * Sets the value of the combo box form. Selects a list item if the value matches one,
+	 * Sets the value of the combo box form.
+	 *
+	 * Selects a list item if the value matches one,
 	 * otherwise sets it as free text (only for editable combo boxes).
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
@@ -29897,6 +30053,7 @@
 	});
 	/**
 	 * Returns the choice name of the currently selected radio button in the group.
+	 *
 	 * Returns an empty string if the current form is not a radio button or nothing is selected.
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE", "CFE"]
@@ -31314,8 +31471,8 @@
 
 	/**
 	 * Converts millimeters to English Metric Units (EMUs).
-	 * The result is an integer value.
 	 *
+	 * The result is an integer value.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {mm} mm - The value in millimeters.
@@ -31358,7 +31515,9 @@
 	 */
 
 	/**
-	 * Compares the current document with another document opened via builderJS.OpenTmpFile. Tracked changes between the two documents are produced in the current document.
+	 * Compares the current document with another document opened via builderJS.OpenTmpFile.
+	 *
+	 * Tracked changes between the two documents are produced in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
@@ -31370,7 +31529,9 @@
 	};
 
 	/**
-	 * Merges the current document with another document opened via builderJS.OpenTmpFile. Its contents are merged into the current document.
+	 * Merges the current document with another document opened via builderJS.OpenTmpFile.
+	 *
+	 * Its contents are merged into the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {object} file - The second document, returned by builderJS.OpenTmpFile.
@@ -31400,7 +31561,9 @@
 	};
 	
 	/**
-	 * Returns the current comment ID. If the comment doesn't have an ID, null is returned.
+	 * Returns the current comment ID.
+	 *
+	 * If the comment doesn't have an ID, null is returned.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @returns {?string}
@@ -31708,7 +31871,6 @@
 	
 	/**
 	 * Sets the position of the comment in the document.
-	 * 
 	 * @memberof ApiComment
 	 * @typeofeditors ["CPE"]
 	 * @param {number} x - The X coordinate of the comment position in EMU.
@@ -31724,7 +31886,6 @@
 
 	/**
 	 * Returns the position of the comment in the document.
-	 * 
 	 * @memberof ApiComment
 	 * @typeofeditors ["CPE"]
 	 * @returns {Object} - An object with the coordinates (in EMU) of the comment position.
@@ -33259,26 +33420,40 @@
 	 * Adds a hyperlink to the current text range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string} link - The link address.
+	 * @param {string} link - The link address. Accepts an external URL (http, https, mailto, ftp) or an internal link. In the presentation editor, the internal link is one of the slide actions: "ppaction://hlinkshowjump?jump=firstslide", "ppaction://hlinkshowjump?jump=lastslide", "ppaction://hlinkshowjump?jump=nextslide", "ppaction://hlinkshowjump?jump=previousslide", "ppaction://hlinksldjumpslide{N}" (N is the zero-based slide index), "ppaction://hlinkfile?file={path}" (opens an external file). In the spreadsheet editor, the internal link is "#" followed by a cell range or a defined name, for example, "#Sheet1!A1" or "#MyName".
 	 * @param {string} screenTipText - The screen tip text.
-	 * @param {string} bookmarkName - Name of a bookmark
-	 * @return {?ApiHyperlink} - returns null if the range spans more than one paragraph or params are invalid.
+	 * @return {?ApiHyperlink} - returns null if the range spans more than one paragraph or the link is invalid.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/AddHyperlink.js
 	 */
-	ApiTextRange.prototype.AddHyperlink = function(link, screenTipText, bookmarkName)
+	ApiTextRange.prototype.AddHyperlink = function(link, screenTipText)
 	{
-		let hyperlinkPr = AscBuilder.private_GetHyperlinkProps(link, screenTipText, bookmarkName);
-		if (!hyperlinkPr)
+		link = AscBuilder.GetStringParameter(link, "");
+		if (!link || link.length > Asc.c_nMaxHyperlinkLength)
 			return null;
 
 		let docContent = this.DocContent;
 		if (!docContent)
 			return null;
 
+		let shape      = docContent.Is_DrawingShape(true);
+		let isInternal = (shape instanceof AscFormat.CShape && shape.getWorksheet()) ? (link.length > 1 && "#" === link[0]) : AscCommon.IsLinkPPAction(link);
+		if (!isInternal)
+		{
+			let urlType = AscCommon.getUrlType(link);
+			if (!AscCommon.rx_allowedProtocols.test(link) && AscCommon.c_oAscUrlType.Invalid === urlType)
+				return null;
+
+			link = AscCommon.prepareUrl(link, urlType);
+		}
+
 		let paragraphs = this.GetAllParagraphs();
 		if (paragraphs.length !== 1)
 			return null;
+
+		let hyperlinkPr = new Asc.CHyperlinkProperty();
+		hyperlinkPr.put_Value(link);
+		hyperlinkPr.put_ToolTip(AscBuilder.GetStringParameter(screenTipText, ""));
 
 		let start = this.private_GetEffectiveStart();
 		let end   = this.private_GetEffectiveEnd();
@@ -33812,7 +33987,7 @@
 
 		private_RefreshTextRanges(this.DocContent);
 		docContent.SelectCharRange(start, end, false);
-		docContent.AddToParagraph(new AscCommonWord.ParaTextPr(props), false);
+		docContent.AddToParagraph(props instanceof AscCommonWord.ParaTextPr ? props : new AscCommonWord.ParaTextPr(props), false);
 		private_RestoreSelectionCharRange(docContent, selection);
 		docContent.Recalculate();
 		private_TrackTextRanges(this.DocContent);
@@ -33838,13 +34013,13 @@
 	 * Sets bold formatting for the contents of the current text range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isBold
+	 * @param {boolean | null} isBold - Pass <em>null</em> to remove the bold formatting.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetBold.js
 	 */
 	ApiTextRange.prototype.SetBold = function(isBold) {
-		isBold = AscBuilder.GetBoolParameter(isBold, false);
+		isBold = null === isBold ? null : AscBuilder.GetBoolParameter(isBold, false);
 		return this.private_ApplyTextPr({Bold: isBold});
 	};
 
@@ -33852,14 +34027,14 @@
 	 * Specifies that any lowercase characters in the current text Range are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isCaps - Specifies if the Range contents are displayed capitalized or not.
+	 * @param {boolean | null} isCaps - Specifies if the Range contents are displayed capitalized or not. Pass <em>null</em> to remove the capitalization.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetCaps.js
 	 */
 	ApiTextRange.prototype.SetCaps = function(isCaps)
 	{
-		isCaps = AscBuilder.GetBoolParameter(isCaps, false);
+		isCaps = null === isCaps ? null : AscBuilder.GetBoolParameter(isCaps, false);
 		return this.private_ApplyTextPr({Caps : isCaps});
 	};
 
@@ -33867,7 +34042,7 @@
 	 * Sets the text color of the current range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {ApiColor} color
+	 * @param {ApiColor | null} color - Pass <em>null</em> to remove the text color.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetColor.js
@@ -33902,6 +34077,9 @@
 		if (!isAuto && isTheme) {
 			paraTextPrOptions = { Unifill : color.private_createUnifill() };
 		}
+		else if (null === color) {
+			paraTextPrOptions = { Color : null, Unifill : null, TextFill : null };
+		}
 
 		return this.private_ApplyTextPr(paraTextPrOptions);
 	};
@@ -33910,13 +34088,13 @@
 	 * Specifies that the contents of the current Range are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isDoubleStrikeout
+	 * @param {boolean | null} isDoubleStrikeout - Pass <em>null</em> to remove the double strikeout.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetDoubleStrikeout.js
 	 */
 	ApiTextRange.prototype.SetDoubleStrikeout = function(isDoubleStrikeout) {
-		isDoubleStrikeout = AscBuilder.GetBoolParameter(isDoubleStrikeout, false);
+		isDoubleStrikeout = null === isDoubleStrikeout ? null : AscBuilder.GetBoolParameter(isDoubleStrikeout, false);
 		return this.private_ApplyTextPr({DStrikeout : isDoubleStrikeout});
 	};
 
@@ -33946,13 +34124,13 @@
 	 * Sets the italic property to the text character.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isItalic
+	 * @param {boolean | null} isItalic - Pass <em>null</em> to remove the italic formatting.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetItalic.js
 	 */
 	ApiTextRange.prototype.SetItalic = function(isItalic) {
-		isItalic = AscBuilder.GetBoolParameter(isItalic, false);
+		isItalic = null === isItalic ? null : AscBuilder.GetBoolParameter(isItalic, false);
 		return this.private_ApplyTextPr({Italic: isItalic});
 	};
 
@@ -33960,13 +34138,13 @@
 	 * Specifies that the contents of the current Range are displayed with a single horizontal line through the range center.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isStrikeout
+	 * @param {boolean | null} isStrikeout - Pass <em>null</em> to remove the strikeout.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetStrikeout.js
 	 */
 	ApiTextRange.prototype.SetStrikeout = function(isStrikeout) {
-		isStrikeout = AscBuilder.GetBoolParameter(isStrikeout, false);
+		isStrikeout = null === isStrikeout ? null : AscBuilder.GetBoolParameter(isStrikeout, false);
 		return this.private_ApplyTextPr({Strikeout: isStrikeout, DStrikeout : false});
 	};
 
@@ -33975,13 +34153,13 @@
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isSmallCaps - Specifies if the contents of the current Range are displayed capitalized two points smaller or not.
+	 * @param {boolean | null} isSmallCaps - Specifies if the contents of the current Range are displayed capitalized two points smaller or not. Pass <em>null</em> to remove the small capitals.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetSmallCaps.js
 	 */
 	ApiTextRange.prototype.SetSmallCaps = function(isSmallCaps) {
-		isSmallCaps = AscBuilder.GetBoolParameter(isSmallCaps, false);
+		isSmallCaps = null === isSmallCaps ? null : AscBuilder.GetBoolParameter(isSmallCaps, false);
 		return this.private_ApplyTextPr({SmallCaps : isSmallCaps, Caps : false});
 	};
 
@@ -33989,12 +34167,15 @@
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {twips} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @param {twips | null} spacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch). Pass <em>null</em> to remove the text spacing.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetSpacing.js
 	 */
 	ApiTextRange.prototype.SetSpacing = function(spacing) {
+		if (null === spacing)
+			return this.private_ApplyTextPr({Spacing : null});
+
 		spacing = AscBuilder.GetNumberParameter(spacing, null);
 		if (spacing === null)
 			return null;
@@ -34006,13 +34187,13 @@
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {boolean} isUnderline - Specifies if the contents of the current Range are displayed underlined or not.
+	 * @param {boolean | null} isUnderline - Specifies if the contents of the current Range are displayed underlined or not. Pass <em>null</em> to remove the underline.
 	 * @returns {ApiTextRange}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetUnderline.js
 	 */
 	ApiTextRange.prototype.SetUnderline = function(isUnderline) {
-		isUnderline = AscBuilder.GetBoolParameter(isUnderline, false);
+		isUnderline = null === isUnderline ? null : AscBuilder.GetBoolParameter(isUnderline, false);
 		return this.private_ApplyTextPr({Underline: isUnderline});
 	};
 
@@ -34023,7 +34204,7 @@
 	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {("baseline" | "subscript" | "superscript")} type - The vertical alignment type applied to the text contents.
+	 * @param {("baseline" | "subscript" | "superscript" | null)} type - The vertical alignment type applied to the text contents. Pass <em>null</em> to remove the vertical alignment.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetVertAlign.js
@@ -34037,6 +34218,8 @@
 			value = AscCommon.vertalign_SubScript;
 		else if (type === "superscript")
 			value = AscCommon.vertalign_SuperScript;
+		else if (type === null)
+			value = null;
 		else 
 			return null;
 
@@ -34064,12 +34247,15 @@
 	 * Sets the font size of the characters in the current text Range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {hps} fontSize - The text size value measured in half-points (1/144 of an inch).
+	 * @param {hps | null} fontSize - The text size value measured in half-points (1/144 of an inch). Pass <em>null</em> to remove the font size.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontSize.js
 	 */
 	ApiTextRange.prototype.SetFontSize = function(fontSize) {
+		if (null === fontSize)
+			return this.private_ApplyTextPr({FontSize: null});
+
 		fontSize = AscBuilder.GetNumberParameter(fontSize, null);
 
 		if (!AscFormat.isRealNumber(fontSize) || fontSize === null)
@@ -34085,12 +34271,15 @@
 	 * Sets the font family for the current TextRange.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string} fontFamily - The font family or families used for the current text Range.
+	 * @param {string | null} [fontFamily] - The font family or families used for the current text Range. Pass <em>null</em> or omit it to remove the font family.
 	 * @returns {ApiTextRange | null}
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetFontFamily.js
 	 */
 	ApiTextRange.prototype.SetFontFamily = function(fontFamily) {
+		if (null === fontFamily || undefined === fontFamily)
+			return this.private_ApplyTextPr(private_GetRemoveFontFamilyTextPr());
+
 		fontFamily = AscBuilder.GetStringParameter(fontFamily, null, false);
 		if (null === fontFamily)
 			AscBuilder.throwException(new Error('Invalid type of parameter "fontFamily".'));
@@ -34107,14 +34296,14 @@
 	 * the contents of the current text range.
 	 * @memberof ApiTextRange
 	 * @typeofeditors ["CPE", "CSE", "PDFE"]
-	 * @param {string} langId - The possible value for this parameter is a language identifier as defined by
-	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @returns {ApiTextRange | null} - returns null if the language identifier is not supported.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextRange/Methods/SetLanguage.js
 	 */
 	ApiTextRange.prototype.SetLanguage = function(langId) {
-		const lcid = Asc.g_oLcidNameToIdMap[langId];
+		const lcid = null === langId ? null : Asc.g_oLcidNameToIdMap[langId];
 		if (undefined === lcid)
 			return null;
 
@@ -36016,7 +36205,6 @@
 			return null;
 
 		comment.GenerateDurableId();
-		logicDocument.GetApi().sync_AddComment(comment.GetId(), comment.GetData());
 		return new ApiComment(comment);
 	}
 
@@ -36227,6 +36415,17 @@
 			return - Math.ceil(Math.abs(hps)) / 2.0
 		}
 		return Math.ceil(hps) / 2.0;
+	}
+
+	function private_GetRemoveFontFamilyTextPr()
+	{
+		const paraTextPr = new AscCommonWord.ParaTextPr();
+		const fonts = paraTextPr.Value.RFonts;
+		fonts.Ascii    = fonts.AsciiTheme    = null;
+		fonts.EastAsia = fonts.EastAsiaTheme = null;
+		fonts.HAnsi    = fonts.HAnsiTheme    = null;
+		fonts.CS       = fonts.CSTheme       = null;
+		return paraTextPr;
 	}
 
 	function private_GetColor(r, g, b, Auto)
@@ -37814,7 +38013,7 @@
 			return Asc.editor.asc_GetLocalTrackRevisions();
 		};
 		
-		Api.asc_GetLocalTrackRevisions = Api["asc_SetLocalTrackRevisions"] = function(isTrack)
+		Api.asc_SetLocalTrackRevisions = Api["asc_SetLocalTrackRevisions"] = function(isTrack)
 		{
 			Asc.editor.asc_SetLocalTrackRevisions(isTrack);
 		};
