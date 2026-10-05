@@ -1528,6 +1528,20 @@
 	AscCommon.getLocalStorageItem = getLocalStorageItem;
 	AscCommon.setLocalStorageItem = setLocalStorageItem;
 
+	const nonRemovablePlugins = Object.create(null);
+	nonRemovablePlugins["asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}"] = true;
+
+	function getRemovedPlugins()
+	{
+		let removed = getLocalStorageItem("asc_plugins_removed");
+		if (removed)
+		{
+			for (let guid in nonRemovablePlugins)
+				delete removed[guid];
+		}
+		return removed;
+	}
+
 	function installPlugin(config, loadFuncName)
 	{
 		if (!config)
@@ -1571,7 +1585,7 @@
 		currentInstalledPlugins[config["guid"]] = config;
 		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
 
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 		if (currentRemovedPlugins && currentRemovedPlugins[config["guid"]])
 		{
 			delete currentRemovedPlugins[config["guid"]];
@@ -1650,6 +1664,7 @@
 			services = JSON.parse(window.localStorage.getItem("asc_plugins_background_stopped"));
 			if (!services)
 				services = [];
+			services = services.filter(function(guid) { return !nonRemovablePlugins[guid]; });
 		}
 		catch (e)
 		{
@@ -1702,7 +1717,7 @@
 		let isInstalledPresent = window.g_asc_plugins.loadExtensionPlugins(arrayPlugins, undefined, true);
 
 		let isRemovedPresent = false;
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 
 		if (currentRemovedPlugins)
 		{
@@ -1753,7 +1768,7 @@
 			}
 		}
 
-		localStorageItems = getLocalStorageItem("asc_plugins_removed");
+		localStorageItems = getRemovedPlugins();
 		if (localStorageItems)
 		{
 			for (let item in localStorageItems)
@@ -1882,7 +1897,7 @@
 			return returnArray;
 
 		// need to also send removed plugins. since a removed plugin may not be in the store. then there's no way to install it back
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 
 		if (currentRemovedPlugins)
 		{
@@ -1939,7 +1954,7 @@
 		
 		if (removedPlugin)
 		{
-			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+			let currentRemovedPlugins = getRemovedPlugins();
 			if (!currentRemovedPlugins)
 				currentRemovedPlugins = {};
 			currentRemovedPlugins[removedPlugin.guid] = removedPlugin.serialize();
