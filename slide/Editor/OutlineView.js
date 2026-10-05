@@ -45,9 +45,13 @@
 	function rebuildPos(pos, sourceContent, sourceParagraph) {
 		const newPos = pos.slice();
 		newPos[0] = {Class: sourceContent, Position: sourceParagraph.GetIndex()};
-		newPos[1] = {Class: sourceParagraph, Position: pos[1].Position};
+		newPos[1] = {Class: sourceParagraph, Position: pos[1].Position, Deleted: pos[1].Deleted};
 		for (let i = 2; i < newPos.length; i += 1) {
 			const previousPos = newPos[i - 1];
+			if (previousPos.Deleted) {
+				newPos.length = i;
+				break;
+			}
 			const newClass = previousPos.Class.GetElement(previousPos.Position);
 			if (newClass.Get_Type() === para_Math) {
 				newPos[i].Class = newClass.Root;
