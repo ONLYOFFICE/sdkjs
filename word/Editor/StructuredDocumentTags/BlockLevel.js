@@ -1310,7 +1310,7 @@ CBlockLevelSdt.prototype.Get_Theme = function()
 };
 CBlockLevelSdt.prototype.GetPrevElementEndInfo = function()
 {
-	return this.Parent.GetPrevElementEndInfo(this);
+	return this.Parent ? this.Parent.GetPrevElementEndInfo(this) : null;
 };
 CBlockLevelSdt.prototype.GetEndInfo = function()
 {

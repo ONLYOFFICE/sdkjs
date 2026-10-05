@@ -1608,7 +1608,7 @@
 		addBlockContentControl	: function(strPlaceholder){
 			return "\tlet " + varRegistry.inc('block') + " = Api.CreateBlockLvlSdt();\n"
 				+ "\t" + varRegistry.get('block') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
-				+ "\tdoc.Push(" + varRegistry.get('block') + ");\n"
+				+ "\tdoc.InsertContent([" + varRegistry.get('block') + "]);\n"
 				+ "\t" + varRegistry.get('block') + ".Select();\n";
 		},
 		addInlineContentControl	: function(strPlaceholder){

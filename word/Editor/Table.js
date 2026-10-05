@@ -4081,7 +4081,6 @@ CTable.prototype.Document_SetThisElementCurrent = function(bUpdateStates)
 	
 	this.Parent.Update_ContentIndexing();
 	this.Parent.Set_CurrentElement(this.Index, bUpdateStates);
-	Asc.editor.addMacroStepData("SelectTable", {id: this.Id});
 };
 CTable.prototype.Can_CopyCut = function()
 {
