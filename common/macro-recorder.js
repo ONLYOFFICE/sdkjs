@@ -717,7 +717,7 @@
 		let getSelectedTables = "";
 		if (editorId === AscCommon.c_oEditorId.Word)
 		{
-			getSelectedTables = " = doc.GetSelectedTable();\n";
+			getSelectedTables = " = doc.GetActiveTable();\n";
 		}
 		else if (editorId === AscCommon.c_oEditorId.Presentation)
 		{
