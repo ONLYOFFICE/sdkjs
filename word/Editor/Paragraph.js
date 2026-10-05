@@ -17417,22 +17417,41 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 				nStartPos = this.Selection.EndPos;
 				nEndPos   = this.Selection.StartPos;
 			}
-			
+
 			// TODO: ParaEnd
 			if (nEndPos === this.Content.length - 1)
 			{
 				nEndPos--;
 				this.Content[this.Content.length - 1].RemoveSelection();
 			}
-			
-			if (para_Run !== this.Content[nStartPos].Type || para_Run !== this.Content[nEndPos].Type)
-				return null;
+
+			let isCollapsed = (nEndPos < nStartPos);
+			if (!isCollapsed)
+			{
+				while (nStartPos <= nEndPos && para_Run !== this.Content[nStartPos].Type && !this.Content[nStartPos].IsSelectedAll())
+				{
+					if (!this.Content[nStartPos].IsSelectionEmpty())
+						return null;
+
+					this.Content[nStartPos].RemoveSelection();
+					nStartPos++;
+				}
+
+				while (nEndPos >= nStartPos && para_Run !== this.Content[nEndPos].Type && !this.Content[nEndPos].IsSelectedAll())
+				{
+					if (!this.Content[nEndPos].IsSelectionEmpty())
+						return null;
+
+					this.Content[nEndPos].RemoveSelection();
+					nEndPos--;
+				}
+			}
 
 			var oContentControl = new CInlineLevelSdt();
 			oContentControl.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
 			oContentControl.SetDefaultTextPr(this.GetDirectTextPr());
 
-			if (nEndPos < nStartPos)
+			if (isCollapsed)
 			{
 				this.Add_ToContent(nStartPos, oContentControl);
 				oContentControl.Add_ToContent(0, new ParaRun(this));
@@ -17441,14 +17460,24 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 			}
 			else
 			{
-				var oNewRun = this.Content[nEndPos].Split_Run(Math.max(this.Content[nEndPos].Selection.StartPos, this.Content[nEndPos].Selection.EndPos));
-				this.Add_ToContent(nEndPos + 1, oNewRun);
+				let moveEndPos = nEndPos;
+				if (nEndPos >= nStartPos && para_Run === this.Content[nEndPos].Type)
+				{
+					let newRun = this.Content[nEndPos].Split_Run(Math.max(this.Content[nEndPos].Selection.StartPos, this.Content[nEndPos].Selection.EndPos));
+					this.Add_ToContent(nEndPos + 1, newRun);
+				}
 
-				oNewRun = this.Content[nStartPos].Split_Run(Math.min(this.Content[nStartPos].Selection.StartPos, this.Content[nStartPos].Selection.EndPos));
-				this.Add_ToContent(nStartPos + 1, oNewRun);
+				let moveStartPos = nStartPos;
+				if (nEndPos >= nStartPos && para_Run === this.Content[nStartPos].Type)
+				{
+					let newRun = this.Content[nStartPos].Split_Run(Math.min(this.Content[nStartPos].Selection.StartPos, this.Content[nStartPos].Selection.EndPos));
+					this.Add_ToContent(nStartPos + 1, newRun);
+					moveStartPos = nStartPos + 1;
+					moveEndPos++;
+				}
 
 				oContentControl.ReplacePlaceHolderWithContent();
-				for (var nIndex = nEndPos + 1; nIndex >= nStartPos + 1; --nIndex)
+				for (var nIndex = moveEndPos; nIndex >= moveStartPos; --nIndex)
 				{
 					oContentControl.Add_ToContent(0, this.Content[nIndex]);
 					this.Remove_FromContent(nIndex, 1);
@@ -17456,10 +17485,12 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 
 				if (oContentControl.IsEmpty())
 					oContentControl.ReplaceContentWithPlaceHolder();
+				else
+					oContentControl.CorrectContent();
 
-				this.Add_ToContent(nStartPos + 1, oContentControl);
-				this.Selection.StartPos = nStartPos + 1;
-				this.Selection.EndPos   = nStartPos + 1;
+				this.Add_ToContent(moveStartPos, oContentControl);
+				this.Selection.StartPos = moveStartPos;
+				this.Selection.EndPos   = moveStartPos;
 			}
 
 			oContentControl.MoveCursorToStartPos();
