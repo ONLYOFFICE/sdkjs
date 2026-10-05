@@ -2007,7 +2007,9 @@
 		let nIntersectStartPos, nIntersectEndPos;
 
 		// if start and end pos of ranges in table
-		if (oThisStartParentTable === oRangeStartParentTable && oThisEndParentTable === oRangeEndParentTable)
+		if (oThisStartParentTable
+			&& oThisStartParentTable === oRangeStartParentTable
+			&& oThisEndParentTable === oRangeEndParentTable)
 		{
 			const aStartEndParas = [
 				findFirstPara(this.StartPos),
