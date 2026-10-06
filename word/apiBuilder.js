@@ -4914,6 +4914,18 @@
 	 * @see office-js-api/Examples/Enumerations/DrawingForGroup.js
 	 */
 
+	/**
+	 * The operation used to merge shapes.
+	 *
+	 * - <b>"union"</b> - unites the shapes into one shape.
+	 * - <b>"combine"</b> - unites the shapes and removes their overlapping areas.
+	 * - <b>"fragment"</b> - splits the shapes into separate shapes along their intersecting lines.
+	 * - <b>"intersect"</b> - keeps only the overlapping area of the shapes.
+	 * - <b>"subtract"</b> - subtracts the other shapes from the first one.
+	 * @typedef {("union" | "combine" | "fragment" | "intersect" | "subtract")} ShapesMergeOperation
+	 * @see office-js-api/Examples/Enumerations/ShapesMergeOperation.js
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Base Api
@@ -5276,6 +5288,65 @@
 
 		if (oGroup)
 			return new ApiGroup(oGroup);
+	};
+
+	/**
+	 * Merges an array of drawings into new shapes.
+	 * The resulting shapes take the formatting of the first drawing in the array.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 * @param {Drawing[]} drawings - An array of at least two drawings from the same page, slide or sheet. At least one of them must be a shape.
+	 * @param {ShapesMergeOperation} operation - The merge operation.
+	 * @returns {Drawing[] | null} - The resulting drawings, or null if the drawings cannot be merged.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/MergeShapes.js
+	 */
+	Api.MergeShapes = function(drawings, operation)
+	{
+		drawings = GetArrayParameter(drawings, []);
+		if (drawings.length < 2)
+			throwException(new Error("The drawings parameter must be an array of at least two drawings"));
+
+		let mergeOperation = private_GetShapesMergeOperation(operation);
+		if (!mergeOperation)
+			throwException(new Error('The operation parameter must be one of "union", "combine", "fragment", "intersect" or "subtract"'));
+
+		let shapes = drawings.map(function(drawing) { return drawing.Drawing; });
+		if (shapes.find(function(shape) { return !shape.IsUseInDocument(); }))
+			throwException(new Error("All drawings must be in the document"));
+
+		let controller = shapes[0].getDrawingObjectsController();
+		if (shapes.find(function(shape) { return shape.getDrawingObjectsController() !== controller; }))
+			throwException(new Error("All drawings must be on the same slide or sheet"));
+
+		if (!controller || !AscCommon["PathBoolean"])
+			return null;
+
+		shapes.forEach(function(shape) { shape.recalculate(); });
+		if (Asc.editor.isDocumentEditor)
+		{
+			new ApiDocument(private_GetLogicDocument()).ForceRecalculate();
+
+			let hdrFtr = drawings[0].getParaDrawing().isHdrFtrChild(true);
+			if (drawings.find(function(drawing) { return drawing.getParaDrawing().isHdrFtrChild(true) !== hdrFtr; }))
+				throwException(new Error("All drawings must be in the main text or in the same header or footer"));
+		}
+
+		let page = shapes[0].GetAbsolutePage();
+		if (shapes.find(function(shape) { return shape.GetAbsolutePage() !== page; }))
+			throwException(new Error("All drawings must be on the same page"));
+
+		if (false === AscFormat.mergeShapes(shapes, mergeOperation))
+			return null;
+
+		let result = GetApiDrawings(controller.getSelectedArray());
+		if (Asc.editor.isDocumentEditor)
+		{
+			let logicDocument = private_GetLogicDocument();
+			logicDocument.SelectDrawings(result.map(function(drawing) { return drawing.getParaDrawing(); }), logicDocument);
+		}
+
+		return result;
 	};
 
 	/**
@@ -34656,6 +34727,7 @@
 	Api["CreateImage"]                      = Api.CreateImage;
 	Api["CreateShape"]                      = Api.CreateShape;
 	Api["CreateGroup"]                      = Api.CreateGroup;
+	Api["MergeShapes"]                      = Api.MergeShapes;
 	Api["CreateChart"]                      = Api.CreateChart;
 	Api["CreateRGBColor"]                   = Api.CreateRGBColor;
 	Api["CreateSchemeColor"]                = Api.CreateSchemeColor;
@@ -36862,6 +36934,19 @@
 			return c_oAscAlignV.Center;
 
 		return c_oAscAlignV.Center;
+	}
+	function private_GetShapesMergeOperation(operation)
+	{
+		switch (operation)
+		{
+			case "union":     return "unite";
+			case "combine":   return "exclude";
+			case "fragment":  return "divide";
+			case "intersect": return "intersect";
+			case "subtract":  return "subtract";
+		}
+
+		return null;
 	}
 	function private_GetRelativeFromH(sRel)
 	{

@@ -5497,10 +5497,11 @@ var editor;
         return;
 
       if (this.asc_canMergeSelectedShapes(operation)) {
-        controller.checkSelectedObjectsAndCallback(
-          AscFormat.mergeSelectedShapes, [operation], false,
-          AscDFH.historydescription_Presentation_MergeSelectedShapes
-        );
+        const wb = this.wb;
+        controller.checkSelectedObjectsAndCallback(function () {
+          AscFormat.mergeSelectedShapes(operation);
+          wb.MacrosAddData(AscDFH.historydescription_Presentation_MergeSelectedShapes, operation);
+        }, [], false, AscDFH.historydescription_Presentation_MergeSelectedShapes);
       }
     };
 

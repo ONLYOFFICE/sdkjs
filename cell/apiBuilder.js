@@ -10615,15 +10615,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetSelectedShapes.js
 	 */
 	ApiWorksheet.prototype.GetSelectedShapes = function () {
-		var allDrawings = this.worksheet.Drawings;
-		var allApiDrawings = [];
-
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
-			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject.selected && allDrawings[nDrawing].isShape()) {
-				allApiDrawings.push(new ApiShape(allDrawings[nDrawing].graphicObject));
-			}
-		}
-		return allApiDrawings;
+		return private_GetSelectedDrawings(this.worksheet).filter(function(drawing) {
+			return drawing.isShape();
+		}).map(function(drawing) {
+			return new ApiShape(drawing);
+		});
 	};
 
 	/**
@@ -10634,16 +10630,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetSelectedDrawings.js
 	 */
 	ApiWorksheet.prototype.GetSelectedDrawings = function () {
-		var allDrawings = this.worksheet.Drawings;
-		var allApiDrawings = [];
-
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
-			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject.selected) {
-				allApiDrawings.push(GetApiDrawing(allDrawings[nDrawing].graphicObject));
-			}
-		}
-
-		return allApiDrawings
+		return private_GetSelectedDrawings(this.worksheet).map(function(drawing) {
+			return GetApiDrawing(drawing);
+		});
 	};
 
 	/**
@@ -33096,6 +33085,17 @@
         }
         return res;
     }
+
+	function private_GetSelectedDrawings(worksheet) {
+		let oDrawingBase = worksheet.Drawings.find(function(drawingBase) {
+			return drawingBase.graphicObject && drawingBase.graphicObject.selected;
+		});
+		if (!oDrawingBase)
+			return [];
+
+		let oController = oDrawingBase.graphicObject.getDrawingObjectsController();
+		return oController.selectedObjects.slice();
+	}
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;

@@ -6592,7 +6592,7 @@ background-repeat: no-repeat;\
 		const isSelectionLocked = this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props);
 		const canMerge = this.asc_canMergeSelectedShapes(operation);
 		if (!isSelectionLocked && canMerge) {
-			this.WordControl.m_oLogicDocument.StartAction(0);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_MergeSelectedShapes, operation);
 			AscFormat.mergeSelectedShapes(operation);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}

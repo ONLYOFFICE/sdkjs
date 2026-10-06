@@ -11983,22 +11983,25 @@
 			const graphicController = Asc.editor.getGraphicController();
 			if (!graphicController) return false;
 
-			const selectedArray = graphicController.getSelectedArray();
-			if (selectedArray.length < 2) return false;
+			return canMergeShapes(graphicController.getSelectedArray(), operation);
+		};
 
-			const hasShape = selectedArray.some(function (item) {
+		const canMergeShapes = function (shapes, operation) {
+			if (shapes.length < 2) return false;
+
+			const hasShape = shapes.some(function (item) {
 				return item instanceof AscFormat.CShape;
 			});
 			if (!hasShape) return false;
 
-			const hasLocked = selectedArray.some(function (item) {
+			const hasLocked = shapes.some(function (item) {
 				return item.Lock &&
 					item.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone &&
 					item.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine;
 			});
 			if (hasLocked) return false;
 
-			const hasInvalidGeometry = selectedArray.some(function (item) {
+			const hasInvalidGeometry = shapes.some(function (item) {
 				return !item.getGeometry || !AscCommon.isRealObject(item.getGeometry());
 			});
 			if (hasInvalidGeometry) return false;
@@ -12009,14 +12012,14 @@
 				AscFormat.CGroupShape,
 				AscFormat.CConnectionShape,
 			];
-			const hasForbiddenTypesInSelection = selectedArray.some(function (item) {
+			const hasForbiddenTypesInSelection = shapes.some(function (item) {
 				return forbiddenTypes.some(function (forbiddenType) {
 					return item instanceof forbiddenType;
 				});
 			});
 			if (hasForbiddenTypesInSelection) return false;
 
-			const hasGroupedItem = selectedArray.some(function (item) {
+			const hasGroupedItem = shapes.some(function (item) {
 				// return item.group != null;
 				return item.group instanceof AscFormat.CGroupShape;
 			});
@@ -12027,7 +12030,7 @@
 				if (operations.indexOf(operation) === -1) return false;
 
 				if (operation === 'intersect') {
-					const rects = selectedArray.map(function (item) { return item.getRectBounds(); });
+					const rects = shapes.map(function (item) { return item.getRectBounds(); });
 					const hasIntersection = rects.every(function (rectA, indexA) {
 						return rects.some(function (rectB, indexB) {
 							return indexA !== indexB && rectA.isIntersectOther(rectB);
@@ -12041,12 +12044,15 @@
 		};
 
 		const mergeSelectedShapes = function (operation) {
+			return mergeShapes(Asc.editor.getGraphicController().getSelectedArray(), operation);
+		};
+
+		const mergeShapes = function (shapes, operation) {
 			const operations = ['unite', 'intersect', 'subtract', 'exclude', 'divide'];
 			if (operations.indexOf(operation) === -1) return false;
-			if (!canMergeSelectedShapes(operation)) return false;
+			if (!canMergeShapes(shapes, operation)) return false;
 
-			const selectedShapes = Asc.editor.getGraphicController().getSelectedArray();
-			const compoundPathLst = selectedShapes.map(function (shape) {
+			const compoundPathLst = shapes.map(function (shape) {
 				const isTextArt = AscCommon.isRealObject(shape.txWarpStruct);
 
 				const shapeGeometry = isTextArt
@@ -12068,18 +12074,18 @@
 			if (operation === 'divide') {
 				const resultPathsArray = AscCommon['PathBoolean']['CompoundPath'].prototype['divide'](compoundPathLst);
 				resultShapes = resultPathsArray.map(function (path) {
-					return createShapeByCompoundPath(path, selectedShapes[0]);
+					return createShapeByCompoundPath(path, shapes[0]);
 				});
 			} else {
 				const resultPath = compoundPathLst.reduce(function (resultPath, currentPath) {
 					return resultPath[operation](currentPath);
 				});
-				resultShapes = [createShapeByCompoundPath(resultPath, selectedShapes[0])];
+				resultShapes = [createShapeByCompoundPath(resultPath, shapes[0])];
 			}
 
-			if (Asc.editor.isDocumentEditor) return de_replaceShapes(selectedShapes, resultShapes);
-			if (Asc.editor.isPdfEditor()) return pdf_replaceShapes(selectedShapes, resultShapes);
-			return replaceShapes(selectedShapes, resultShapes);
+			if (Asc.editor.isDocumentEditor) return de_replaceShapes(shapes, resultShapes);
+			if (Asc.editor.isPdfEditor()) return pdf_replaceShapes(shapes, resultShapes);
+			return replaceShapes(shapes, resultShapes);
 		};
 
 		function convertFormatPathToCompoundPath(path, transform) {
@@ -12291,12 +12297,13 @@
 		}
 
 		function replaceShapes(oldShapes, newShapes) {
+			const graphicController = oldShapes[0].getDrawingObjectsController();
+
 			// Remove old shapes
 			oldShapes.forEach(function (shape) {
 				shape.deleteDrawingBase();
 			});
 
-			const graphicController = Asc.editor.getGraphicController();
 			graphicController.resetSelection();
 
 			// Add new shapes to document
@@ -12383,20 +12390,8 @@
 				paraDrawing.AddToParagraph(firstParagraph);
 				paraDrawing.Set_Parent(firstParagraph);
 
-				paraDrawing.Set_Props(new Asc.asc_CImgProperty({
-					PositionH: {
-						RelativeFrom: Asc.c_oAscRelativeFromH.Page,
-						UseAlign: false,
-						Align: undefined,
-						Value: dOffX
-					},
-					PositionV: {
-						RelativeFrom: Asc.c_oAscRelativeFromV.Page,
-						UseAlign: false,
-						Align: undefined,
-						Value: dOffY
-					}
-				}));
+				paraDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, dOffX, undefined);
+				paraDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, dOffY, undefined);
 
 				newShape.setParent(paraDrawing);
 				graphicController.addGraphicObject(paraDrawing);
@@ -12588,6 +12583,7 @@
 
 		window['AscFormat'].canMergeSelectedShapes = canMergeSelectedShapes;
 		window['AscFormat'].mergeSelectedShapes = mergeSelectedShapes;
+		window['AscFormat'].mergeShapes = mergeShapes;
 
 		window['AscFormat'].paraApplyCallback = paraApplyCallback;
 	})(window);

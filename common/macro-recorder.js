@@ -438,7 +438,7 @@
 		},
 		{
 			prevType: "DeselectDrawing",
-			editor: [AscCommon.c_oEditorId.Word, AscCommon.c_oEditorId.Presentation],
+			editor: [AscCommon.c_oEditorId.Word, AscCommon.c_oEditorId.Presentation, AscCommon.c_oEditorId.Spreadsheet],
 			curType: "SelectDrawing",
 			check: function(type, additional) {
 				return true;
@@ -1091,6 +1091,17 @@
 			case 4:  return "none";
 			case 0:
 			default: return "dot";
+		}
+	}
+
+	function getShapesMergeOperationName(operation)
+	{
+		switch (operation) {
+			case "unite":     return "union";
+			case "exclude":   return "combine";
+			case "divide":    return "fragment";
+			case "intersect": return "intersect";
+			case "subtract":  return "subtract";
 		}
 	}
 
@@ -2062,6 +2073,10 @@
 				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
 				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
 		},
+		mergeShapes			: function(operation)
+		{
+			return "\tApi.MergeShapes(doc.GetSelectedDrawings(), \"" + getShapesMergeOperationName(operation) + "\");\n";
+		},
 		setDrawingTitle			: function(title){
 			return "\tdoc.GetSelectedDrawings().forEach(function(draw) { draw.SetTitle(\"" + title + "\") });\n";
 		},
@@ -2508,6 +2523,7 @@
 	DEActionMap['SetRelSizeV']													= wordActions.setShapeRelSizeV;
 	DEActionMap['SetGeometry']													= wordActions.setGeometry;
 	DEActionMap['SetCustomGeometry']											= wordActions.setCustomGeometry;
+	DEActionMap[AscDFH.historydescription_Presentation_MergeSelectedShapes]	= wordActions.mergeShapes;
 	DEActionMap[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
 	DEActionMap[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
 	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
@@ -2995,6 +3011,10 @@
 				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
 				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
 		},
+		mergeShapes			: function(operation)
+		{
+			return "\tApi.MergeShapes(worksheet.GetSelectedDrawings(), \"" + getShapesMergeOperationName(operation) + "\");\n";
+		},
 		setDrawingTitle		: function(title){
 			return "\tworksheet.GetSelectedDrawings().forEach(function(draw) { draw.SetTitle(\"" + title + "\") });\n";
 		},
@@ -3062,6 +3082,7 @@
 	SEActionMap['SetShapeInnerPadding']											= cellActions.setShapeInnerPadding;
 	SEActionMap['SetGeometry']														= cellActions.setGeometry;
 	SEActionMap['SetCustomGeometry']												= cellActions.setCustomGeometry;
+	SEActionMap[AscDFH.historydescription_Presentation_MergeSelectedShapes]			= cellActions.mergeShapes;
 	SEActionMap['SetDrawingTitle']													= cellActions.setDrawingTitle;
 	SEActionMap['SetDrawingDescription']											= cellActions.setDrawingDescription;
 	SEActionMap['SetDrawingAspectRatio']											= cellActions.setDrawingAspectRatio;
@@ -3670,6 +3691,10 @@
 				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
 				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
 		},
+		mergeShapes			: function(operation)
+		{
+			return "\tApi.MergeShapes(Api.GetSelection().GetShapes(), \"" + getShapesMergeOperationName(operation) + "\");\n";
+		},
 		setDrawingTitle		: function(title){
 			return "\tApi.GetSelection().GetShapes()\n"
 				+ "\t\t.forEach(function(shape) {\n"
@@ -3945,6 +3970,7 @@
 	PEActionMap["SetDrawingFill"]													= presActions.setDrawingFill;
 	PEActionMap["SetGeometry"]														= presActions.setGeometry;
 	PEActionMap["SetCustomGeometry"]												= presActions.setCustomGeometry;
+	PEActionMap[AscDFH.historydescription_Presentation_MergeSelectedShapes]			= presActions.mergeShapes;
 	PEActionMap["SetDrawingLine"]													= presActions.setDrawingLine;
 	PEActionMap["SetDrawingShadow"]												= presActions.setDrawingShadow;
 	PEActionMap["SetShapeX"]														= presActions.setShapeX;
