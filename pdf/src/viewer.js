@@ -1354,7 +1354,7 @@
 				Asc.editor.macros.SetData(macrosData);
 			}
 			
-			oDoc.UpdateCurMaxApIdx(nMaxIdx);
+			oDoc.SetMaxApIdx(nMaxIdx);
 
 			AscCommon.g_oIdCounter.Set_Load(isLoad);
 		};
@@ -5688,6 +5688,19 @@
 		// write in order
 		for (let i = 0; i < aOrder.length; i++) {
 			writePageInfo.call(this, aOrder[i], undefined);
+		}
+
+		if (!oMemory) {
+			let aNativeCalculateOrder = aFormsInfo["CO"] || [];
+			let aCurrentCalculateOrder = oDoc.GetCalculateInfo().ids;
+			let isCalculateOrderChanged = aNativeCalculateOrder.length !== aCurrentCalculateOrder.length ||
+				aCurrentCalculateOrder.some(function(id, index) {
+					return id !== aNativeCalculateOrder[index];
+				});
+
+			if (isCalculateOrderChanged) {
+				checkMemory();
+			}
 		}
 
 		if (!oMemory) {

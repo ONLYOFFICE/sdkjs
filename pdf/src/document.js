@@ -7911,7 +7911,7 @@ var CPresentation = CPresentation || function(){};
 
         if (res) {
             let aPages = oFile.nativeFile["getPagesInfo"]();
-            this.UpdateCurMaxApIdx(oFile.nativeFile["getStartID"]());
+            this.SetMaxApIdx(oFile.nativeFile["getStartID"]());
 
             for (let i = oFile.originalPagesCount; i < aPages.length; i++) {
                 let page = aPages[i];
@@ -7976,6 +7976,14 @@ var CPresentation = CPresentation || function(){};
                         oFormsInfoNew["Fields"].push(field);
                     }
                 }
+            }
+
+            let oNativeCalculateOrderBefore = new Set(oFormsInfoBefore["CO"] || []);
+            let aMergedCalculateOrder = (oFormsInfoAfter["CO"] || []).filter(function(id) {
+                return !oNativeCalculateOrderBefore.has(id);
+            });
+            if (aMergedCalculateOrder.length > 0) {
+                oFormsInfoNew["CO"] = this.GetCalculateInfo().GetCalculateOrder().concat(aMergedCalculateOrder);
             }
 
             this.private_AddFormsByInfo(oFormsInfoNew, nInsertPos - oFile.originalPagesCount);
@@ -8750,10 +8758,35 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Clear_ContentChanges = function() {
 		this.pagesContentChanges.Clear();
     };
-    CPDFDoc.prototype.UpdateCurMaxApIdx = function(nApIdx) {
+    CPDFDoc.prototype.SetMaxApIdx = function(nApIdx) {
+        if (this.maxApIdx === nApIdx) {
+            return;
+        }
+
+        let oCalculateInfo = this.GetCalculateInfo();
+        let aCalculateOrder = oCalculateInfo.GetCalculateOrder();
+        let oCreatedFieldsMap = new Map();
+
+        aCalculateOrder.forEach(function(nFieldApIdx) {
+            let oField = this.GetFieldByApIdx(nFieldApIdx);
+            if (oField && undefined === oField.GetApIdx(true)) {
+                oCreatedFieldsMap.set(nFieldApIdx, oField);
+            }
+        }, this);
+
+        AscCommon.History.Add(new CChangesPDFDocumentMaxApIdx(this, this.maxApIdx, nApIdx));
         this.maxApIdx = nApIdx;
+
+        if (oCreatedFieldsMap.size > 0) {
+            let aNewCalculateOrder = aCalculateOrder.map(function(nFieldApIdx) {
+                let oField = oCreatedFieldsMap.get(nFieldApIdx);
+                return oField ? oField.GetApIdx() : nFieldApIdx;
+            });
+
+            oCalculateInfo.SetCalculateOrder(aNewCalculateOrder);
+        }
     };
-    CPDFDoc.prototype.GetCurMaxApIdx = function() {
+    CPDFDoc.prototype.GetMaxApIdx = function() {
         return this.maxApIdx;
     };
     // new - cause is we update this value only on merge or open file.
@@ -8783,7 +8816,7 @@ var CPresentation = CPresentation || function(){};
             }
         });
 
-        return Math.max(nMax, this.GetCurMaxApIdx());
+        return Math.max(nMax, this.GetMaxApIdx());
     };
     CPDFDoc.prototype.Add_ContentChanges = function(Changes) {
         this.pagesContentChanges.Add(Changes);

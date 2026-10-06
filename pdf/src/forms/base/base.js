@@ -197,12 +197,12 @@
 
         this._apIdx = nIdx;
     };
-	CBaseField.prototype.GetApIdx = function() {
-		if (undefined !== this._apIdx) {
+	CBaseField.prototype.GetApIdx = function(bSource) {
+		if (undefined !== this._apIdx || bSource) {
 			return this._apIdx;
 		}
 		else {
-			let nApIdx = Asc.editor.getPDFDoc().GetCurMaxApIdx() + Number(this.GetId().replace("_", ""));
+			let nApIdx = Asc.editor.getPDFDoc().GetMaxApIdx() + Number(this.GetId().replace("_", ""));
 			if (!isNaN(nApIdx)) {
 				return nApIdx;
 			}
@@ -670,9 +670,11 @@
         		
 				if (canChange) {
 					let oCalcInfo = oDoc.GetCalculateInfo();
-					oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
+                    let nApIdx = this.GetApIdx();
+
+					oCalcInfo.RemoveFieldFromOrder(nApIdx);
                 	if (oNewTrigger) {
-						oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
+						oCalcInfo.AddFieldToOrder(nApIdx);
 					}
 				}
 

@@ -1488,7 +1488,7 @@
 			return this._apIdx;
 		}
 		else {
-			let nApIdx = Asc.editor.getPDFDoc().GetCurMaxApIdx() + Number(this.GetId().replace("_", ""));
+			let nApIdx = Asc.editor.getPDFDoc().GetMaxApIdx() + Number(this.GetId().replace("_", ""));
 			if (!isNaN(nApIdx)) {
 				return nApIdx;
 			}
