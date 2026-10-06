@@ -3638,7 +3638,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 		
 		if (this.RowsInfo[lastRow].FirstPage
 			&& !this.GetRow(lastRow).CanSplit()
-			&& ((lastRow > FirstRow) || (0 === lastRow && 0 === CurPage && (docPrev || isNotFirstOnPage))))
+			&& ((lastRow > FirstRow) || (0 === lastRow && 0 === CurPage && docPrev && isNotFirstOnPage)))
 		{
 			this.RowsInfo[lastRow].FirstPage = false;
 		}
