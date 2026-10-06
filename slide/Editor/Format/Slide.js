@@ -1300,7 +1300,7 @@
 				continue;
 			}
 
-			const idx = parseInt(shape.getPlaceholderIndex() || "0", 10);
+			const idx = getOutlinePlaceholderIndex(shape);
 			if (titleShape === null || idx < minIdx) {
 				titleShape = shape;
 				minIdx = idx;
