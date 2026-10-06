@@ -383,7 +383,7 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 	if (Flags & 16384)
 	{
 		this.Date = new AscWord.CSdtDatePickerPr();
-		this.Date.ReadToBinary(Reader);
+		this.Date.ReadFromBinary(Reader);
 	}
 
 	if (Flags & 32768)

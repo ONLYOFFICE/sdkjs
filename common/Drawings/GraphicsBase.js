@@ -206,9 +206,9 @@
 			if (mode === 1)
 				this._darkMode1();
 			else if (mode === 2)
-				this.darkMode2();
+				this._darkMode2();
 			else
-				this.darkMode3();
+				this._darkMode3();
 		}
 	};
 

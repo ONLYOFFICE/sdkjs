@@ -6602,16 +6602,16 @@
 		let nDisplay = this.Annot.GetDisplay();
 
 		switch (nDisplay) {
-			case AscPDF.Api.Types.display.visible: {
+			case AscPDF.Api.Types.display["visible"]: {
 				return "visible";
 			}
-			case AscPDF.Api.Types.display.hidden: {
+			case AscPDF.Api.Types.display["hidden"]: {
 				return "hidden";
 			}
-			case AscPDF.Api.Types.display.noPrint: {
+			case AscPDF.Api.Types.display["noPrint"]: {
 				return "noPrint";
 			}
-			case AscPDF.Api.Types.display.noView: {
+			case AscPDF.Api.Types.display["noView"]: {
 				return "noView";
 			}
 		}

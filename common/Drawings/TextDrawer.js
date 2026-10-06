@@ -2399,7 +2399,7 @@
 				oCopyTextPr.TextOutline = new AscFormat.CLn();
 				oCopyTextPr.TextOutline.w = 36000.0 * penW >> 0;
 				var oUnifill = oCopyTextPr.TextFill ? oCopyTextPr.TextFill : oCopyTextPr.Unifill;
-				if ((!oUnifill || !oUnifill.fill || !oUnifill.fill.type === Asc.c_oAscFill._SOLID || !oUnifill.fill.color) && oCopyTextPr.Color) {
+				if ((!oUnifill || !oUnifill.fill || oUnifill.fill.type !== Asc.c_oAscFill.FILL_TYPE_SOLID || !oUnifill.fill.color) && oCopyTextPr.Color) {
 					oUnifill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(oCopyTextPr.Color.r, oCopyTextPr.Color.g, oCopyTextPr.Color.b))
 				}
 				if (oUnifill) {

@@ -1254,7 +1254,7 @@ function(window, undefined) {
 		}
 
 		const mapLabel = function (oLabel, pivotShift, fAngle, labelShift) {
-			if (!oLabel && !oLabel.localTransfromText) {
+			if (!oLabel || !oLabel.localTransformText) {
 				return;
 			}
 			const oTransform = oLabel.localTransformText;
@@ -2126,7 +2126,7 @@ function(window, undefined) {
 		{
 			if (oApi.isOpenOOXInBrowser && !AscCommon.checkOOXMLSignature(this.XLSX))
 			{
-				const base64 = oApi.frameManager.getEncodedArray(this.XLSX).toUtf8();
+				const base64 = AscCommon.Utf8.encode(oApi.frameManager.getEncodedArray(this.XLSX), true);
 				const oThis = this;
 				oApi.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
 					if (arrBinaryData)
@@ -6606,6 +6606,7 @@ function(window, undefined) {
 				if (nCrossBetween === AscFormat.CROSS_BETWEEN_MID_CAT && nPtsLength < 2) {
 					nPtsLength = 2;
 				}
+				oAxis.maxCatVal = nPtsLength;
 				let oLitFormatDate = null;
 				if (oAxis.numFmt && typeof oAxis.numFmt.formatCode === "string" && oAxis.numFmt.formatCode.length > 0) {
 					oLitFormatDate = oNumFormatCache.get(oAxis.numFmt.formatCode);

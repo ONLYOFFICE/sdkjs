@@ -11766,14 +11766,14 @@
 			}
 			oGradFill.path.path = nPathShadeType;
 
-			if (oGradFill.path.fillToRect)
+			if (oParsedGradFill["path"]["fillToRect"])
 			{
-				oGradFill.rect      = new AscFormat.CSrcRect();
+				oGradFill.path.rect      = new AscFormat.CSrcRect();
 
-				oGradFill.rect.b = oParsedGradFill["path"]["fillToRect"]["b"];
-				oGradFill.rect.l = oParsedGradFill["path"]["fillToRect"]["l"];
-				oGradFill.rect.r = oParsedGradFill["path"]["fillToRect"]["r"];
-				oGradFill.rect.t = oParsedGradFill["path"]["fillToRect"]["t"];
+				oGradFill.path.rect.b = oParsedGradFill["path"]["fillToRect"]["b"];
+				oGradFill.path.rect.l = oParsedGradFill["path"]["fillToRect"]["l"];
+				oGradFill.path.rect.r = oParsedGradFill["path"]["fillToRect"]["r"];
+				oGradFill.path.rect.t = oParsedGradFill["path"]["fillToRect"]["t"];
 			}
 		}
 

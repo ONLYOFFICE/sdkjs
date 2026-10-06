@@ -18488,7 +18488,7 @@
 							let bIsCurDocReference = false;
 							if (oReferenceData && oPastedReferenceData)
 							{
-								bIsCurDocReference = oReferenceData.fileKey === oPastedReferenceData.fileKey && oReferenceData.instanceId === oPastedReferenceData.instanceId;
+								bIsCurDocReference = oReferenceData["fileKey"] === oPastedReferenceData["fileKey"] && oReferenceData["instanceId"] === oPastedReferenceData["instanceId"];
 							}
 							if (!bIsCurDocReference)
 							{

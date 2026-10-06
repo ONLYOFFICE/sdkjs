@@ -1069,7 +1069,7 @@
 			"tmplLst":         this.SerTmplLst(oBldP.tmplLst),
 			"advAuto":         oBldP.advAuto,
         	"animBg":          oBldP.animBg,
-        	"autoUpdateAnimB": oBldP.autoUpdateAnimB,
+        	"autoUpdateAnimBg": oBldP.autoUpdateAnimBg,
         	"bldLvl":          oBldP.bldLvl,
         	"build":           sBuildType,
 			"grpId":           oBldP.grpId,
@@ -2601,7 +2601,7 @@
 		oParsedBldP["tmplLst"] != undefined && oBldP.setTmplLst(this.TmplLstFromJSON(oParsedBldP["tmplLst"]));
 		oParsedBldP["advAuto"] != undefined && oBldP.setAdvAuto(oParsedBldP["advAuto"]);
 		oParsedBldP["animBg"] != undefined && oBldP.setAnimBg(oParsedBldP["animBg"]);
-		oParsedBldP["autoUpdateAnimB"] != undefined && oBldP.setAutoUpdateAnimBg(oParsedBldP["autoUpdateAnimB"]);
+		oParsedBldP["autoUpdateAnimBg"] != undefined && oBldP.setAutoUpdateAnimBg(oParsedBldP["autoUpdateAnimBg"]);
 		oParsedBldP["bldLvl"] != undefined && oBldP.setBldLvl(oParsedBldP["bldLvl"]);
 		nBuildType != undefined && oBldP.setBuild(nBuildType);
 		oParsedBldP["grpId"] != undefined && oBldP.setGrpId(oParsedBldP["grpId"]);

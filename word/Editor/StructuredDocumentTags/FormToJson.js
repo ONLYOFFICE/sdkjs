@@ -231,7 +231,7 @@
 
 		for (let nIndex = 0, nCount = oPr.GetItemsCount(); nIndex < nCount; ++nIndex)
 		{
-			object.choice.push(oPr.GetItemDisplayText(nIndex));
+			object["choice"].push(oPr.GetItemDisplayText(nIndex));
 		}
 
 		Buffer.push(object);

@@ -4220,7 +4220,7 @@ FormatParser.prototype =
                 if(i - 1 >= 0 && i + 1 < length){
                     var prev = match[i - 1];
                     var next = match[i + 1];
-                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimite){
+                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimiter){
                         if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
                             if(false == prev.date && false == next.date){
                                 bError = false;
@@ -4473,7 +4473,7 @@ FormatParser.prototype =
                 if(i - 1 >= 0 && i + 1 < length){
                     var prev = match[i - 1];
                     var next = match[i + 1];
-                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimite){
+                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimiter){
                         if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
                             if(false == prev.date && false == next.date){
                                 bError = false;

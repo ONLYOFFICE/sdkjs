@@ -6107,7 +6107,7 @@ function (window, undefined) {
 	PluginType["Window"] = PluginType.Window;
 	PluginType["Panel"] = PluginType.Panel;
 	PluginType["PanelRight"] = PluginType.PanelRight;
-	PluginType["Unvisible"] = PluginType.Unvisible;
+	PluginType["Invisible"] = PluginType.Invisible;
 
 	PluginType["getType"] = PluginType.getType = function(type) {
 		if (undefined === type)
@@ -8056,9 +8056,9 @@ function (window, undefined) {
 	prot["put_Shardkey"] = prot["asc_putShardkey"] = prot.asc_putShardkey;
 	prot["get_Shardkey"] = prot["asc_getShardkey"] = prot.asc_getShardkey;
 	prot["put_ShowVerticalScroll"] = prot["asc_putShowVerticalScroll"] = prot.asc_putShowVerticalScroll;
-	prot["get_ShowVerticalScroll"] = prot["get_getShowVerticalScroll"] = prot.get_getShowVerticalScroll;
+	prot["get_ShowVerticalScroll"] = prot["asc_getShowVerticalScroll"] = prot.asc_getShowVerticalScroll;
 	prot["put_ShowHorizontalScroll"] = prot["asc_putShowHorizontalScroll"] = prot.asc_putShowHorizontalScroll;
-	prot["get_ShowHorizontalScroll"] = prot["get_getShowHorizontalScroll"] = prot.get_getShowHorizontalScroll;
+	prot["get_ShowHorizontalScroll"] = prot["asc_getShowHorizontalScroll"] = prot.asc_getShowHorizontalScroll;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;

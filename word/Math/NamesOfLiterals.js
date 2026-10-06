@@ -5651,7 +5651,7 @@
 				this.setIsLimitNary(oMetaData.isLimitNary);
 
 			if (this.isText !== oMetaData.isText)
-				this.setIsText(oMetaData.isTex);
+				this.setIsText(oMetaData.isText);
 		}
 	}
 

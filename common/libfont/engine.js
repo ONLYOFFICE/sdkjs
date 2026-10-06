@@ -664,7 +664,7 @@ function onLoadFontsModule(window, undefined)
 				else
 					utf8_end = glyphs[i - 1].cluster;
 
-				glyphs[i].text = String.prototype.fromUtf8(arBuffer, utf8_start, utf8_end - utf8_start);
+				glyphs[i].text = AscCommon.UTF8ArrayToString(arBuffer, utf8_start, utf8_end - utf8_start);
 				utf8_start = utf8_end;
 			}
 		}
@@ -677,7 +677,7 @@ function onLoadFontsModule(window, undefined)
 				else
 					utf8_end = glyphs[i + 1].cluster;
 
-				glyphs[i].text = String.prototype.fromUtf8(arBuffer, utf8_start, utf8_end - utf8_start);
+				glyphs[i].text = AscCommon.UTF8ArrayToString(arBuffer, utf8_start, utf8_end - utf8_start);
 				utf8_start = utf8_end;
 			}
 		}

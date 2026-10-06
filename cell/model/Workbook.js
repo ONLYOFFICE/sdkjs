@@ -11481,8 +11481,8 @@
 		for (let i = startIndex; i < endIndex; i += 1) {
 			const r = isRowItem ? startRow : i;
 			const c = isRowItem ? i : startCol;
-			const offsetR = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : (i === endIndex - 1 ? Asc.st_PIVOT_AREA_OFFSET_END : i - startIndex);
-			const offsetC = isRowItem ? (i === endIndex - 1 ? Asc.st_PIVOT_AREA_OFFSET_END : i - startIndex) : Asc.st_PIVOT_AREA_OFFSET_END;
+			const offsetR = isRowItem ? AscCommonExcel.st_PIVOT_AREA_OFFSET_END : (i === endIndex - 1 ? AscCommonExcel.st_PIVOT_AREA_OFFSET_END : i - startIndex);
+			const offsetC = isRowItem ? (i === endIndex - 1 ? AscCommonExcel.st_PIVOT_AREA_OFFSET_END : i - startIndex) : AscCommonExcel.st_PIVOT_AREA_OFFSET_END;
 			
 			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
 			const cell = this.getRange4(r, c);
@@ -11526,8 +11526,8 @@
 			if (!isRowItem && r1 + item.getR() <= startRow && i !== itemIndex) {
 				break;
 			}
-			const offsetR = isRowItem ? ((!nextItem || (c1 + rowFieldsOffset[nextItem.getR()] <= startCol)) ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow) : Asc.st_PIVOT_AREA_OFFSET_END;
-			const offsetC = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : ((!nextItem || (r1 + nextItem.getR() <= startRow)) ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol);
+			const offsetR = isRowItem ? ((!nextItem || (c1 + rowFieldsOffset[nextItem.getR()] <= startCol)) ? AscCommonExcel.st_PIVOT_AREA_OFFSET_END : r - startRow) : AscCommonExcel.st_PIVOT_AREA_OFFSET_END;
+			const offsetC = isRowItem ? AscCommonExcel.st_PIVOT_AREA_OFFSET_END : ((!nextItem || (r1 + nextItem.getR() <= startRow)) ? AscCommonExcel.st_PIVOT_AREA_OFFSET_END : c - startCol);
 			
 			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
 			const cell = this.getRange4(r, c);
@@ -26554,7 +26554,7 @@
 
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula,
 					this.ws.getId(),
-					new Asc.Range(oldRef.c1, oldRef.r1, oldRef.oldRef, oldRef.r1),
+					new Asc.Range(oldRef.c1, oldRef.r1, oldRef.c1, oldRef.r1),
 					new AscCommonExcel.UndoRedoData_ArrayFormula(
 						new Asc.Range(oldRef.c1, oldRef.r1, oldRef.c1, oldRef.r1),
 						null,

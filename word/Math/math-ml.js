@@ -1192,7 +1192,7 @@
             let charText = firstContent.GetTextOfElement().GetText();
             props.chr = charText.charCodeAt(0);
 
-            return this.private_fromMathML(props, true);
+            return this.handleNary_private(props, true);
         };
         this.handleNary_private = function(props, isAlredyChr)
         {

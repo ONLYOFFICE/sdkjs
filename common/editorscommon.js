@@ -12801,7 +12801,7 @@
                     if (_array[i]["change"].length > _checkPrefixLen)
                     {
 						if((Asc.editor || editor).binaryChanges) {
-							_prefix = String.prototype.fromUtf8(_array[i]["change"], 0, _checkPrefixLen);
+							_prefix = AscCommon.UTF8ArrayToString(_array[i]["change"], 0, _checkPrefixLen);
 						} else {
 							_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
 						}
@@ -12824,7 +12824,7 @@
                     if (_array[i].length > _checkPrefixLen)
                     {
 						if((Asc.editor || editor).binaryChanges) {
-							_prefix = String.prototype.fromUtf8(_array[i], 0, _checkPrefixLen);
+							_prefix = AscCommon.UTF8ArrayToString(_array[i], 0, _checkPrefixLen);
 						} else {
 							_prefix = _array[i].substr(0, _checkPrefixLen);
 						}
@@ -12843,7 +12843,7 @@
                     if (_array[i].m_pData.length > _checkPrefixLen)
                     {
 						if((Asc.editor || editor).binaryChanges) {
-							_prefix = String.prototype.fromUtf8(_array[i].m_pData, 0, _checkPrefixLen);
+							_prefix = AscCommon.UTF8ArrayToString(_array[i].m_pData, 0, _checkPrefixLen);
 						} else {
 							_prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
 						}

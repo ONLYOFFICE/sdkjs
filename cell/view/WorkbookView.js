@@ -5506,7 +5506,7 @@
 				this.cellEditor.updateDarkMode(isDarkMode);
 			}
 		}
-		var hfEditor = window["Asc"] && window["Asc"]["g_header_footer_editor"];
+		var hfEditor = window["Asc"] && window["Asc"].g_header_footer_editor;
 		if (hfEditor) {
 			hfEditor.updateDarkMode(isDarkMode);
 		}

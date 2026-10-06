@@ -4450,7 +4450,7 @@
 							objects_by_type.smartArts[i].setNoChangeAspect(props.lockAspect ? true : undefined);
 						}
             
-            if (objects_by_type.shapes.length || objects_by_type.images.lengt || objects_by_type.charts.length)
+            if (objects_by_type.shapes.length || objects_by_type.images.length || objects_by_type.charts.length)
               Asc.editor.addMacroStepData('SetDrawingAspectRatio', props.lockAspect);
 					}
 					if (isRealObject(props.Position) && AscFormat.isRealNumber(props.Position.X) && AscFormat.isRealNumber(props.Position.Y)

@@ -9863,7 +9863,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 			var oPrevNumPr = this.GetPrChangeNumPr();
 
 			var oNumInfo     = oNumPr ? oParent.CalculateNumberingValues(this, oNumPr, true) : null;
-			var oPrevNumInfo = oPrevNumPr ? oParent.CalculateNumberingValues(this. oPrevNumPr, true) : null;
+			var oPrevNumInfo = oPrevNumPr ? oParent.CalculateNumberingValues(this, oPrevNumPr, true) : null;
 
 			oPara.SaveNumberingValues(oNumInfo, oPrevNumInfo);
 		}

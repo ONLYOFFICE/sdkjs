@@ -2811,7 +2811,7 @@
 			}
 			if (null != queryTableRefresh.fieldIdWrapped) {
 				this.bs.WriteItem(c_oSer_QueryTableRefresh.FieldIdWrapped, function () {
-					oThis.memory.WriteBool(queryTableRefresh.feldIdWrapped);
+					oThis.memory.WriteBool(queryTableRefresh.fieldIdWrapped);
 				});
 			}
 			if (null != queryTableRefresh.headersInLastRefresh) {
@@ -10059,9 +10059,9 @@
             } else if (c_oSer_TimelinePivotFilter.UseWholeDay === type) {
                 oTimelinePivotFilter.useWholeDay = this.stream.GetBool();
             } else if (c_oSer_TimelinePivotFilter.Id === type) {
-                oTimelinePivotFilter.id = this.stream.Getlong();
+                oTimelinePivotFilter.id = this.stream.GetLong();
             } else if (c_oSer_TimelinePivotFilter.Fld === type) {
-                oTimelinePivotFilter.fld = this.stream.Getlong();
+                oTimelinePivotFilter.fld = this.stream.GetLong();
             } else if (c_oSer_TimelinePivotFilter.AutoFilter === type) {
                 let oBinary_TableReader = new Binary_TableReader(this.stream, this.InitOpenManager, /*ws*/null);
                 oTimelinePivotFilter.autoFilter = new AscCommonExcel.AutoFilter();

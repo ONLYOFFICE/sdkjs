@@ -11710,7 +11710,7 @@ PasteProcessor.prototype =
 				ascColor.asc_putB(borderColor.b);
 				brd.put_Color(ascColor);
 			}
-			formPr.put_Border(brd);
+			formPr.SetAscBorder(brd);
 		}
 
 		let shd = node.attributes["shd"];

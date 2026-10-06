@@ -261,7 +261,6 @@
 			endStyle;
 
 		if (this.oLookahead.data === "├") {
-			this.strBreakSymbol.push("|", "‖");
 			this.EatToken("├");
 
 			startStyle = this.oLookahead.style;
