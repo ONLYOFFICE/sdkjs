@@ -832,7 +832,7 @@ CChangesPDFDocumentPagesContent.prototype.Undo = function() {
     if (this.IsAdd()) {
         for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
             let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-            oDocument.RemovePage(nPos);
+            oDocument.RemovePage(nPos, false);
         }
     }
     else {
@@ -860,7 +860,7 @@ CChangesPDFDocumentPagesContent.prototype.Redo = function() {
     else {
         for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
             let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-            oDocument.RemovePage(nPos);
+            oDocument.RemovePage(nPos, false);
         }
     }
 	
@@ -885,7 +885,7 @@ CChangesPDFDocumentPagesContent.prototype.Load = function()
             if (false === nPos)
                 continue;
             
-            pdfDocument.RemovePage(nPos);
+            pdfDocument.RemovePage(nPos, false);
         }
     }
 	

@@ -3306,9 +3306,10 @@ var CPresentation = CPresentation || function(){};
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
      * @param {number} [nPos = 0] 
+     * @param {boolean} [bRemoveFields = true] 
 	 * @returns {boolean}
 	 */
-    CPDFDoc.prototype.RemovePage = function(nPos) {
+    CPDFDoc.prototype.RemovePage = function(nPos, bRemoveFields) {
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let oController = this.GetController();
@@ -3323,6 +3324,10 @@ var CPresentation = CPresentation || function(){};
 
         oFile.removeSelection();
         
+		if (bRemoveFields !== false) {
+			this.RemovePageFields(nPos);
+		}
+		
         // remove page information
         let aPages = oFile.removePage(nPos);
 		oViewer.drawingPages.splice(nPos, 1);
@@ -3354,6 +3359,17 @@ var CPresentation = CPresentation || function(){};
         oViewer.paint();
 
         return aPages[0];
+    };
+    CPDFDoc.prototype.RemovePageFields = function(nPos) {
+        let oPageInfo = this.GetPageInfo(nPos);
+        if (!oPageInfo || !oPageInfo.fields || this.GetPagesCount() < 2)
+            return;
+
+        this.BlurActiveObject();
+        oPageInfo.fields.slice().forEach(function(field) {
+            let oParent = field.GetParent();
+            oParent && oParent.RemoveKid(field);
+        });
     };
     CPDFDoc.prototype.RemovePages = function(aIndexes) {
         aIndexes.sort(function(a, b) {
@@ -3402,7 +3418,7 @@ var CPresentation = CPresentation || function(){};
             });
 
             aLowerIndexes.forEach(function(oldIndex, i) {
-                let oPage = _t.RemovePage(oldIndex);
+                let oPage = _t.RemovePage(oldIndex, false);
                 _t.AddPage(nNewPos - i, oPage);
             });
         }
@@ -3415,7 +3431,7 @@ var CPresentation = CPresentation || function(){};
             let nOffset = aLowerIndexes.length > 0 ? 1 : 0;
             
             aHigherIndexes.forEach(function(oldIndex, i) {
-                let oPage = _t.RemovePage(oldIndex);
+                let oPage = _t.RemovePage(oldIndex, false);
                 _t.AddPage(nNewPos + nOffset + i, oPage);
             });
         }
