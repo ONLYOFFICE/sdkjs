@@ -207,7 +207,7 @@
 			return;
 		}
 		const content = shape.getDocContent();
-		const isCorrectContent = content && (shape.isTitlePlaceholder() || this.isShownContent(content));
+		const isCorrectContent = content && (this.isShownContent(content) || shape.isGeneralTitle());
 		if (!isCorrectContent) {
 			return;
 		}
@@ -225,7 +225,7 @@
 	ParagraphUpdateDataCollector.prototype.getBodyContentOfParagraph = function (paragraph) {
 		const shape = paragraph.GetParentShape();
 		const slide = shape && shape.parent;
-		if (!slide || !AscFormat.isSlideLikeObject(slide) || !slide.isSlide() || !shape.isOutlinePlaceholder() || shape.isTitlePlaceholder()) {
+		if (!slide || !AscFormat.isSlideLikeObject(slide) || !slide.isSlide() || !shape.isOutlinePlaceholder() || shape.isGeneralTitle()) {
 			return null;
 		}
 		if (this.outlineView.getPresentation().GetSlideIndex(slide) === -1) {
@@ -918,7 +918,7 @@
 		const sourceParagraph = outlineParagraph && this.getSourceParagraph(outlineParagraph);
 		const content = sourceParagraph && sourceParagraph.GetParent();
 		const shape = content && content.Is_DrawingShape(true);
-		if (!shape || shape.isTitlePlaceholder() || !content.Is_Empty()) {
+		if (!shape || !content.Is_Empty() || shape.isGeneralTitle()) {
 			return null;
 		}
 		return content;
@@ -1047,7 +1047,7 @@
 	};
 	RemoveOutlineParagraphsManager.prototype.processSourceSelectedContent = function (content, idx, count, isOnAddText, edgeContents) {
 		const shape = content.Is_DrawingShape(true);
-		if (shape.isTitlePlaceholder()) {
+		if (shape.isGeneralTitle()) {
 			const slide = shape.parent;
 			this.checkSlidesForRemove[slide.num] = slide;
 		}
@@ -2491,7 +2491,7 @@
 	};
 	OutlineView.prototype.hideContentIfEmpty = function (content) {
 		const shape = content && content.Is_DrawingShape(true);
-		if (shape && !shape.isTitlePlaceholder() && content.Is_Empty()) {
+		if (shape && content.Is_Empty() && !shape.isGeneralTitle()) {
 			this.hideEmptyContent(content);
 		}
 	};
@@ -3183,11 +3183,20 @@
 		slideUpdateDataCollector.addSlidesToCheck(paragraphUpdateDataCollector.additionalCheckSlideMap);
 		const updateData = slideUpdateDataCollector.collect();
 		isRecalculate |= this.updateSlideData(updateData);
+		this.resetContentShapeInfoMaps(this.mapToCheckSlides);
 		this.resetMapToCheckSlides();
 
 		if (isRecalculate) {
 			this.recalcInfo.recalculateContent = false;
 			this.outlineShape && this.outlineShape.recalculateContent();
+		}
+	};
+	OutlineView.prototype.resetContentShapeInfoMaps = function (checkSlideMap) {
+		for (let id in checkSlideMap) {
+			const info = this.outlineInfo.getSlideInfoBySlide(checkSlideMap[id].slide);
+			if (info) {
+				info.resetContentShapeInfoMap();
+			}
 		}
 	};
 	function UseInDocumentManager() {
@@ -3385,16 +3394,30 @@
 				const parent = shape.parent || shape.oldParent;
 				if (parent) {
 					this.mapToCheckSlides[parent.GetId()] = new CheckSlideInfo(parent);
+					this.checkSlideShapesOfSameKind(parent, shape.isTitlePlaceholder());
 				}
 			}
-			const content = shape.getDocContent();
-			if (!content) {
-				return;
+			this.checkShapeParagraphs(shape);
+		}
+	};
+	OutlineView.prototype.checkSlideShapesOfSameKind = function (slide, isTitle) {
+		if (!AscFormat.isSlideLikeObject(slide) || !slide.isSlide()) {
+			return;
+		}
+		for (let i = 0; i < slide.cSld.spTree.length; i += 1) {
+			const shape = slide.cSld.spTree[i];
+			if (shape.isOutlinePlaceholder() && shape.isTitlePlaceholder() === isTitle) {
+				this.checkShapeParagraphs(shape);
 			}
-			for (let i = 0; i < content.Content.length; i += 1) {
-				const paragraph = content.Content[i];
-				this.checkParagraph(paragraph);
-			}
+		}
+	};
+	OutlineView.prototype.checkShapeParagraphs = function (shape) {
+		const content = shape.getDocContent();
+		if (!content) {
+			return;
+		}
+		for (let i = 0; i < content.Content.length; i += 1) {
+			this.checkParagraph(content.Content[i]);
 		}
 	};
 	OutlineView.prototype.getApi = function () {

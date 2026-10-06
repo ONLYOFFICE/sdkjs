@@ -39,6 +39,9 @@
 	var g_oTableId = AscCommon.g_oTableId;
 	var History = AscCommon.History;
 
+	function getOutlinePlaceholderIndex(shape) {
+		return parseInt(shape.getPlaceholderIndex() || "0", 10);
+	}
 
 	function CChangesDrawingsContentComments(Class, Type, Pos, Items, isAdd) {
 		AscDFH.CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
@@ -1297,7 +1300,7 @@
 				continue;
 			}
 
-			const idx = parseInt(shape.getPlaceholderIndex() || "0", 10);
+			const idx = getOutlinePlaceholderIndex(shape);
 			if (titleShape === null || idx < minIdx) {
 				titleShape = shape;
 				minIdx = idx;
@@ -1310,19 +1313,26 @@
 		result.setSlide(this);
 		const titleShape = this.getOutlineTitleShape();
 		result.setTitle(titleShape);
+		let mainContentShape = null;
 		for (let i = 0; i < this.cSld.spTree.length; i += 1) {
 			const shape = this.cSld.spTree[i];
 			if (shape.getObjectType() !== AscDFH.historyitem_type_Shape) {
 				continue;
 			}
-			if (shape.isContentPlaceholder() || shape.isTitlePlaceholder() && shape !== titleShape) {
+			if (shape.isContentPlaceholder()) {
+				result.addContent(shape);
+				if (!mainContentShape || getOutlinePlaceholderIndex(shape) < getOutlinePlaceholderIndex(mainContentShape)) {
+					mainContentShape = shape;
+				}
+			} else if (shape.isTitlePlaceholder() && shape !== titleShape) {
 				result.addContent(shape);
 			}
 		}
 		result.content.sort(function (aShape, bShape) {
-			const aPhIndex = aShape.getPlaceholderIndex() || "0";
-			const bPhIndex = bShape.getPlaceholderIndex() || "0";
-			return parseInt(aPhIndex, 10) - parseInt(bPhIndex, 10);
+			if (aShape === mainContentShape || bShape === mainContentShape) {
+				return aShape === mainContentShape ? -1 : 1;
+			}
+			return getOutlinePlaceholderIndex(aShape) - getOutlinePlaceholderIndex(bShape);
 		});
 		return result;
 	};
