@@ -207,7 +207,7 @@
 			return;
 		}
 		const content = shape.getDocContent();
-		const isCorrectContent = content && (shape.isTitlePlaceholder() || this.isShownContent(content));
+		const isCorrectContent = content && (this.isShownContent(content) || shape.isGeneralTitle());
 		if (!isCorrectContent) {
 			return;
 		}
@@ -225,7 +225,7 @@
 	ParagraphUpdateDataCollector.prototype.getBodyContentOfParagraph = function (paragraph) {
 		const shape = paragraph.GetParentShape();
 		const slide = shape && shape.parent;
-		if (!slide || !AscFormat.isSlideLikeObject(slide) || !slide.isSlide() || !shape.isOutlinePlaceholder() || shape.isTitlePlaceholder()) {
+		if (!slide || !AscFormat.isSlideLikeObject(slide) || !slide.isSlide() || !shape.isOutlinePlaceholder() || shape.isGeneralTitle()) {
 			return null;
 		}
 		if (this.outlineView.getPresentation().GetSlideIndex(slide) === -1) {
@@ -918,7 +918,7 @@
 		const sourceParagraph = outlineParagraph && this.getSourceParagraph(outlineParagraph);
 		const content = sourceParagraph && sourceParagraph.GetParent();
 		const shape = content && content.Is_DrawingShape(true);
-		if (!shape || shape.isTitlePlaceholder() || !content.Is_Empty()) {
+		if (!shape || !content.Is_Empty() || shape.isGeneralTitle()) {
 			return null;
 		}
 		return content;
@@ -1047,7 +1047,7 @@
 	};
 	RemoveOutlineParagraphsManager.prototype.processSourceSelectedContent = function (content, idx, count, isOnAddText, edgeContents) {
 		const shape = content.Is_DrawingShape(true);
-		if (shape.isTitlePlaceholder()) {
+		if (shape.isGeneralTitle()) {
 			const slide = shape.parent;
 			this.checkSlidesForRemove[slide.num] = slide;
 		}
@@ -2491,7 +2491,7 @@
 	};
 	OutlineView.prototype.hideContentIfEmpty = function (content) {
 		const shape = content && content.Is_DrawingShape(true);
-		if (shape && !shape.isTitlePlaceholder() && content.Is_Empty()) {
+		if (shape && content.Is_Empty() && !shape.isGeneralTitle()) {
 			this.hideEmptyContent(content);
 		}
 	};
