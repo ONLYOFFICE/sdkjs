@@ -3183,11 +3183,20 @@
 		slideUpdateDataCollector.addSlidesToCheck(paragraphUpdateDataCollector.additionalCheckSlideMap);
 		const updateData = slideUpdateDataCollector.collect();
 		isRecalculate |= this.updateSlideData(updateData);
+		this.resetContentShapeInfoMaps(this.mapToCheckSlides);
 		this.resetMapToCheckSlides();
 
 		if (isRecalculate) {
 			this.recalcInfo.recalculateContent = false;
 			this.outlineShape && this.outlineShape.recalculateContent();
+		}
+	};
+	OutlineView.prototype.resetContentShapeInfoMaps = function (checkSlideMap) {
+		for (let id in checkSlideMap) {
+			const info = this.outlineInfo.getSlideInfoBySlide(checkSlideMap[id].slide);
+			if (info) {
+				info.resetContentShapeInfoMap();
+			}
 		}
 	};
 	function UseInDocumentManager() {
@@ -3385,21 +3394,19 @@
 				const parent = shape.parent || shape.oldParent;
 				if (parent) {
 					this.mapToCheckSlides[parent.GetId()] = new CheckSlideInfo(parent);
-					if (shape.isTitlePlaceholder()) {
-						this.checkSlideTitleShapes(parent);
-					}
+					this.checkSlideShapesOfSameKind(parent, shape.isTitlePlaceholder());
 				}
 			}
 			this.checkShapeParagraphs(shape);
 		}
 	};
-	OutlineView.prototype.checkSlideTitleShapes = function (slide) {
+	OutlineView.prototype.checkSlideShapesOfSameKind = function (slide, isTitle) {
 		if (!AscFormat.isSlideLikeObject(slide) || !slide.isSlide()) {
 			return;
 		}
 		for (let i = 0; i < slide.cSld.spTree.length; i += 1) {
 			const shape = slide.cSld.spTree[i];
-			if (shape.isTitlePlaceholder()) {
+			if (shape.isOutlinePlaceholder() && shape.isTitlePlaceholder() === isTitle) {
 				this.checkShapeParagraphs(shape);
 			}
 		}
