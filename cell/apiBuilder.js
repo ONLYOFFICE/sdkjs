@@ -83,6 +83,7 @@
 	 * @name Api
 	 * @property {ApiWorksheet[]} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
+	 * @property {ApiWorkbook} ActiveWorkbook - Returns an object that represents the active workbook.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
 	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
@@ -98,6 +99,7 @@
 	 * Class representing the currently active workbook
 	 *
 	 * @constructor
+	 * @property {ApiTableStyles} TableStyles - Returns the collection of table styles of the workbook.
 	 */
 	function ApiWorkbook(workbook) {
 		this.Workbook = workbook;
@@ -134,7 +136,7 @@
 	 * @property {PageOrientation} PageOrientation - Returns or sets the page orientation.
 	 * @property {boolean} PrintHeadings - Returns or sets the page PrintHeadings property.
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
-	 * @property {ApiName[]} Defnames - Returns an array of the ApiName objects.
+	 * @property {ApiName[]} DefNames - Returns an array of the ApiName objects.
 	 * @property {ApiComment[]} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 * @property {ApiPageSetup} PageSetup - Returns the page setup object for the current worksheet.
@@ -25649,6 +25651,7 @@
 	 * @property {number} Priority - Returns or sets the priority of the condition.
 	 * @property {boolean} StopIfTrue - Returns or sets whether subsequent conditional formatting rules should be evaluated when this rule evaluates to true.
 	 * @property {ApiRange} AppliesTo - Returns the range to which this condition applies.
+	 * @property {ApiFont | null} Font - Returns the font applied by the format condition.
 	 * @property {string} NumberFormat - Returns or sets the number format applied to a cell when the conditional formatting rule evaluates to true.
 	 * @property {ApiRange} Parent - Returns the parent range object of the format condition.
 	 * @property {PTCondition} PTCondition - Returns the pivot table condition object.

@@ -43,6 +43,7 @@
 	 * @global
 	 * @class
 	 * @name Api
+	 * @property {string} FullName - Returns the full name of the currently opened file.
 	 */
 	var Api = {};
 	
@@ -1350,6 +1351,8 @@
 	 * @param {Number?} [Start = undefined] - The start element of Range in the current Element. If omitted or undefined, the range begins at the beginning of the element.
 	 * @param {Number?} [End = undefined] - The end element of Range in the current Element. If omitted or undefined, the range begins at the end of the element.
 	 * @constructor
+	 * @property {number} Start - Returns or sets the start position of the current range.
+	 * @property {number} End - Returns or sets the end position of the current range.
 	 */
 	function ApiRange(oElement, Start, End)
 	{
@@ -3360,6 +3363,8 @@
 	 * Class representing a table.
 	 * @constructor
 	 * @extends {ApiTablePr}
+	 * @property {ApiTableRow[]} Rows - Returns all rows of the table as an array.
+	 * @property {ApiTableCell[][]} Cells - Returns all cells of the table as a two-dimensional array indexed by [row][cell].
 	 */
 	function ApiTable(Table)
 	{
@@ -3486,6 +3491,7 @@
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
+	 * @property {string} Value - Returns or sets the current text value of the text form.
 	 * @see office-js-api/Examples/{Editor}/ApiTextForm/Methods/constructor.js
 	 */
 	function ApiTextForm(oSdt)
@@ -3501,6 +3507,7 @@
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
+	 * @property {string} Value - Returns or sets the current text value of the combo box form.
 	 * @see office-js-api/Examples/{Editor}/ApiComboBoxForm/Methods/constructor.js
 	 */
 	function ApiComboBoxForm(oSdt)
@@ -3516,6 +3523,8 @@
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
+	 * @property {boolean} Value - Returns or sets the current state of the checkbox form.
+	 * @property {string} GroupValue - Returns or sets the choice name of the currently selected radio button in the group.
 	 * @see office-js-api/Examples/{Editor}/ApiCheckBoxForm/Methods/constructor.js
 	 */
 	function ApiCheckBoxForm(oSdt)
@@ -3531,6 +3540,7 @@
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
+	 * @property {string} Value - Returns or sets the current image of the picture form as a base64 encoded string.
 	 * @see office-js-api/Examples/{Editor}/ApiPictureForm/Methods/constructor.js
 	 */
 	function ApiPictureForm(oSdt)
@@ -3546,6 +3556,7 @@
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
+	 * @property {Date | undefined} Value - Returns or sets the date of the current form.
 	 * @see office-js-api/Examples/{Editor}/ApiDateForm/Methods/constructor.js
 	 */
 	function ApiDateForm(oSdt)
@@ -3562,6 +3573,7 @@
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
+	 * @property {string} Value - Returns the current text value of the complex form.
 	 * @see office-js-api/Examples/{Editor}/ApiComplexForm/Methods/constructor.js
 	 */
 	function ApiComplexForm(oSdt)
@@ -3576,6 +3588,7 @@
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
+	 * @property {string} Value - Returns or sets the current image of the signature form as a base64 encoded string.
 	 * @see office-js-api/Examples/{Editor}/ApiSignatureForm/Methods/constructor.js
 	 */
 	function ApiSignatureForm(sdt)
@@ -3879,6 +3892,7 @@
 	 * Class representing a table row.
 	 * @constructor
 	 * @extends {ApiTableRowPr}
+	 * @property {ApiTableCell[]} Cells - Returns all cells of the row as an array.
 	 */
 	function ApiTableRow(Row)
 	{
@@ -33081,6 +33095,8 @@
 	 * @param {CDrawingDocContent} docContent - Internal document content of the shape's text body.
 	 * @param {number} [start=0] - Start character position (0-based, inclusive).
 	 * @param {number} [end=-1]     - End character position (0-based, exclusive). If omitted or -1, the range always ends at the end of the content.
+	 * @property {number} Start - Returns or sets the start position of the current range.
+	 * @property {number} End - Returns or sets the end position of the current range.
 	 */
 	function ApiTextRange(docContent, start, end) {
 		this.DocContent  = docContent;

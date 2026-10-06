@@ -83,6 +83,8 @@
     /**
      * Class representing a placeholder.
      * @constructor
+     * @property {PlaceholderType} Type - Returns or sets the placeholder type.
+     * @property {number | undefined} Index - Returns or sets the placeholder index.
      */
     function ApiPlaceholder(oPh){
         this.Placeholder = oPh;
@@ -236,6 +238,8 @@
      * @param oGraphicFrame
      * @constructor
 	 * @extends {ApiDrawing}
+	 * @property {ApiTableRow[]} Rows - Returns all rows of the current table.
+	 * @property {ApiTableCell[][]} Cells - Returns all cells of the current table as a two-dimensional array indexed by [row][cell].
      */
 	function ApiTable(oGraphicFrame){
 		this.Table = oGraphicFrame.graphicObject;
@@ -321,6 +325,12 @@
 	/**
 	 * Class representing a slide show transition.
 	 * @constructor
+	 * @property {EntryEffect} EntryEffect - Returns or sets the entry effect for the slide show transition.
+	 * @property {TransitionSpeed} Speed - Returns or sets the transition speed.
+	 * @property {number} Duration - Returns or sets the transition duration in milliseconds.
+	 * @property {boolean} AdvanceOnClick - Returns or sets whether the slide advances on mouse click.
+	 * @property {boolean} AdvanceOnTime - Returns or sets whether the slide advances after a specified time.
+	 * @property {number | undefined} AdvanceTime - Returns or sets the slide advance time in milliseconds.
 	 */
 	function ApiSlideShowTransition(transition, slide) {
 		this.Transition = transition;

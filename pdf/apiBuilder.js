@@ -10090,6 +10090,8 @@
 	 * @param oGraphicFrame
 	 * @constructor
 	 * @extends {ApiDrawing}
+	 * @property {ApiTableRow[]} Rows - Returns all rows of the current table.
+	 * @property {ApiTableCell[][]} Cells - Returns all cells of the current table as a two-dimensional array indexed by [row][cell].
 	 */
 	function ApiTable(oGraphicFrame) {
 		this.Table = oGraphicFrame.graphicObject;
