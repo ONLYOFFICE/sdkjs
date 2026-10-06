@@ -4830,7 +4830,7 @@
 				oMemory.WriteLong(aUint8Array.length);
 				oMemory.WriteBuffer(aUint8Array, 0, aUint8Array.length);
 				oMemory.WriteLong(nMaxIdx);
-				oMemory.WriteString('Merged_' + i);
+				oMemory.WriteString(oData.mergeName);
 				let nEndPos = oMemory.GetCurPosition();
 				oMemory.Seek(nStartPos);
 				oMemory.WriteLong(nEndPos - nStartPos);
