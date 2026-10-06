@@ -14940,7 +14940,9 @@
 			oController.resetSelection();
 
 		oController.selectObject(oDrawing, 0);
-		oController.drawingObjects.getWorksheet().setSelectionShape(true);
+		const worksheet = oController.drawingObjects.getWorksheet();
+		if (worksheet)
+			worksheet.setSelectionShape(true);
 		oController.updateSelectionState();
 		oController.updateOverlay();
 	};
@@ -14962,7 +14964,7 @@
 			return false
 		oController.deselectObject(oDrawing);
 		const worksheet = oController.drawingObjects.getWorksheet();
-		if (!worksheet.objectRender.selectedGraphicObjectsExists() && worksheet._endSelectionShape())
+		if (worksheet && !worksheet.objectRender.selectedGraphicObjectsExists() && worksheet._endSelectionShape())
 			worksheet._updateSelectionNameAndInfo();
 		oController.updateSelectionState();
 		oController.updateOverlay();
