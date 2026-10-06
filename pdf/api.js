@@ -2605,6 +2605,9 @@
 						return;
 					}
 				}
+				if (undefined == sValue && field instanceof AscPDF.CBaseField) {
+					sValue = "Off";
+				}
 				
 				field.SetDefaultValue(sValue);
 			});
