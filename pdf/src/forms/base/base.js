@@ -400,7 +400,7 @@
         
         if (oNewPage) {
             let sId = this.GetId();
-            oCurPage.RemoveField(sId);
+            oCurPage.RemoveField(sId, true);
             oNewPage.AddField(this);
 
             let oEditShape = this.GetEditShape();
