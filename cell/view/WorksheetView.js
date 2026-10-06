@@ -31393,9 +31393,9 @@ function isAllowPasteLink(pastedWb) {
 		if (rangeStyle.hyperLink && specialPasteProps.hyperlink) {
 			var _link = rangeStyle.hyperLink.hyperLink;
 			var newHyperlink = new AscCommonExcel.Hyperlink();
-			if (_link.search('#') === 0) {
+			if (_link && _link.search('#') === 0) {
 				newHyperlink.setLocation(_link.replace('#', ''));
-			} else {
+			} else if (_link) {
 				newHyperlink.Hyperlink = _link;
 			}
 			newHyperlink.Ref = range;
