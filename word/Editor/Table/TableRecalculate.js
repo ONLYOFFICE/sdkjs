@@ -2523,7 +2523,9 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 		
 		if (0 === nKeepNextForceRow)
 		{
-			if (0 === CurPage && this.Get_DocumentPrev())
+			if (0 === CurPage
+				&& this.Get_DocumentPrev()
+				&& (!this.Parent || !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex())))
 			{
 				this.StartFromNewPage();
 				this.TurnOffRecalc = false;
@@ -3632,7 +3634,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 		let originlastRow = lastRow;
 		let docPrev  = this.Get_DocumentPrev();
 		let isNotFirstOnPage = (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
-		let canMoveRows = lastRow || CurPage || docPrev || isNotFirstOnPage;
+		let canMoveRows = lastRow || CurPage || (docPrev && isNotFirstOnPage);
 		
 		if (this.RowsInfo[lastRow].FirstPage
 			&& !this.GetRow(lastRow).CanSplit()
@@ -3652,7 +3654,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					--lastRow;
 				}
 				
-				if (0 === lastRow && 0 === CurPage && this.private_IsRowWithKeepNext(0))
+				if (0 === lastRow && 0 === CurPage && docPrev && isNotFirstOnPage && this.private_IsRowWithKeepNext(0))
 				{
 					this.Pages[CurPage].LastRow = -1;
 					this.Pages[CurPage].LastRowSplit = false;
@@ -3677,7 +3679,8 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 				let moveRows = false;
 				if (0 === CurPage)
 				{
-					while (lastRow >= 0 && this.private_IsRowWithKeepNext(lastRow))
+					let minRow = (docPrev && isNotFirstOnPage) ? -1 : 0;
+					while (lastRow > minRow && this.private_IsRowWithKeepNext(lastRow))
 					{
 						moveRows = true;
 						--lastRow;
@@ -3692,11 +3695,15 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 					}
 					
 					if (_lastRow !== FirstRow)
-						lastRow = _lastRow;
-					else
-						lastRow = lastRow - 1;
-					
-					moveRows = true;
+					{
+						lastRow  = _lastRow;
+						moveRows = true;
+					}
+					else if (lastRow > FirstRow)
+					{
+						lastRow  = lastRow - 1;
+						moveRows = true;
+					}
 				}
 				
 				if (moveRows)
