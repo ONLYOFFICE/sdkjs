@@ -3385,16 +3385,32 @@
 				const parent = shape.parent || shape.oldParent;
 				if (parent) {
 					this.mapToCheckSlides[parent.GetId()] = new CheckSlideInfo(parent);
+					if (shape.isTitlePlaceholder()) {
+						this.checkSlideTitleShapes(parent);
+					}
 				}
 			}
-			const content = shape.getDocContent();
-			if (!content) {
-				return;
+			this.checkShapeParagraphs(shape);
+		}
+	};
+	OutlineView.prototype.checkSlideTitleShapes = function (slide) {
+		if (!AscFormat.isSlideLikeObject(slide) || !slide.isSlide()) {
+			return;
+		}
+		for (let i = 0; i < slide.cSld.spTree.length; i += 1) {
+			const shape = slide.cSld.spTree[i];
+			if (shape.isTitlePlaceholder()) {
+				this.checkShapeParagraphs(shape);
 			}
-			for (let i = 0; i < content.Content.length; i += 1) {
-				const paragraph = content.Content[i];
-				this.checkParagraph(paragraph);
-			}
+		}
+	};
+	OutlineView.prototype.checkShapeParagraphs = function (shape) {
+		const content = shape.getDocContent();
+		if (!content) {
+			return;
+		}
+		for (let i = 0; i < content.Content.length; i += 1) {
+			this.checkParagraph(content.Content[i]);
 		}
 	};
 	OutlineView.prototype.getApi = function () {
