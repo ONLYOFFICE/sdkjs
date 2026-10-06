@@ -1320,6 +1320,10 @@
 			}
 		}
 		result.content.sort(function (aShape, bShape) {
+			const aIsTitle = aShape.isTitlePlaceholder();
+			if (aIsTitle !== bShape.isTitlePlaceholder()) {
+				return aIsTitle ? 1 : -1;
+			}
 			const aPhIndex = aShape.getPlaceholderIndex() || "0";
 			const bPhIndex = bShape.getPlaceholderIndex() || "0";
 			return parseInt(aPhIndex, 10) - parseInt(bPhIndex, 10);
