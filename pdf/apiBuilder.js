@@ -2109,6 +2109,7 @@
 
 	/**
 	 * Gets document selection info
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?DocSelection}
 	 * @since 10.0.0
@@ -2161,6 +2162,7 @@
 
 	/**
 	 * Sets document selection
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @param {DocSelection} selection
 	 * @returns {boolean}
@@ -2206,6 +2208,7 @@
 	
 	/**
 	 * Gets document selection quads by page
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @returns {DocQuads}
 	 * @since 10.0.0
@@ -2227,6 +2230,7 @@
 
 	/**
 	 * Gets selected text in document
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
 	 * @since 10.0.0
@@ -2238,6 +2242,7 @@
 
 	/**
 	 * Gets document calculate fields order
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string[]} - order of fields names
 	 * @since 10.0.0
@@ -2249,6 +2254,7 @@
 
 	/**
 	 * Sets document calculate fields order
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @param {string[]} names - order of fields names
 	 * @returns {boolean}
@@ -2261,6 +2267,7 @@
 
 	/**
 	 * Splits current pdf file with specified pages.
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @param {number[]} [indexes] - pages indexes for split (returns result for all pages if the parameter is omitted.)
 	 * @returns {PdfFile}
@@ -2286,6 +2293,7 @@
 
 	/**
 	 * Merges pdf files to current document in specified position.
+	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} [position] - page index to merge pdf files (paste to end if omitted)
 	 * @param {number} [deleteCount=0] - number of existing pages to replace starting at position, limited to the remaining pages
@@ -2598,6 +2606,7 @@
 
 	/**
 	 * Gets page selection.
+	 * @memberof ApiPage
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?PageSelection}
 	 * @since 10.0.0
@@ -3395,6 +3404,7 @@
 
 	/**
 	 * Gets parent field.
+	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiField}
 	 * @since 10.0.0
@@ -3411,6 +3421,7 @@
 
 	/**
 	 * Gets actions collection.
+	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiActionCollection}
 	 * @since 10.0.0
@@ -5200,6 +5211,7 @@
 
 	/**
 	 * Gets class type of this object.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"actionCollection"}
 	 * @since 10.0.0
@@ -5211,6 +5223,7 @@
 
 	/**
 	 * Gets MouseUp action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
 	 * @since 10.0.0
@@ -5222,6 +5235,7 @@
 
 	/**
 	 * Sets the MouseUp action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5239,6 +5253,7 @@
 
 	/**
 	 * Gets MouseDown action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
 	 * @since 10.0.0
@@ -5250,6 +5265,7 @@
 
 	/**
 	 * Sets the MouseDown action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5267,6 +5283,7 @@
 
 	/**
 	 * Gets MouseEnter action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
 	 * @since 10.0.0
@@ -5278,6 +5295,7 @@
 
 	/**
 	 * Sets the MouseEnter action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5295,6 +5313,7 @@
 
 	/**
 	 * Gets MouseExit action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
 	 * @since 10.0.0
@@ -5306,6 +5325,7 @@
 
 	/**
 	 * Sets the MouseExit action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5323,6 +5343,7 @@
 
 	/**
 	 * Gets OnFocus action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
 	 * @since 10.0.0
@@ -5334,6 +5355,7 @@
 
 	/**
 	 * Sets the OnFocus action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5351,6 +5373,7 @@
 
 	/**
 	 * Gets OnBlur action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
 	 * @since 10.0.0
@@ -5362,6 +5385,7 @@
 
 	/**
 	 * Sets the OnBlur action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiBaseAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5379,6 +5403,7 @@
 
 	/**
 	 * Gets Format action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
 	 * @since 10.0.0
@@ -5390,6 +5415,7 @@
 
 	/**
 	 * Sets the Format action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5411,6 +5437,7 @@
 
 	/**
 	 * Gets Keystroke action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
 	 * @since 10.0.0
@@ -5422,6 +5449,7 @@
 
 	/**
 	 * Sets the Keystroke action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5439,6 +5467,7 @@
 
 	/**
 	 * Gets Validate action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
 	 * @since 10.0.0
@@ -5450,6 +5479,7 @@
 
 	/**
 	 * Sets the Validate action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5467,6 +5497,7 @@
 
 	/**
 	 * Gets Calculate action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiJsAction}
 	 * @since 10.0.0
@@ -5478,6 +5509,7 @@
 
 	/**
 	 * Sets the Calculate action.
+	 * @memberof ApiActionCollection
 	 * @typeofeditors ["PDFE"]
 	 * @param {?ApiJsAction} action - The action to set, or <code>null</code> to remove it.
 	 * @returns {boolean}
@@ -5527,6 +5559,7 @@
 
 	/**
 	 * Returns next action.
+	 * @memberof ApiBaseAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiBaseAction}
 	 * @since 10.0.0
@@ -5538,6 +5571,7 @@
 
 	/**
 	 * Sets next action.
+	 * @memberof ApiBaseAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiBaseAction} action
 	 * @returns {ApiBaseAction} - returns next action
@@ -5587,6 +5621,7 @@
 
 	/**
 	 * Gets desctination page index
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
 	 * @since 10.0.0
@@ -5598,6 +5633,7 @@
 
 	/**
 	 * Sets desctination page index
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} page
 	 * @returns {boolean}
@@ -5619,6 +5655,7 @@
 
 	/**
 	 * Gets goto type
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {GoToType}
 	 * @since 10.0.0
@@ -5630,6 +5667,7 @@
 
 	/**
 	 * Sets goto type
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {GoToType} type
 	 * @returns {boolean}
@@ -5662,6 +5700,7 @@
 	/**
 	 * Gets goto destination rect
 	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?Rect}
 	 * @since 10.0.0
@@ -5678,6 +5717,7 @@
 	/**
 	 * Sets goto destination rect
 	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect
 	 * @returns {boolean}
@@ -5697,6 +5737,7 @@
 
 	/**
 	 * Gets zoom for action
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?number}
 	 * @since 10.0.0
@@ -5708,6 +5749,7 @@
 
 	/**
 	 * Sets goto zoom ratio
+	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} [zoom=1] - zoom ratio, 1 is equal 100% (used only for goToType == "xyz")
 	 * @returns {boolean}
@@ -5759,6 +5801,7 @@
 
 	/**
 	 * Gets uri string
+	 * @memberof ApiUriAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
 	 * @since 10.0.0
@@ -5770,6 +5813,7 @@
 
 	/**
 	 * Sets uri to action
+	 * @memberof ApiUriAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} uri
 	 * @returns {boolean}
@@ -5821,6 +5865,7 @@
 
 	/**
 	 * Checks if action hide fields
+	 * @memberof ApiHideShowFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - if false then show fields
 	 * @since 10.0.0
@@ -5832,6 +5877,7 @@
 
 	/**
 	 * Sets action hide fields
+	 * @memberof ApiHideShowFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isHide
 	 * @returns {boolean}
@@ -5847,6 +5893,7 @@
 
 	/**
 	 * Gets names of fields to hide
+	 * @memberof ApiHideShowFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string[]}
 	 * @since 10.0.0
@@ -5858,6 +5905,7 @@
 
 	/**
 	 * Sets names of fields to hide
+	 * @memberof ApiHideShowFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {string[]} names
 	 * @returns {boolean}
@@ -5975,6 +6023,7 @@
 
 	/**
 	 * Will all fields be reset except the fields whose names are specified
+	 * @memberof ApiResetFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
 	 * @since 10.0.0
@@ -5986,6 +6035,7 @@
 
 	/**
 	 * Sets all fields be reset except the fields whose names are specified
+	 * @memberof ApiResetFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isAllExcept
 	 * @returns {boolean}
@@ -6001,6 +6051,7 @@
 
 	/**
 	 * Gets names of fields to reset
+	 * @memberof ApiResetFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string[]}
 	 * @since 10.0.0
@@ -6012,6 +6063,7 @@
 
 	/**
 	 * Sets names of fields to reset
+	 * @memberof ApiResetFormsAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {string[]} names
 	 * @returns {boolean}
@@ -6066,6 +6118,7 @@
 
 	/**
 	 * Gets action script
+	 * @memberof ApiJsAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
 	 * @since 10.0.0
@@ -6077,6 +6130,7 @@
 
 	/**
 	 * Sets action script.
+	 * @memberof ApiJsAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} script
 	 * @returns {boolean}
