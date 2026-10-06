@@ -11068,6 +11068,9 @@
 
 		let apiRun = new ApiRun(run);
 		apiRun.SetTextPr(prevRun.GetTextPr());
+		if (prevRun.Run.IsStyleHyperlink())
+			run.SetRStyle(null);
+
 		apiRun.AddText(text, widths);
 
 		private_PushElementToParagraph(this.Paragraph, run);
