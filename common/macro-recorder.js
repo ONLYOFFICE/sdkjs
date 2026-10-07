@@ -1191,7 +1191,9 @@
 	{
 		return value
 			.replace(/\\/g, '\\\\')
-			.replace(/"/g, '\\"');
+			.replace(/"/g, '\\"')
+			.replace(/\r/g, '\\r')
+			.replace(/\n/g, '\\n');
 	}
 
 	function private_getShapeVar(shapeId)
@@ -1590,21 +1592,23 @@
 			return value;
 		},
 		addHyperlink			: function(hl){
-			let link = hl.Value ? hl.Value : hl.Text;
+			let args = "\"" + escapeMacroString(hl.Value) + "\", \"" + escapeMacroString(hl.ToolTip) + "\"";
+			if (hl.Anchor)
+				args += ", \"" + escapeMacroString(hl.Anchor) + "\"";
 
 			if (!hl.Text)
 			{
 				return "\t(function () {\n"
 						+ "\t\tlet range = doc.GetRangeBySelect();\n"
 						+ "\t\tlet length = range.GetText().length;\n"
-						+ "\t\trange.AddHyperlink(\"" + link + "\", \"" + hl.ToolTip + "\");\n"
+						+ "\t\trange.AddHyperlink(" + args + ");\n"
 						+ "\t\tdoc.MoveCursorRight(length, false, false);\n"
 					+ "\t}());\n";
 			}
 
 			return "\t(function () {\n"
 					+ "\t\tlet paragraph = Api.CreateParagraph();\n"
-					+ "\t\tparagraph.AddText(\"" + hl.Text + "\").AddHyperlink(\"" + link + "\", \"" + hl.ToolTip + "\");\n"
+					+ "\t\tparagraph.AddText(\"" + escapeMacroString(hl.Text) + "\").AddHyperlink(" + args + ");\n"
 					+ "\t\tdoc.InsertContent([paragraph], true);\n"
 				+ "\t}());\n";
 		},
@@ -3405,18 +3409,21 @@
 			// api set time
 		},
 		addHyperlink			: function(hl){
+			let link = escapeMacroString(hl.Value);
+			let toolTip = escapeMacroString(hl.ToolTip);
+
 			if (!hl.Text)
 			{
 				return "\t(function () {\n"
 						+ "\t\tlet range = Api.GetSelection().GetTextRange();\n"
 						+ "\t\tif (range)\n"
-						+ "\t\t\trange.AddHyperlink(\"" + hl.Value + "\", \"" + hl.ToolTip + "\");\n"
+						+ "\t\t\trange.AddHyperlink(\"" + link + "\", \"" + toolTip + "\");\n"
 					+ "\t}());\n";
 			}
 
-			return "\tpresentation.EnterText(\"" + hl.Text + "\");\n"
+			return "\tpresentation.EnterText(\"" + escapeMacroString(hl.Text) + "\");\n"
 				+ "\tpresentation.MoveCursorLeft(" + hl.Text.length + ", true, false);\n"
-				+ "\tApi.GetSelection().GetTextRange().AddHyperlink(\"" + hl.Value + "\", \"" + hl.ToolTip + "\");\n"
+				+ "\tApi.GetSelection().GetTextRange().AddHyperlink(\"" + link + "\", \"" + toolTip + "\");\n"
 				+ "\tpresentation.MoveCursorRight(1, false, false);\n";
 		},
 		addParagraph			: function()
