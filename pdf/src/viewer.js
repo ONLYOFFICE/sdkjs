@@ -5232,6 +5232,34 @@
 			}
 		}
 
+		// write info about deleted object for deleted pages
+		if (!isNewFile) {
+			let aKept = oFile.pages.map(function(page) {
+				return page.originIndex;
+			});
+
+			for (let nOrig = 0; nOrig < oFile.originalPagesCount; nOrig++) {
+				if (aKept.includes(nOrig) || !aDeleted[nOrig]) {
+					continue;
+				}
+
+				checkMemory();
+				let nStartPos = oMemory.GetCurPosition();
+				oMemory.Skip(4);
+				oMemory.WriteByte(AscPDF.CommandType.editPage);
+				oMemory.WriteLong(nOrig);
+				for (let j = 0; j < aDeleted[nOrig].length; j++) {
+					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
+					oMemory.WriteLong(8);
+					oMemory.WriteLong(aDeleted[nOrig][j]);
+				}
+				let nEndPos = oMemory.GetCurPosition();
+				oMemory.Seek(nStartPos);
+				oMemory.WriteLong(nEndPos - nStartPos);
+				oMemory.Seek(nEndPos);
+			}
+		}
+
 		// compose the order of page delete/add operations
 		let aOrder = generateOperations(oFile.originalPagesCount, oFile.pages);
 
