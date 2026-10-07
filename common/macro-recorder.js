@@ -1590,8 +1590,23 @@
 			return value;
 		},
 		addHyperlink			: function(hl){
-			// create hyperlink text
-			return "\tdoc.GetRangeBySelect().AddHyperlink(\"" + (hl.Value ? hl.Value : hl.Text) + "\", \"" + hl.ToolTip + "\");\n"
+			let link = hl.Value ? hl.Value : hl.Text;
+
+			if (!hl.Text)
+			{
+				return "\t(function () {\n"
+						+ "\t\tlet range = doc.GetRangeBySelect();\n"
+						+ "\t\tlet length = range.GetText().length;\n"
+						+ "\t\trange.AddHyperlink(\"" + link + "\", \"" + hl.ToolTip + "\");\n"
+						+ "\t\tdoc.MoveCursorRight(length, false, false);\n"
+					+ "\t}());\n";
+			}
+
+			return "\t(function () {\n"
+					+ "\t\tlet paragraph = Api.CreateParagraph();\n"
+					+ "\t\tparagraph.AddText(\"" + hl.Text + "\").AddHyperlink(\"" + link + "\", \"" + hl.ToolTip + "\");\n"
+					+ "\t\tdoc.InsertContent([paragraph], true);\n"
+				+ "\t}());\n";
 		},
 		addShape				: function(shapeProps){
 			let fill = shapeProps.fill.getRGBAColor();
@@ -3389,9 +3404,20 @@
 
 			// api set time
 		},
-		addHyperlink			: function(hp){
-			// no api
-			return ""
+		addHyperlink			: function(hl){
+			if (!hl.Text)
+			{
+				return "\t(function () {\n"
+						+ "\t\tlet range = Api.GetSelection().GetTextRange();\n"
+						+ "\t\tif (range)\n"
+						+ "\t\t\trange.AddHyperlink(\"" + hl.Value + "\", \"" + hl.ToolTip + "\");\n"
+					+ "\t}());\n";
+			}
+
+			return "\tpresentation.EnterText(\"" + hl.Text + "\");\n"
+				+ "\tpresentation.MoveCursorLeft(" + hl.Text.length + ", true, false);\n"
+				+ "\tApi.GetSelection().GetTextRange().AddHyperlink(\"" + hl.Value + "\", \"" + hl.ToolTip + "\");\n"
+				+ "\tpresentation.MoveCursorRight(1, false, false);\n";
 		},
 		addParagraph			: function()
 		{
