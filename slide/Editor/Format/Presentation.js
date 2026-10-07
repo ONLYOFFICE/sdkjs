@@ -3847,6 +3847,9 @@ CPresentation.prototype.addImages = function (aImages, placeholder) {
 };
 
 CPresentation.prototype.AddOleObject = function (fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, Data, sApplicationId, bSelect, arrImagesForAddToHistory) {
+	if (!this.CanEdit()) {
+		return;
+	}
 	let oSlide = this.GetCurrentSlide();
 	if (oSlide) {
 		var fPosX = (this.GetWidthMM() - fWidth) / 2;

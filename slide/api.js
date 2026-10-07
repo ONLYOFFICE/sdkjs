@@ -4426,6 +4426,10 @@ background-repeat: no-repeat;\
 				return;
 			}
 		}
+		if (!oLogicDocument.CanEdit())
+		{
+			return;
+		}
 		var oSlide = oLogicDocument.GetCurrentSlide();
 		if (oPh && !bLocked)
 		{
