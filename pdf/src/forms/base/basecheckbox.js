@@ -664,6 +664,8 @@
 				oField.SyncValue();
 			}
 		}
+
+        this.SetWasChanged(true);
     };
     CBaseCheckBoxField.prototype.RemoveKid = function(oField) {
         if (false == this.IsLogicalRoot()) {
@@ -737,6 +739,7 @@
         this.SetLogicValue(sNewLogicValue);
         this.SetDefaultValue(sNewDefaultValue);
 
+        this.SetWasChanged(true);
         this.UpdateAll();
 
         return true;

@@ -436,6 +436,8 @@
                 oField.SyncValue();
             }
         }
+
+        this.SetWasChanged(true);
     };
     CBaseField.prototype.GetKids = function() {
         return this._kids;
@@ -460,6 +462,8 @@
             AscCommon.History.Add(new CChangesPDFFormKidsContent(this, nIndex, [oField], false))
 			oField.SetNeedUpdateEditShape(true);
             oField._parent = null;
+
+            this.SetWasChanged(true);
             return true;
         }
 
