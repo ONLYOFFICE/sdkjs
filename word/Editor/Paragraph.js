@@ -11268,7 +11268,7 @@ Paragraph.prototype.GetCompiledInheritedPr = function()
 		let _Lvl = Pr.ParaPr.NumPr.Lvl ? Pr.ParaPr.NumPr.Lvl : 0;
 		
 		let lvlPStyle = num.GetLvl(_Lvl).GetPStyle();
-		if (lvlPStyle === _styleId)
+		if (!lvlPStyle || lvlPStyle === _styleId)
 		{
 			Lvl = _Lvl;
 		}
@@ -11298,26 +11298,7 @@ Paragraph.prototype.GetCompiledInheritedPr = function()
 		}
 		
 		if (-1 === Lvl)
-		{
-			let headingLvl = Styles.GetHeadingNumId(_styleId);
-			// Follow MS Behaviour (78570)
-			if (-1 !== headingLvl)
-			{
-				if (undefined === Pr.ParaPr.NumPr.Lvl)
-				{
-					Pr.ParaPr.NumPr.Lvl = 0;
-					Lvl = 0;
-				}
-				else
-				{
-					Lvl = Pr.ParaPr.NumPr.Lvl;
-				}
-			}
-			else
-			{
-				Pr.ParaPr.NumPr = undefined;
-			}
-		}
+			Pr.ParaPr.NumPr = undefined;
 	}
 	
 	Pr.ParaPr.StyleTabs = ( undefined != Pr.ParaPr.Tabs ? Pr.ParaPr.Tabs.Copy() : new CParaTabs() );

@@ -8372,11 +8372,6 @@ CStyles.prototype =
 		{
 			let oNumbering = oLogicDocument.GetNumbering();
 			let numId      = Style.ParaPr.NumPr.NumId;
-			
-			// Follow MS Behaviour (78570)
-			if (undefined === numId)
-				numId = this.GetHeadingNumId(StyleId);
-			
 			if (0 !== numId && "0" !== numId)
 			{
 				if (undefined === numId && Pr.ParaPr.NumPr)
@@ -8385,13 +8380,13 @@ CStyles.prototype =
 				let oNum = oNumbering.GetNum(numId);
 				if (oNum)
 				{
-					var nLvl = oNum.GetLvlByStyle(StyleId);
-					if (-1 !== nLvl)
-						Pr.ParaPr.Merge(oNumbering.GetParaPr(numId, nLvl));
-					else if (undefined !== Style.ParaPr.NumPr.Lvl)
-						Pr.ParaPr.Merge(oNumbering.GetParaPr(numId, Style.ParaPr.NumPr.Lvl));
-					else
-						Pr.ParaPr.NumPr = undefined;
+					let lvl = Style.ParaPr.NumPr.Lvl;
+					if (undefined === lvl && Pr.ParaPr.NumPr)
+						lvl = Pr.ParaPr.NumPr.Lvl;
+					if (undefined === lvl)
+						lvl = 0;
+					
+					Pr.ParaPr.Merge(oNumbering.GetParaPr(numId, lvl));
 				}
 			}
 			else
@@ -8452,24 +8447,6 @@ CStyles.prototype =
 				break;
 			}
 		}
-	},
-	
-	GetHeadingNumId : function(styleId)
-	{
-		let numId = undefined;
-		let headingLvl = this.GetHeadingLevelById(styleId);
-		for (let nLvl = headingLvl - 1; nLvl >= 0 && undefined === numId; --nLvl)
-		{
-			let _prevStyle = this.Get(this.GetDefaultHeading(nLvl));
-			if (_prevStyle 
-				&& _prevStyle.ParaPr.NumPr
-				&& undefined !== _prevStyle.ParaPr.NumPr.NumId)
-			{
-				numId = _prevStyle.ParaPr.NumPr.NumId;
-				break;
-			}
-		}
-		return numId;
 	},
 
     Document_Get_AllFontNames : function(AllFonts)
