@@ -516,15 +516,9 @@
     };
     
     CBaseField.prototype.GetFullName = function() {
-        if (this._parent)
-        {
-            if (this._partialName != undefined)
-                return this._parent.GetFullName() + "." + this._partialName;
-            else
-                return this._parent.GetFullName();
-        }
-
-        return this._partialName ? this._partialName : "";
+        let sName = this._partialName ? this._partialName : "";
+        let sParent = this._parent ? this._parent.GetFullName() : "";
+        return sParent && sName ? sParent + "." + sName : sParent + sName;
     };
     CBaseField.prototype.SetPartialName = function(sName) {
         if (this._partialName == sName) {
