@@ -1559,7 +1559,11 @@
 				let nextCommand = this.queueCommands[0];
 				if (nextCommand.type === CommandTaskType.Command)
 				{
-					this.callCommandInternal(nextCommand.value, nextCommand);
+					let _t = this;
+					this.api.loadScriptModules(nextCommand.value, function()
+					{
+						_t.callCommandInternal(nextCommand.value, nextCommand);
+					});
 				}
 				else
 				{
@@ -1578,7 +1582,11 @@
 			if (0 === this.queueCommands.length)
 			{
 				this.queueCommands.push(task);
-				this.callCommandInternal(value, task);
+				let _t = this;
+				this.api.loadScriptModules(value, function()
+				{
+					_t.callCommandInternal(value, task);
+				});
 				return;
 			}
 

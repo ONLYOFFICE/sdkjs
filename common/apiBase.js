@@ -4804,11 +4804,13 @@
 			return;
 
 		let _t = this;
-		this.runBuilderScript(function(){
-			_t._beforeEvalCommand();
-			_t.macros.runAuto();
-			_t._afterEvalCommand(undefined);
-			_t.onEndBuilderScript();
+		this.loadScriptModules(this.macros.GetData(), function() {
+			_t.runBuilderScript(function(){
+				_t._beforeEvalCommand();
+				_t.macros.runAuto();
+				_t._afterEvalCommand(undefined);
+				_t.onEndBuilderScript();
+			});
 		});
     };
 	baseEditorsApi.prototype.asc_runMacros = function(sGuid)
@@ -4823,11 +4825,13 @@
 			return;
 
 		let _t = this;
-		this.runBuilderScript(function(){
-			_t._beforeEvalCommand();
-			_t.macros.run(sGuid);
-			_t._afterEvalCommand(undefined);
-			_t.onEndBuilderScript();
+		this.loadScriptModules(this.macros.GetData(), function() {
+			_t.runBuilderScript(function(){
+				_t._beforeEvalCommand();
+				_t.macros.run(sGuid);
+				_t._afterEvalCommand(undefined);
+				_t.onEndBuilderScript();
+			});
 		});
     };
 	baseEditorsApi.prototype.asc_getAllMacrosNames = function()
@@ -6108,6 +6112,18 @@
 		}, function () {
 			oThis.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical)
 		})
+	};
+
+	baseEditorsApi.prototype.loadScriptModules = function(script, callback) {
+		if (AscCommon['PathBoolean'] || -1 === script.indexOf('MergeShapes')) {
+			callback();
+			return;
+		}
+		let oThis = this;
+		AscCommon.loadPathBoolean(callback, function () {
+			oThis.sendEvent("asc_onError", c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
+			callback();
+		});
 	};
 
 	baseEditorsApi.prototype.asc_mergeSelectedShapesAction = function(operation) {
