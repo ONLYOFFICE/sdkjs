@@ -10153,8 +10153,12 @@ var CPresentation = CPresentation || function(){};
     function ReadAnnotReplyJSON(oParentAnnot, replyJson) {
         let oReply = new AscPDF.CAnnotationText(replyJson["UniqueName"], [], oParentAnnot.GetDocument());
 
-        oReply.SetCreationDate(AscPDF.ParsePDFDate(replyJson["CreationDate"]).getTime());
-        oReply.SetModDate(AscPDF.ParsePDFDate(replyJson["LastModified"]).getTime());
+        if (replyJson["CreationDate"]) {
+            oReply.SetCreationDate(AscPDF.ParsePDFDate(replyJson["CreationDate"]).getTime());
+        }
+        if (replyJson["LastModified"]) {
+            oReply.SetModDate(AscPDF.ParsePDFDate(replyJson["LastModified"]).getTime());
+        }
         oReply.SetAuthor(replyJson["User"]);
         oReply.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
         oReply.SetPopupIdx(replyJson["Popup"]);

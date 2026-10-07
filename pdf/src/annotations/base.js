@@ -1377,7 +1377,7 @@
 		let oAscCommData = new Asc.asc_CCommentDataPDF(null);
 		oAscCommData.asc_putText(this.GetContents() || "");
 
-		let sCreationDate = this.GetCreationDate();
+		let sCreationDate = this.GetModDate();
 		if (sCreationDate)
 			oAscCommData.asc_putOnlyOfficeTime(sCreationDate.toString());
 		oAscCommData.asc_putUserId(this.GetUserId());
