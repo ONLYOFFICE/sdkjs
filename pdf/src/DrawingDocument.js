@@ -434,7 +434,7 @@
             let oWordControl = this.m_oWordControl;
             let bIsReturn = false;
 
-            if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM())) {
+            if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(pos.Page), this.m_oLogicDocument.GetPageHeightMM(pos.Page))) {
                 bIsReturn = true;
                 this.m_oWordControl.onMouseUpMainSimple();
             }
@@ -463,7 +463,7 @@
                 bIsReturn = true;
             } else {
                 if (!AscCommon.global_mouseEvent.IsLocked) {
-                    if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM())) {
+                    if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(pos.Page), this.m_oLogicDocument.GetPageHeightMM(pos.Page))) {
                         oWordControl.OnUpdateOverlay();
                         oWordControl.EndUpdateOverlay();
                         bIsReturn = true;
@@ -489,7 +489,7 @@
                 this.EndTrackText();
 
                 bIsReturn = true;
-            } else if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM()))
+            } else if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(pos.Page), this.m_oLogicDocument.GetPageHeightMM(pos.Page)))
                 bIsReturn = true;
 
             if (bIsReturn) {
