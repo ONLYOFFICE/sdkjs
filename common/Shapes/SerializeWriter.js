@@ -661,13 +661,8 @@ function CBinaryFileWriter()
 	function collectThemes(slides, themes) {
 		const themeRels = [];
 		for (let i = 0; i < slides.length; i++) {
-			var theme = slides[i].Theme;
-			let themeIndex = themes.indexOf(theme);
-			if (themeIndex === -1) {
-				themeIndex = themes.length;
-				themes.push(theme);
-			}
-			themeRels.push(themeIndex);
+			themeRels.push(themes.length);
+			themes.push(slides[i].Theme);
 		}
 		return themeRels;
 	}

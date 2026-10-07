@@ -40,6 +40,7 @@
 	const SVG_EMU_PER_MM = 36000;
 	const SVG_TEXT_LINE_RATIO = 1.2;
 	const SVG_TEXT_DESCENT_RATIO = 0.22;
+	const SVG_COLOR_NUMBER = /-?[\d.]+(?:e[+-]?\d+)?%?/g;
 	let svgCssRules = [];
 
 	function parseSvgCss(cssText, rules) {
@@ -113,7 +114,50 @@
 		"maroon": [128, 0, 0], "olive": [128, 128, 0], "lime": [0, 255, 0],
 		"aqua": [0, 255, 255], "cyan": [0, 255, 255], "teal": [0, 128, 128],
 		"navy": [0, 0, 128], "fuchsia": [255, 0, 255], "magenta": [255, 0, 255],
-		"purple": [128, 0, 128], "orange": [255, 165, 0]
+		"purple": [128, 0, 128], "orange": [255, 165, 0],
+		"aliceblue": [240, 248, 255], "antiquewhite": [250, 235, 215], "aquamarine": [127, 255, 212],
+		"azure": [240, 255, 255], "beige": [245, 245, 220], "bisque": [255, 228, 196],
+		"blanchedalmond": [255, 235, 205], "blueviolet": [138, 43, 226], "brown": [165, 42, 42],
+		"burlywood": [222, 184, 135], "cadetblue": [95, 158, 160], "chartreuse": [127, 255, 0],
+		"chocolate": [210, 105, 30], "coral": [255, 127, 80], "cornflowerblue": [100, 149, 237],
+		"cornsilk": [255, 248, 220], "crimson": [220, 20, 60], "darkblue": [0, 0, 139],
+		"darkcyan": [0, 139, 139], "darkgoldenrod": [184, 134, 11], "darkgray": [169, 169, 169],
+		"darkgreen": [0, 100, 0], "darkgrey": [169, 169, 169], "darkkhaki": [189, 183, 107],
+		"darkmagenta": [139, 0, 139], "darkolivegreen": [85, 107, 47], "darkorange": [255, 140, 0],
+		"darkorchid": [153, 50, 204], "darkred": [139, 0, 0], "darksalmon": [233, 150, 122],
+		"darkseagreen": [143, 188, 143], "darkslateblue": [72, 61, 139], "darkslategray": [47, 79, 79],
+		"darkslategrey": [47, 79, 79], "darkturquoise": [0, 206, 209], "darkviolet": [148, 0, 211],
+		"deeppink": [255, 20, 147], "deepskyblue": [0, 191, 255], "dimgray": [105, 105, 105],
+		"dimgrey": [105, 105, 105], "dodgerblue": [30, 144, 255], "firebrick": [178, 34, 34],
+		"floralwhite": [255, 250, 240], "forestgreen": [34, 139, 34], "gainsboro": [220, 220, 220],
+		"ghostwhite": [248, 248, 255], "gold": [255, 215, 0], "goldenrod": [218, 165, 32],
+		"greenyellow": [173, 255, 47], "honeydew": [240, 255, 240], "hotpink": [255, 105, 180],
+		"indianred": [205, 92, 92], "indigo": [75, 0, 130], "ivory": [255, 255, 240],
+		"khaki": [240, 230, 140], "lavender": [230, 230, 250], "lavenderblush": [255, 240, 245],
+		"lawngreen": [124, 252, 0], "lemonchiffon": [255, 250, 205], "lightblue": [173, 216, 230],
+		"lightcoral": [240, 128, 128], "lightcyan": [224, 255, 255], "lightgoldenrodyellow": [250, 250, 210],
+		"lightgray": [211, 211, 211], "lightgreen": [144, 238, 144], "lightgrey": [211, 211, 211],
+		"lightpink": [255, 182, 193], "lightsalmon": [255, 160, 122], "lightseagreen": [32, 178, 170],
+		"lightskyblue": [135, 206, 250], "lightslategray": [119, 136, 153], "lightslategrey": [119, 136, 153],
+		"lightsteelblue": [176, 196, 222], "lightyellow": [255, 255, 224], "limegreen": [50, 205, 50],
+		"linen": [250, 240, 230], "mediumaquamarine": [102, 205, 170], "mediumblue": [0, 0, 205],
+		"mediumorchid": [186, 85, 211], "mediumpurple": [147, 112, 219], "mediumseagreen": [60, 179, 113],
+		"mediumslateblue": [123, 104, 238], "mediumspringgreen": [0, 250, 154], "mediumturquoise": [72, 209, 204],
+		"mediumvioletred": [199, 21, 133], "midnightblue": [25, 25, 112], "mintcream": [245, 255, 250],
+		"mistyrose": [255, 228, 225], "moccasin": [255, 228, 181], "navajowhite": [255, 222, 173],
+		"oldlace": [253, 245, 230], "olivedrab": [107, 142, 35], "orangered": [255, 69, 0],
+		"orchid": [218, 112, 214], "palegoldenrod": [238, 232, 170], "palegreen": [152, 251, 152],
+		"paleturquoise": [175, 238, 238], "palevioletred": [219, 112, 147], "papayawhip": [255, 239, 213],
+		"peachpuff": [255, 218, 185], "peru": [205, 133, 63], "pink": [255, 192, 203],
+		"plum": [221, 160, 221], "powderblue": [176, 224, 230], "rebeccapurple": [102, 51, 153],
+		"rosybrown": [188, 143, 143], "royalblue": [65, 105, 225], "saddlebrown": [139, 69, 19],
+		"salmon": [250, 128, 114], "sandybrown": [244, 164, 96], "seagreen": [46, 139, 87],
+		"seashell": [255, 245, 238], "sienna": [160, 82, 45], "skyblue": [135, 206, 235],
+		"slateblue": [106, 90, 205], "slategray": [112, 128, 144], "slategrey": [112, 128, 144],
+		"snow": [255, 250, 250], "springgreen": [0, 255, 127], "steelblue": [70, 130, 180],
+		"tan": [210, 180, 140], "thistle": [216, 191, 216], "tomato": [255, 99, 71],
+		"turquoise": [64, 224, 208], "violet": [238, 130, 238], "wheat": [245, 222, 179],
+		"whitesmoke": [245, 245, 245], "yellowgreen": [154, 205, 50]
 	};
 
 	function svgArcToCubics(startX, startY, endX, endY, rx, ry, rotation, largeArc, sweep) {
@@ -374,6 +418,38 @@
 		return close ? d + "Z" : d;
 	}
 
+	function parseSvgAlpha(value) {
+		const alpha = parseFloat(value);
+		if (isNaN(alpha)) {
+			return 1;
+		}
+		return Math.max(0, Math.min(1, value.indexOf("%") !== -1 ? alpha / 100 : alpha));
+	}
+
+	function parseSvgRgbChannel(value) {
+		const channel = parseFloat(value);
+		return AscFormat.ClampColor(value.indexOf("%") !== -1 ? channel * 255 / 100 : channel);
+	}
+
+	function parseSvgColorFunction(value) {
+		const m = value.match(/^color\(\s*display-p3\s+([\d.e+-]+)\s+([\d.e+-]+)\s+([\d.e+-]+)\s*(?:\/\s*([\d.e+-]+%?)\s*)?\)/);
+		if (!m) {
+			return null;
+		}
+		const p3R = AscCommon.CU.srgbToLinear(parseFloat(m[1]));
+		const p3G = AscCommon.CU.srgbToLinear(parseFloat(m[2]));
+		const p3B = AscCommon.CU.srgbToLinear(parseFloat(m[3]));
+		const r = 1.2249401763 * p3R - 0.2249401763 * p3G;
+		const g = -0.0420569547 * p3R + 1.0420569547 * p3G;
+		const b = -0.0196375546 * p3R - 0.0786360456 * p3G + 1.0982736001 * p3B;
+		return [
+			AscFormat.ClampColor(AscCommon.CU.linearToSrgb(r) * 255),
+			AscFormat.ClampColor(AscCommon.CU.linearToSrgb(g) * 255),
+			AscFormat.ClampColor(AscCommon.CU.linearToSrgb(b) * 255),
+			parseSvgAlpha(m[4])
+		];
+	}
+
 	function parseSvgColor(value, currentColor) {
 		if (!value) {
 			return null;
@@ -383,7 +459,7 @@
 			return false;
 		}
 		if (value === "currentcolor") {
-			return currentColor ? parseSvgColor(currentColor, null) : [0, 0, 0];
+			return currentColor ? parseSvgColor(currentColor, null) : [0, 0, 0, 1];
 		}
 		if (value.charAt(0) === "#") {
 			let hex = value.substring(1);
@@ -394,21 +470,44 @@
 				const r = parseInt(hex.substring(0, 2), 16);
 				const g = parseInt(hex.substring(2, 4), 16);
 				const b = parseInt(hex.substring(4, 6), 16);
+				const a = /^[0-9a-f]{8}$/.test(hex) ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
 				if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-					return [r, g, b];
+					return [AscFormat.ClampColor(r), AscFormat.ClampColor(g), AscFormat.ClampColor(b), a];
 				}
 			}
 			return null;
 		}
 		if (value.indexOf("rgb") === 0) {
-			const m = value.match(/[\d.]+/g);
+			const m = value.match(SVG_COLOR_NUMBER);
 			if (m && m.length >= 3) {
-				return [Math.round(parseFloat(m[0])), Math.round(parseFloat(m[1])), Math.round(parseFloat(m[2]))];
+				return [
+					parseSvgRgbChannel(m[0]),
+					parseSvgRgbChannel(m[1]),
+					parseSvgRgbChannel(m[2]),
+					parseSvgAlpha(m[3])
+				];
 			}
 			return null;
 		}
-		if (svgNamedColors[value]) {
-			return svgNamedColors[value];
+		if (value.indexOf("hsl") === 0) {
+			const m = value.match(SVG_COLOR_NUMBER);
+			if (m && m.length >= 3) {
+				const hue = parseFloat(m[0]) % 360;
+				const rgb = AscCommon.CU.hslToRgb({
+					H: (hue < 0 ? hue + 360 : hue) / 360 * 255,
+					S: Math.max(0, Math.min(100, parseFloat(m[1]))) / 100 * 255,
+					L: Math.max(0, Math.min(100, parseFloat(m[2]))) / 100 * 255
+				}, true);
+				return [rgb.R, rgb.G, rgb.B, parseSvgAlpha(m[3])];
+			}
+			return null;
+		}
+		if (value.indexOf("color(") === 0) {
+			return parseSvgColorFunction(value);
+		}
+		if (svgNamedColors.hasOwnProperty(value)) {
+			const named = svgNamedColors[value];
+			return [named[0], named[1], named[2], 1];
 		}
 		return null;
 	}
@@ -556,8 +655,8 @@
 		for (let i = 0; i < stops.length; ++i) {
 			const inlineObj = parseSvgInlineStyle(stops[i]);
 			const sc = (inlineObj["stop-color"] !== undefined) ? inlineObj["stop-color"] : stops[i].getAttribute("stop-color");
-			const col = parseSvgColor(sc, currentColor) || [0, 0, 0];
-			if (col.length !== 3) {
+			const col = parseSvgColor(sc, currentColor) || [0, 0, 0, 1];
+			if (col.length !== 4) {
 				continue;
 			}
 			let off = inlineObj["offset"] !== undefined ? inlineObj["offset"] : stops[i].getAttribute("offset");
@@ -569,7 +668,7 @@
 			}
 			let so = (inlineObj["stop-opacity"] !== undefined) ? inlineObj["stop-opacity"] : stops[i].getAttribute("stop-opacity");
 			let alpha = parseFloat(so);
-			alpha = isNaN(alpha) ? 255 : Math.round(Math.max(0, Math.min(1, alpha)) * 255);
+			alpha = svgClampAlpha((isNaN(alpha) ? 1 : alpha) * col[3]);
 			out.push({pos: Math.max(0, Math.min(1, pos)), rgb: col, alpha: alpha});
 		}
 		return out;
@@ -656,7 +755,7 @@
 		if (child) {
 			col = parseSvgColor(child.getAttribute("fill"), currentColor);
 		}
-		return {rgb: (col && col.length === 3) ? col : [128, 128, 128]};
+		return {rgb: (col && col.length === 4) ? col : [128, 128, 128]};
 	}
 
 	function svgResolveMask(value, idMap, currentColor) {
@@ -739,7 +838,7 @@
 					if (stops.length > 0) {
 						let r = 0, g = 0, b = 0;
 						for (let i = 0; i < stops.length; ++i) { r += stops[i].rgb[0]; g += stops[i].rgb[1]; b += stops[i].rgb[2]; }
-						return [Math.round(r / stops.length), Math.round(g / stops.length), Math.round(b / stops.length)];
+						return [Math.round(r / stops.length), Math.round(g / stops.length), Math.round(b / stops.length), 1];
 					}
 					return null;
 				}
@@ -805,13 +904,13 @@
 			el.fillGrad = fillGrad;
 		} else if (fillPattern) {
 			el.fillPattern = fillPattern;
-		} else if (fillCol && fillCol.length === 3) {
+		} else if (fillCol && fillCol.length === 4) {
 			el.fill = fillCol;
-			el.fillAlpha = svgClampAlpha(style.opacity * style.fillOpacity);
+			el.fillAlpha = svgClampAlpha(style.opacity * style.fillOpacity * fillCol[3]);
 		}
-		if (strokeCol && strokeCol.length === 3) {
+		if (strokeCol && strokeCol.length === 4) {
 			el.stroke = strokeCol;
-			el.strokeAlpha = svgClampAlpha(style.opacity * style.strokeOpacity);
+			el.strokeAlpha = svgClampAlpha(style.opacity * style.strokeOpacity * strokeCol[3]);
 			el.strokeWidth = (style.strokeWidth || 1) * matScaleSvg(matrix);
 			el.strokeDash = svgDashPreset(style.strokeDash, ("" + (style.strokeCap || "")).toLowerCase(), style.strokeWidth || 1);
 		}
@@ -904,7 +1003,7 @@
 			fontFamily: resolveSvgFontFamily(format.fontFamily),
 			bold: (format.weight === "bold" || format.weight === "bolder" || parseInt(format.weight, 10) >= 600),
 			italic: (format.fontStyle === "italic" || format.fontStyle === "oblique"),
-			color: (fillCol && fillCol.length === 3) ? fillCol : [0, 0, 0]
+			color: (fillCol && fillCol.length === 4) ? fillCol : [0, 0, 0]
 		};
 	}
 

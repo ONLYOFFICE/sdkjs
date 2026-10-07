@@ -209,7 +209,7 @@ function (window, undefined) {
 		var arr = this.Name.split(" ");
 		this.Initials = "";
 		for (var i = 0; i < arr.length; i++) {
-			if (arr[i].length > 0) this.Initials += (arr[i].substring(0, 1));
+			if (arr[i].length > 0) this.Initials += String.fromCodePoint(arr[i].codePointAt(0));
 		}
 	};
 	CCommentAuthor.prototype.GetColorIndex = function () {
