@@ -7417,7 +7417,7 @@ var editor;
 	  }
       this._onUpdateAfterApplyChanges();
   };
-	spreadsheet_api.prototype.runBuilderScript = function(fRun) {
+	spreadsheet_api.prototype._runBuilderScript = function(fRun) {
 		this.executeGroupActionsStart();
 		let res = this.asc_canPaste();
 		if (!res || !fRun)

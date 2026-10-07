@@ -3899,7 +3899,19 @@
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};
-	baseEditorsApi.prototype.runBuilderScript = function(fRun)
+	baseEditorsApi.prototype.runBuilderScript = function(fRun, script)
+	{
+		if (!fRun)
+			return;
+
+		let _t = this;
+		let result;
+		this.loadBuilderModules(script, function(){
+			result = _t._runBuilderScript(fRun);
+		});
+		return result;
+	};
+	baseEditorsApi.prototype._runBuilderScript = function(fRun)
 	{
 		this.executeGroupActionsStart();
 		let res = this.asc_canPaste();
@@ -4804,14 +4816,12 @@
 			return;
 
 		let _t = this;
-		this.loadScriptModules(this.macros.GetData(), function() {
-			_t.runBuilderScript(function(){
-				_t._beforeEvalCommand();
-				_t.macros.runAuto();
-				_t._afterEvalCommand(undefined);
-				_t.onEndBuilderScript();
-			});
-		});
+		this.runBuilderScript(function(){
+			_t._beforeEvalCommand();
+			_t.macros.runAuto();
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
+		}, this.macros.GetData());
     };
 	baseEditorsApi.prototype.asc_runMacros = function(sGuid)
     {
@@ -4825,14 +4835,12 @@
 			return;
 
 		let _t = this;
-		this.loadScriptModules(this.macros.GetData(), function() {
-			_t.runBuilderScript(function(){
-				_t._beforeEvalCommand();
-				_t.macros.run(sGuid);
-				_t._afterEvalCommand(undefined);
-				_t.onEndBuilderScript();
-			});
-		});
+		this.runBuilderScript(function(){
+			_t._beforeEvalCommand();
+			_t.macros.run(sGuid);
+			_t._afterEvalCommand(undefined);
+			_t.onEndBuilderScript();
+		}, this.macros.GetData());
     };
 	baseEditorsApi.prototype.asc_getAllMacrosNames = function()
     {
@@ -6087,7 +6095,7 @@
 			if (!Asc.checkReturnCommand(commandReturnValue))
 				commandReturnValue = undefined;
 			return commandReturnValue;
-		});
+		}, funcText);
 	};
 
 	baseEditorsApi.prototype["native_callMethod"] = function(name, params)
@@ -6114,14 +6122,14 @@
 		})
 	};
 
-	baseEditorsApi.prototype.loadScriptModules = function(script, callback) {
-		if (AscCommon['PathBoolean'] || -1 === script.indexOf('MergeShapes')) {
+	baseEditorsApi.prototype.loadBuilderModules = function(script, callback) {
+		if (AscCommon['PathBoolean'] || typeof script !== "string" || -1 === script.indexOf('MergeShapes')) {
 			callback();
 			return;
 		}
-		let oThis = this;
+		let _t = this;
 		AscCommon.loadPathBoolean(callback, function () {
-			oThis.sendEvent("asc_onError", c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
+			_t.sendEvent("asc_onError", c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 			callback();
 		});
 	};

@@ -1559,11 +1559,7 @@
 				let nextCommand = this.queueCommands[0];
 				if (nextCommand.type === CommandTaskType.Command)
 				{
-					let _t = this;
-					this.api.loadScriptModules(nextCommand.value, function()
-					{
-						_t.callCommandInternal(nextCommand.value, nextCommand);
-					});
+					this.callCommandInternal(nextCommand.value, nextCommand);
 				}
 				else
 				{
@@ -1582,11 +1578,7 @@
 			if (0 === this.queueCommands.length)
 			{
 				this.queueCommands.push(task);
-				let _t = this;
-				this.api.loadScriptModules(value, function()
-				{
-					_t.callCommandInternal(value, task);
-				});
+				this.callCommandInternal(value, task);
 				return;
 			}
 
@@ -1664,7 +1656,7 @@
 							_t.api._afterEvalCommand(onEndScript);
 						else
 							onEndScript();
-					});
+					}, value);
 					return;
 				}
 			}

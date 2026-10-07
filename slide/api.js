@@ -8735,7 +8735,7 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 		return true;
 	};
-	asc_docs_api.prototype.runBuilderScript = function(fRun)
+	asc_docs_api.prototype._runBuilderScript = function(fRun)
 	{
 		let logicDocument = this.getLogicDocument();
 		if (!logicDocument || !fRun)

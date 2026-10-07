@@ -4428,7 +4428,7 @@
 		this.stampAnnotPreviewManager = new AscPDF.StampAnnotPreviewManager();
 		AscBuilder.Pdf.init();
 	};
-	PDFEditorApi.prototype.runBuilderScript = function(fRun) {	
+	PDFEditorApi.prototype._runBuilderScript = function(fRun) {
 		if (!fRun)
 			return;
 		
