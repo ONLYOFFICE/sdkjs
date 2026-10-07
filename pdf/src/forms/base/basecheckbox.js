@@ -551,7 +551,10 @@
             if (aOldOpt) {
                 nIdx = parseInt(curValue);
                 if (String(nIdx) !== String(curValue) || nIdx < 0 || nIdx >= aOldOpt.length) {
-                    return "Off";
+                    if (aOldOpt.indexOf(curValue) == -1) {
+                        return "Off";
+                    }
+                    nIdx = aOpt.indexOf(curValue);
                 }
             }
             else {
@@ -699,9 +702,12 @@
             }
 
             let sValue = String(value);
-            let nValue = parseInt(sValue, 10);
+            let nValue = parseInt(sValue);
             if (String(nValue) !== sValue || nValue < 0 || nValue >= aOptions.length) {
-                return "Off";
+                nValue = aOptions.indexOf(sValue);
+                if (nValue == -1) {
+                    return "Off";
+                }
             }
             if (nValue < nIndex) {
                 return String(nValue);

@@ -2957,7 +2957,10 @@
 		if (this instanceof ApiCheckboxField) {
 			let aOptions = this.Field.GetOptions();
 			if (aOptions && aOptions.length !== 0 && value != undefined) {
-				return aOptions[value] || "Off";
+				if (aOptions[value] !== undefined)
+					return aOptions[value];
+				
+				return aOptions.indexOf(value) != -1 ? value : "Off";
 			}
 		}
 
