@@ -941,6 +941,10 @@
         }
 
         let sExportValue = this.GetExportValue(memory.isCopyPaste);
+        if (sExportValue == null && !memory.isCopyPaste && oParent == null && aOptions) {
+            sExportValue = "0";
+        }
+        
         if (sExportValue != null) {
             memory.fieldDataFlags |= (1 << 14);
             memory.WriteString(sExportValue);
