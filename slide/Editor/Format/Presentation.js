@@ -1590,7 +1590,7 @@ CPresentation.prototype.IsViewModeInEditor = function () {
 };
 
 CPresentation.prototype.CanEdit = function () {
-	if(this.IsSlideShow()) {
+	if(this.IsSlideShow() || true === AscCommon.CollaborativeEditing.Get_GlobalLock()) {
 		return false;
 	}
 	return this.Api.canEdit();
@@ -2151,6 +2151,9 @@ CPresentation.prototype.Get_Id = function () {
 
 
 CPresentation.prototype.AddNewMasterSlide = function () {
+	if (!this.CanEdit()) {
+		return;
+	}
 	this.getViewManager().addNewMasterSlide();
 };
 CPresentation.prototype.AddForceNewMasterSlide = function () {
@@ -2166,6 +2169,9 @@ CPresentation.prototype.AddForceNewMasterSlide = function () {
 
 };
 CPresentation.prototype.AddNewLayout = function () {
+	if (!this.CanEdit()) {
+		return;
+	}
 	this.getViewManager().addNewLayout();
 };
 CPresentation.prototype.AddForceNewLayout = function () {
@@ -3768,6 +3774,9 @@ CPresentation.prototype.SetThumbnailsFocusElement = function(nFocusType) {
 };
 
 CPresentation.prototype.addImages = function (aImages, placeholder) {
+	if (!this.CanEdit()) {
+		return;
+	}
 	let oCurSlide = this.GetCurrentSlide();
 	if (oCurSlide && aImages.length) {
 		this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
@@ -3949,6 +3958,9 @@ CPresentation.prototype.finalizeAddChart = function(oSlide, oChart, isFromInterf
 };
 
 CPresentation.prototype.addChart = function (nTypeChart, isFromInterface, Placeholder) {
+	if (!this.CanEdit()) {
+		return;
+	}
 	let oSlide = this.prepareAddChart();
 	if (!oSlide)
 		return;
@@ -4044,6 +4056,9 @@ CPresentation.prototype.Check_GraphicFrameRowHeight = function (grFrame, bIgnore
 };
 
 CPresentation.prototype.Add_FlowTable = function (Cols, Rows, Placeholder, sStyleId) {
+	if (!this.CanEdit()) {
+		return;
+	}
 
 	var oSlide = this.GetCurrentSlide();
 	if (!oSlide)
@@ -5344,7 +5359,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			break;
 		}
 		case Asc.c_oAscPresentationShortcutType.EuroSign: {
-			if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+			if (this.CanEdit() && (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)) {
 				History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 				this.AddToParagraph(new AscWord.CRunText("€".charCodeAt(0)), false, true);
 			}
@@ -5837,7 +5852,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 				this.DrawingDocument.TargetShow();
 
 
-				if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+				if (this.CanEdit() && (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)) {
 					if (oController && oController.selectedObjects.length !== 0) {
 						History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 						this.AddToParagraph(new AscWord.CRunText(0x00A0), false, true);
@@ -5846,7 +5861,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			} else if (e.CtrlKey) {
 				this.ClearParagraphFormatting(false, true);
 			} else {
-				if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+				if (this.CanEdit() && (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)) {
 					if (oController && oController.selectedObjects.length !== 0) {
 						History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 						this.CheckLanguageOnTextAdd = true;
@@ -9074,6 +9089,9 @@ CPresentation.prototype.RemoveBeforePaste = function () {
 };
 
 CPresentation.prototype.addNextSlide = function (layoutIndex) {
+	if (!this.CanEdit()) {
+		return;
+	}
 	this.getViewManager().addNextSlide(layoutIndex);
 };
 CPresentation.prototype.addForceNextSlide = function (layoutIndex) {
@@ -10171,7 +10189,7 @@ CPresentation.prototype.HideComments = function () {
 // Functions for working with textbox
 //-----------------------------------------------------------------------------------
 CPresentation.prototype.TextBox_Put = function (sText, rFonts) {
-	if (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false) {
+	if (this.CanEdit() && (true === this.CollaborativeEditing.Is_Fast() || this.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 		if (!rFonts) {
 
