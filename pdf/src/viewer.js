@@ -1354,7 +1354,7 @@
 				Asc.editor.macros.SetData(macrosData);
 			}
 			
-			oDoc.UpdateCurMaxApIdx(nMaxIdx);
+			oDoc.SetMaxApIdx(nMaxIdx);
 
 			AscCommon.g_oIdCounter.Set_Load(isLoad);
 		};
@@ -4830,7 +4830,7 @@
 				oMemory.WriteLong(aUint8Array.length);
 				oMemory.WriteBuffer(aUint8Array, 0, aUint8Array.length);
 				oMemory.WriteLong(nMaxIdx);
-				oMemory.WriteString('Merged_' + i);
+				oMemory.WriteString(oData.mergeName);
 				let nEndPos = oMemory.GetCurPosition();
 				oMemory.Seek(nStartPos);
 				oMemory.WriteLong(nEndPos - nStartPos);
@@ -5229,6 +5229,34 @@
 		for (let i = 0; i < aPagesInfo.length; i++) {
 			if (checkNeedEditOrigPage(i)) {
 				writePageInfo.call(this, [AscPDF.CommandType.editPage, i], oFile.pages[i].originIndex);
+			}
+		}
+
+		// write info about deleted object for deleted pages
+		if (!isNewFile) {
+			let aKept = oFile.pages.map(function(page) {
+				return page.originIndex;
+			});
+
+			for (let nOrig = 0; nOrig < oFile.originalPagesCount; nOrig++) {
+				if (aKept.includes(nOrig) || !aDeleted[nOrig]) {
+					continue;
+				}
+
+				checkMemory();
+				let nStartPos = oMemory.GetCurPosition();
+				oMemory.Skip(4);
+				oMemory.WriteByte(AscPDF.CommandType.editPage);
+				oMemory.WriteLong(nOrig);
+				for (let j = 0; j < aDeleted[nOrig].length; j++) {
+					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
+					oMemory.WriteLong(8);
+					oMemory.WriteLong(aDeleted[nOrig][j]);
+				}
+				let nEndPos = oMemory.GetCurPosition();
+				oMemory.Seek(nStartPos);
+				oMemory.WriteLong(nEndPos - nStartPos);
+				oMemory.Seek(nEndPos);
 			}
 		}
 
@@ -5688,6 +5716,19 @@
 		// write in order
 		for (let i = 0; i < aOrder.length; i++) {
 			writePageInfo.call(this, aOrder[i], undefined);
+		}
+
+		if (!oMemory) {
+			let aNativeCalculateOrder = aFormsInfo["CO"] || [];
+			let aCurrentCalculateOrder = oDoc.GetCalculateInfo().ids;
+			let isCalculateOrderChanged = aNativeCalculateOrder.length !== aCurrentCalculateOrder.length ||
+				aCurrentCalculateOrder.some(function(id, index) {
+					return id !== aNativeCalculateOrder[index];
+				});
+
+			if (isCalculateOrderChanged) {
+				checkMemory();
+			}
 		}
 
 		if (!oMemory) {

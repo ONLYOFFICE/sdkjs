@@ -197,12 +197,12 @@
 
         this._apIdx = nIdx;
     };
-	CBaseField.prototype.GetApIdx = function() {
-		if (undefined !== this._apIdx) {
+	CBaseField.prototype.GetApIdx = function(bSource) {
+		if (undefined !== this._apIdx || bSource) {
 			return this._apIdx;
 		}
 		else {
-			let nApIdx = Asc.editor.getPDFDoc().GetCurMaxApIdx() + Number(this.GetId().replace("_", ""));
+			let nApIdx = Asc.editor.getPDFDoc().GetMaxApIdx() + Number(this.GetId().replace("_", ""));
 			if (!isNaN(nApIdx)) {
 				return nApIdx;
 			}
@@ -400,7 +400,7 @@
         
         if (oNewPage) {
             let sId = this.GetId();
-            oCurPage.RemoveField(sId);
+            oCurPage.RemoveField(sId, true);
             oNewPage.AddField(this);
 
             let oEditShape = this.GetEditShape();
@@ -436,6 +436,8 @@
                 oField.SyncValue();
             }
         }
+
+        this.SetWasChanged(true);
     };
     CBaseField.prototype.GetKids = function() {
         return this._kids;
@@ -460,6 +462,8 @@
             AscCommon.History.Add(new CChangesPDFFormKidsContent(this, nIndex, [oField], false))
 			oField.SetNeedUpdateEditShape(true);
             oField._parent = null;
+
+            this.SetWasChanged(true);
             return true;
         }
 
@@ -516,15 +520,9 @@
     };
     
     CBaseField.prototype.GetFullName = function() {
-        if (this._parent)
-        {
-            if (this._partialName != undefined)
-                return this._parent.GetFullName() + "." + this._partialName;
-            else
-                return this._parent.GetFullName();
-        }
-
-        return this._partialName ? this._partialName : "";
+        let sName = this._partialName ? this._partialName : "";
+        let sParent = this._parent ? this._parent.GetFullName() : "";
+        return sParent && sName ? sParent + "." + sName : sParent + sName;
     };
     CBaseField.prototype.SetPartialName = function(sName) {
         if (this._partialName == sName) {
@@ -670,9 +668,11 @@
         		
 				if (canChange) {
 					let oCalcInfo = oDoc.GetCalculateInfo();
-					oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
+                    let nApIdx = this.GetApIdx();
+
+					oCalcInfo.RemoveFieldFromOrder(nApIdx);
                 	if (oNewTrigger) {
-						oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
+						oCalcInfo.AddFieldToOrder(nApIdx);
 					}
 				}
 

@@ -968,7 +968,16 @@
 			},
 			get: function() {
 				if (this.field.IsLogicalRoot()) {
-					return this.field.GetLogicValue();
+					let aOpt = this.field.GetOptions();
+					if (aOpt) {
+						let value = this.field.GetLogicValue();
+						if (aOpt[value] !== undefined)
+							return aOpt[value];
+						return aOpt.indexOf(value) != -1 ? value : "Off";
+					}
+					else {
+						return this.field.GetLogicValue();
+					}
 				}
 				else {
 					throw Error(ERROR_GET_MESSAGES.logic);
@@ -1065,7 +1074,10 @@
 				if (this.field.IsLogicalRoot()) {
 					let aOpt = this.field.GetOptions();
 					if (aOpt) {
-						return aOpt[this.field.GetLogicValue()];
+						let value = this.field.GetLogicValue();
+						if (aOpt[value] !== undefined)
+							return aOpt[value];
+						return aOpt.indexOf(value) != -1 ? value : "Off";
 					}
 					else {
 						return this.field.GetLogicValue();

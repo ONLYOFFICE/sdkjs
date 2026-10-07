@@ -3306,9 +3306,10 @@ var CPresentation = CPresentation || function(){};
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
      * @param {number} [nPos = 0] 
+     * @param {boolean} [bRemoveFields = true] 
 	 * @returns {boolean}
 	 */
-    CPDFDoc.prototype.RemovePage = function(nPos) {
+    CPDFDoc.prototype.RemovePage = function(nPos, bRemoveFields) {
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let oController = this.GetController();
@@ -3323,6 +3324,10 @@ var CPresentation = CPresentation || function(){};
 
         oFile.removeSelection();
         
+		if (bRemoveFields !== false) {
+			this.RemovePageFields(nPos);
+		}
+		
         // remove page information
         let aPages = oFile.removePage(nPos);
 		oViewer.drawingPages.splice(nPos, 1);
@@ -3354,6 +3359,17 @@ var CPresentation = CPresentation || function(){};
         oViewer.paint();
 
         return aPages[0];
+    };
+    CPDFDoc.prototype.RemovePageFields = function(nPos) {
+        let oPageInfo = this.GetPageInfo(nPos);
+        if (!oPageInfo || !oPageInfo.fields || this.GetPagesCount() < 2)
+            return;
+
+        this.BlurActiveObject();
+        oPageInfo.fields.slice().forEach(function(field) {
+            let oParent = field.GetParent();
+            oParent && oParent.RemoveKid(field);
+        });
     };
     CPDFDoc.prototype.RemovePages = function(aIndexes) {
         aIndexes.sort(function(a, b) {
@@ -3402,7 +3418,7 @@ var CPresentation = CPresentation || function(){};
             });
 
             aLowerIndexes.forEach(function(oldIndex, i) {
-                let oPage = _t.RemovePage(oldIndex);
+                let oPage = _t.RemovePage(oldIndex, false);
                 _t.AddPage(nNewPos - i, oPage);
             });
         }
@@ -3415,7 +3431,7 @@ var CPresentation = CPresentation || function(){};
             let nOffset = aLowerIndexes.length > 0 ? 1 : 0;
             
             aHigherIndexes.forEach(function(oldIndex, i) {
-                let oPage = _t.RemovePage(oldIndex);
+                let oPage = _t.RemovePage(oldIndex, false);
                 _t.AddPage(nNewPos + nOffset + i, oPage);
             });
         }
@@ -7911,7 +7927,7 @@ var CPresentation = CPresentation || function(){};
 
         if (res) {
             let aPages = oFile.nativeFile["getPagesInfo"]();
-            this.UpdateCurMaxApIdx(oFile.nativeFile["getStartID"]());
+            this.SetMaxApIdx(oFile.nativeFile["getStartID"]());
 
             for (let i = oFile.originalPagesCount; i < aPages.length; i++) {
                 let page = aPages[i];
@@ -7976,6 +7992,14 @@ var CPresentation = CPresentation || function(){};
                         oFormsInfoNew["Fields"].push(field);
                     }
                 }
+            }
+
+            let oNativeCalculateOrderBefore = new Set(oFormsInfoBefore["CO"] || []);
+            let aMergedCalculateOrder = (oFormsInfoAfter["CO"] || []).filter(function(id) {
+                return !oNativeCalculateOrderBefore.has(id);
+            });
+            if (aMergedCalculateOrder.length > 0) {
+                oFormsInfoNew["CO"] = this.GetCalculateInfo().GetCalculateOrder().concat(aMergedCalculateOrder);
             }
 
             this.private_AddFormsByInfo(oFormsInfoNew, nInsertPos - oFile.originalPagesCount);
@@ -8750,10 +8774,35 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Clear_ContentChanges = function() {
 		this.pagesContentChanges.Clear();
     };
-    CPDFDoc.prototype.UpdateCurMaxApIdx = function(nApIdx) {
+    CPDFDoc.prototype.SetMaxApIdx = function(nApIdx) {
+        if (this.maxApIdx === nApIdx) {
+            return;
+        }
+
+        let oCalculateInfo = this.GetCalculateInfo();
+        let aCalculateOrder = oCalculateInfo.GetCalculateOrder();
+        let oCreatedFieldsMap = new Map();
+
+        aCalculateOrder.forEach(function(nFieldApIdx) {
+            let oField = this.GetFieldByApIdx(nFieldApIdx);
+            if (oField && undefined === oField.GetApIdx(true)) {
+                oCreatedFieldsMap.set(nFieldApIdx, oField);
+            }
+        }, this);
+
+        AscCommon.History.Add(new CChangesPDFDocumentMaxApIdx(this, this.maxApIdx, nApIdx));
         this.maxApIdx = nApIdx;
+
+        if (oCreatedFieldsMap.size > 0) {
+            let aNewCalculateOrder = aCalculateOrder.map(function(nFieldApIdx) {
+                let oField = oCreatedFieldsMap.get(nFieldApIdx);
+                return oField ? oField.GetApIdx() : nFieldApIdx;
+            });
+
+            oCalculateInfo.SetCalculateOrder(aNewCalculateOrder);
+        }
     };
-    CPDFDoc.prototype.GetCurMaxApIdx = function() {
+    CPDFDoc.prototype.GetMaxApIdx = function() {
         return this.maxApIdx;
     };
     // new - cause is we update this value only on merge or open file.
@@ -8783,7 +8832,7 @@ var CPresentation = CPresentation || function(){};
             }
         });
 
-        return Math.max(nMax, this.GetCurMaxApIdx());
+        return Math.max(nMax, this.GetMaxApIdx());
     };
     CPDFDoc.prototype.Add_ContentChanges = function(Changes) {
         this.pagesContentChanges.Add(Changes);
@@ -10104,8 +10153,12 @@ var CPresentation = CPresentation || function(){};
     function ReadAnnotReplyJSON(oParentAnnot, replyJson) {
         let oReply = new AscPDF.CAnnotationText(replyJson["UniqueName"], [], oParentAnnot.GetDocument());
 
-        oReply.SetCreationDate(AscPDF.ParsePDFDate(replyJson["CreationDate"]).getTime());
-        oReply.SetModDate(AscPDF.ParsePDFDate(replyJson["LastModified"]).getTime());
+        if (replyJson["CreationDate"]) {
+            oReply.SetCreationDate(AscPDF.ParsePDFDate(replyJson["CreationDate"]).getTime());
+        }
+        if (replyJson["LastModified"]) {
+            oReply.SetModDate(AscPDF.ParsePDFDate(replyJson["LastModified"]).getTime());
+        }
         oReply.SetAuthor(replyJson["User"]);
         oReply.SetDisplay(window["AscPDF"].Api.Types.display["visible"]);
         oReply.SetPopupIdx(replyJson["Popup"]);

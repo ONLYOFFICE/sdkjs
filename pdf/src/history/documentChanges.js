@@ -52,6 +52,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Calc_Order]       		= CCha
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_RolesInfo]        		= CChangesPDFDocumentRolesInfo;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_DisconnectEveryone]		= CChangesPDFDocumentDisconnectEveryone;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Final]					= CChangesPDFDocumentFinal;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Max_Ap_Idx]				= CChangesPDFDocumentMaxApIdx;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_Locks]            		= CChangesPDFDocumentLocks;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Redact]     		= CChangesPDFDocumentStartRedact;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Redact]      		= CChangesPDFDocumentPartRedact;
@@ -831,7 +832,7 @@ CChangesPDFDocumentPagesContent.prototype.Undo = function() {
     if (this.IsAdd()) {
         for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
             let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-            oDocument.RemovePage(nPos);
+            oDocument.RemovePage(nPos, false);
         }
     }
     else {
@@ -859,7 +860,7 @@ CChangesPDFDocumentPagesContent.prototype.Redo = function() {
     else {
         for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex) {
             let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
-            oDocument.RemovePage(nPos);
+            oDocument.RemovePage(nPos, false);
         }
     }
 	
@@ -884,7 +885,7 @@ CChangesPDFDocumentPagesContent.prototype.Load = function()
             if (false === nPos)
                 continue;
             
-            pdfDocument.RemovePage(nPos);
+            pdfDocument.RemovePage(nPos, false);
         }
     }
 	
@@ -1291,7 +1292,6 @@ CChangesPDFDocumentEndMergePages.prototype.Redo = function()
 
     oFile.nativeFile["MergePages"](oDoc.unitedBinary, this.MaxIdx, this.MergeName);
     let aPages = oFile.nativeFile["getPagesInfo"]();
-    oDoc.UpdateCurMaxApIdx(oFile.nativeFile["getStartID"]());
 
     oFile.originalPagesCount = aPages.length;
 
@@ -1363,6 +1363,22 @@ CChangesPDFCalcOrder.prototype.private_SetValue = function(Value)
 {
 	let oCalcInfo = this.Class;
 	oCalcInfo.ids = Value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFDocumentMaxApIdx(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFDocumentMaxApIdx.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFDocumentMaxApIdx.prototype.constructor = CChangesPDFDocumentMaxApIdx;
+CChangesPDFDocumentMaxApIdx.prototype.Type = AscDFH.historyitem_Pdf_Document_Max_Ap_Idx;
+CChangesPDFDocumentMaxApIdx.prototype.private_SetValue = function(Value)
+{
+	this.Class.maxApIdx = Value;
 };
 
 /**

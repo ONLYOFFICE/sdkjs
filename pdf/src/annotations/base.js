@@ -1377,7 +1377,7 @@
 		let oAscCommData = new Asc.asc_CCommentDataPDF(null);
 		oAscCommData.asc_putText(this.GetContents() || "");
 
-		let sCreationDate = this.GetCreationDate();
+		let sCreationDate = this.GetModDate();
 		if (sCreationDate)
 			oAscCommData.asc_putOnlyOfficeTime(sCreationDate.toString());
 		oAscCommData.asc_putUserId(this.GetUserId());
@@ -1488,7 +1488,7 @@
 			return this._apIdx;
 		}
 		else {
-			let nApIdx = Asc.editor.getPDFDoc().GetCurMaxApIdx() + Number(this.GetId().replace("_", ""));
+			let nApIdx = Asc.editor.getPDFDoc().GetMaxApIdx() + Number(this.GetId().replace("_", ""));
 			if (!isNaN(nApIdx)) {
 				return nApIdx;
 			}
