@@ -4967,6 +4967,10 @@ function CDrawingDocument()
 		if (this.m_oWordControl.MobileTouchManager)
 			this.m_oWordControl.OnUpdateOverlay();
 	};
+	this.GetTrackedTable = function()
+	{
+		return this.TableOutlineDr.TableOutline ? this.TableOutlineDr.TableOutline.Table : null;
+	};
 	this.EndTrackTable = function (pointer, bIsAttack)
 	{
 		if (this.TableOutlineDr.TableOutline != null)
@@ -5684,8 +5688,17 @@ function CDrawingDocument()
 			}
 		}
 	};
-	
-	this.IsCursorInTableCur = function (x, y, page, checkArea)
+
+	/**
+	 * Checks if the cursor is in the track area of the current table
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} page - absolute page index
+	 * @param {boolean} [checkArea=false] - besides the mover corner, check the strips to the left of and above the table
+	 * @param {boolean} [checkInside=false] - check the whole table area including the strips to the left and above
+	 * @returns {boolean}
+	 */
+	this.IsCursorInTableCur = function (x, y, page, checkArea, checkInside)
 	{
 		var _table = this.TableOutlineDr.TableOutline;
 		if (_table == null)
@@ -5704,7 +5717,7 @@ function CDrawingDocument()
 
 		if ((x > (_x - _dist)) && (x < _r) && (y > (_y - _dist)) && (y < _b))
 		{
-			if ((x < _x && y < _y) || (checkArea && (x < _x || y < _y)))
+			if (checkInside || (x < _x && y < _y) || (checkArea && (x < _x || y < _y)))
 			{
 				this.TableOutlineDr.Counter = 0;
 				this.TableOutlineDr.bIsNoTable = false;

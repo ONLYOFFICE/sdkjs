@@ -2806,6 +2806,11 @@ function CDrawingDocument()
 			this.m_oWordControl.OnUpdateOverlay();
 	};
 
+	this.GetTrackedTable = function()
+	{
+		return this.TableOutlineDr.TableOutline ? this.TableOutlineDr.TableOutline.Table : null;
+	};
+
 	this.EndTrackTable = function (pointer, bIsAttack)
 	{
 		if (this.TableOutlineDr.TableOutline != null)

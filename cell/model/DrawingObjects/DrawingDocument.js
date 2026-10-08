@@ -623,6 +623,11 @@ function CDrawingDocument()
     {
     };
 
+    this.GetTrackedTable = function()
+    {
+        return null;
+    };
+
     this.EndTrackTable = function(pointer, bIsAttack)
     {
     };
