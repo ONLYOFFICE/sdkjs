@@ -1696,6 +1696,17 @@ function CEditorPage(api)
 		return true;
 	};
 
+	this.getMultiPageRowMaxWidth = function()
+	{
+		let width = this.m_oEditor.HtmlElement.width;
+		width /= AscCommon.AscBrowser.retinaPixelRatio;
+
+		if (!this.m_oApi.isMobileVersion)
+			width -= 40;
+
+		return width;
+	};
+
 	this.GetVerticalScrollTo = function(y, page)
 	{
 		var dKoef = g_dKoef_mm_to_pix * this.m_nZoomValue / 100;
@@ -3131,8 +3142,7 @@ function CEditorPage(api)
 		}
 		else
 		{
-			let editorWidth = this.m_oEditor.HtmlElement.width;
-			editorWidth /= AscCommon.AscBrowser.retinaPixelRatio;
+			let editorWidth = this.getMultiPageRowMaxWidth();
 
 			let currentBlockW = 0;
 			let currentBlockH = 0;
@@ -3155,7 +3165,7 @@ function CEditorPage(api)
 				if (mm_h > this.m_dDocumentPageHeight)
 					this.m_dDocumentPageHeight = mm_h;
 
-				let _pageWidth = (mm_w * dKoef) >> 0;
+				let _pageWidth = (mm_w * dKoef + 0.5) >> 0;
 				let _pageHeight = (mm_h * dKoef + 0.5) >> 0;
 
 				if (0 === currentBlockW)
@@ -3292,8 +3302,7 @@ function CEditorPage(api)
 		}
 		else
 		{
-			let editorWidth = this.m_oEditor.HtmlElement.width;
-			editorWidth /= AscCommon.AscBrowser.retinaPixelRatio;
+			let editorWidth = this.getMultiPageRowMaxWidth();
 
 			let currentBlockW = 0;
 			let currentBlockH = 0;
@@ -3470,6 +3479,10 @@ function CEditorPage(api)
 		{
 			if (this.m_oEditor && this.m_oEditor.HtmlElement)
 				this.m_oEditor.HtmlElement.fullRepaint = true;
+
+			this.m_oHorRuler.RepaintChecker.BlitAttack = true;
+			this.m_oVerRuler.RepaintChecker.BlitAttack = true;
+
 			this.zoom_Fire(0, this.m_nZoomValue);
 
 			this.m_oBoundsController.ClearNoAttack();
