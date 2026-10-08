@@ -129,10 +129,7 @@
         return oTextPr.FontSize;
     };
     CPushButtonField.prototype.AddImage = function(oImgData, nAPType) {
-        if (!oImgData) {
-            return;
-        }
-        if (oImgData.Status !== AscFonts.ImageLoadStatus.Complete) {
+        if (!oImgData || !oImgData.Image || oImgData.Status !== AscFonts.ImageLoadStatus.Complete) {
             return;
         }
 
@@ -271,6 +268,10 @@
 		if (!oImgData || oImgData.Status === AscFonts.ImageLoadStatus.Loading)
 			return false;
 		
+        if (!oImgData.Image) {
+            return true;
+        }
+        
 		this._RemoveImage();
         this.CheckTextFont();
         this.CheckTextColor();
