@@ -4949,6 +4949,9 @@ function CDrawingDocument()
 
 	this.StartTrackTable = function (obj, transform)
 	{
+		if (this.IsTrackTable())
+			return;
+		
 		let touchManager = this.m_oWordControl.MobileTouchManager;
 		if (touchManager && touchManager.isTouchMode())
 		{
