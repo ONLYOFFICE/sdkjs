@@ -6676,9 +6676,11 @@
 								editor.WordControl.m_oLogicDocument.TurnOff_Recalculate();
 							}
 						}
-						oContentToDraw.SetApplyToAll(true);
-						oContentToDraw.SetParagraphSpacing({Before: 0, After: 0});
-						oContentToDraw.SetApplyToAll(false);
+						if (this.bWordShape) {
+							oContentToDraw.SetApplyToAll(true);
+							oContentToDraw.SetParagraphSpacing({Before: 0, After: 0, Line: 1, LineRule: Asc.linerule_Auto});
+							oContentToDraw.SetApplyToAll(false);
+						}
 						if (bNeedTurnOn) {
 							editor.WordControl.m_oLogicDocument.TurnOn_Recalculate(false);
 						}
