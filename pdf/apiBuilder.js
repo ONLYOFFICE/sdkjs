@@ -5078,6 +5078,10 @@
 		this.Field.SetImageRasterId(imageUrl, private_GetInnerButtonApType(appearance));
 		this.Field.SetNeedUpdateImage(true);
 
+		if (appearance == 'normal') {
+			this.Field.SetImage(imageUrl);
+		}
+		
 		return true;
 	};
 
