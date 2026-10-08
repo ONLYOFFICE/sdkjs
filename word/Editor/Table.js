@@ -3169,20 +3169,15 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 				oTargetTable = AscCommon.CollaborativeEditing.Is_SingleUser() ? this : this.Copy(NewDocContent);
 				if (NewDocContent !== OldDocContent)
 				{
-					// Сначала добавляем таблицу в новый класс
-					NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
-
-					// Удаляем таблицу из родительского класса
 					OldDocContent.Internal_Content_Remove(OldIndex, 1);
-
-					oTargetTable.Parent = NewDocContent;
+					NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
 				}
 				else
 				{
 					if (NearestPos.Paragraph.Index > this.Index)
 					{
-						NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
 						OldDocContent.Internal_Content_Remove(OldIndex, 1);
+						NewDocContent.Internal_Content_Add(NewIndex - 1, oTargetTable);
 					}
 					else
 					{
