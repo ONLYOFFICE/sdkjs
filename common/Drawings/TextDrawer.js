@@ -142,7 +142,7 @@
 		var i, j, t, aByPaths, aWarpedObjects = [];
 		var bOddPaths = oWarpStruct.pathLst.length / 2 - ((oWarpStruct.pathLst.length / 2) >> 0) > 0;
 		if (bOddPaths) {
-			this.checkByFollowPathWarp(oWarpStruct, XLimit);
+			this.checkByFollowPathWarp(oWarpStruct, XLimit, dWidth, dHeight, oShape.bWordShape);
 			return;
 		}
 		var nDivCount = oWarpStruct.pathLst.length >> 1;
@@ -183,7 +183,7 @@
 		}
 		this.checkUnionPaths(aWarpedObjects2);
 	};
-	CDocContentStructure.prototype.checkByFollowPathWarp = function (warpGeometry, xLimit) {
+	CDocContentStructure.prototype.checkByFollowPathWarp = function (warpGeometry, xLimit, width, height, isWordShape) {
 		const polygons = warpGeometry.getArrayPolygonsByPaths(PATH_DIV_EPSILON);
 		const pathCount = polygons.length;
 		const lines = this.m_aByLines;
@@ -192,10 +192,11 @@
 
 		const groups = [];
 		let scale = 1;
+		let inkExtent = 0;
 		let startIndex = 0;
 		for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
 			const endIndex = startIndex + Math.ceil((lines.length - startIndex) / (pathCount - pathIndex));
-			const group = {polygon: polygons[pathIndex], path: new PolygonWrapper(polygons[pathIndex]), infos: []};
+			const group = {polygon: polygons[pathIndex], path: new PolygonWrapper(polygons[pathIndex]), infos: [], ink: 0, height: 0};
 			for (let lineIndex = startIndex; lineIndex < endIndex; ++lineIndex) {
 				for (let structIndex = 0; structIndex < lines[lineIndex].length; ++structIndex) {
 					const line = lines[lineIndex][structIndex];
@@ -207,10 +208,25 @@
 					if (info.width * scale > group.path.dLen) {
 						scale = group.path.dLen / info.width;
 					}
+					if (isWordShape) {
+						group.ink += GetLineInkHeight(line);
+						group.height += info.bottom - info.top;
+					}
 				}
 			}
+			inkExtent = Math.max(inkExtent, group.ink);
 			groups.push(group);
 			startIndex = endIndex;
+		}
+		if (isWordShape) {
+			const radius = Math.max(width, height) / 2;
+			const factor = radius / (radius + inkExtent);
+			for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
+				const group = groups[pathIndex];
+				group.polygon = GetScaledPolygon(group.polygon, factor, width / 2, height / 2);
+				group.path = new PolygonWrapper(group.polygon);
+			}
+			scale *= factor;
 		}
 
 		for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
@@ -218,6 +234,7 @@
 			if (!group.infos.length) {
 				continue;
 			}
+			const inkRatio = group.height > 0 ? group.ink / group.height : 1;
 			const first = group.infos[0];
 			const last = group.infos[group.infos.length - 1];
 			let anchorY = last.pathY;
@@ -232,7 +249,7 @@
 			}
 			for (let infoIndex = 0; infoIndex < group.infos.length; ++infoIndex) {
 				const info = group.infos[infoIndex];
-				const offset = scale * (info.pathY - anchorY);
+				const offset = scale * inkRatio * (info.pathY - anchorY);
 				const path = Math.abs(offset) > EPSILON_TEXT_AUTOFIT ? new PolygonWrapper(GetOffsetPolygon(group.polygon, offset)) : group.path;
 				const lineWarp = new CFollowPathLineWarp(path, scale, info.align * (path.dLen - scale * xLimit), info.pathY);
 				const objects = [];
@@ -2838,12 +2855,15 @@
 			return;
 		}
 		const paragraph = structure.m_oParagraph;
+		const spacing = paragraph.Get_CompiledPr2(false).ParaPr.Spacing;
+		const before = paragraph.GetPrevDocumentElement() ? 0 : spacing.Before;
+		const after = paragraph.GetNextDocumentElement() ? 0 : spacing.After;
 		for (let lineIndex = 0; lineIndex < content.length; ++lineIndex) {
 			const paraLine = paragraph.Lines[lineIndex];
 			const range = paraLine.Ranges[0];
 			const pageY = paragraph.Pages[paragraph.getPageByLine(lineIndex)].Y;
-			const top = pageY + paraLine.Top;
-			const bottom = pageY + paraLine.Bottom;
+			const top = pageY + paraLine.Top - (lineIndex === 0 ? before : 0);
+			const bottom = pageY + paraLine.Bottom + (lineIndex === content.length - 1 ? after : 0);
 			const freeWidth = range.XEnd - range.X - range.W;
 			lineInfos.set(content[lineIndex], {
 				line: content[lineIndex],
@@ -2854,6 +2874,21 @@
 				align: freeWidth > EPSILON_TEXT_AUTOFIT ? Math.min(Math.max((range.XVisible - range.X) / freeWidth, 0), 1) : 0
 			});
 		}
+	}
+
+	function GetLineInkHeight(line) {
+		const boundsChecker = new AscFormat.CSlideBoundsChecker();
+		boundsChecker.init(100, 100, 100, 100);
+		line.CheckBoundsWarped(boundsChecker);
+		return Math.max(boundsChecker.Bounds.max_y - boundsChecker.Bounds.min_y, 0);
+	}
+
+	function GetScaledPolygon(polygon, factor, centerX, centerY) {
+		const result = [];
+		for (let index = 0; index < polygon.length; ++index) {
+			result.push({x: centerX + factor * (polygon[index].x - centerX), y: centerY + factor * (polygon[index].y - centerY)});
+		}
+		return result;
 	}
 
 	function GetOffsetPolygon(polygon, offset) {
