@@ -718,7 +718,7 @@ var CPresentation = CPresentation || function(){};
             oButtonField.SetMEOptions(1);
         }
 
-        oButtonField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp, [{
+        oButtonField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, [{
 			"S": AscPDF.ACTIONS_TYPES.JavaScript,
 			"JS": "event.target.buttonImportIcon();"
 		}]);
