@@ -3004,6 +3004,16 @@
 		}
 		if (!oWidget) {
 			oWidget = oDoc.CreateField(this.Field.GetFullName(), nFieldType, rect);
+
+			if (this.GetClassType() == "signatureField") {
+				oWidget.SetMeta({"isOOSignature": true});
+				oWidget.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, [{
+					"S": AscPDF.ACTIONS_TYPES.JavaScript,
+					"JS": "event.target.buttonImportIcon();"
+				}]);
+				oWidget.SetLayout(AscPDF.Api.Types.position['iconOnly']);
+				oWidget.SetRequired(true);
+			}
 		}
 		
 		oDoc.AddField(oWidget, pageIndex);
@@ -3297,7 +3307,10 @@
 
 	/**
 	 * Sets widget text alignment.
-	 * <note> Only for text/combobox/listbox fields widgets. </note>
+	 *
+	 * :::note
+	 * Only for text/combobox/listbox fields widgets.
+	 * :::
 	 * @memberof ApiBaseWidget
 	 * @typeofeditors ["PDFE"]
 	 * @param {WidgetTextAlign} textAlign - The text alignment.
@@ -4207,7 +4220,10 @@
 
 	/**
 	 * Sets text field placeholder.
-	 * <note>Makes combobox editable</note>
+	 *
+	 * :::note
+	 * Makes combobox editable
+	 * :::
 	 * @memberof ApiComboboxField
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} sPlaceholder - field placeholder 
@@ -4701,6 +4717,10 @@
 
 	/**
 	 * Sets image for all button field widgets
+	 * 
+	 * :::note
+	 * Doesn't work with "textOnly" layout.
+	 * :::
 	 * @memberof ApiButtonField
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} [imageUrl=""] - The URL of the image to set for the button (currently only internet URL or Base64 encoded images are supported)
@@ -4760,6 +4780,10 @@
 
 	/**
 	 * Sets button widget layout type
+	 * 
+	 * :::note
+	 * For signature field can't set "textOnly" layout
+	 * :::
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
 	 * @param {ButtonLayout} layout - The button layout.
@@ -4768,6 +4792,10 @@
 	 */
 	ApiButtonWidget.prototype.SetLayout = function(layout) {
 		if (false == Object.keys(AscPDF.Api.Types.position).includes(layout)) {
+			AscBuilder.throwException("The layout parameter must be one of ButtonLayout");
+		}
+
+		if (this.Field.IsOOSignature() && layout == "textOnly") {
 			return false;
 		}
 
@@ -5019,6 +5047,10 @@
 
 	/**
 	 * Sets image to button widget field.
+	 * 
+	 * :::note
+	 * Doesn't work with "textOnly" layout.
+	 * :::
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} [imageUrl=""] - The URL of the image to set for the button widget (currently only internet URL or Base64 encoded images are supported)
@@ -5046,6 +5078,10 @@
 		this.Field.SetImageRasterId(imageUrl, private_GetInnerButtonApType(appearance));
 		this.Field.SetNeedUpdateImage(true);
 
+		if (appearance == 'normal') {
+			this.Field.SetImage(imageUrl);
+		}
+		
 		return true;
 	};
 
@@ -5702,7 +5738,10 @@
 
 	/**
 	 * Gets goto destination rect
-	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
+	 *
+	 * :::note
+	 * For all goto types except "fitR" used only x1, y1 coordinates.
+	 * :::
 	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @returns {?Rect}
@@ -5719,7 +5758,10 @@
 
 	/**
 	 * Sets goto destination rect
-	 * <note> For all goto types except "fitR" used only x1, y1 coordinates </note>
+	 *
+	 * :::note
+	 * For all goto types except "fitR" used only x1, y1 coordinates.
+	 * :::
 	 * @memberof ApiGoToAction
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect

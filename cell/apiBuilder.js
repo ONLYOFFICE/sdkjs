@@ -10524,7 +10524,10 @@
 
 	/**
 	 * Groups an array of drawings in the current sheet.
-	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 *
+	 * :::note
+	 * This method is not supported in the document builder and works only in the editor.
+	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiDrawing[]} aDrawings - An array of drawings to group.
@@ -15320,7 +15323,10 @@
 
 	/**
 	 * Ungroups the current group of drawings.
-	 * <note>This method is not supported in the document builder and works only in the editor.</note>
+	 *
+	 * :::note
+	 * This method is not supported in the document builder and works only in the editor.
+	 * :::
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiDrawing[] | null} - The array of the ungrouped objects, or null if the group is not in the document, cannot be ungrouped, or when called in the document builder.
