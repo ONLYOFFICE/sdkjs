@@ -3098,6 +3098,10 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
+					if (field.IsOOSignature() && nType == AscPDF.Api.Types.position["textOnly"]) {
+						return;
+					}
+					
 					field.SetLayout(nType);
 				}
 			});

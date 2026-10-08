@@ -3004,6 +3004,16 @@
 		}
 		if (!oWidget) {
 			oWidget = oDoc.CreateField(this.Field.GetFullName(), nFieldType, rect);
+
+			if (this.GetClassType() == "signatureField") {
+				oWidget.SetMeta({"isOOSignature": true});
+				oWidget.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, [{
+					"S": AscPDF.ACTIONS_TYPES.JavaScript,
+					"JS": "event.target.buttonImportIcon();"
+				}]);
+				oWidget.SetLayout(AscPDF.Api.Types.position['iconOnly']);
+				oWidget.SetRequired(true);
+			}
 		}
 		
 		oDoc.AddField(oWidget, pageIndex);
@@ -4760,6 +4770,10 @@
 
 	/**
 	 * Sets button widget layout type
+	 * 
+	 * :::note
+	 * For signature field can't set "textOnly" layout
+	 * :::
 	 * @memberof ApiButtonWidget
 	 * @typeofeditors ["PDFE"]
 	 * @param {ButtonLayout} layout - The button layout.
@@ -4768,6 +4782,10 @@
 	 */
 	ApiButtonWidget.prototype.SetLayout = function(layout) {
 		if (false == Object.keys(AscPDF.Api.Types.position).includes(layout)) {
+			AscBuilder.throwException("The layout parameter must be one of ButtonLayout");
+		}
+
+		if (this.Field.IsOOSignature() && layout == "textOnly") {
 			return false;
 		}
 
