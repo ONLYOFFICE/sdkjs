@@ -10125,12 +10125,15 @@
 	 */
 	/**
 	 * Adds a table of figures to the current document.
+	 *
+	 * :::note
+	 * Please note that the table of figures properties will be filled with the default properties if they are undefined.
+	 * :::
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 10.0.0
 	 * @param {TofPr} [oTofPr={}] - Table of figures properties.
-	 * <note>Please note that the table of figures properties will be filled with the default properties if they are undefined.</note>
 	 * @param {ApiRange} [oRange] - The range that the table of figures replaces. If omitted, the table of figures is inserted at the current position.
 	 * @returns {?ApiTableOfFigures}
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/AddTableOfFigures.js
@@ -18920,8 +18923,11 @@
 	 */
 	/**
 	 * Specifies the border which will be displayed below a set of paragraphs which have the same paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added
-	 * to the whole block rather than to every paragraph in this block.</note>
+	 *
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added
+	 * to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @since 10.0.0
@@ -19061,7 +19067,10 @@
 	 */
 	/**
 	 * Specifies the border which will be displayed above a set of paragraphs which have the same set of paragraph border settings.
-	 * <note>The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.</note>
+	 *
+	 * :::note
+	 * The paragraphs of the same style going one by one are considered as a single block, so the border is added to the whole block rather than to every paragraph in this block.
+	 * :::
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @since 10.0.0
@@ -24023,7 +24032,10 @@
 
 	/**
 	 * Sets the fill to the specified chart series.
-	 * <note>The fill is not applied to 2D line and scatter series. Use the SetSeriesOutLine method to change their line and the SetMarkerFill method to change their markers.</note>
+	 *
+	 * :::note
+	 * The fill is not applied to 2D line and scatter series. Use the SetSeriesOutLine method to change their line and the SetMarkerFill method to change their markers.
+	 * :::
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
