@@ -299,6 +299,11 @@
         }
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
+        let aOptions = this.GetOptions();
+        if (aOptions.length == 0) {
+            return;
+        }
+        
         if (this.IsWidget()) {
             AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetLogicCurIdxs(), aIdxs));
 
@@ -774,15 +779,14 @@
         }
 
         // I array (selected list values)
-        let curIdxs;
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetLogicCurIdxs(memory.isCopyPaste);
-        }
-        if (curIdxs) {
-            memory.fieldDataFlags |= (1 << 14);
-            memory.WriteLong(curIdxs.length);
-            for (let i = 0; i < curIdxs.length; i++) {
-                memory.WriteLong(curIdxs[i]);
+        if (memory.isCopyPaste || this.IsLogicalRoot()) {
+            let curIdxs = this.GetLogicCurIdxs(false);
+            if (curIdxs && curIdxs.length !== 0) {
+                memory.fieldDataFlags |= (1 << 14);
+                memory.WriteLong(curIdxs.length);
+                for (let i = 0; i < curIdxs.length; i++) {
+                    memory.WriteLong(curIdxs[i]);
+                }
             }
         }
 
