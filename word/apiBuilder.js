@@ -5353,6 +5353,10 @@
 			let logicDocument = private_GetLogicDocument();
 			logicDocument.SelectDrawings(result.map(function(drawing) { return drawing.getParaDrawing(); }), logicDocument);
 		}
+		else if (Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+		{
+			controller.drawingObjects.getWorksheet().setSelectionShape(true);
+		}
 
 		return result;
 	};
