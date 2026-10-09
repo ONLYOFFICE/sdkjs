@@ -12083,8 +12083,8 @@
 				resultShapes = [createShapeByCompoundPath(resultPath, shapes[0])];
 			}
 
-			if (Asc.editor.isDocumentEditor) return de_replaceShapes(shapes, resultShapes);
 			if (Asc.editor.isPdfEditor()) return pdf_replaceShapes(shapes, resultShapes);
+			if (Asc.editor.isDocumentEditor) return de_replaceShapes(shapes, resultShapes);
 			return replaceShapes(shapes, resultShapes);
 		};
 

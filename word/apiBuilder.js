@@ -5293,11 +5293,15 @@
 	/**
 	 * Merges an array of drawings into new shapes.
 	 * The resulting shapes take the formatting of the first drawing in the array.
+	 *
+	 * :::note
+	 * In the spreadsheet editor, this method is not supported in the document builder and works only in the editor.
+	 * :::
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {Drawing[]} drawings - An array of at least two drawings from the same page, slide or sheet. At least one of them must be a shape.
 	 * @param {ShapesMergeOperation} operation - The merge operation.
-	 * @returns {Drawing[] | null} - The resulting drawings, or null if the drawings cannot be merged.
+	 * @returns {Drawing[] | null} - The resulting drawings, or null if the drawings cannot be merged or when called in the spreadsheet document builder.
 	 * @since 10.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/MergeShapes.js
 	 */
@@ -5311,6 +5315,9 @@
 		if (!mergeOperation)
 			throwException(new Error('The operation parameter must be one of "union", "combine", "fragment", "intersect" or "subtract"'));
 
+		if (AscCommon.isFileBuild() && AscCommon.c_oEditorId.Spreadsheet === Asc.editor.editorId)
+			return null;
+
 		let shapes = drawings.map(function(drawing) { return drawing.Drawing; });
 		if (shapes.find(function(shape) { return !shape.IsUseInDocument(); }))
 			throwException(new Error("All drawings must be in the document"));
@@ -5322,8 +5329,9 @@
 		if (!controller || !AscCommon["PathBoolean"])
 			return null;
 
+		let isDocumentEditor = Asc.editor.isDocumentEditor && !Asc.editor.isPdfEditor();
 		shapes.forEach(function(shape) { shape.recalculate(); });
-		if (Asc.editor.isDocumentEditor)
+		if (isDocumentEditor)
 		{
 			new ApiDocument(private_GetLogicDocument()).ForceRecalculate();
 
@@ -5340,7 +5348,7 @@
 			return null;
 
 		let result = GetApiDrawings(controller.getSelectedArray());
-		if (Asc.editor.isDocumentEditor)
+		if (isDocumentEditor)
 		{
 			let logicDocument = private_GetLogicDocument();
 			logicDocument.SelectDrawings(result.map(function(drawing) { return drawing.getParaDrawing(); }), logicDocument);
