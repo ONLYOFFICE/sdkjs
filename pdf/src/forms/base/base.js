@@ -3475,6 +3475,8 @@
         let nFlags      = 0;
         memory.Skip(4);
 
+        let isLogicalRoot = this.IsLogicalRoot();
+
         // partial name
         let sName = this.GetPartialName();
         if (sName != null) {
@@ -3482,30 +3484,33 @@
             memory.WriteString(sName);
         }
 
-        // value
-        let value = this.GetLogicValue();
-        if (value != null && Array.isArray(value) == false) {
-            nFlags |= (1 << 1);
-            memory.WriteString(value);
-        }
+        let value;
+        if (isLogicalRoot) {
+            // value
+            value = this.GetLogicValue();
+            if (value != null && Array.isArray(value) == false) {
+                nFlags |= (1 << 1);
+                memory.WriteString(value);
+            }
 
-        // default value
-        let defValue = this.GetDefaultValue();
-        if (defValue != null) {
-            nFlags |= (1 << 2);
-            memory.WriteString(defValue);
-        }
+            // default value
+            let defValue = this.GetDefaultValue();
+            if (defValue != null) {
+                nFlags |= (1 << 2);
+                memory.WriteString(defValue);
+            }
 
-        // combobox/listbox
-        let curIdxs = [];
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetLogicCurIdxs();
-        }
-        if (curIdxs.length > 0) {
-            nFlags |= (1 << 3);
-            memory.WriteLong(curIdxs.length);
-            for (let i = 0; i < curIdxs.length; i++) {
-                memory.WriteLong(curIdxs[i]);
+            // combobox/listbox
+            let curIdxs = [];
+            if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+                curIdxs = this.GetLogicCurIdxs();
+            }
+            if (curIdxs.length > 0) {
+                nFlags |= (1 << 3);
+                memory.WriteLong(curIdxs.length);
+                for (let i = 0; i < curIdxs.length; i++) {
+                    memory.WriteLong(curIdxs[i]);
+                }
             }
         }
 
@@ -3516,38 +3521,35 @@
             memory.WriteLong(oParent.GetApIdx());
         }
 
-        if (value != null && Array.isArray(value) == true) {
-            // flag that value is an array
-            nFlags |= (1 << 5);
-            memory.WriteLong(value.length);
-            for (let i = 0; i < value.length; i++) {
-                memory.WriteString(value[i]);
-            }
-        }
-
-        // combobox/listbox, checkbox/radiobutton
-        let aOptions = [];
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.GetType())) {
-            aOptions = this.GetOptions(false);
-            if (aOptions) {
-                nFlags |= (1 << 6);
-
-                memory.WriteLong(aOptions.length);
-                for (let i = 0; i < aOptions.length; i++) {
-                    memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
-                    memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
+        if (isLogicalRoot) {
+            if (value != null && Array.isArray(value) == true) {
+                // flag that value is an array
+                nFlags |= (1 << 5);
+                memory.WriteLong(value.length);
+                for (let i = 0; i < value.length; i++) {
+                    memory.WriteString(value[i]);
                 }
             }
-        }
 
-        // field flags
-        nFlags |= (1 << 7);
+            // combobox/listbox, checkbox/radiobutton
+            let aOptions = [];
+            if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.GetType())) {
+                aOptions = this.GetOptions(false);
+                if (aOptions) {
+                    nFlags |= (1 << 6);
 
-        let nFieldType = this.GetType();
-        let bWriteType = this.IsLogicalRoot();
+                    memory.WriteLong(aOptions.length);
+                    for (let i = 0; i < aOptions.length; i++) {
+                        memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
+                        memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
+                    }
+                }
+            }
 
-        let nWidgetFlags = 0;
-        if (bWriteType) {
+            // field flags
+            nFlags |= (1 << 7);
+            let nFieldType = this.GetType();
+            let nWidgetFlags = 0;
             switch (nFieldType) {
                 case AscPDF.FIELD_TYPES.radiobutton: {
                     nWidgetFlags |= (1 << 15);
@@ -3561,80 +3563,80 @@
                     nWidgetFlags |= (1 << 17);
                     break;
                 }
-            }    
-        }
+            }   
 
-        if (this.IsReadOnly && this.IsReadOnly()) {
-            nWidgetFlags |= (1 << 0);
-        }
-        if (this.IsRequired && this.IsRequired()) {
-            nWidgetFlags |= (1 << 1);
-        }
-        if (this.IsNoExport && this.IsNoExport()) {
-            nWidgetFlags |= (1 << 2);
-        }
-        if (this.IsMultiline && this.IsMultiline()) {
-            nWidgetFlags |= (1 << 12);
-        }
-        if (this.IsPassword && this.IsPassword()) {
-            nWidgetFlags |= (1 << 13);
-        }
-        if (this.IsNoToggleToOff && this.IsNoToggleToOff()) {
-            nWidgetFlags |= (1 << 14);
-        }
-        if (this.IsEditable && this.IsEditable()) {
-            nWidgetFlags |= (1 << 18);
-        }
-        if (this.IsFileSelect && this.IsFileSelect()) {
-            nWidgetFlags |= (1 << 20);
-        }
-        if (this.IsMultipleSelection && this.IsMultipleSelection()) {
-            nWidgetFlags |= (1 << 21);
-        }
-        if (this.IsDoNotSpellCheck && this.IsDoNotSpellCheck()) {
-            nWidgetFlags |= (1 << 22);
-        }
-        if (this.IsDoNotScroll && this.IsDoNotScroll()) {
-            nWidgetFlags |= (1 << 23);
-        }
-        if (this.IsComb && this.IsComb()) {
-            nWidgetFlags |= (1 << 24);
-        }
-        if (this.IsRadiosInUnison && this.IsRadiosInUnison()) {
-            nWidgetFlags |= (1 << 25);
-        }
-        if (this.IsCommitOnSelChange && this.IsCommitOnSelChange()) {
-            nWidgetFlags |= (1 << 26);
-        }
-        memory.WriteLong(nWidgetFlags);
+            if (this.IsReadOnly && this.IsReadOnly()) {
+                nWidgetFlags |= (1 << 0);
+            }
+            if (this.IsRequired && this.IsRequired()) {
+                nWidgetFlags |= (1 << 1);
+            }
+            if (this.IsNoExport && this.IsNoExport()) {
+                nWidgetFlags |= (1 << 2);
+            }
+            if (this.IsMultiline && this.IsMultiline()) {
+                nWidgetFlags |= (1 << 12);
+            }
+            if (this.IsPassword && this.IsPassword()) {
+                nWidgetFlags |= (1 << 13);
+            }
+            if (this.IsNoToggleToOff && this.IsNoToggleToOff()) {
+                nWidgetFlags |= (1 << 14);
+            }
+            if (this.IsEditable && this.IsEditable()) {
+                nWidgetFlags |= (1 << 18);
+            }
+            if (this.IsFileSelect && this.IsFileSelect()) {
+                nWidgetFlags |= (1 << 20);
+            }
+            if (this.IsMultipleSelection && this.IsMultipleSelection()) {
+                nWidgetFlags |= (1 << 21);
+            }
+            if (this.IsDoNotSpellCheck && this.IsDoNotSpellCheck()) {
+                nWidgetFlags |= (1 << 22);
+            }
+            if (this.IsDoNotScroll && this.IsDoNotScroll()) {
+                nWidgetFlags |= (1 << 23);
+            }
+            if (this.IsComb && this.IsComb()) {
+                nWidgetFlags |= (1 << 24);
+            }
+            if (this.IsRadiosInUnison && this.IsRadiosInUnison()) {
+                nWidgetFlags |= (1 << 25);
+            }
+            if (this.IsCommitOnSelChange && this.IsCommitOnSelChange()) {
+                nWidgetFlags |= (1 << 26);
+            }
+            memory.WriteLong(nWidgetFlags);
 
-        // actions
-        nFlags |= (1 << 8);
-        let aActions = this.GetListActions();
-        memory.WriteLong(aActions.length);
-        
-        for (let i = 0; i < aActions.length; i++) {
-            aActions[i].WriteToBinary(memory);
-        }
+            // actions
+            nFlags |= (1 << 8);
+            let aActions = this.GetListActions();
+            memory.WriteLong(aActions.length);
+            
+            for (let i = 0; i < aActions.length; i++) {
+                aActions[i].WriteToBinary(memory);
+            }
 
-        // charLimit
-        if (this.GetType() == AscPDF.FIELD_TYPES.text) {
-            nFlags |= (1 << 9);
-            memory.WriteLong(this.GetCharLimit());
-        }
+            // charLimit
+            if (this.GetType() == AscPDF.FIELD_TYPES.text) {
+                nFlags |= (1 << 9);
+                memory.WriteLong(this.GetCharLimit());
+            }
 
-        // tooltip
-        let sTooltip = this.GetTooltip();
-        if (sTooltip) {
-            nFlags |= (1 << 10);
-            memory.WriteString(sTooltip);
-        }
+            // tooltip
+            let sTooltip = this.GetTooltip();
+            if (sTooltip) {
+                nFlags |= (1 << 10);
+                memory.WriteString(sTooltip);
+            }
 
-        // middle east options
-        let nMEOptions = this.GetMEOptions();
-        if (nMEOptions !== 0) {
-            nFlags |= (1 << 11);
-            memory.WriteLong(nMEOptions);
+            // middle east options
+            let nMEOptions = this.GetMEOptions();
+            if (nMEOptions !== 0) {
+                nFlags |= (1 << 11);
+                memory.WriteLong(nMEOptions);
+            }
         }
 
         // write flags
