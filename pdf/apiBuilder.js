@@ -3016,7 +3016,8 @@
 			}
 		}
 		
-		oDoc.AddField(oWidget, pageIndex);
+		oWidget.SetName(this.GetFullName());
+		oPage.AddField(oWidget);
 
 		this.Field = oWidget.GetParent();
 
