@@ -3016,6 +3016,7 @@
 			}
 		}
 		
+		oWidget.SetPartialName(undefined);
 		oWidget.SetName(this.GetFullName());
 		oPage.AddField(oWidget);
 
