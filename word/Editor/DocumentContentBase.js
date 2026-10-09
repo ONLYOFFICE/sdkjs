@@ -1983,21 +1983,26 @@ CDocumentContentBase.prototype.private_UpdateSelectionPosOnRemove = function(nPo
 };
 /**
  * Соединяем параграф со следующим в заданной позиции
- * @param nPosition {number}
- * @param isUseConcatedStyle {boolean} использовать ли стиль присоединяемого параграфа для итогового параграфа
+ * @param pos {number}
+ * @param useConcatedStyle {boolean} использовать ли стиль присоединяемого параграфа для итогового параграфа
  * @returns {boolean}
  */
-CDocumentContentBase.prototype.ConcatParagraphs = function(nPosition, isUseConcatedStyle)
+CDocumentContentBase.prototype.ConcatParagraphs = function(pos, useConcatedStyle)
 {
-	if (nPosition < this.Content.length - 1 && this.Content[nPosition].IsParagraph() && this.Content[nPosition + 1].IsParagraph())
-	{
-		this.Content[nPosition].Concat(this.Content[nPosition + 1], isUseConcatedStyle);
-		this.RemoveFromContent(nPosition + 1, 1);
-		this.Content[nPosition].CorrectContent();
-		return true;
-	}
+	if (pos >= this.Content.length - 1
+		|| !this.Content[pos].IsParagraph()
+		|| !this.Content[pos + 1].IsParagraph())
+		return false;
+	
+	let paragraph     = this.Content[pos];
+	let nextParagraph = this.Content[pos + 1];
+	
+	if (!useConcatedStyle)
+		paragraph.CopyPr(nextParagraph);
 
-	return false;
+	nextParagraph.ConcatBefore(paragraph, null, true);
+	this.RemoveFromContent(pos, 1);
+	return true;
 };
 /**
  * Специальная функция удаления параграфа во время приема/отклонения изменений

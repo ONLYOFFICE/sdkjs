@@ -14304,8 +14304,9 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
  *                             1 - выделяем правую часть
  *                             0 - ставим курсор в место разделения
  *                             null | undefined - ничего не делаем
+ * @param correctContent {boolean}
  */
-Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
+Paragraph.prototype.ConcatBefore = function(oPara, nSelection, correctContent)
 {
 	this.DeleteCommentOnRemove = false;
 	oPara.DeleteCommentOnRemove = false;
@@ -14387,6 +14388,9 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 	
 	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
 		complexFields[iField].FinishCharsUpdate();
+	
+	if (correctContent)
+		this.CorrectContent(0, nCount);
 };
 /**
  * Копируем настройки параграфа и последние текстовые настройки в новый параграф
