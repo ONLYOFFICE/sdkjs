@@ -7567,7 +7567,7 @@ background-repeat: no-repeat;\
 		}
 
 		if (bIsReporter)
-			this.DemonstrationReporterStart(reporterStartObject);
+			this.DemonstrationReporterStart(reporterStartObject, slidestart_num);
 
 		if (bIsReporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
@@ -7606,9 +7606,10 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.DemonstrationReporterStart = function(startObject)
+	asc_docs_api.prototype.DemonstrationReporterStart = function(startObject, startSlideNum)
 	{
 		this.reporterStartObject = startObject;
+		this.reporterStartObject["startSlideIndex"] = (undefined === startSlideNum || null === startSlideNum) ? 0 : startSlideNum;
 		this.reporterStartObject["translate"] = AscCommon.translateManager.mapTranslate;
 		this.reporterStartObject["skin"] = AscCommon.GlobalSkin;
 
@@ -7802,6 +7803,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.preloadReporter = function(data)
 	{
+		this.reporterStartSlide = (data && undefined !== data["startSlideIndex"]) ? data["startSlideIndex"] : 0;
 		if (data["translate"])
 			this.translateManager = AscCommon.translateManager.init(data["translate"]);
 		if (data["skin"]) {
