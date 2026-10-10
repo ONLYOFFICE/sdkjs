@@ -2277,6 +2277,9 @@
 		}
 
 		function imageUrlToBase64(url) {
+			if (0 === url.indexOf("data:"))
+				return url;
+
 			let xhr = new XMLHttpRequest();
 
 			xhr.open('GET', url, false);
