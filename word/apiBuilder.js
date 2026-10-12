@@ -17725,7 +17725,7 @@
 	/**
 	 * Sets the text color to the current text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @since 9.1.0
 	 * @param {ApiColor | null} color - The text color. Pass <em>null</em> to remove the text color.
@@ -18065,7 +18065,7 @@
 	 * Specifies the languages which will be used to check spelling and grammar (if requested) when processing
 	 * the contents of the text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string | null} langId - The possible value for this parameter is a language identifier as defined by
 	 * RFC 4646/BCP 47. Example: "en-CA". Pass <em>null</em> to remove the language.
 	 * @return {ApiTextPr} - this text properties.
