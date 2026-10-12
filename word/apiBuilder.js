@@ -5239,6 +5239,7 @@
 
 	/**
 	 * Groups an array of drawings.
+	 *
 	 * :::note
 	 * The drawings must not be added to the document. To group the drawings which are already in the document, use the {@link ApiDocument#GroupDrawings} method.
 	 * :::

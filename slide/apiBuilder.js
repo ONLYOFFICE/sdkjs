@@ -1052,6 +1052,7 @@
 
     /**
      * Creates a group of drawings.
+     *
      * :::note
      * The drawings must not be added to the presentation. To group the drawings which are already in the presentation, use the {@link ApiSlide#GroupDrawings} method.
      * :::
