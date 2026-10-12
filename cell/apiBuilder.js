@@ -15001,6 +15001,7 @@
 	/**
 	 * Sets the fill formatting properties to the current graphic object.
 	 *
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 *
@@ -15088,6 +15089,7 @@
 	};
 	/**
 	 * Sets the outline properties to the current graphic object.
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
@@ -27059,6 +27061,7 @@
 
 	/**
 	 * Deletes the above average conditional formatting rule.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -27068,6 +27071,7 @@
 
 	/**
 	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
@@ -27078,6 +27082,7 @@
 
 	/**
 	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -27087,6 +27092,7 @@
 
 	/**
 	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -27096,6 +27102,7 @@
 
 	/**
 	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The range of cells affected by the current condition.
@@ -27116,6 +27123,7 @@
 
 	/**
 	 * Returns the font applied by the current format condition.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont} An ApiFont object representing the font applied by the format condition.
@@ -27126,6 +27134,7 @@
 
 	/**
 	 * Returns the number format applied to a cell when the conditional formatting rule evaluates to true.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} The number format.
@@ -27136,6 +27145,7 @@
 
 	/**
 	 * Sets the number format applied to a cell when the conditional formatting rule evaluates to true.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {string} NumberFormat - The number format code.
@@ -27148,6 +27158,7 @@
 	 * Returns the background color for the format condition.
 	 *
 	 * Returns 'No Fill' when the background color of the format condition is null.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
@@ -27160,6 +27171,7 @@
 	 * Sets the background color to the format condition with the previously created color object.
 	 *
 	 * Sets 'No Fill' when previously created color object is null.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The color object that specifies the background color for the format condition.
@@ -27170,6 +27182,7 @@
 
 	/**
 	 * Returns the parent range object of the current format condition.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} - The parent range object.
@@ -27180,6 +27193,7 @@
 
 	/**
 	 * Returns the priority value of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The priority value of the conditional formatting rule.
@@ -27190,6 +27204,7 @@
 
 	/**
 	 * Sets the priority value for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Priority - The priority value (1-based).
@@ -27200,6 +27215,7 @@
 
 	/**
 	 * Returns the pivot table condition object.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {PTCondition | null} The pivot table condition object.
@@ -27210,6 +27226,7 @@
 
 	/**
 	 * Returns the scope type of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
@@ -27220,6 +27237,7 @@
 
 	/**
 	 * Sets the scope type for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
@@ -27230,6 +27248,7 @@
 
 	/**
 	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
@@ -27240,6 +27259,7 @@
 
 	/**
 	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @method
 	 * @memberof ApiAboveAverage
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
@@ -27377,6 +27397,7 @@
 
 	/**
 	 * Deletes the color scale conditional formatting rule.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -27386,6 +27407,7 @@
 
 	/**
 	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
@@ -27396,6 +27418,7 @@
 
 	/**
 	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -27405,6 +27428,7 @@
 
 	/**
 	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -27414,6 +27438,7 @@
 
 	/**
 	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The range of cells affected by the current condition.
@@ -27424,6 +27449,7 @@
 
 	/**
 	 * Returns the parent range object of the current format condition.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The parent range object.
@@ -27434,6 +27460,7 @@
 
 	/**
 	 * Returns the priority value of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The priority value of the conditional formatting rule.
@@ -27444,6 +27471,7 @@
 
 	/**
 	 * Sets the priority value for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Priority - The priority value (1-based).
@@ -27454,6 +27482,7 @@
 
 	/**
 	 * Returns the pivot table condition object.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {PTCondition | null} The pivot table condition object.
@@ -27464,6 +27493,7 @@
 
 	/**
 	 * Returns the scope type of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
@@ -27474,6 +27504,7 @@
 
 	/**
 	 * Sets the scope type for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
@@ -27485,6 +27516,7 @@
 	/**
 	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
 	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @method
 	 * @memberof ApiColorScale
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
@@ -28775,6 +28807,7 @@
 
 	/**
 	 * Deletes the data bar conditional formatting rule.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -28784,6 +28817,7 @@
 
 	/**
 	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
@@ -28794,6 +28828,7 @@
 
 	/**
 	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -28803,6 +28838,7 @@
 
 	/**
 	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -28814,6 +28850,7 @@
 
 	/**
 	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The range of cells affected by the current condition.
@@ -28824,6 +28861,7 @@
 
 	/**
 	 * Returns the parent range object of the current format condition.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The parent range object.
@@ -28834,6 +28872,7 @@
 
 	/**
 	 * Returns the priority value of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The priority value of the conditional formatting rule.
@@ -28844,6 +28883,7 @@
 
 	/**
 	 * Sets the priority value for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Priority - The priority value (1-based).
@@ -28854,6 +28894,7 @@
 
 	/**
 	 * Returns the pivot table condition object.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {PTCondition | null} The pivot table condition object.
@@ -28864,6 +28905,7 @@
 
 	/**
 	 * Returns the scope type of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
@@ -28874,6 +28916,7 @@
 
 	/**
 	 * Sets the scope type for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
@@ -28885,6 +28928,7 @@
 	/**
 	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
 	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @method
 	 * @memberof ApiDatabar
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
@@ -29571,6 +29615,7 @@
 
 	/**
 	 * Deletes the icon set conditional formatting rule.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -29580,6 +29625,7 @@
 
 	/**
 	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
@@ -29590,6 +29636,7 @@
 
 	/**
 	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -29599,6 +29646,7 @@
 
 	/**
 	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -29610,6 +29658,7 @@
 
 	/**
 	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The range of cells affected by the current condition.
@@ -29620,6 +29669,7 @@
 
 	/**
 	 * Returns the parent range object of the current format condition.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The parent range object.
@@ -29630,6 +29680,7 @@
 
 	/**
 	 * Returns the priority value of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The priority value of the conditional formatting rule.
@@ -29640,6 +29691,7 @@
 
 	/**
 	 * Sets the priority value for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Priority - The priority value (1-based).
@@ -29650,6 +29702,7 @@
 
 	/**
 	 * Returns the pivot table condition object.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {PTCondition | null} The pivot table condition object.
@@ -29660,6 +29713,7 @@
 
 	/**
 	 * Returns the scope type of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
@@ -29670,6 +29724,7 @@
 
 	/**
 	 * Sets the scope type for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
@@ -29681,6 +29736,7 @@
 	/**
 	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
 	 * This rule type cannot stop the evaluation, so the value can be changed only by opening a file where it is set.
+	 * @method
 	 * @memberof ApiIconSetCondition
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
@@ -30798,6 +30854,7 @@
 
 	/**
 	 * Deletes the top 10 conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -30807,6 +30864,7 @@
 
 	/**
 	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
@@ -30817,6 +30875,7 @@
 
 	/**
 	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -30826,6 +30885,7 @@
 
 	/**
 	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -30837,6 +30897,7 @@
 
 	/**
 	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The range of cells affected by the current condition.
@@ -30847,6 +30908,7 @@
 
 	/**
 	 * Returns the parent range object of the current format condition.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The parent range object.
@@ -30857,6 +30919,7 @@
 
 	/**
 	 * Returns the priority value of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The priority value of the conditional formatting rule.
@@ -30867,6 +30930,7 @@
 
 	/**
 	 * Sets the priority value for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Priority - The priority value (1-based).
@@ -30877,6 +30941,7 @@
 
 	/**
 	 * Returns the pivot table condition object.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {PTCondition | null} The pivot table condition object.
@@ -30887,6 +30952,7 @@
 
 	/**
 	 * Returns the scope type of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
@@ -30897,6 +30963,7 @@
 
 	/**
 	 * Sets the scope type for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
@@ -30907,6 +30974,7 @@
 
 	/**
 	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
@@ -30917,6 +30985,7 @@
 
 	/**
 	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
@@ -30927,6 +30996,7 @@
 
 	/**
 	 * Returns the font formatting for the top 10 conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont} An ApiFont object representing the font applied by the format condition.
@@ -30947,6 +31017,7 @@
 
 	/**
 	 * Returns the number format for the top 10 conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} The number format.
@@ -30957,6 +31028,7 @@
 
 	/**
 	 * Sets the number format for the top 10 conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {string} NumberFormat - The number format to apply.
@@ -30967,6 +31039,7 @@
 
 	/**
 	 * Returns the fill color for the top 10 conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null} The background color applied by the format condition, or null if none is set.
@@ -30977,6 +31050,7 @@
 
 	/**
 	 * Sets the fill color for the top 10 conditional formatting rule.
+	 * @method
 	 * @memberof ApiTop10
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The fill color to apply.
@@ -31107,6 +31181,7 @@
 
 	/**
 	 * Deletes the unique values conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -31116,6 +31191,7 @@
 
 	/**
 	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
@@ -31126,6 +31202,7 @@
 
 	/**
 	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -31135,6 +31212,7 @@
 
 	/**
 	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @since 9.1.0
@@ -31146,6 +31224,7 @@
 	
 	/**
 	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The range of cells affected by the current condition.
@@ -31156,6 +31235,7 @@
 
 	/**
 	 * Returns the parent range object of the current format condition.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange} The parent range object.
@@ -31166,6 +31246,7 @@
 
 	/**
 	 * Returns the priority value of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} The priority value of the conditional formatting rule.
@@ -31176,6 +31257,7 @@
 
 	/**
 	 * Sets the priority value for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Priority - The priority value (1-based).
@@ -31186,6 +31268,7 @@
 
 	/**
 	 * Returns the pivot table condition object.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {PTCondition | null} The pivot table condition object.
@@ -31196,6 +31279,7 @@
 
 	/**
 	 * Returns the scope type of the conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
@@ -31206,6 +31290,7 @@
 
 	/**
 	 * Sets the scope type for the conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
@@ -31216,6 +31301,7 @@
 
 	/**
 	 * Returns whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
@@ -31226,6 +31312,7 @@
 
 	/**
 	 * Sets whether the editor will stop evaluating additional formatting rules if this rule evaluates to true.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
@@ -31236,6 +31323,7 @@
 
 	/**
 	 * Returns the font formatting for the unique values conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont} An ApiFont object representing the font applied by the format condition.
@@ -31256,6 +31344,7 @@
 
 	/**
 	 * Returns the number format for the unique values conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} The number format.
@@ -31266,6 +31355,7 @@
 
 	/**
 	 * Sets the number format for the unique values conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @param {string} NumberFormat - The number format to apply.
@@ -31276,6 +31366,7 @@
 
 	/**
 	 * Returns the fill color for the unique values conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null} The background color applied by the format condition, or null if none is set.
@@ -31286,6 +31377,7 @@
 
 	/**
 	 * Sets the fill color for the unique values conditional formatting rule.
+	 * @method
 	 * @memberof ApiUniqueValues
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The fill color to apply.

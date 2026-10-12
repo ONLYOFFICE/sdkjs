@@ -21247,6 +21247,7 @@
 
 	/**
 	 * Creates a copy of the current shape.
+	 * @method
 	 * @memberof ApiShape
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiShape | null}
@@ -21258,6 +21259,7 @@
 
 	/**
 	 * Creates a copy of the current chart.
+	 * @method
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiChart | null}
@@ -21269,6 +21271,7 @@
 
 	/**
 	 * Creates a copy of the current group.
+	 * @method
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiGroup | null}
@@ -21280,6 +21283,7 @@
 
 	/**
 	 * Creates a copy of the current image.
+	 * @method
 	 * @memberof ApiImage
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiImage | null}
@@ -21291,6 +21295,7 @@
 
 	/**
 	 * Creates a copy of the current OLE object.
+	 * @method
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiOleObject | null}
@@ -21651,6 +21656,7 @@
 	};
 	/**
 	 * Sets the fill formatting properties to the current graphic object.
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
@@ -21729,6 +21735,7 @@
 	};
 	/**
 	 * Sets the outline properties to the current graphic object.
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
@@ -28433,6 +28440,7 @@
 
 	/**
 	 * Sets the tag color of the content control.
+	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.4.0
@@ -28444,6 +28452,7 @@
 
 	/**
 	 * Returns the tag color of the content control.
+	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 9.4.0
@@ -30717,6 +30726,7 @@
 	};
 	/**
 	 * Returns an image in the base64 format from the current signature form.
+	 * @method
 	 * @memberof ApiSignatureForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {Base64Img}
@@ -30725,6 +30735,7 @@
 	ApiSignatureForm.prototype.GetImage = ApiPictureForm.prototype.GetImage;
 	/**
 	 * Sets an image to the current picture form.
+	 * @method
 	 * @memberof ApiSignatureForm
 	 * @param {string} imageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
 	 * @typeofeditors ["CDE", "CFE"]

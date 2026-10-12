@@ -7159,6 +7159,7 @@
 
 	/**
 	 * Creates a copy of the current shape.
+	 * @method
 	 * @memberof ApiShape
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiShape}
@@ -7170,6 +7171,7 @@
 
 	/**
 	 * Creates a copy of the current chart.
+	 * @method
 	 * @memberof ApiChart
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiChart}
@@ -7181,6 +7183,7 @@
 
 	/**
 	 * Creates a copy of the current group.
+	 * @method
 	 * @memberof ApiGroup
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiGroup}
@@ -7192,6 +7195,7 @@
 
 	/**
 	 * Creates a copy of the current image.
+	 * @method
 	 * @memberof ApiImage
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiImage}
@@ -7203,6 +7207,7 @@
 
 	/**
 	 * Creates a copy of the current OLE object.
+	 * @method
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiOleObject}
@@ -7214,6 +7219,7 @@
 
 	/**
 	 * Creates a copy of the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTable}
@@ -7974,6 +7980,7 @@
 	};
 	/**
 	 * Sets the fill formatting properties to the current graphic object.
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
@@ -8054,6 +8061,7 @@
 	};
 	/**
 	 * Sets the outline properties to the current graphic object.
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
@@ -8954,6 +8962,7 @@
 
 	/**
 	 * Returns the selected cells of the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTableCell[]} - An array of the currently selected cells (empty if there is no cell selection).
@@ -8964,6 +8973,7 @@
 
 	/**
 	 * Returns the rows that contain the currently selected cells of the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTableRow[]} - An array of the rows that contain selected cells (empty if there is no cell selection).
@@ -8977,6 +8987,7 @@
 	 * Returns all cells from the columns that contain the currently selected cells.
 	 * This method identifies which columns contain selected cells and then returns all cells
 	 * in those columns, not just the selected cells themselves.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
@@ -8987,6 +8998,7 @@
 
 	/**
 	 * Selects a range of cells in the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @param {number} startRowIndex - The start row index.
@@ -9405,6 +9417,7 @@
 
 	/**
 	 * Sets the background color for all cells in the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
@@ -9472,6 +9485,7 @@
 	};
 	/**
 	 * Clears the content from the table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
@@ -9625,6 +9639,7 @@
 	};
 	/**
 	 * Returns an internal id of the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9634,6 +9649,7 @@
 	ApiTableRow.prototype.GetInternalId = AscBuilder.ApiTableRow.prototype.GetInternalId;
 	/**
 	 * Returns the current row index.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9643,6 +9659,7 @@
 	ApiTableRow.prototype.GetIndex = AscBuilder.ApiTableRow.prototype.GetIndex;
 	/**
 	 * Adds the new rows to the current table.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9654,6 +9671,7 @@
 	ApiTableRow.prototype.AddRows = AscBuilder.ApiTableRow.prototype.AddRows;
 	/**
 	 * Merges the cells in the current row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9663,6 +9681,7 @@
 	ApiTableRow.prototype.MergeCells = AscBuilder.ApiTableRow.prototype.MergeCells;
 	/**
 	 * Clears the content from the current row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9672,6 +9691,7 @@
 	ApiTableRow.prototype.Clear = AscBuilder.ApiTableRow.prototype.Clear;
 	/**
 	 * Removes the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9681,6 +9701,7 @@
 	ApiTableRow.prototype.Remove = AscBuilder.ApiTableRow.prototype.Remove;
 	/**
 	 * Sets the text properties to the current row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9691,6 +9712,7 @@
 	ApiTableRow.prototype.SetTextPr = AscBuilder.ApiTableRow.prototype.SetTextPr;
 	/**
 	 * Sets the background color to all cells in the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -9701,6 +9723,7 @@
 	ApiTableRow.prototype.SetBackgroundColor = AscBuilder.ApiTableRow.prototype.SetBackgroundColor;
 	/**
 	 * Sets the properties to the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTableRowPr} oApiTableRowPr - The table row properties.
@@ -9878,6 +9901,7 @@
 
 	/**
 	 * Sets the background color to the current table cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10364,6 +10388,7 @@
     };
 	/**
 	 * Adds the new rows to the current table.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10375,6 +10400,7 @@
 	ApiTableCell.prototype.AddRows = AscBuilder.ApiTableCell.prototype.AddRows;
 	/**
 	 * Adds the new columns to the current table.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10386,6 +10412,7 @@
 	ApiTableCell.prototype.AddColumns = AscBuilder.ApiTableCell.prototype.AddColumns;
 	/**
 	 * Removes a column containing the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10395,6 +10422,7 @@
 	ApiTableCell.prototype.RemoveColumn = AscBuilder.ApiTableCell.prototype.RemoveColumn;
 	/**
 	 * Removes a row containing the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10404,6 +10432,7 @@
 	ApiTableCell.prototype.RemoveRow = AscBuilder.ApiTableCell.prototype.RemoveRow;
 	/**
 	 * Clears the content from the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10414,6 +10443,7 @@
 
 	/**
 	 * Sets the text properties to the content of the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current cell.
@@ -10430,6 +10460,7 @@
 
 	/**
 	 * Returns a type of the ApiTablePr class.
+	 * @method
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10602,6 +10633,7 @@
 	};
 	/**
 	 * Converts the ApiTablePr object into the JSON object.
+	 * @method
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10623,6 +10655,7 @@
 
 	/**
 	 * Returns a type of the ApiStyle class.
+	 * @method
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10632,6 +10665,7 @@
 	ApiStyle.prototype.GetClassType = AscBuilder.ApiStyle.prototype.GetClassType;
 	/**
 	 * Returns a name of the current style.
+	 * @method
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10641,6 +10675,7 @@
 	ApiStyle.prototype.GetName = AscBuilder.ApiStyle.prototype.GetName;
 	/**
 	 * Sets a name to the current style.
+	 * @method
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10651,6 +10686,7 @@
 	ApiStyle.prototype.SetName = AscBuilder.ApiStyle.prototype.SetName;
 	/**
 	 * Returns a type of the current style.
+	 * @method
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10710,6 +10746,7 @@
 
 	/**
 	 * Returns a type of the ApiTableStylePr class.
+	 * @method
 	 * @memberof ApiTableStylePr
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10719,6 +10756,7 @@
 	ApiTableStylePr.prototype.GetClassType = AscBuilder.ApiTableStylePr.prototype.GetClassType;
 	/**
 	 * Returns a type of the current table conditional style.
+	 * @method
 	 * @memberof ApiTableStylePr
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10810,6 +10848,7 @@
 
 	/**
 	 * Returns a type of the ApiTableRowPr class.
+	 * @method
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10819,6 +10858,7 @@
 	ApiTableRowPr.prototype.GetClassType = AscBuilder.ApiTableRowPr.prototype.GetClassType;
 	/**
 	 * Sets the height to the current table row within the current table.
+	 * @method
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0
@@ -10830,6 +10870,7 @@
 	ApiTableRowPr.prototype.SetHeight = AscBuilder.ApiTableRowPr.prototype.SetHeight;
 	/**
 	 * Converts the ApiTableRowPr object into the JSON object.
+	 * @method
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CPE"]
 	 * @since 10.0.0

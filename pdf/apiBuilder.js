@@ -8184,6 +8184,7 @@
 
 	/**
 	 * Returns a number of elements in the current document.
+	 * @method
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
@@ -8254,6 +8255,7 @@
 	 * :::note
 	 * When all elements are removed, a new empty rich paragraph is automatically created.
 	 * :::
+	 * @method
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8263,6 +8265,7 @@
 
 	/**
 	 * Removes an element using the position specified.
+	 * @method
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} pos - The element number (position) in the rich content.
@@ -8297,6 +8300,7 @@
 
 	/**
 	 * Returns the inner text of the current document content object.
+	 * @method
 	 * @memberof ApiRichContent
 	 * @typeofeditors ["PDFE"]
 	 * @param {object} [options] - Options for formatting the returned text.
@@ -8376,6 +8380,7 @@
 
 	/**
 	 * Sets the rich paragraph contents justification.
+	 * @method
 	 * @memberof ApiRichParaPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {HorTextAlign} jc - The justification type that will be applied to the rich paragraph contents.
@@ -8386,6 +8391,7 @@
 
 	/**
 	 * Returns the rich paragraph contents justification.
+	 * @method
 	 * @memberof ApiRichParaPr
 	 * @typeofeditors ["PDFE"]
 	 * @returns {HorTextAlign} 
@@ -8471,6 +8477,7 @@
 
 	/**
 	 * Returns a number of elements in the current paragraph.
+	 * @method
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {number}
@@ -8525,6 +8532,7 @@
 
 	/**
 	 * Returns the last Run with text in the current paragraph.
+	 * @method
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiRun}
@@ -8555,6 +8563,7 @@
 	 * If the element you remove is the last paragraph element (i.e. all the elements are removed from the paragraph),
 	 * a new empty run is automatically created.
 	 * :::
+	 * @method
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} pos - The element position which we want to remove from the paragraph.
@@ -8569,6 +8578,7 @@
 	 * :::note
 	 * When all the elements are removed from the paragraph, a new empty run is automatically created.
 	 * :::
+	 * @method
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8578,6 +8588,7 @@
 
 	/**
 	 * Deletes the current paragraph.
+	 * @method
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - returns false if paragraph haven't parent.
@@ -8665,6 +8676,7 @@
 
 	/**
 	 * Returns the paragraph text.
+	 * @method
 	 * @memberof ApiRichParagraph
 	 * @param {object} [options] - Options for formatting the returned text.
 	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any string can be used. The default separator is "\r".
@@ -8677,6 +8689,7 @@
 
 	/**
 	 * Returns the paragraph position within its parent element.
+	 * @method
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
 	 * @returns {Number} - returns -1 if the paragraph parent doesn't exist. 
@@ -8719,6 +8732,7 @@
 
 	/**
 	 * Sets the bold property to the text character.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isBold - Specifies that the contents of the run are displayed bold.
@@ -8729,6 +8743,7 @@
 
 	/**
 	 * Gets the bold property from the current text properties.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @return {?boolean}
@@ -8738,6 +8753,7 @@
 
 	/**
 	 * Sets the italic property to the text character.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current run are displayed italicized.
@@ -8748,6 +8764,7 @@
 
 	/**
 	 * Gets the italic property from the current text properties.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @return {?boolean}
@@ -8757,6 +8774,7 @@
 
 	/**
 	 * Specifies that the contents of the run are displayed with a single horizontal line through the center of the line.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current run are displayed struck through.
@@ -8767,6 +8785,7 @@
 
 	/**
 	 * Gets the strikeout property from the current text properties.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @return {?boolean}
@@ -8777,6 +8796,7 @@
 	/**
 	 * Specifies that the contents of the run are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current run are displayed underlined.
@@ -8787,6 +8807,7 @@
 
 	/**
 	 * Gets the underline property from the current text properties.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @return {?boolean}
@@ -8796,6 +8817,7 @@
 
 	/**
 	 * Sets all 4 font slots with the specified font family.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} fontFamily - The font family or families used for the current text run.
@@ -8808,6 +8830,7 @@
 	 * Returns the font family from the current text properties.
 	 *
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * param {undefined | "ascii" | "eastAsia" | "hAnsi" | "cs"} [fontSlot="ascii"] - The font slot.
@@ -8819,6 +8842,7 @@
 
 	/**
 	 * Sets the font size to the characters of the current text run.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {hps} size - The text size value measured in half-points (1/144 of an inch).
@@ -8829,6 +8853,7 @@
 
 	/**
 	 * Gets the font size from the current text properties.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @return {?hps}
@@ -8838,6 +8863,7 @@
 
 	/**
 	 * Sets the text color to the current text run.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} color
@@ -8848,6 +8874,7 @@
 
 	/**
 	 * Gets the RGB color from the current text properties.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @return {?ApiColor}
@@ -8857,6 +8884,7 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the contents of the run in relation to the default appearance of the run text:
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {TextVertAlign} type - The vertical alignment type applied to the text contents.
@@ -8867,6 +8895,7 @@
 
 	/**
 	 * Gets the vertical alignment type from the current text properties.
+	 * @method
 	 * @memberof ApiRichTextPr
 	 * @typeofeditors ["PDFE"]
 	 * @return {TextVertAlign}
@@ -8938,6 +8967,7 @@
 
 	/**
 	 * Clears the content from the current run.
+	 * @method
 	 * @memberof ApiRichRun
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8947,6 +8977,7 @@
 
 	/**
 	 * Removes all the elements from the current run.
+	 * @method
 	 * @memberof ApiRichRun
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8956,6 +8987,7 @@
 
 	/**
 	 * Deletes the current run.
+	 * @method
 	 * @memberof ApiRichRun
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean}
@@ -8965,6 +8997,7 @@
 
 	/**
 	 * Adds some text to the current run.
+	 * @method
 	 * @memberof ApiRichRun
 	 * @typeofeditors ["PDFE"]
 	 * @param {string} text - The text which will be added to the current run.
@@ -8993,6 +9026,7 @@
 
 	/**
 	 * Returns a text from the text run.
+	 * @method
 	 * @memberof ApiRichRun
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
@@ -9182,6 +9216,7 @@
 
 	/**
 	 * Creates a copy of the current shape.
+	 * @method
 	 * @memberof ApiShape
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiShape}
@@ -9193,6 +9228,7 @@
 
 	/**
 	 * Creates a copy of the current chart.
+	 * @method
 	 * @memberof ApiChart
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiChart}
@@ -9204,6 +9240,7 @@
 
 	/**
 	 * Creates a copy of the current image.
+	 * @method
 	 * @memberof ApiImage
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiImage}
@@ -9215,6 +9252,7 @@
 
 	/**
 	 * Creates a copy of the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTable}
@@ -9638,6 +9676,7 @@
 
 	/**
 	 * Sets the fill formatting properties to the current graphic object.
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiFill} fill - The fill type used to fill the graphic object.
@@ -9755,6 +9794,7 @@
 
 	/**
 	 * Sets the outline properties to the current graphic object.
+	 * @method
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiStroke} stroke - The stroke used to create the graphic object outline.
@@ -10667,6 +10707,7 @@
 
 	/**
 	 * Selects a range of cells in the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {number} startRowIndex - The start row index.
@@ -10681,6 +10722,7 @@
 
 	/**
 	 * Returns the selected cells of the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell[]} - An array of the currently selected cells (empty if there is no cell selection).
@@ -10693,6 +10735,7 @@
 	 * Returns all cells from the columns that contain the currently selected cells.
 	 * This method identifies which columns contain selected cells and then returns all cells
 	 * in those columns, not just the selected cells themselves.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell[]} - An array of all cells from the columns that contain selected cells.
@@ -10703,6 +10746,7 @@
 
 	/**
 	 * Returns the rows that contain the currently selected cells of the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableRow[]} - An array of the rows that contain selected cells (empty if there is no cell selection).
@@ -10785,6 +10829,7 @@
 
 	/**
 	 * Sets the background color for all cells in the current table.
+	 * @method
 	 * @memberof ApiTable
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
@@ -11043,6 +11088,7 @@
 
 	/**
 	 * Returns an internal id of the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
@@ -11053,6 +11099,7 @@
 
 	/**
 	 * Returns the current row index.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {Number}
@@ -11063,6 +11110,7 @@
 
 	/**
 	 * Adds the new rows to the current table.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @param {Number} nCount - Count of rows to be added.
@@ -11075,6 +11123,7 @@
 
 	/**
 	 * Merges the cells in the current row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {ApiTableCell | null} - return null if can't merge.
@@ -11085,6 +11134,7 @@
 
 	/**
 	 * Clears the content from the current row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - returns false if parent table doesn't exist.
@@ -11095,6 +11145,7 @@
 
 	/**
 	 * Removes the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - return false if parent table doesn't exist.
@@ -11105,6 +11156,7 @@
 
 	/**
 	 * Sets the background color to all cells in the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
@@ -11116,6 +11168,7 @@
 
 	/**
 	 * Sets the properties to the current table row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTableRowPr} oApiTableRowPr - The table row properties.
@@ -11127,6 +11180,7 @@
 
 	/**
 	 * Sets the text properties to the current row.
+	 * @method
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current row.
@@ -11154,6 +11208,7 @@
 
 	/**
 	 * Returns a type of the ApiTableRowPr class.
+	 * @method
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["PDFE"]
 	 * @returns {"tableRowPr"}
@@ -11164,6 +11219,7 @@
 
 	/**
 	 * Specifies that the current table row will be repeated at the top of each new page wherever this table is displayed.
+	 * @method
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {boolean} isHeader - The true value means that the current table row will be repeated at the top of each new page.
@@ -11175,6 +11231,7 @@
 
 	/**
 	 * Sets the height to the current table row within the current table.
+	 * @method
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["PDFE"]
 	 * @param {("auto" | "atLeast")} sHRule - The rule to apply the height value to the current table row or ignore it.
@@ -11388,6 +11445,7 @@
 
 	/**
 	 * Sets the background color of the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
@@ -11611,6 +11669,7 @@
 
 	/**
 	 * Sets the text properties to the content of the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current cell.
@@ -11622,6 +11681,7 @@
 
 	/**
 	 * Returns an internal id of the current table cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {string}
@@ -11632,6 +11692,7 @@
 
 	/**
 	 * Returns the current cell index.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {Number}
@@ -11824,6 +11885,7 @@
 
 	/**
 	 * Adds the new rows to the current table.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @param {Number} nCount - Count of rows to be added.
@@ -11836,6 +11898,7 @@
 
 	/**
 	 * Adds the new columns to the current table.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @param {Number} nCount - Count of columns to be added.
@@ -11848,6 +11911,7 @@
 
 	/**
 	 * Removes a column containing the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} - returns false if table doesn't exist.
@@ -11858,6 +11922,7 @@
 
 	/**
 	 * Removes a row containing the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @returns {boolean} Is the table empty after removing.
@@ -11868,6 +11933,7 @@
 
 	/**
 	 * Clears the content from the current cell.
+	 * @method
 	 * @memberof ApiTableCell
 	 * @typeofeditors ["PDFE"]
 	 * @return {boolean} - returns false if parent row is invalid.
