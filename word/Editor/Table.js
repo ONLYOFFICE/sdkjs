@@ -2822,10 +2822,14 @@ CTable.prototype.Shift = function(CurPage, Dx, Dy)
 	}
 
 	var StartRow = this.Pages[CurPage].FirstRow;
-	var LastRow  = this.Pages[CurPage].LastRow;
+	var LastRow  = Math.min(this.Pages[CurPage].LastRow, this.Content.length - 1);
+	if (StartRow < 0 || StartRow >= this.Content.length)
+		return;
 	for (var CurRow = StartRow; CurRow <= LastRow; CurRow++)
 	{
 		var Row        = this.Content[CurRow];
+		if (!Row || !this.RowsInfo[CurRow] || !this.TableRowsBottom[CurRow])
+			continue;
 		var CellsCount = Row.Get_CellsCount();
 		for (var CurCell = 0; CurCell < CellsCount; CurCell++)
 		{

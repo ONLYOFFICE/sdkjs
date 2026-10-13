@@ -55,15 +55,18 @@ CTable.prototype.Draw = function(CurPage, pGraphics, isDrawContent)
 
     // Определим какие строки попадают на данную страницу
     var Row_start = this.Pages[CurPage].FirstRow;
-    var Row_last  = this.Pages[CurPage].LastRow;
+    var Row_last  = Math.min(this.Pages[CurPage].LastRow, this.Content.length - 1);
 
-    if (Row_last < Row_start)
+    if (Row_start < 0 || Row_start >= this.Content.length || Row_last < Row_start)
         return -1;
 
     // Возможно, на данной странице строку, с которой началось разбиение на странице,
     // не надо рисовать. (Если начальная и конечная строки совпадают, тогда это 2
     // или более страница данной строки)
-    if ((Row_start != Row_last || (0 === Row_start && 0 === Row_last && 0 === CurPage)) && false === this.RowsInfo[Row_last].FirstPage)
+    if (!this.RowsInfo[Row_last])
+		return -1;
+
+	if ((Row_start != Row_last || (0 === Row_start && 0 === Row_last && 0 === CurPage)) && false === this.RowsInfo[Row_last].FirstPage)
         Row_last--;
 
     if (Row_last < Row_start)
@@ -71,7 +74,7 @@ CTable.prototype.Draw = function(CurPage, pGraphics, isDrawContent)
 
     // Данный случай добавлен из-за сносок. Когда у таблицы на данной страницы ничего не убирается.
 	// TODO: Надо улучшить данную проверку, т.к. она не учитывает ситуацию с вложенными таблицами.
-    if (Row_start === Row_last && Math.abs(this.RowsInfo[Row_last].H[CurPage] - this.RowsInfo[Row_last].TopDy[CurPage]) < 0.001)
+    if (Row_start === Row_last && this.RowsInfo[Row_last] && Math.abs(this.RowsInfo[Row_last].H[CurPage] - this.RowsInfo[Row_last].TopDy[CurPage]) < 0.001)
         return -1;
 
     pGraphics.SaveGrState();

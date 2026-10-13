@@ -682,6 +682,7 @@ CChangesTableAddRow.prototype.Undo = function()
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
 	oTable.private_UpdateTableGrid();
+	oTable.OnContentChange();
 };
 CChangesTableAddRow.prototype.Redo = function()
 {
@@ -698,6 +699,7 @@ CChangesTableAddRow.prototype.Redo = function()
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
 	oTable.private_UpdateTableGrid();
+	oTable.OnContentChange();
 };
 CChangesTableAddRow.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -766,6 +768,7 @@ CChangesTableRemoveRow.prototype.Undo = function()
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
 	oTable.private_UpdateTableGrid();
+	oTable.OnContentChange();
 };
 CChangesTableRemoveRow.prototype.Redo = function()
 {
@@ -783,6 +786,7 @@ CChangesTableRemoveRow.prototype.Redo = function()
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
 	oTable.private_UpdateTableGrid();
+	oTable.OnContentChange();
 };
 CChangesTableRemoveRow.prototype.private_WriteItem = function(Writer, Item)
 {
