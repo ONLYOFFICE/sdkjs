@@ -3212,7 +3212,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number[]} arg1 - An array of values or the selected range for which the frequencies will be counted (blanks and text are ignored).
 	 * @param {ApiRange | ApiName | number[]} arg2 - An array of intervals or the selected range into which the values in the first range will be grouped.
-	 * @returns {number}
+	 * @returns {number[][]}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FREQUENCY.js
 	 */
 	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
@@ -3363,7 +3363,7 @@
 	 * @param {ApiRange | ApiName | number[]} [arg3] - New x-values for which the function will return the corresponding y-values.
 	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b>,
 	 * and *b* is set equal to 1 if the parameter is <b>false</b> or omitted.
-	 * @returns {number}
+	 * @returns {number[][]}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GROWTH.js
 	 */
 	ApiWorksheetFunction.prototype.GROWTH = function (arg1, arg2, arg3, arg4) {
@@ -3459,7 +3459,7 @@
 	 * and *b* is set equal to 0 if the parameter is <b>false</b>.
 	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
 	 * and return m-coefficients and the constant *b* if the parameter is <b>false</b> or omitted.
-	 * @returns {number}
+	 * @returns {number[][]}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LINEST.js
 	 */
 	ApiWorksheetFunction.prototype.LINEST = function (arg1, arg2, arg3, arg4) {
@@ -4266,7 +4266,7 @@
 	 * @param {ApiRange | ApiName | number[]} [arg3] - A range or array of new x-values for which this function will return corresponding y-values.
 	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b> or omitted,
 	 * and *b* is set equal to 0 if the parameter is <b>false</b>.
-	 * @returns {number}
+	 * @returns {number[][]}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TREND.js
 	 */
 	ApiWorksheetFunction.prototype.TREND = function (arg1, arg2, arg3, arg4) {
@@ -4803,7 +4803,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The binary number which will be convertrd.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BIN2HEX.js
 	 */
 	ApiWorksheetFunction.prototype.BIN2HEX = function (arg1, arg2) {
@@ -4815,7 +4815,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The binary number which will be convertrd.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BIN2OCT.js
 	 */
 	ApiWorksheetFunction.prototype.BIN2OCT = function (arg1, arg2) {
@@ -4889,7 +4889,7 @@
 	 * @param {ApiRange | ApiName | number} arg2 - The imaginary coefficient of the complex number.
 	 * @param {ApiRange | ApiName | string} [arg3] - The suffix for the imaginary component of the complex number. It can be either "i" or "j" in lowercase.
 	 * If it is omitted, the function will assume suffix to be "i".
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COMPLEX.js
 	 */
 	ApiWorksheetFunction.prototype.COMPLEX = function (arg1, arg2, arg3) {
@@ -4914,7 +4914,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The decimal integer to convert.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2BIN.js
 	 */
 	ApiWorksheetFunction.prototype.DEC2BIN = function (arg1, arg2) {
@@ -4926,7 +4926,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The decimal integer to convert.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2HEX.js
 	 */
 	ApiWorksheetFunction.prototype.DEC2HEX = function (arg1, arg2) {
@@ -4938,7 +4938,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - Te decimal integer to convert.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2OCT.js
 	 */
 	ApiWorksheetFunction.prototype.DEC2OCT = function (arg1, arg2) {
@@ -5023,7 +5023,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The hexadecimal number to convert.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HEX2BIN.js
 	 */
 	ApiWorksheetFunction.prototype.HEX2BIN = function (arg1, arg2) {
@@ -5046,7 +5046,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The hexadecimal number to convert.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HEX2OCT.js
 	 */
 	ApiWorksheetFunction.prototype.HEX2OCT = function (arg1, arg2) {
@@ -5090,7 +5090,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCONJUGATE.js
 	 */
 	ApiWorksheetFunction.prototype.IMCONJUGATE = function (arg1) {
@@ -5101,7 +5101,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOS.js
 	 */
 	ApiWorksheetFunction.prototype.IMCOS = function (arg1) {
@@ -5112,7 +5112,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOSH.js
 	 */
 	ApiWorksheetFunction.prototype.IMCOSH = function (arg1) {
@@ -5123,7 +5123,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOT.js
 	 */
 	ApiWorksheetFunction.prototype.IMCOT = function (arg1) {
@@ -5134,7 +5134,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSC.js
 	 */
 	ApiWorksheetFunction.prototype.IMCSC = function (arg1) {
@@ -5145,7 +5145,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSCH.js
 	 */
 	ApiWorksheetFunction.prototype.IMCSCH = function (arg1) {
@@ -5157,7 +5157,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The complex numerator or dividend in the *x + yi* or *x + yj* form.
 	 * @param {ApiRange | ApiName | number} arg2 - The complex denominator or divisor in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMDIV.js
 	 */
 	ApiWorksheetFunction.prototype.IMDIV = function (arg1, arg2) {
@@ -5168,7 +5168,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMEXP.js
 	 */
 	ApiWorksheetFunction.prototype.IMEXP = function (arg1) {
@@ -5179,7 +5179,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLN.js
 	 */
 	ApiWorksheetFunction.prototype.IMLN = function (arg1) {
@@ -5190,7 +5190,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG10.js
 	 */
 	ApiWorksheetFunction.prototype.IMLOG10 = function (arg1) {
@@ -5201,7 +5201,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG2.js
 	 */
 	ApiWorksheetFunction.prototype.IMLOG2 = function (arg1) {
@@ -5213,7 +5213,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @param {ApiRange | ApiName | number} arg2 - The power to which the complex number will be raised.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPOWER.js
 	 */
 	ApiWorksheetFunction.prototype.IMPOWER = function (arg1, arg2) {
@@ -5224,7 +5224,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPRODUCT.js
 	 */
 	ApiWorksheetFunction.prototype.IMPRODUCT = function () {
@@ -5246,7 +5246,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSEC.js
 	 */
 	ApiWorksheetFunction.prototype.IMSEC = function (arg1) {
@@ -5257,7 +5257,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSECH.js
 	 */
 	ApiWorksheetFunction.prototype.IMSECH = function (arg1) {
@@ -5268,7 +5268,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSIN.js
 	 */
 	ApiWorksheetFunction.prototype.IMSIN = function (arg1) {
@@ -5279,7 +5279,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSINH.js
 	 */
 	ApiWorksheetFunction.prototype.IMSINH = function (arg1) {
@@ -5290,7 +5290,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSQRT.js
 	 */
 	ApiWorksheetFunction.prototype.IMSQRT = function (arg1) {
@@ -5302,7 +5302,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The complex number from which to subtract the second number.
 	 * @param {ApiRange | ApiName | number} arg2 - The complex number to subtract from the first number.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSUB.js
 	 */
 	ApiWorksheetFunction.prototype.IMSUB = function (arg1, arg2) {
@@ -5313,7 +5313,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSUM.js
 	 */
 	ApiWorksheetFunction.prototype.IMSUM = function () {
@@ -5324,7 +5324,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMTAN.js
 	 */
 	ApiWorksheetFunction.prototype.IMTAN = function (arg1) {
@@ -5336,7 +5336,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The octal number to convert.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2BIN.js
 	 */
 	ApiWorksheetFunction.prototype.OCT2BIN = function (arg1, arg2) {
@@ -5359,7 +5359,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The octal number to convert.
 	 * @param {ApiRange | ApiName | number} [arg2] - The number of characters to use.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2HEX.js
 	 */
 	ApiWorksheetFunction.prototype.OCT2HEX = function (arg1, arg2) {
@@ -6492,7 +6492,7 @@
 	 * @param {ApiRange | ApiName | number} arg1 - The number to convert.
 	 * @param {ApiRange | ApiName | number} arg2 - The base radix into which the number will be converted. An integer greater than or equal to 2 and less than or equal to 36.
 	 * @param {ApiRange | ApiName | number} [arg3] - The minimum length of the returned string. An integer greater than or equal to 0 and less than 256. If omitted, leading zeros are not added to the result.
-	 * @returns {number}
+	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BASE.js
 	 */
 	ApiWorksheetFunction.prototype.BASE = function (arg1, arg2, arg3) {
@@ -6900,7 +6900,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - An integer specifying the dimension of the unit matrix to be returned.
-	 * @returns {number}
+	 * @returns {number[][]}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MUNIT.js
 	 */
 	ApiWorksheetFunction.prototype.MUNIT = function (arg1) {
@@ -7409,7 +7409,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | Array<number | string | boolean>} arg1 - A range of cells on a worksheet or an array that will be transposed.
-	 * @returns {ApiRange}
+	 * @returns {Array<Array<number | string | boolean>>}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRANSPOSE.js
 	 */
 	ApiWorksheetFunction.prototype.TRANSPOSE = function (arg1) {
