@@ -4412,14 +4412,14 @@
 	 * - <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
 	 * - <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
 	 * - <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
-	 * - <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
+	 * - <b>"firstRow"</b> - specifies that the table formatting is applied to the first row. Any subsequent row which is in *table header* will also use this conditional format.
 	 * - <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
-	 * - <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
+	 * - <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column.
 	 * - <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
-	 * - <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
-	 * - <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
-	 * - <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
-	 * - <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
+	 * - <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
+	 * - <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
+	 * - <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
+	 * - <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
 	 * - <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
 	 * @typedef {("topLeftCell" | "topRightCell" | "bottomLeftCell" | "bottomRightCell" | "firstRow" | "lastRow" |
 	 *     "firstColumn" | "lastColumn" | "bandedColumn" | "bandedColumnEven" | "bandedRow" | "bandedRowEven" |
