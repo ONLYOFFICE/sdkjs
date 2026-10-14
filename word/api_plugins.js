@@ -1535,6 +1535,7 @@
 	/**
 	 * Checks if the document is in the filling form mode.
 	 * @memberof Api
+	 * @function
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @alias IsFillingForm
 	 * @returns {boolean} - Returns **true** if the document is in the filling form mode.
@@ -1552,6 +1553,7 @@
 	/**
 	 * Checks if the document is in the filling PDF form mode.
 	 * @memberof Api
+	 * @function
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @alias IsFillingPdfForm
 	 * @returns {boolean} - Returns **true** if the document is in the filling PDF form mode.
@@ -1570,6 +1572,7 @@
 	/**
 	 * Checks if the document is in the editing PDF form mode.
 	 * @memberof Api
+	 * @function
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @alias IsEditingPdfForm
 	 * @returns {boolean} - Returns **true** if the document is in the editing PDF form mode.
