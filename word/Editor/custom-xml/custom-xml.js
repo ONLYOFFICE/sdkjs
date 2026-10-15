@@ -220,7 +220,7 @@
 	 */
 	CustomXml.prototype.addContent = function (arrData)
 	{
-		let customXml = fromUtf8(arrData);
+		let customXml = decodeCustomXmlData(arrData);
 		let startPos = customXml.indexOf("<");
 		if (-1 !== startPos)
 			customXml = customXml.slice(customXml.indexOf("<")); // Skip "L"
@@ -707,6 +707,38 @@
 		};
 	}
 
+	/**
+	 * Decodes the bytes of a custom XML part. Parts are usually UTF-8, but Excel writes some as
+	 * UTF-16 with a byte order mark (Power Query's DataMashup, the Data Model's Gemini parts).
+	 * Reading those as UTF-8 gave a string the XML parser couldn't read, so the part was emptied
+	 * on open and saved back with no content.
+	 * @param arrData {Uint8Array | Array} may start with the record's 4-byte length
+	 * @returns {string}
+	 */
+	function decodeCustomXmlData(arrData)
+	{
+		if (!arrData)
+			return "";
+
+		let start = 0;
+		if (arrData.length >= 4 && ((arrData[0] | arrData[1] << 8 | arrData[2] << 16 | arrData[3] << 24) >>> 0) === arrData.length - 4)
+			start = 4;
+
+		let isLE = arrData[start] === 0xFF && arrData[start + 1] === 0xFE;
+		let isBE = arrData[start] === 0xFE && arrData[start + 1] === 0xFF;
+		if (!isLE && !isBE)
+			return fromUtf8(arrData);
+
+		let result = "";
+		for (let i = start + 2; i + 1 < arrData.length; i += 2)
+		{
+			result += String.fromCharCode(isLE ? (arrData[i] | arrData[i + 1] << 8) : (arrData[i] << 8 | arrData[i + 1]));
+		}
+
+		// The part is written back as UTF-8, so the declaration has to say so.
+		return result.replace(/^(\s*<\?xml[^>]*encoding\s*=\s*["'])utf-16(["'])/i, "$1utf-8$2");
+	}
+
 	// TODO: Временно вынес метод сюда, потом перенести надо будет
 	// разница с AscCommon.UTF8ArrayToString, что тут на 0-символе не останавливаемся
 	function fromUtf8(buffer, start, len)
@@ -776,6 +808,11 @@
 			switch (oStax.GetEventType()) {
 				case EasySAXEvent.CHARACTERS:
 					rootContent.addTextContent(oStax.text);
+					break;
+				case EasySAXEvent.CDATA:
+					// Text is kept and written back as it appears in the file, so keep the section
+					// as written: Excel's Data Model parts store their content in CDATA.
+					rootContent.addTextContent("<![CDATA[" + oStax.text + "]]>");
 					break;
 				case EasySAXEvent.END_ELEMENT:
 					rootContent = rootContent.getParent();
