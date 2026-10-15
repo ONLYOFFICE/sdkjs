@@ -1196,9 +1196,20 @@ StaxParser.prototype.next = function() {
     // ---------------------------------------------
     var w = xml.charCodeAt(i + 1);
     if (w === 33) { // 33 == "!"
+        if (xml.charCodeAt(i + 2) === 91 && xml.substr(i + 3, 6) === 'CDATA[') { // CDATA: report its text
+            var indexEndCDATA = xml.indexOf(']]>', i + 9);
+            if (indexEndCDATA === -1) {
+                this.stop = true;
+                return this.eventType;
+            }
+            this.index = indexEndCDATA + 3;
+            this.eventType = EasySAXEvent.CDATA;
+            this.text = xml.substring(i + 9, indexEndCDATA);
+            return this.eventType;
+        }
         if (i + 3 < this.length && xml.charCodeAt(i + 2) === 45 && xml.charCodeAt(i + 3) === 45) { // COMMENT
             this.index = xml.indexOf('-->', i) + 3;
-        } else { // CDATA
+        } else { // other <!...> declarations
             this.index = xml.indexOf(']]>', i) + 3;
         }
         if (this.index === 2) { // -1 + 3 = 2
