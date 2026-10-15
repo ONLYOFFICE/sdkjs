@@ -144,8 +144,8 @@
       this._CoAuthoringApi.onLicenseChanged = function(res) {
         t.callback_OnLicenseChanged(res);
       };
-      this._CoAuthoringApi.onAiPluginSettings = function(res) {
-        t.callback_OnAiPluginSettings(res);
+      this._CoAuthoringApi.onAiPluginSettings = function(res, allowBrowserProxy) {
+        t.callback_OnAiPluginSettings(res, allowBrowserProxy);
       };
       this._CoAuthoringApi.onMiscEvent = function(res) {
         t.callback_OnMiscEvent(res);
@@ -552,9 +552,9 @@
       this.onLicenseChanged(res);
     }
   };
-  CDocsCoApi.prototype.callback_OnAiPluginSettings = function(res) {
+  CDocsCoApi.prototype.callback_OnAiPluginSettings = function(res, allowBrowserProxy) {
     if (this.onAiPluginSettings) {
-      this.onAiPluginSettings(res);
+      this.onAiPluginSettings(res, allowBrowserProxy);
     }
   };
   CDocsCoApi.prototype.callback_OnMiscEvent = function(res) {
@@ -604,6 +604,12 @@
     //"1.5MB" is choosen to avoid disconnect(after 25s) while downloading/uploading oversized changes with 0.5Mbps connection
     this.websocketMaxPayloadSize = 1572864;
     this._serverChangesSize = 0;
+    //todo: count the accumulated changes size on the server and only accept its number here
+    // Size of every confirmed change on the server, indexed by absolute change index
+    this._changesSizes = [];
+    // Size of the current save operation that is not confirmed by the server yet
+    this._pendingChangesSize = 0;
+    this._isSaveOperation = false;
     // Current changes index
     this.currentIndex = 0;
     this.currentIndexEnd = 0;
@@ -685,7 +691,46 @@
   };
 
   DocsCoApi.prototype.get_serverChangesSize = function() {
-    return this._serverChangesSize;
+    return this._serverChangesSize + this._pendingChangesSize;
+  };
+
+  // Replace the tail of the server changes list starting at index with sizes
+  DocsCoApi.prototype._replaceChangesSizesFrom = function(index, sizes) {
+    index = Math.max(0, index);
+    for (var i = index; i < this._changesSizes.length; ++i) {
+      this._serverChangesSize -= this._changesSizes[i];
+    }
+    this._changesSizes.length = Math.min(index, this._changesSizes.length);
+    // Pad the gap when some changes never reached the accounting
+    while (this._changesSizes.length < index) {
+      this._changesSizes.push(0);
+    }
+    for (var j = 0; j < sizes.length; ++j) {
+      this._changesSizes.push(sizes[j]);
+      this._serverChangesSize += sizes[j];
+    }
+  };
+
+  // Move the batch confirmed by the server from the pending size to the confirmed sizes
+  DocsCoApi.prototype._confirmChangesSizes = function(syncChangesIndex) {
+    if (!this._isSaveOperation || !this.arrayChanges || this.currentIndexEnd <= this.currentIndex) {
+      return;
+    }
+    var batch = [];
+    var batchSize = 0;
+    for (var i = this.currentIndex; i < this.currentIndexEnd; ++i) {
+      batch.push(this.arrayChanges[i].length);
+      batchSize += this.arrayChanges[i].length;
+    }
+    var sizes = batch;
+    var start = undefined !== syncChangesIndex && -1 !== syncChangesIndex ? syncChangesIndex - batch.length : this._changesSizes.length;
+    // A gap ahead of the confirmed sizes is left by earlier writes of this same batch, they repeat its sizes
+    while (start > this._changesSizes.length) {
+      sizes = batch.concat(sizes);
+      start -= batch.length;
+    }
+    this._replaceChangesSizesFrom(start, sizes);
+    this._pendingChangesSize = Math.max(0, this._pendingChangesSize - batchSize);
   };
 
   DocsCoApi.prototype.get_isAuth = function() {
@@ -850,7 +895,14 @@
       this.deleteIndex = deleteIndex;
       if (null != this.deleteIndex && -1 !== this.deleteIndex) {
         this.deleteIndex += this.changesIndex;
+        // The server drops the tail by this index before writing the operation
+        this._replaceChangesSizesFrom(this.deleteIndex, []);
       }
+      // The whole operation is charged upfront so the limit stays accurate while batches 2..N are still in flight
+      this._isSaveOperation = true;
+      this._pendingChangesSize = arrayChanges.reduce(function(sum, change) {
+        return sum + change.length;
+      }, 0);
       this.currentIndex = 0;
       this.arrayChanges = arrayChanges;
       this.excelAdditionalInfo = excelAdditionalInfo;
@@ -881,11 +933,6 @@
 
     // Set save state
     this._state = ConnectionState.SaveChanges;
-    // Credit all bytes of this save operation upfront on the first batch (not per-batch),
-    // so localSize + serverSize stays accurate while batches 2..N are sent asynchronously.
-    if (!reSave && startIndex === 0) {
-      this._serverChangesSize += arrayChanges.reduce((s, c) => s + c.length, 0);
-    }
     let _changes = this.binaryChanges ? arrayChanges.slice(startIndex, endIndex) : JSON.stringify(arrayChanges.slice(startIndex, endIndex));
     this._send({'type': 'saveChanges', 'changes': _changes,
       'startSaveChanges': (startIndex === 0), 'endSaveChanges': (endIndex === arrayChanges.length),
@@ -898,6 +945,8 @@
     this.deleteIndex = deleteIndex;
     if (null != this.deleteIndex && -1 !== this.deleteIndex) {
       this.deleteIndex += this.changesIndex;
+      // The server truncates the changes list by this index in checkEndAuthLock
+      this._replaceChangesSizesFrom(this.deleteIndex, []);
     }
     this._send({'type': 'unLockDocument', 'isSave': isSave, 'unlock': this.canUnlockDocument,
       'deleteIndex': this.deleteIndex, 'releaseLocks': this.canReleaseLocks});
@@ -1297,6 +1346,10 @@
     if (undefined !== data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
       this.syncChangesIndex = data['syncChangesIndex'];
     }
+    this._confirmChangesSizes(data['syncChangesIndex']);
+    // The save operation is over, nothing of it stays pending
+    this._isSaveOperation = false;
+    this._pendingChangesSize = 0;
 	
     if (this.onUnSaveLock) {
       this.onUnSaveLock();
@@ -1310,17 +1363,21 @@
         this.syncChangesIndex = syncChangesIndex;
       }
       if (allServerChanges) {
+        // Received changes occupy the last allServerChanges.length indexes of the server list
+        var sizes = [];
         for (var i = 0; i < allServerChanges.length; ++i) {
           var change = allServerChanges[i];
           var changesOneUser = this.binaryChanges ? new Uint8Array(change['change']) : JSON.parse(change['change']);
+          sizes.push(0);
           if (changesOneUser) {
             if (change['user'] !== this._userId) {
               this.lastOtherSaveTime = change['time'];
             }
-            this._serverChangesSize += changesOneUser.length;
+            sizes[i] = changesOneUser.length;
             this.onSaveChanges(changesOneUser, change['useridoriginal'], bFirstLoad);
           }
         }
+        this._replaceChangesSizesFrom(Math.max(0, changesIndex - allServerChanges.length), sizes);
       }
       this.onChangesIndex(changesIndex);
     }
@@ -1351,6 +1408,7 @@
     if (undefined !== data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
       this.syncChangesIndex = data['syncChangesIndex'];
     }
+    this._confirmChangesSizes(data['syncChangesIndex']);
 
     this.saveChanges(this.arrayChanges, this.currentIndexEnd);
   };
@@ -1506,7 +1564,7 @@
       this.isLicenseInit = true;
       this.onLicense(data['license']);
       if (this.onAiPluginSettings) {
-        this.onAiPluginSettings(data['aiPluginSettings']);
+        this.onAiPluginSettings(data['aiPluginSettings'], data['aiPluginSettingsAllowBrowserProxy']);
       }
     }
   };
@@ -1578,7 +1636,7 @@
       this._onLicenseChanged(data);
       this._onAuthParticipantsChanged(data['participants']);
 
-      this._onSpellCheckInit(data['g_cAscSpellCheckUrl']);
+      this._onSpellCheckInit();
       this._onSetIndexUser(this._indexUser);
 
       this._onMessages(data, false);

@@ -126,7 +126,7 @@
 		}
 	};
 
-	CDataFormula.prototype.correctToInterface = function (ws, oValidation){
+	CDataFormula.prototype.correctToInterface = function (ws, oValidation, activeCell){
 		let data = {
 			val : this.text,
 			isNum: isNum(this.text),
@@ -199,7 +199,7 @@
 				toListPreview(data);
 			} else if (this && this._formula) {
 				//if the formula contains references to ranges, they need to be shifted depending on the active area
-				var offset = oValidation.calculateOffset(ws);
+				var offset = oValidation.calculateOffset(ws, activeCell);
 				if (offset) {
 					this._formula.changeOffset(offset);
 				}
@@ -526,9 +526,15 @@
 			AscCommonExcel.g_oVLOOKUPCache.clean();
 			AscCommonExcel.g_oHLOOKUPCache.clean();
 			AscCommonExcel.g_oMatchCache.clean();
-			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
+			AscCommonExcel.g_oCountIFSCache.clean();
+			AscCommonExcel.g_oSumIfCache.clean();
+			AscCommonExcel.g_oAverageIfCache.clean();
+			AscCommonExcel.g_oSumIFSCache.clean();
+			AscCommonExcel.g_oAverageIFSCache.clean();
+			AscCommonExcel.g_oMaxIFSCache.clean();
+			AscCommonExcel.g_oMinIFSCache.clean();
 		};
 
 		let cellType = cell.getType();
@@ -670,7 +676,7 @@
 					aValue = [];
 					aData = [];
 					let duplicatedMap = [];
-					list._foreachNoEmpty(function (cell) {
+					list._foreachDataOnly(function (cell) {
 						if (!cell.isNullTextString()) {
 							let val = cell.getValue();
 							if (!duplicatedMap[val]) {
@@ -1243,7 +1249,7 @@
 		return false;
 	};
 
-	CDataValidation.prototype.calculateOffset = function (ws) {
+	CDataValidation.prototype.calculateOffset = function (ws, activeCell) {
 		if (!this.ranges) {
 			return null;
 		}
@@ -1262,8 +1268,9 @@
 			}
 		}
 		if (_row !== null && _col !== null) {
-			var selectionRange = ws.getSelection();
-			var activeCell = selectionRange.activeCell;
+			if (!activeCell) {
+				activeCell = ws.getSelection().activeCell;
+			}
 			res = new AscCommon.CellBase(activeCell.row - _row, activeCell.col - _col);
 		}
 

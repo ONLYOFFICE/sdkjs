@@ -67,9 +67,9 @@
 		//todo more checks
 		return this.ranges && this.ranges.length > 0;
 	};
-	CConditionalFormatting.prototype.initRules = function (ws) {
+	CConditionalFormatting.prototype.initRules = function (ws, opt_skipFormulaInit) {
 		for (var i = 0; i < this.aRules.length; ++i) {
-			this.aRules[i].updateConditionalFormatting(this, ws);
+			this.aRules[i].updateConditionalFormatting(this, ws, opt_skipFormulaInit);
 		}
 	};
 
@@ -652,6 +652,30 @@
 		}
 	};
 
+	CConditionalFormattingRule.prototype.changeFormulaOffset = function (offset, ws) {
+		//shift every formula the rule owns by the copy/paste offset:
+		//aRuleElements (expression/cellIs) and the aCFVOs formulas of colorScale/dataBar/iconSet.
+		if (!offset || (0 === offset.row && 0 === offset.col) || !this.aRuleElements) {
+			return;
+		}
+		for (var i = 0; i < this.aRuleElements.length; ++i) {
+			var elem = this.aRuleElements[i];
+			if (!elem) {
+				continue;
+			}
+			if (elem instanceof CFormulaCF) {
+				elem.setOffset(offset, ws);
+			} else if (elem.aCFVOs) {
+				for (var j = 0; j < elem.aCFVOs.length; ++j) {
+					var cfvo = elem.aCFVOs[j];
+					if (cfvo && cfvo.formula) {
+						cfvo.formula.setOffset(offset, ws);
+					}
+				}
+			}
+		}
+	};
+
 	CConditionalFormattingRule.prototype.getUnionRange = function (opt_ranges) {
 		var res = null;
 
@@ -930,7 +954,7 @@
 	CConditionalFormattingRule.prototype.hasStdDev = function () {
 		return null !== this.stdDev;
 	};
-	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws) {
+	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws, opt_skipFormulaInit) {
 		var i;
 		this.pivot = cf.pivot;
 		if (cf.ranges) {
@@ -939,11 +963,15 @@
 				this.ranges.push(cf.ranges[i].clone());
 			}
 		}
-		if (ws) {
-			if (this.aRuleElements) {
-				for (let i = 0 ; i < this.aRuleElements.length; i++) {
-					this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
-				}
+		//opt_skipFormulaInit - on open parse formulas later, when all sheets are loaded (cross-sheet refs)
+		if (ws && !opt_skipFormulaInit) {
+			this.initRuleElements(ws);
+		}
+	};
+	CConditionalFormattingRule.prototype.initRuleElements = function (ws) {
+		if (ws && this.aRuleElements) {
+			for (let i = 0; i < this.aRuleElements.length; i++) {
+				this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
 			}
 		}
 	};
@@ -2193,7 +2221,9 @@
 	};
 	CFormulaCF.prototype.recalcFormula = function (ws, toInterface) {
 		var f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-		if (f.parse(!toInterface)) {
+		//to interface we parse model formula without localization, from interface - with localization
+		let isParsed = toInterface ? f.parse() : f.parse(true, true);
+		if (isParsed) {
 			this.Text = toInterface ? f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true) : f.assemble();
 		}
 	};
@@ -2221,6 +2251,20 @@
 		//m_arrFormula[i]->isExtended() -> return (m_sNodeName == L"xm:f");
 		return true;
 	};
+	CFormulaCF.prototype.setOffset = function (offset, ws) {
+		//shift relative references in the formula by the copy/paste offset (mirrors CDataFormula.setOffset).
+		//changeOffset -> Range.setOffsetWithAbs respects $-absolute refs and turns out-of-bounds into #REF!,
+		//so this reproduces MS behaviour (relative refs move, $-anchored refs and constants stay).
+		if (!offset || (0 === offset.row && 0 === offset.col) || null == this.Text) {
+			return;
+		}
+		var f = this.getFormula(ws);
+		if (f) {
+			this.Text = f.changeOffset(offset, null, true).assemble(true);
+			//drop the parsed formula so it is re-parsed (against the rule bbox anchor) on the next init
+			this._f = null;
+		}
+	};
 	CFormulaCF.prototype.getFormulaStr = function (needBuild) {
 		var res = null;
 		if (this._f) {
@@ -2231,7 +2275,7 @@
 				var ws = oWB.getActiveWs();
 				if (ws) {
 					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-					_f.parse(true, true);
+					_f.parse();
 					res = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 				}
 			}
@@ -2557,7 +2601,9 @@
 		return this.Type;
 	};
 	CConditionalFormatValueObject.prototype.asc_getVal = function () {
-		return !isNumeric(this.Val) ? "=" + this.Val : this.Val;
+		if (!isNumeric(this.Val))
+			return "=" + this.Val;
+		return AscCommon.g_oFormatParser.toLocaleNumber(this.Val);
 	};
 	CConditionalFormatValueObject.prototype.asc_setGte = function (val) {
 		this.Gte = val;
@@ -2566,8 +2612,7 @@
 		this.Type = val;
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
-		val = correctFromInterface(val);
-		this.Val = (val !== undefined && val !== null) ? val + "" : val;
+		this.Val = correctFromInterface(val);
 	};
 	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
 		if (this.Gte === elem.Gte && this.Type === elem.Type && this.Val === elem.Val && this.Type === elem.Type) {
@@ -2842,8 +2887,8 @@
 
 			if (_prevNum && _isNum) {
 				if (_isNum && _prevNum) {
-					_val = parseFloat(_val);
-					_prevVal = parseFloat(_prevVal);
+					_val = AscCommon.g_oFormatParser.parseLocaleNumber(_val);
+					_prevVal = AscCommon.g_oFormatParser.parseLocaleNumber(_prevVal);
 				}
 				if (type === Asc.ECfType.colorScale) {
 					if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
@@ -2866,7 +2911,7 @@
 		var _isNumeric;
 		for (i = 0; i < props.length; i++) {
 			if (undefined !== props[i][1] && type !== Asc.ECfType.top10) {
-				_isNumeric = isNumeric(props[i][0]);
+				_isNumeric = AscCommon.g_oFormatParser.tryParseLocaleNumber(props[i][0]) !== null;
 				nError = _checkValue(props[i][0], props[i][1], _isNumeric);
 				if (nError !== null) {
 					return [nError, i];
@@ -2923,8 +2968,12 @@
 	}
 
 	function correctFromInterface(val) {
-		let _isNumeric = isNumeric(val);
-		if (!_isNumeric) {
+		if (typeof val === "number")
+			return val + "";
+		let _num = AscCommon.g_oFormatParser.tryParseLocaleNumber(val);
+		if (_num !== null) {
+			val = String(_num);
+		} else {
 			let isDate;
 			let isFormula;
 
@@ -2938,7 +2987,7 @@
 			//store number
 			if (isDate) {
 				val = isDate.value;
-				return val;
+				return typeof val === "number" ? val + "" : val;
 			}
 
 			if (!isFormula) {

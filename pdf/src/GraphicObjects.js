@@ -48,6 +48,18 @@
 	CGraphicObjects.prototype.createShape = function() {
 		return new AscPDF.CPdfShape();
 	};
+	CGraphicObjects.prototype.private_InsertShapesFromSvg = function(image, shapes) {
+		let doc = this.document;
+		let pageIndex = image.GetPage();
+		this.resetSelection();
+		image.deleteDrawingBase();
+		for (let i = 0; i < shapes.length; ++i) {
+			let shape = shapes[i];
+			doc.AddDrawing(shape, pageIndex);
+			shape.SetNeedRecalc(true);
+			this.selectObject(shape, pageIndex);
+		}
+	};
     CGraphicObjects.prototype.updateSelectionState = function(bNoCheck) {
         let text_object, drawingDocument = this.drawingDocument;
         if (this.selection.textSelection) {
@@ -477,7 +489,7 @@
         let target_text_object = AscFormat.getTargetTextObject(this);
         if (target_text_object) {
             let oGroup = target_text_object.getMainGroup && target_text_object.getMainGroup();
-            if (oGroup && oGroup.IsAnnot())
+            if ((oGroup && oGroup.IsAnnot()) || (target_text_object.IsForm && target_text_object.IsForm()))
                 return null;
             
             if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
@@ -498,7 +510,8 @@
                     let oGroup = arr[i].getMainGroup && arr[i].getMainGroup();
                     if (arr[i].IsAnnot && arr[i].IsAnnot()
                         || (oGroup && oGroup.IsAnnot && oGroup.IsAnnot())
-                        || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()) {
+                        || arr[i].IsDrawing() && arr[i].IsShape() && arr[i].GetEditField()
+						|| arr[i].IsForm()) {
                         return null;
                     }
 
@@ -564,7 +577,7 @@
                         if (arr[i].getDocContent) {
                             if (arr[i].IsDrawing() && arr[i].IsEditFieldShape()) {
                                 let oField = arr[i].GetEditField();
-                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent ? oContent.GetCalculatedTextPr() : null;
 
                                 cur_pr = new AscWord.CTextPr();
@@ -635,9 +648,178 @@
         
         return oPageInfo ? oPageInfo.drawings : [];
     };
+    CGraphicObjects.prototype.getAnnotObjects = function(nPage) {
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+        
+        return oPageInfo ? oPageInfo.annots.filter(function(annot) {
+			if (annot.IsLink() || (annot.IsRedact() && annot.GetRedactId())) {
+				return false;
+			}
 
+			return true;
+		}) : [];
+    };
+    CGraphicObjects.prototype.getFieldEditShapeObjects = function(nPage) {
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+        
+        return oPageInfo ? oPageInfo.fields.map(function(field) {
+			return field.GetEditShape();
+		}) : [];
+    };
+	
     CGraphicObjects.prototype.getDrawingArray = function() {
         return this.document.drawings;
+    };
+    CGraphicObjects.prototype.getObjectPasteShift = function(aExisting, oRefObject, fGetBounds, dStep) {
+        if (!aExisting || !oRefObject) {
+            return 0;
+        }
+
+        let oRefBounds = fGetBounds(oRefObject);
+        if (!oRefBounds) {
+            return 0;
+        }
+
+        let fAE = AscFormat.fApproxEqual;
+        let dDelta = 0.1;
+        let fMatch = function(oCur, dCmpX, dCmpY) {
+            if (oCur === oRefObject) {
+                return false;
+            }
+            let oCurBounds = fGetBounds(oCur);
+            if (!oCurBounds) {
+                return false;
+            }
+            return fAE(dCmpX, oCurBounds.x, dDelta) &&
+                fAE(dCmpY, oCurBounds.y, dDelta) &&
+                fAE(oRefBounds.w, oCurBounds.w, dDelta) &&
+                fAE(oRefBounds.h, oCurBounds.h, dDelta);
+        };
+
+        let nBaseIdx = -1;
+        for (let i = 0; i < aExisting.length; ++i) {
+            if (fMatch(aExisting[i], oRefBounds.x, oRefBounds.y)) {
+                nBaseIdx = i;
+                break;
+            }
+        }
+        if (nBaseIdx === -1) {
+            return 0;
+        }
+
+        let dShift = dStep;
+        for (let i = nBaseIdx + 1; i < aExisting.length; ++i) {
+            if (fMatch(aExisting[i], oRefBounds.x + dShift, oRefBounds.y + dShift)) {
+                dShift += dStep;
+            }
+        }
+        return dShift;
+    };
+    CGraphicObjects.prototype.getDrawingPasteShift = function(oDrawing, nPage) {
+        let oPageInfo = this.document.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return 0;
+        }
+        let dStep = 12 * g_dKoef_pt_to_mm;
+        let fGetBounds = function(oDrawing) {
+            let dX = oDrawing.getXfrmOffX();
+            let dY = oDrawing.getXfrmOffY();
+            let dW = oDrawing.getXfrmExtX();
+            let dH = oDrawing.getXfrmExtY();
+            if (dX === null || dY === null || dW === null || dH === null) {
+                return null;
+            }
+            return {x: dX, y: dY, w: dW, h: dH};
+        };
+        return this.getObjectPasteShift(oPageInfo.GetDrawings(), oDrawing, fGetBounds, dStep);
+    };
+    CGraphicObjects.prototype.getAnnotPasteShift = function(oRefAnnot, nPage) {
+        let oPageInfo = this.document.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return 0;
+        }
+
+		function fGetBounds(oObject) {
+			let aRect = oObject.GetRect();
+			if (!aRect) {
+				return null;
+			}
+			return {x: aRect[0], y: aRect[1], w: aRect[2] - aRect[0], h: aRect[3] - aRect[1]};
+		}
+
+        let dStep = 12;
+        return this.getObjectPasteShift(oPageInfo.GetAnnots(), oRefAnnot, fGetBounds, dStep);
+    };
+    CGraphicObjects.prototype.getFieldPasteShift = function(oRefField, nPage) {
+        let oPageInfo = this.document.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return 0;
+        }
+
+		function fGetBounds(oObject) {
+			let aRect = oObject.GetRect();
+			if (!aRect) {
+				return null;
+			}
+			return {x: aRect[0], y: aRect[1], w: aRect[2] - aRect[0], h: aRect[3] - aRect[1]};
+		}
+
+        let dStep = 12;
+        return this.getObjectPasteShift(oPageInfo.GetFields(), oRefField, fGetBounds, dStep);
+    };
+    CGraphicObjects.prototype.ComputeDrawingAddingPos = function(nPage, nExtX, nExtY, isFromUI) {
+        let oDoc        = this.document;
+        let oViewRect   = oDoc.Viewer.getViewingRect(nPage);
+        let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
+        let nPageW      = oDoc.GetPageWidthMM(nPage);
+        let nPageH      = oDoc.GetPageHeightMM(nPage);
+        let nPosX;
+        let nPosY;
+
+        if (isFromUI) {
+            switch (nRotAngle) {
+                case 0:
+                    nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
+                    break;
+                case 90:
+                    nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 4) - nExtX / 2;
+                    nPosY = nPageH - nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 2) - nExtY / 2;
+                    break;
+                case 180:
+                    nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH - nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
+                    break;
+                case 270:
+                    nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 4) - nExtX / 2;
+                    nPosY = nPageH * (oViewRect.x + (oViewRect.r - oViewRect.x) / 2) - nExtY / 2;
+                    break;
+            }
+        }
+        else {
+            switch (nRotAngle) {
+                case 0:
+                    nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                    break;
+                case 90:
+                    nPosX = nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                    nPosY = nPageH - nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
+                    break;
+                case 180:
+                    nPosX = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                    nPosY = nPageH - nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                    break;
+                case 270:
+                    nPosX = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtX / 2;
+                    nPosY = nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtY / 2;
+                    break;
+            }
+        }
+
+        return {x: nPosX, y: nPosY}
     };
 
     CGraphicObjects.prototype.canEditText = function () {
@@ -1104,7 +1286,7 @@
             }
         }
         else {
-            if (this.selection.groupSelection) {
+            if (this.selection.groupSelection && !this.selection.groupSelection.IsAnnot()) {
                 if (!this.selection.groupSelection.selection.chartSelection) {
                     this.selection.groupSelection.resetSelection(this);
                     for (i = this.selection.groupSelection.arrGraphicObjects.length - 1; i > -1; --i) {
@@ -1113,10 +1295,25 @@
                 }
             } else if (!this.selection.chartSelection) {
                 let nCurPage = this.document.GetCurPage();
+				let oActiveObj = this.document.GetActiveObject();
+				let aObjects;
+
+				if (oActiveObj) {
+					if (oActiveObj.IsDrawing()) {
+						aObjects = this.getDrawingObjects(nCurPage);
+					}
+					else if (oActiveObj.IsAnnot()) {
+						aObjects = this.getAnnotObjects(nCurPage);
+					}
+					else if (oActiveObj.IsForm()) {
+						aObjects = this.getFieldEditShapeObjects(nCurPage);
+					}
+				}
+
                 this.resetSelection();
-                var drawings = this.getDrawingObjects(nCurPage);
-                for (i = drawings.length - 1; i > -1; --i) {
-                    this.selectObject(drawings[i], nCurPage);
+
+                for (i = aObjects.length - 1; i > -1; --i) {
+                    this.selectObject(aObjects[i], nCurPage);
                 }
             }
         }
@@ -1165,18 +1362,6 @@
                     return true;
                 }
 				let sCursorType = ret.cursorType;
-				let oAPI = this.getEditorApi();
-				if(oAPI.isFormatPainterOn())
-				{
-					if(sCursorType !== "text")
-					{
-						let oData = oAPI.getFormatPainterData();
-						if(oData.isDrawingData())
-						{
-							sCursorType = AscCommon.Cursors.ShapeCopy;
-						}
-					}
-				}
                 this.drawingDocument.SetCursorType(sCursorType);
             }
             return true;
@@ -1226,7 +1411,7 @@
                 ty = invert_transform_text.TransformPointY(x, y);
     
                 // Render controls for Document Editor
-                if (this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
+                if (this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.IsForm()) {
                     var oForm = object.getInnerForm();
                     if (oForm)
                         oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, tx, ty, 0, false);
@@ -1264,8 +1449,15 @@
         if (this.selectedObjects.length == 0 && !oDoc.GetActiveObject()) {
             oDoc.SetMouseDownObject(object);
         }
-        object.select(this, pageIndex);
 
+		// for restore state in edit mode
+		if (object.IsForm() && oDoc.IsEditFieldsMode()) {
+			object = object.GetEditShape();
+		}
+
+        object.select(this, pageIndex);
+		this.resetInternalSelection();
+		
         if (AscFormat.MoveAnimationDrawObject) {
             if (object instanceof AscFormat.MoveAnimationDrawObject) {
                 for (let i = this.selectedObjects.length - 1; i > -1; --i) {
@@ -1364,7 +1556,7 @@
             oGm.drawSelect(pageIndex, drawingDocument);
         } else if (oTx) {
             if (oTx.selectStartPage === pageIndex) {
-                if (!oTx.isForm()) {
+                if (!oTx.IsForm()) {
                     let isLineAnnot = oTx.IsAnnot() && oTx.IsLine();
 
                     drawingDocument.DrawTrack(
@@ -1455,16 +1647,17 @@
                 if (oDrawing.selectStartPage === pageIndex) {
 
                     if (oDrawing.IsForm()) {
-                        oDrawing = oDrawing.editShape;
+						return;
                     }
 
-                    let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
+					let isAnnot = oDrawing.IsAnnot();
+                    let nType = isAnnot && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 
-                    if (oDrawing.IsAnnot() && (oDrawing.IsTextMarkup() || oDrawing.IsComment())) {
-                        oDrawing.DrawSelected(drawingDocument.Overlay);
+                    if (isAnnot && (oDrawing.IsTextMarkup() || oDrawing.IsText())) {
+                        oDrawing.DrawSelected(this.document.Viewer.overlay);
                     }
                     else {
-                        if (oDrawing.IsAnnot() && oDrawing.IsFreeText()) {
+                        if (isAnnot && oDrawing.IsFreeText()) {
                             drawingDocument.DrawTrack(
                                 nType,
                                 oDrawing.getTransformMatrix(),
@@ -1479,18 +1672,22 @@
                             );
                         }
                         else {
-                            drawingDocument.DrawTrack(
-                                nType,
-                                oDrawing.getTransformMatrix(),
-                                0,
-                                0,
-                                oDrawing.extX,
-                                oDrawing.extY,
-                                AscFormat.CheckObjectLine(oDrawing),
-                                oDrawing.canRotate(),
-                                undefined,
-                                (isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
-                            );
+							if (isAnnot && oDrawing.IsLink() && !Asc.editor.canEdit()) {
+								return;
+							}
+
+							drawingDocument.DrawTrack(
+								nType,
+								oDrawing.getTransformMatrix(),
+								0,
+								0,
+								oDrawing.extX,
+								oDrawing.extY,
+								AscFormat.CheckObjectLine(oDrawing),
+								oDrawing.canRotate(),
+								undefined,
+								(isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
+							);
                         }
                     }
                 }
@@ -1560,8 +1757,17 @@
 
                         // edit field shape
                         if (object.IsDrawing() && object.IsEditFieldShape() && oAcitveObj == object.GetEditField()) {
-                            oDoc.SetMouseDownObject(oPrev && oPrev.GetEditField() || null, false);
-                            oDoc.activeForm = oPrev && oPrev.GetEditField() || null;
+							if (oPrev) {
+								if (oPrev.IsDrawing()) {
+									let oField = oPrev.GetEditField();
+									oDoc.SetMouseDownObject(oField, false);
+									oDoc.activeForm = oField;
+								}
+								else {
+									oDoc.SetMouseDownObject(oPrev, false);
+									oDoc.activeForm = oPrev;
+								}
+							}
                         }
                         // other objects
                         else if (oAcitveObj == object) {
@@ -1655,6 +1861,11 @@
 		page.drawings.forEach(function(drawing){
 			drawing.getAllRasterImages(result);
 		});
+		page.annots.forEach(function(annot) {
+			if (annot.IsStamp() && !annot.IsNeedDrawFromStream() && AscPDF.STAMP_TYPES.Image == annot.GetIconType()) {
+				annot.getAllRasterImages(result);
+			}
+		});
 		
 		return result;
 	};
@@ -1718,6 +1929,19 @@
             var ret = false, ret2;
             for (var i = 0; i < arr.length; ++i) {
                 let drawing = arr[i];
+				let mainGroup = drawing.getMainGroup();
+				
+				if (mainGroup && mainGroup.IsAnnot && mainGroup.IsAnnot()) {
+					if (mainGroup.IsFreeText() && !mainGroup.IsInTextBox()) {
+						return;
+					}
+				}
+
+				if (drawing.IsForm() || (drawing.IsAnnot && drawing.IsAnnot() && !(drawing.GetDocContent() && drawing.IsInTextBox()))) {
+					return;
+				}
+				
+
                 const newShape = arr[i].checkDrawingPartWithHistory && arr[i].checkDrawingPartWithHistory();
                 if (newShape) {
                     drawing = newShape;
@@ -1767,7 +1991,7 @@
                                 oField.SetAlign(AscPDF.getPdfTypeAlignByInternal(args[0]));
                             }
                             else if (f == CDocumentContent.prototype.IncreaseDecreaseFontSize) {
-                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent.GetCalculatedTextPr();
                                 
                                 let nCurFontSize = oCalcedTextPr.GetFontSize();
@@ -2088,6 +2312,10 @@
                 this.resetConnectors(this.selectedObjects);
                 for (let i = 0; i < this.selectedObjects.length; ++i) {
                     let oSp = this.selectedObjects[i];
+					if (oSp.IsForm && oSp.IsForm()) {
+						return;
+					}
+					
                     oSp.deleteDrawingBase();
                     oSp.setBDeleted(true);
                 }
@@ -2128,7 +2356,6 @@
     CGraphicObjects.prototype.setDefaultTabSize         = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
     CGraphicObjects.prototype.changeTextCase            = AscFormat.DrawingObjectsController.prototype.changeTextCase;
     CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
-    CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
     CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
     CGraphicObjects.prototype.setParagraphBidi          = AscFormat.DrawingObjectsController.prototype.setParagraphBidi;
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = AscFormat.DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges;

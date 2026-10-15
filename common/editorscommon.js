@@ -405,7 +405,7 @@
 		this.hotspot = _hotspot;
 		this.default = _default;
 	}
-	CHTMLCursorItemBase.prototype.baseUrl = "../../../../sdkjs/common/Images/cursors/";
+	CHTMLCursorItemBase.prototype.baseUrl = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/cursors/";
 	CHTMLCursorItemBase.prototype.getValue = function() { return this.default; };
 
 	/**
@@ -533,7 +533,7 @@
 			try
 			{
 				var xhr = new XMLHttpRequest();
-				xhr.open("GET", "../../../../sdkjs/common/Images/cursors/svg.json", true);
+				xhr.open("GET", AscCommon.RELATIVE_SDKJS_PATH + "common/Images/cursors/svg.json", true);
 				var t = this;
 				xhr.onload = function()
 				{
@@ -766,8 +766,20 @@
 
 		return !!_relsPiece;
 	}
+	function isOfdFormatFile(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+			return false;
+		}
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
+			return false;
+		}
+		let ofdXml = jsZlib.getFile("OFD.xml");
+		jsZlib.close();
+		return !!ofdXml;
+	}
 	function checkNativeViewerSignature(stream) {
-		return isPdfFormatFile(stream) || isDjvuFormatFile(stream) || isXpsFormatFile(stream);
+		return isPdfFormatFile(stream) || isDjvuFormatFile(stream) || isXpsFormatFile(stream) || isOfdFormatFile(stream);
 	}
 	function checkStreamSignature(stream, Signature) {
 		if (stream.length > Signature.length) {
@@ -782,6 +794,79 @@
 	}
 	function checkOOXMLSignature(stream) {
 		return null !== getEditorByOOXMLSignature(stream);
+	}
+	function checkOfficeCryptSignature(stream) {
+		// Same rule as COfficeFileFormatChecker::isMS_OFFICECRYPTOFormatFile: a CFB whose root storage has an "EncryptionInfo" entry
+		const cfbSignature = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+		if (!(stream && stream.length >= 512)) {
+			return false;
+		}
+		for (let i = 0; i < cfbSignature.length; ++i) {
+			if (cfbSignature[i] !== stream[i]) {
+				return false;
+			}
+		}
+		const readUInt32 = function(pos) {
+			return (stream[pos] | (stream[pos + 1] << 8) | (stream[pos + 2] << 16) | (stream[pos + 3] << 24)) >>> 0;
+		};
+		const sectorSize = 1 << (stream[30] | (stream[31] << 8));
+		if (512 !== sectorSize && 4096 !== sectorSize) {
+			return false;
+		}
+		// Sector N starts after the header at (N + 1) * sectorSize
+		const maxSectorCount = Math.max(0, Math.floor(stream.length / sectorSize) - 1);
+		const idsPerSector = sectorSize / 4;
+		const getSectorPos = function(sector) {
+			return sector >= 0 && sector < maxSectorCount ? (sector + 1) * sectorSize : -1;
+		};
+		// FAT sector numbers: the first 109 are in the header, the rest in the DIFAT chain
+		const fatSectorCount = Math.min(readUInt32(44), maxSectorCount);
+		const fatSectors = [];
+		for (let i = 0; i < 109 && fatSectors.length < fatSectorCount; ++i) {
+			fatSectors.push(readUInt32(76 + 4 * i));
+		}
+		for (let difatPos = getSectorPos(readUInt32(68)); difatPos >= 0 && fatSectors.length < fatSectorCount;) {
+			for (let i = 0; i < idsPerSector - 1 && fatSectors.length < fatSectorCount; ++i) {
+				fatSectors.push(readUInt32(difatPos + 4 * i));
+			}
+			difatPos = getSectorPos(readUInt32(difatPos + sectorSize - 4));
+		}
+		const getNextSector = function(sector) {
+			const fatPos = getSectorPos(fatSectors[Math.floor(sector / idsPerSector)]);
+			return fatPos >= 0 ? readUInt32(fatPos + 4 * (sector % idsPerSector)) : -1;
+		};
+		const entries = [];
+		for (let sector = readUInt32(48), count = 0; getSectorPos(sector) >= 0 && count < maxSectorCount; sector = getNextSector(sector), ++count) {
+			for (let pos = getSectorPos(sector); pos < getSectorPos(sector) + sectorSize; pos += 128) {
+				entries.push(pos);
+			}
+		}
+		if (0 === entries.length) {
+			return false;
+		}
+		// Walk the red-black tree of the root storage children: child at +76, left and right siblings at +68 and +72
+		const name = "EncryptionInfo";
+		const ids = [readUInt32(entries[0] + 76)];
+		for (let visited = 0; ids.length > 0 && visited < entries.length;) {
+			const id = ids.pop();
+			if (id >= entries.length) {
+				continue;
+			}
+			++visited;
+			const pos = entries[id];
+			let j = 0;
+			const type = stream[pos + 66];
+			if ((1 === type || 2 === type || 5 === type) && 2 * (name.length + 1) === (stream[pos + 64] | (stream[pos + 65] << 8))) {
+				while (j < name.length && name.charCodeAt(j) === (stream[pos + 2 * j] | (stream[pos + 2 * j + 1] << 8))) {
+					++j;
+				}
+			}
+			if (j === name.length) {
+				return true;
+			}
+			ids.push(readUInt32(pos + 68), readUInt32(pos + 72));
+		}
+		return false;
 	}
 	function getEditorByBinSignature(stream, Signature) {
 		if (stream.length > 4) {
@@ -999,7 +1084,7 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, userSessionId, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, userSessionId, data, forceSaveType, fError, fsuccess)
 	{
 		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
 		let url =sSaveFileLocalUrl + '/' + docId;
@@ -1012,6 +1097,10 @@
 		}
 		if (userSessionId) {
 			url += '&' + Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId);
+		}
+		//null asks the server for the final save of the session, a type asks for an intermediate one
+		if (null !== forceSaveType && undefined !== forceSaveType) {
+			url += '&forcesavetype=' + forceSaveType;
 		}
 		asc_ajax({
 			type:        'POST',
@@ -1717,7 +1806,7 @@
 	//todo get from server config
 	var c_oAscImageUploadProp = {//Not all browsers allow getting file info before upload (e.g. ie9); if params change here, change matching params in web.common
 		MaxFileSize:      25000000, //25 mb
-		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg", "tiff", "tif"]
+		SupportedFormats: ["jpg", "jpeg", "jpe", "jfif", "jif", "png", "gif", "bmp", "svg", "tiff", "tif", "webp", "heic", "heif", "avif"]
 	};
 
 	var c_oAscDocumentUploadProp = {
@@ -2888,15 +2977,15 @@
 		//TODO for formula input fix SUM(A1:B1.) - change rgRange/rgRangeR1C1,
 		// MS also complains about other symbols - ~@# (we also complain, but do not highlight range before them).
 		// to test, enter SUM(A1:B1@) in cell
-		rgRange               = /^(\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+)(?:[-+*\/^&%<=>: ;),.]|$)/,
-		rgRangeR1C1           = /^(([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?):([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),.]|$)/,
-		rgCols                = /^(\$?[A-Za-z]+:\$?[A-Za-z]+)(?:[-+*\/^&%<=>: ;),]|$)/,
-		rgColsR1C1            = /^(([Cc]{1}(\[)?(-?\d*)(\])?(:)?)([Cc]?(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),]|$)/,
-		rgRows                = /^(\$?\d+:\$?\d+)(?:[-+*\/^&%<=>: ;),]|$)/,
-		rgRowsR1C1            = /^(([Rr]{1}(\[)?(-?\d*)(\])?(:)?)([Rr]?(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),]|$)/,
-		rx_ref                = /^ *(\$?[A-Za-z]{1,3}\$?(\d{1,7}))([-+*\/^&%<=>: ;),]|$)/,
-		rx_refAll             = /^(\$?[A-Za-z]+\$?(\d+))([-+*\/^&%<=>: ;),]|$)/,
-		rx_refR1C1            = /^(([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),]|$)/,
+		rgRange               = /^(\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+)(?:[-+*\/^&%<=>: ;),.#]|$)/,
+		rgRangeR1C1           = /^(([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?):([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),.#]|$)/,
+		rgCols                = /^(\$?[A-Za-z]+:\$?[A-Za-z]+)(?:[-+*\/^&%<=>: ;),#]|$)/,
+		rgColsR1C1            = /^(([Cc]{1}(\[)?(-?\d*)(\])?(:)?)([Cc]?(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),#]|$)/,
+		rgRows                = /^(\$?\d+:\$?\d+)(?:[-+*\/^&%<=>: ;),#]|$)/,
+		rgRowsR1C1            = /^(([Rr]{1}(\[)?(-?\d*)(\])?(:)?)([Rr]?(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),#]|$)/,
+		rx_ref                = /^ *(\$?[A-Za-z]{1,3}\$?(\d{1,7}))([-+*\/^&%<=>: ;),#]|$)/,
+		rx_refAll             = /^(\$?[A-Za-z]+\$?(\d+))([-+*\/^&%<=>: ;),#]|$)/,
+		rx_refR1C1            = /^(([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),#]|$)/,
 		rx_ref3D_non_quoted   = new XRegExp("^(?<name_from>[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*))?!", "i"),
 		rx_ref3D_quoted       = new XRegExp("^'(?<name_from>(?:''|[^\\[\\]'\\/*?:])*)(?::(?<name_to>(?:''|[^\\[\\]'\\/*?:])*))?'!"),
 		rx_ref3D_non_quoted_2 = new XRegExp("^(?<name_from>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*))?!", "i"),
@@ -2920,7 +3009,7 @@
 		rx_space              = /\s/,
 		rx_intersect          = /^ +/,
 		rg_str_allLang        = /[A-Za-z\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0345\u0370-\u0374\u0376\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0527\u0531-\u0556\u0559\u0561-\u0587\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0657\u0659-\u065F\u066E-\u06D3\u06D5-\u06DC\u06E1-\u06E8\u06ED-\u06EF\u06FA-\u06FC\u06FF\u0710-\u073F\u074D-\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0817\u081A-\u082C\u0840-\u0858\u08A0\u08A2-\u08AC\u08E4-\u08E9\u08F0-\u08FE\u0900-\u093B\u093D-\u094C\u094E-\u0950\u0955-\u0963\u0971-\u0977\u0979-\u097F\u0981-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD-\u09C4\u09C7\u09C8\u09CB\u09CC\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09F0\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3E-\u0A42\u0A47\u0A48\u0A4B\u0A4C\u0A51\u0A59-\u0A5C\u0A5E\u0A70-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD-\u0AC5\u0AC7-\u0AC9\u0ACB\u0ACC\u0AD0\u0AE0-\u0AE3\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D-\u0B44\u0B47\u0B48\u0B4B\u0B4C\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCC\u0BD0\u0BD7\u0C01-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4C\u0C55\u0C56\u0C58\u0C59\u0C60-\u0C63\u0C82\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCC\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CF1\u0CF2\u0D02\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4C\u0D4E\u0D57\u0D60-\u0D63\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E46\u0E4D\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0ECD\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F71-\u0F81\u0F88-\u0F97\u0F99-\u0FBC\u1000-\u1036\u1038\u103B-\u103F\u1050-\u1062\u1065-\u1068\u106E-\u1086\u108E\u109C\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135F\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1713\u1720-\u1733\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17B3\u17B6-\u17C8\u17D7\u17DC\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191C\u1920-\u192B\u1930-\u1938\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u1A00-\u1A1B\u1A20-\u1A5E\u1A61-\u1A74\u1AA7\u1B00-\u1B33\u1B35-\u1B43\u1B45-\u1B4B\u1B80-\u1BA9\u1BAC-\u1BAF\u1BBA-\u1BE5\u1BE7-\u1BF1\u1C00-\u1C35\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF3\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u24B6-\u24E9\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u2E2F\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA674-\uA67B\uA67F-\uA697\uA69F-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA793\uA7A0-\uA7AA\uA7F8-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA827\uA840-\uA873\uA880-\uA8C3\uA8F2-\uA8F7\uA8FB\uA90A-\uA92A\uA930-\uA952\uA960-\uA97C\uA980-\uA9B2\uA9B4-\uA9BF\uA9CF\uAA00-\uAA36\uAA40-\uAA4D\uAA60-\uAA76\uAA7A\uAA80-\uAABE\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF5\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uABC0-\uABEA\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]/,
-		rx_name               = new XRegExp("^(?<name>" + "[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)([-+*\\/^&%<=>: ;/\n/),]|$)"),
+		rx_name               = new XRegExp("^(?<name>" + "[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)([-+*\\/^&%<=>: ;/\n/),#]|$)"),
 		rx_defName            = new test_defName(),
 		rx_protectedRangeName = new test_rx_protectedRangeName(),
 		rx_arraySeparatorsDef = /^ *[,;] */,
@@ -3574,22 +3663,45 @@
 		}
 		return [false, null, null, external, externalLength];
 	};
-	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
+	parserHelper.prototype.isNextPtg = function (formula, start_pos)
 	{
+		if (formula.charCodeAt(start_pos) !== 32)
+		{
+			return false;
+		}
+
 		if (this instanceof parserHelper)
 		{
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos), match;
-		if (subSTR.match(rx_RightParentheses) == null && subSTR.match(digitDelim ? rx_Comma : rx_CommaDef) == null &&
-			subSTR.match(rx_operators) == null && (match = subSTR.match(rx_intersect)) != null)
+		var pos = start_pos + 1;
+		var length = formula.length;
+		while (pos < length && formula.charCodeAt(pos) === 32)
 		{
-			this.pCurrPos += match[0].length;
-			this.operand_str = match[0][0];
+			++pos;
+		}
+
+		if (pos === length)
+		{
+			this.pCurrPos += (pos - start_pos);
+			this.operand_str = ' ';
 			return true;
 		}
-		return false;
+
+		var code = formula.charCodeAt(pos);
+		// )=41  *=42  +=43  ,=44  -=45  /=47  :=58  ;=59  <=60  ==61  >=62  ^=94  &=38  %=37
+		if (code === 41 || code === 44 || code === 59 ||
+			code === 43 || code === 45 || code === 42 || code === 47 ||
+			code === 94 || code === 38 || code === 37 ||
+			code === 60 || code === 61 || code === 62 || code === 58)
+		{
+			return false;
+		}
+
+		this.pCurrPos += (pos - start_pos);
+		this.operand_str = ' ';
+		return true;
 	};
 	parserHelper.prototype.isNumber = function (formula, start_pos, digitDelim)
 	{
@@ -4092,9 +4204,10 @@
 		{
 			if(dataRange)
 			{
-				if(Asc.c_oAscError.ID.No === AscFormat.isValidChartRange(dataRange))
+				let oOptions = {checkFormula: true, localFormula: true};
+				if(Asc.c_oAscError.ID.No === AscFormat.isValidChartRange(dataRange, oOptions))
 				{
-					range = AscFormat.fParseChartFormulaExternal(dataRange);
+					range = AscFormat.fParseChartFormulaExternal(dataRange, oOptions);
 				}
 			}
 		}
@@ -4554,7 +4667,6 @@
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
 
-		this.m_nPdfNewFormCounter = 0;
 		this.m_nPdfRedactCounter = 0;
 
 		this.m_nTurnOffCounter = 0;
@@ -4598,7 +4710,6 @@
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
 
-		this.m_nPdfNewFormCounter = 0;
 		this.m_nPdfRedactCounter = 0;
 	};
 	CIdCounter.prototype.GetNewIdForOForm = function()
@@ -4607,10 +4718,6 @@
 			return ("_oform_" + (++this.m_nOFormLoadCounter));
 		else
 			return ("" + this.m_sUserId + "_oform_" + (++this.m_nOFormEditCounter));
-	};
-	CIdCounter.prototype.GetNewIdForPdfForm = function()
-	{
-		return ++this.m_nPdfNewFormCounter;
 	};
 	CIdCounter.prototype.GetNewIdForPdfRedact = function()
 	{
@@ -4792,6 +4899,9 @@
 
 	CContentChangesElement.prototype.Refresh_BinaryData = function ()
 	{
+		if (!this.m_pData)
+			return;
+		
 		var Binary_Writer = AscCommon.History.BinaryWriter;
 		var Binary_Pos = Binary_Writer.GetCurPosition();
 
@@ -10926,12 +11036,7 @@
 		else
 		{
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
-
-			if (AscCommon.g_oTableId && AscCommon.g_oTableId.IsOn())
-			{
-				AscCommon.g_oTableId.TurnOff();
-				isTableId = true;
-			}
+			AscCommon.g_oTableId && AscCommon.g_oTableId.TurnOff();
 		}
 
 		let result = f.apply(oThis, args);
@@ -10943,8 +11048,7 @@
 		else
 		{
 			AscCommon.History.TurnOn && AscCommon.History.TurnOn();
-			if (isTableId)
-				AscCommon.g_oTableId.TurnOn();
+			AscCommon.g_oTableId && AscCommon.g_oTableId.TurnOn();
 		}
 
 		return result;
@@ -11634,17 +11738,17 @@
 			if (scriptDirectory) {
 				loadScript(scriptDirectory + 'sdk-all.js', onSuccess, onError);
 			} else {
-				loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+				loadScript(AscCommon.RELATIVE_SDKJS_PATH + sdkName + '/sdk-all.js', onSuccess, onError);
 			}
 		}
 	}
 
 	function loadChartStyles(onSuccess, onError) {
-		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
+		loadScript(AscCommon.RELATIVE_SDKJS_PATH + 'common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
 	function loadPathBoolean(onSuccess, onError) {
-		loadScript('../../../../sdkjs/common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
+		loadScript(AscCommon.RELATIVE_SDKJS_PATH + 'common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
 	}
 
 	function getAltGr(e)
@@ -12377,7 +12481,7 @@
 
         this.isExistDecryptedChanges = false; // whether there was at least one request to decrypt data (were there foreign changes)
 
-        this.cryptoPrefix = (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetEncryptedHeader"]) ? window["AscDesktopEditor"]["GetEncryptedHeader"]() : "ENCRYPTED;";
+        this.cryptoPrefix = AscCommon.CryptoProvider ? AscCommon.CryptoProvider.getEncryptedHeader() : "ENCRYPTED;";
         this.cryptoPrefixLen = this.cryptoPrefix.length;
 
         this.editorId = null;
@@ -12398,14 +12502,11 @@
 
         this.isNeedCrypt = function()
 		{
-			if (window.g_asc_plugins)
-			{
-                if (!window.g_asc_plugins.isRunnedEncryption())
-                    return false;
-            }
+			if (!AscCommon.CryptoProvider)
+				return false;
 
-            if (!window["AscDesktopEditor"])
-                return false;
+			if (!AscCommon.CryptoProvider.isEncryptionRunning())
+				return false;
 
             if (this.isFrameEditor)
             	return false;
@@ -12413,7 +12514,7 @@
             if (2 == this.cryptoMode)
             	return true;
 
-            if (0 === window["AscDesktopEditor"]["CryptoMode"])
+            if (0 === AscCommon.CryptoProvider.getCryptoMode())
             	return false;
 
             return true;
@@ -12427,7 +12528,7 @@
         this.addCryproImagesFromDialog = function(callback)
 		{
 			var _this = this;
-            window["AscDesktopEditor"]["OpenFilenameDialog"]("images", true, function(files) {
+            AscCommon.CryptoProvider.openFilenameDialog("images", true, function(files) {
 				if (!files)
 					return;
                 if (!Array.isArray(files)) // string detect
@@ -12441,7 +12542,7 @@
 
 				for (var i = 0; i < files.length; i++)
 				{
-                    _files.push(window["AscDesktopEditor"]["GetImageBase64"](files[i], true));
+                    _files.push(AscCommon.CryptoProvider.getImageBase64(files[i], true));
                     _options.ext.push(AscCommon.GetFileExtension(files[i]));
 				}
 
@@ -12449,32 +12550,61 @@
             });
 		};
 
-        this.addCryproImagesFromUrls = function(urls, callback)
-        {
-            var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-            _editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+		this.addCryproImagesFromUrls = function(urls, callback)
+		{
+			var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+			_editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
 
-            var _this = this;
-            window["AscDesktopEditor"]["DownloadFiles"](urls, [], function(files) {
+			var _this = this;
+			AscCommon.CryptoProvider.downloadFiles(urls, [], function(files)
+			{
 
-            	_editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+				_editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
 
-                _editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+				if (AscCommon.EncryptionWorker.isChangesHandled)
+				{
+					_editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
-            	var _files = [];
+					var _files = [];
 
-                var _options = { isImageCrypt: true, isUrls: true, callback: callback, ext : [], api: _editor };
+					var _options = {isImageCrypt: true, isUrls: true, callback: callback, ext: [], api: _editor, urls: urls, loaded: []};
 
-                for (var elem in files)
-                {
-                    _files.push(window["AscDesktopEditor"]["GetImageBase64"](files[elem], true));
-                    _options.ext.push(window["AscDesktopEditor"]["GetImageFormat"](files[elem]));
-                    window["AscDesktopEditor"]["RemoveFile"](files[elem]);
-                }
+					for (var elem in files)
+					{
+						// request index of this download (the desktop may rewrite the url key -> positional)
+						var index = urls.indexOf(elem);
+						_options.loaded.push((-1 !== index) ? index : _files.length);
 
-                _this.sendChanges(this, _files, AscCommon.EncryptionMessageType.Encrypt, _options);
-            });
-        };
+						_files.push(AscCommon.CryptoProvider.getImageBase64(files[elem], true));
+						_options.ext.push(AscCommon.CryptoProvider.getImageFormat(files[elem]));
+						AscCommon.CryptoProvider.removeFile(files[elem]);
+					}
+
+					_this.sendChanges(this, _files, AscCommon.EncryptionMessageType.Encrypt, _options);
+				}
+			});
+		};
+
+		// UploadImageUrls result ([{path, url}] for the uploaded files, or an error code) -> one entry
+		// per requested url in request order; urls that were not downloaded/uploaded carry the
+		// 'error' marker, the same way sendImgUrls reports them for the server path.
+		this.alignImageUrls = function(result, options)
+		{
+			var out = [];
+			for (var i = 0; i < options.urls.length; i++)
+				out.push({ url : "error", path : "error" });
+
+			var count = 0;
+			if (Array.isArray(result))
+			{
+				count = Math.min(result.length, options.loaded.length);
+				for (var k = 0; k < count; k++)
+					out[options.loaded[k]] = result[k];
+			}
+			if (count < out.length)
+				options.api.sendEvent("asc_onError", Asc.c_oAscError.ID.UplImageUrl, Asc.c_oAscError.Level.NoCritical);
+			return out;
+		};
 
         this.onDecodeError = function()
 		{
@@ -12548,17 +12678,17 @@
             {
             	//console.log("encrypt: " + data["changes"]);
 				if (this.arrData[0].options && this.arrData[0].options.isImageCrypt)
-                    window.g_asc_plugins.sendToEncryption({ "type" : "encryptData", "data" : this.arrData[0].data });
+                    AscCommon.CryptoProvider.sendToEncryption({ "type" : "encryptData", "data" : this.arrData[0].data });
 				else
-                    window.g_asc_plugins.sendToEncryption({ "type" : "encryptData", "data" : JSON.parse(this.arrData[0].data["changes"]) });
+                    AscCommon.CryptoProvider.sendToEncryption({ "type" : "encryptData", "data" : JSON.parse(this.arrData[0].data["changes"]) });
             }
             else if (AscCommon.EncryptionMessageType.Decrypt == this.arrData[0].type)
             {
                 //console.log("decrypt: " + data["changes"]);
                 if (this.arrData[0].options && this.arrData[0].options.isImageDecrypt)
-                    window.g_asc_plugins.sendToEncryption({ "type" : "decryptData", "data" : this.arrData[0].data });
+                    AscCommon.CryptoProvider.sendToEncryption({ "type" : "decryptData", "data" : this.arrData[0].data });
                 else
-                    window.g_asc_plugins.sendToEncryption({ "type" : "decryptData", "data" : this.arrData[0].data["changes"] });
+                    AscCommon.CryptoProvider.sendToEncryption({ "type" : "decryptData", "data" : this.arrData[0].data["changes"] });
             }
         };
 
@@ -12623,7 +12753,7 @@
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
-                            obj.options.callback(urls);
+                            obj.options.callback(AscCommon.EncryptionWorker.alignImageUrls(urls, obj.options));
                         });
 					}
 				}
@@ -12637,8 +12767,10 @@
             {
                 if (obj.options && obj.options.isImageDecrypt)
                 {
-                	window["AscDesktopEditor"]["ResaveFile"](obj.options.src, data[0]);
-                    obj.options.img["onload_crypto"](obj.options.src);
+                	// desktop: ResaveFile writes to disk and returns nothing -> re-display from src.
+                	// web: resaveFile returns a blob: URL for the decrypted bytes -> re-display from it.
+                	var _resavedSrc = AscCommon.CryptoProvider.resaveFile(obj.options.src, data[0]);
+                    obj.options.img["onload_crypto"](_resavedSrc || obj.options.src);
                 }
                 else
 				{
@@ -12669,7 +12801,7 @@
                     if (_array[i]["change"].length > _checkPrefixLen)
                     {
 						if((Asc.editor || editor).binaryChanges) {
-							_prefix = String.prototype.fromUtf8(_array[i]["change"], 0, _checkPrefixLen);
+							_prefix = AscCommon.UTF8ArrayToString(_array[i]["change"], 0, _checkPrefixLen);
 						} else {
 							_prefix = _array[i]["change"].substr(0, _checkPrefixLen);
 						}
@@ -12692,7 +12824,7 @@
                     if (_array[i].length > _checkPrefixLen)
                     {
 						if((Asc.editor || editor).binaryChanges) {
-							_prefix = String.prototype.fromUtf8(_array[i], 0, _checkPrefixLen);
+							_prefix = AscCommon.UTF8ArrayToString(_array[i], 0, _checkPrefixLen);
 						} else {
 							_prefix = _array[i].substr(0, _checkPrefixLen);
 						}
@@ -12711,7 +12843,7 @@
                     if (_array[i].m_pData.length > _checkPrefixLen)
                     {
 						if((Asc.editor || editor).binaryChanges) {
-							_prefix = String.prototype.fromUtf8(_array[i].m_pData, 0, _checkPrefixLen);
+							_prefix = AscCommon.UTF8ArrayToString(_array[i].m_pData, 0, _checkPrefixLen);
 						} else {
 							_prefix = _array[i].m_pData.substr(0, _checkPrefixLen);
 						}
@@ -12760,14 +12892,14 @@
                 }
 			}
 
-            window.g_asc_plugins.sendToEncryption({ "type" : "decryptData", "data" : this.handleChangesCallback.changes });
+            AscCommon.CryptoProvider.sendToEncryption({ "type" : "decryptData", "data" : this.handleChangesCallback.changes });
 		};
 
         this.asc_setAdvancedOptions = function(api, idOption, option)
 		{
             if (window.isNativeOpenPassword)
             {
-                window["AscDesktopEditor"]["NativeViewerOpen"](option.asc_getPassword());
+                AscCommon.CryptoProvider.nativeViewerOpen(option.asc_getPassword());
                 return;
             }
             if (window.isCloudCryptoDownloadAs)
@@ -12780,7 +12912,7 @@
             if (window["Asc"].c_oAscAdvancedOptionsID.TXT === idOption)
             {
                 var _param = ("<m_nCsvTxtEncoding>" + option.asc_getCodePage() + "</m_nCsvTxtEncoding>");
-                window["AscDesktopEditor"]["SetAdvancedOptions"](_param);
+                AscCommon.CryptoProvider.setAdvancedOptions(_param);
             }
             else if (window["Asc"].c_oAscAdvancedOptionsID.CSV === idOption)
             {
@@ -12795,13 +12927,13 @@
                     _param += ("<m_nCsvDelimiterChar>" + delimiterChar + "</m_nCsvDelimiterChar>");
                 }
 
-                window["AscDesktopEditor"]["SetAdvancedOptions"](_param);
+                AscCommon.CryptoProvider.setAdvancedOptions(_param);
             }
             else if (window["Asc"].c_oAscAdvancedOptionsID.DRM === idOption)
             {
                 var _param = ("<m_sPassword>" + AscCommon.CopyPasteCorrectString(option.asc_getPassword()) + "</m_sPassword>");
                 api.currentPassword = option.asc_getPassword();
-                window["AscDesktopEditor"]["SetAdvancedOptions"](_param);
+                AscCommon.CryptoProvider.setAdvancedOptions(_param);
             }
             return true;
 		};
@@ -14914,6 +15046,35 @@
 		return sAction.indexOf("ppaction://hlink") === 0;
 	}
 
+	const ppactionFileAction = "ppaction://hlinkfile";
+	const ppactionFilePrefix = ppactionFileAction + "?file=";
+
+	function IsLinkPPActionFile(link) {
+		return typeof link === "string" && 0 === link.indexOf(ppactionFileAction);
+	}
+
+	function GetPPActionFilePath(link) {
+		const path = link.substring(ppactionFilePrefix.length).replace(/%20/g, " ");
+		const windowsPath = /^(?:file:\/\/\/)?([a-zA-Z]:.*)$/.exec(path);
+		return windowsPath ? windowsPath[1].replace(/\//g, "\\") : path;
+	}
+
+	function GetPPActionFileUrl(link) {
+		let path = link.substring(ppactionFilePrefix.length);
+		if (!path) {
+			return "";
+		}
+		if (0 === path.indexOf("file:")) {
+			return path;
+		}
+
+		path = path.replace(/\\/g, "/");
+		if (!/^([a-zA-Z]:|\/)/.test(path)) {
+			path = AscCommonExcel.completePathForLocalLinks(path).replace(/\\/g, "/");
+		}
+		return "file:///" + path.replace(/^\/+/, "");
+	}
+
 	function generateHashParams() {
 		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64()};
 	}
@@ -15265,7 +15426,7 @@
 	function applyElementDirection(element) {
 		if (!element)
 			return;
-		const text = element.value || '';
+		const text = (element.value != null ? element.value : (element.textContent || ''));
 		let dir = 'ltr';
 		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
 			let charDir = AscCommon.getCharStrongDir(iter.value());
@@ -15617,6 +15778,13 @@
 		return value < min ? min : value > max ? max : value;
 	}
 
+	function IsNativeBuilder() {
+		return window["NATIVE_EDITOR_ENJINE"] && !window["IS_NATIVE_EDITOR"];
+	}
+	function IsNativeEngine() {
+		return window["NATIVE_EDITOR_ENJINE"];
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].consoleLog = consoleLog;
@@ -15679,6 +15847,7 @@
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
+	window["AscCommon"].checkOfficeCryptSignature = checkOfficeCryptSignature;
 	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
 	window["AscCommon"].getEditorBySignature = getEditorBySignature;
 	window["AscCommon"].getLTRString = getLTRString;
@@ -15828,6 +15997,9 @@
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
 	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
 	window["AscCommon"].IsLinkPPAction = IsLinkPPAction;
+	window["AscCommon"].IsLinkPPActionFile = IsLinkPPActionFile;
+	window["AscCommon"].GetPPActionFilePath = GetPPActionFilePath;
+	window["AscCommon"].GetPPActionFileUrl = GetPPActionFileUrl;
 	window["AscCommon"].generateHashParams = generateHashParams;
 	window["AscCommon"].fromModelAlgorithmName = fromModelAlgorithmName;
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
@@ -15865,6 +16037,8 @@
 	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
 	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
 	window["AscCommon"].rx_error = rx_error;
+	window["AscCommon"].IsNativeBuilder = IsNativeBuilder;
+	window["AscCommon"].IsNativeEngine = IsNativeEngine;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_data)
@@ -15878,7 +16052,7 @@ window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_da
 
     if (_code == 90 || _code == 91)
     {
-    	if (window["AscDesktopEditor"] && (0 !== window["AscDesktopEditor"]["CryptoMode"]) && !_editor.isLoadFullApi)
+    	if (AscCommon.CryptoProvider && (0 !== AscCommon.CryptoProvider.getCryptoMode()) && !_editor.isLoadFullApi)
 		{
             // waiting for initialization
             _editor.asc_initAdvancedOptions_params = [];
@@ -15891,25 +16065,33 @@ window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_da
     	if (AscCommon.EncryptionWorker.isNeedCrypt() && !window.checkPasswordFromPlugin)
     	{
             window.checkPasswordFromPlugin = true;
-            window.g_asc_plugins.sendToEncryption({ "type": "getPasswordByFile", "hash": _file_hash, "docinfo": _docInfo });
+            AscCommon.CryptoProvider.sendToEncryption({ "type": "getPasswordByFile", "hash": _file_hash, "docinfo": _docInfo });
             return;
         }
     }
 
     window.checkPasswordFromPlugin = false;
 	let data = undefined;
-	if (csv_data && window["AscDesktopEditor"])
+	if (csv_data)
 	{
-		var bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](csv_data);
+		let bufferArray = undefined;
+		if (AscCommon.CryptoProvider)
+		{
+			bufferArray = AscCommon.CryptoProvider.getOpenedFile(csv_data);
+		}
+		else if (window["AscDesktopEditor"] && (typeof csv_data === "string") && (0 === csv_data.indexOf("binary_content://")))
+		{
+			bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](csv_data);
+		}
 		if (bufferArray)
 			data = new Uint8Array(bufferArray);
 	}
-    _editor._onNeedParams(data, (_code == 90 || _code == 91) ? true : undefined);
+	_editor._onNeedParams(data, (_code == 90 || _code == 91) ? true : undefined);
 };
 
 window["asc_IsNeedBuildCryptedFile"] = function()
 {
-    if (!window["AscDesktopEditor"] || !window["AscDesktopEditor"]["CryptoMode"])
+    if (!AscCommon.CryptoProvider || !AscCommon.CryptoProvider.getCryptoMode())
         return false;
 
     var _api = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
@@ -15950,17 +16132,23 @@ window["asc_IsNeedBuildCryptedFile"] = function()
         }
     }
 
-    window["AscDesktopEditor"]["execCommand"]("encrypt:isneedbuild", "" + _returnValue);
+    AscCommon.CryptoProvider.execCommand("encrypt:isneedbuild", "" + _returnValue);
     return _returnValue;
 };
 
 window["UpdateSystemPlugins"] = function()
 {
     var _plugins = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
-    _plugins[0]["url"] = _plugins[0]["url"].replace(" ", "%20");
-    _plugins[1]["url"] = _plugins[1]["url"].replace(" ", "%20");
+	let lenTypes = 2;
+	_plugins[0]["url"] = _plugins[0]["url"].split(" ").join("%20");
+	_plugins[1]["url"] = _plugins[1]["url"].split(" ").join("%20");
+	if (_plugins.length > 2)
+	{
+		lenTypes = 3;
+		_plugins[2]["url"] = _plugins[2]["url"].split(" ").join("%20");
+	}
 
-    for (var k = 0; k < 2; k++)
+    for (var k = 0; k < lenTypes; k++)
     {
         var _pluginsCur = _plugins[k];
 
@@ -16027,7 +16215,7 @@ window["buildCryptoFile_Start"] = function()
     var _editor = window.Asc.editor ? window.Asc.editor : window.editor;
     _editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
 
-    window.g_asc_plugins.sendToEncryption({ "type" : "generatePassword" });
+    AscCommon.CryptoProvider.sendToEncryption({ "type" : "generatePassword" });
 };
 
 window["buildCryptoFile_End"] = function(url, error, hash, password)
@@ -16092,12 +16280,12 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, _editor.documentUserSessionId, fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, _editor.documentUserSessionId, fileData, null, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);
 
-                window["AscDesktopEditor"]["buildCryptedEnd"](false);
+                AscCommon.CryptoProvider.buildCryptedEnd(false);
 
 			}, function(httpRequest) {
 				//console.log(httpRequest.responseText);
@@ -16112,14 +16300,14 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					};
 					_editor.currentDocumentInfoNext = undefined;
 
-					window["AscDesktopEditor"]["sendSystemMessage"](data);
-					window["AscDesktopEditor"]["CallInAllWindows"]("function(){ if (window.DesktopUpdateFile) { window.DesktopUpdateFile(undefined); } }");
+					AscCommon.CryptoProvider.sendSystemMessage(data);
+					AscCommon.CryptoProvider.onUpdateFileAfterBuild();
 
                     _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
 
 					setTimeout(function() {
 
-                        window["AscDesktopEditor"]["buildCryptedEnd"](true);
+                        AscCommon.CryptoProvider.buildCryptedEnd(true);
 
 					}, 1000);
 				}
@@ -16131,7 +16319,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 
 		xhr.send(null);
 	};
-    window.g_asc_plugins.sendToEncryption({"type": "setPasswordByFile", "hash": hash, "password": password});
+    AscCommon.CryptoProvider.sendToEncryption({"type": "setPasswordByFile", "hash": hash, "password": password});
 };
 
 window["NativeFileOpen_error"] = function(error, _file_hash, _docInfo)
@@ -16142,7 +16330,7 @@ window["NativeFileOpen_error"] = function(error, _file_hash, _docInfo)
     {
         window.isNativeOpenPassword = error;
 
-        if (window["AscDesktopEditor"] && (0 !== window["AscDesktopEditor"]["CryptoMode"]) && !_api.isLoadFullApi)
+        if (AscCommon.CryptoProvider && (0 !== AscCommon.CryptoProvider.getCryptoMode()) && !_api.isLoadFullApi)
         {
             // waiting for initialization
             _api.asc_initAdvancedOptions_params = [];
@@ -16155,7 +16343,7 @@ window["NativeFileOpen_error"] = function(error, _file_hash, _docInfo)
         if (AscCommon.EncryptionWorker.isNeedCrypt() && !window.checkPasswordFromPlugin)
         {
             window.checkPasswordFromPlugin = true;
-            window.g_asc_plugins.sendToEncryption({ "type": "getPasswordByFile", "hash": _file_hash, "docinfo": _docInfo });
+            AscCommon.CryptoProvider.sendToEncryption({ "type": "getPasswordByFile", "hash": _file_hash, "docinfo": _docInfo });
             return;
         }
 

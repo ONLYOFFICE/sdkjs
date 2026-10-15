@@ -521,18 +521,21 @@ CNary.prototype.Apply_MenuProps = function(Props)
 			var LimLoc = Props.LimLoc == Asc.c_oAscMathInterfaceNaryLimitLocation.SubSup ? NARY_SubSup : NARY_UndOvr;
 			AscCommon.History.Add(new CChangesMathNaryLimLoc(this, this.Pr.limLoc, LimLoc));
 			this.raw_SetLimLoc(LimLoc);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideUpper !== undefined && Props.HideUpper !== this.Pr.supHide)
 		{
 			AscCommon.History.Add(new CChangesMathNaryUpperLimit(this, this.Pr.supHide, !this.Pr.supHide));
 			this.raw_HideUpperIterator(!this.Pr.supHide);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideLower !== undefined && Props.HideLower !== this.Pr.subHide)
 		{
 			AscCommon.History.Add(new CChangesMathNaryLowerLimit(this, this.Pr.subHide, !this.Pr.subHide));
 			this.raw_HideLowerIterator(!this.Pr.subHide);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };
@@ -650,44 +653,44 @@ CNary.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
         PRS.bContainCompareOper = bContainCompareOper;
     }
 };
-CNary.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CNary.prototype.recalculateRangeWidth = function(widthState)
 {
     if(this.bOneLine == true)
     {
-        CMathBase.prototype.Recalculate_Range_Width.call(this, PRSC, _CurLine, _CurRange);
+        CMathBase.prototype.recalculateRangeWidth.call(this, widthState);
     }
     else
     {
-        var CurLine = _CurLine - this.StartLine;
-        var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+        var CurLine = widthState.CurLine - this.StartLine;
+        var CurRange = ( 0 === CurLine ? widthState.CurRange - this.StartRange : widthState.CurRange );
 
-        var RangeW = PRSC.Range.W;
+        var RangeW = widthState.Range.W;
 
         if(CurLine == 0 && CurRange == 0)
         {
-            PRSC.Range.W += this.BrGapLeft;
-            var RangeW2 = PRSC.Range.W;
+            widthState.Range.W += this.BrGapLeft;
+            var RangeW2 = widthState.Range.W;
 
             if(this.Base.IsJustDraw() == false)
             {
-                this.LowerIterator.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
-                this.UpperIterator.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
+                this.LowerIterator.recalculateRangeWidth(widthState);
+                this.UpperIterator.recalculateRangeWidth(widthState);
 
                 this.Base.Bounds.SetWidth(CurLine, CurRange, this.Base.size.width);
             }
 
-            PRSC.Range.W = RangeW2 + this.Base.size.width + this.dW;
+            widthState.Range.W = RangeW2 + this.Base.size.width + this.dW;
 
         }
 
-        this.Arg.Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
+        this.Arg.recalculateRangeWidth(widthState);
 
-        if(this.Arg.Math_Is_End( _CurLine, _CurRange))
+        if(this.Arg.Math_Is_End(widthState.CurLine, widthState.CurRange))
         {
-            PRSC.Range.W += this.BrGapRight;
+            widthState.Range.W += this.BrGapRight;
         }
 
-        this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
+        this.Bounds.SetWidth(CurLine, CurRange, widthState.Range.W - RangeW);
     }
 };
 CNary.prototype.Draw_Elements = function(PDSE)

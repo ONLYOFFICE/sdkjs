@@ -422,6 +422,7 @@
 			this.TableStyle = (undefined != tblProp.TableStyle) ? tblProp.TableStyle : null;
 			this.TableLook = (undefined != tblProp.TableLook) ? tblProp.TableLook.Copy() : null;
 			this.RowsInHeader = (undefined !== tblProp.RowsInHeader) ? tblProp.RowsInHeader : false;
+			this.CanSplitRow = (undefined !== tblProp.CanSplitRow) ? tblProp.CanSplitRow : true;
 			this.CellsVAlign = (undefined != tblProp.CellsVAlign) ? tblProp.CellsVAlign : c_oAscVertAlignJc.Top;
 			this.AllowOverlap = (undefined != tblProp.AllowOverlap) ? tblProp.AllowOverlap : undefined;
 			this.TableLayout = tblProp.TableLayout;
@@ -670,6 +671,14 @@
 	{
 		this.RowsInHeader = v;
 	};
+	CTableProp.prototype.get_CanSplitRow = function ()
+	{
+		return this.CanSplitRow;
+	};
+	CTableProp.prototype.put_CanSplitRow = function (v)
+	{
+		this.CanSplitRow = v;
+	};
 	CTableProp.prototype.get_Locked = function ()
 	{
 		return this.Locked;
@@ -827,6 +836,8 @@
 	CTableProp.prototype['get_CanBeFlow'] = CTableProp.prototype.get_CanBeFlow;
 	CTableProp.prototype['get_RowsInHeader'] = CTableProp.prototype.get_RowsInHeader;
 	CTableProp.prototype['put_RowsInHeader'] = CTableProp.prototype.put_RowsInHeader;
+	CTableProp.prototype['get_CanSplitRow'] = CTableProp.prototype.get_CanSplitRow;
+	CTableProp.prototype['put_CanSplitRow'] = CTableProp.prototype.put_CanSplitRow;
 	CTableProp.prototype['get_Locked'] = CTableProp.prototype.get_Locked;
 	CTableProp.prototype['get_CellsVAlign'] = CTableProp.prototype.get_CellsVAlign;
 	CTableProp.prototype['put_CellsVAlign'] = CTableProp.prototype.put_CellsVAlign;
@@ -1449,7 +1460,7 @@
 			{
 				this.Caption = null;
 			}
-			this.IsIncludeLabelAndNumber = (this.CaptionOnlyText === undefined);
+			this.IsIncludeLabelAndNumber = (oInstruction.CaptionOnlyText === undefined);
 		}
 	};
 	CTableOfContentsPr.prototype.InitFromSdtTOC = function(oSdtTOC)
@@ -2078,7 +2089,7 @@
 		return this.TextPr;
 	};
 	CAscWatermarkProperties.prototype['put_Opacity'] = CAscWatermarkProperties.prototype.put_Opacity = function (v) {
-		this.Opacity = v;
+		this.Opacity = Math.max(0, Math.min(255, (v + 0.5) | 0));
 	};
 	CAscWatermarkProperties.prototype['get_Opacity'] = CAscWatermarkProperties.prototype.get_Opacity = function () {
 		return this.Opacity;
@@ -2772,37 +2783,67 @@
 				t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, files)
 			{
 				if (Asc.c_oAscError.ID.No !== error)
-				{
 					t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-				}
 				else
-				{
-					t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-					AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(),
-						t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, urls)
-					{
-						if (Asc.c_oAscError.ID.No !== error)
-						{
-							t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
-							t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-						}
-						else
-						{
-							t.ImageLoader.LoadImagesWithCallback(urls, function()
-							{
-								if (urls.length > 0)
-								{
-									_this.ImageUrl = urls[0];
-									_this.ProcessedCanvas = null;
-									t.sendEvent("asc_onSignatureImageLoaded");
-								}
-								t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-							});
-						}
-					});
-				}
+					_this._uploadFiles(files);
 			});
 		}
+	};
+
+	CSignatureFormProps.prototype.putFile = function(file)
+	{
+		const t = this.Api;
+		if (!t || !file)
+			return;
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]() && file["path"])
+		{
+			const _this = this;
+			const url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file["path"]);
+			const urls = [AscCommon.g_oDocumentUrls.getImageUrl(url)];
+			t.ImageLoader.LoadImagesWithCallback(urls, function()
+			{
+				if (urls.length > 0)
+				{
+					_this.ImageUrl = urls[0];
+					_this.ProcessedCanvas = null;
+					t.sendEvent("asc_onSignatureImageLoaded");
+				}
+			});
+			return;
+		}
+
+		this._uploadFiles([file]);
+	};
+
+	CSignatureFormProps.prototype._uploadFiles = function(files)
+	{
+		const t = this.Api;
+		const _this = this;
+
+		t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+		AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(),
+			t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, urls)
+		{
+			if (Asc.c_oAscError.ID.No !== error)
+			{
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+			}
+			else
+			{
+				t.ImageLoader.LoadImagesWithCallback(urls, function()
+				{
+					if (urls.length > 0)
+					{
+						_this.ImageUrl = urls[0];
+						_this.ProcessedCanvas = null;
+						t.sendEvent("asc_onSignatureImageLoaded");
+					}
+					t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+				});
+			}
+		});
 	};
 
 	CSignatureFormProps.prototype.put_ImageUrl = function(sUrl, token)
@@ -3446,6 +3487,11 @@
 		return this.Mode;
 	};
 
+	CSignatureFormProps.prototype.get_FormId = function()
+	{
+		return this.FormObj.get_ObjId();
+	};
+
 	CSignatureFormProps.prototype.getText = function()
 	{
 		return this.TypeText;
@@ -3583,17 +3629,17 @@
 					imageData = AscCommon.getFullImageSrc2(this.ImageUrl);
 				break;
 			case 1:
-				imageData = this._getDrawImageData();
+				imageData = this._getDrawSvgData();
 				break;
 			case 2:
-				imageData = this._getTypeImageData();
+				imageData = this._getTypeSvgData();
 				break;
 		}
 
 		const oControl = this.FormObj ? (this.FormObj.get_Obj ? this.FormObj.get_Obj() : this.FormObj["obj"]) : null;
 		return {
-			imageData: imageData,
-			internalId: oControl ? oControl.Get_Id() : null
+			'imageData': imageData,
+			'internalId': oControl ? oControl.Get_Id() : null
 		};
 	};
 
@@ -3678,6 +3724,113 @@
 		return oCanvas.toDataURL("image/png");
 	};
 
+	CSignatureFormProps.prototype._getTypeSvgData = function()
+	{
+		if (!this.TypeText || !this.Api)
+			return null;
+
+		const result = this._buildTypeParagraph();
+		if (!result)
+			return null;
+
+		const rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		const koef = AscCommon.g_dKoef_pix_to_mm / rPR;
+		const nPadding = 20;
+		const paddingMM = nPadding * koef;
+		const totalW = result.contentW + paddingMM * 2;
+		const totalH = result.contentH + paddingMM * 2;
+		if (result.contentW <= 0 || result.contentH <= 0)
+			return null;
+
+		const svgDrawer = new AscFormat.CSvgDrawer(totalW, totalH);
+		svgDrawer.transform(1, 0, 0, 1, 0, 0);
+
+		let oldParamarks = this.Api.ShowParaMarks;
+		this.Api.ShowParaMarks = false;
+		result.par.Shift(0, paddingMM, -result.lineTop + paddingMM);
+		result.par.Draw(0, svgDrawer);
+		this.Api.ShowParaMarks = oldParamarks;
+
+		return svgDrawer.getSvgDataUrl();
+	};
+
+	CSignatureFormProps.prototype._getDrawSvgData = function()
+	{
+		if (!this.DrawCanvas || this.DrawPaths.length === 0)
+			return null;
+
+		let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+		for (let i = 0; i < this.DrawPaths.length; i++)
+		{
+			const path = this.DrawPaths[i];
+			const half = (path[0].size || this.LineSize) / 2;
+			for (let j = 0; j < path.length; j++)
+			{
+				if (path[j].x - half < minX) minX = path[j].x - half;
+				if (path[j].y - half < minY) minY = path[j].y - half;
+				if (path[j].x + half > maxX) maxX = path[j].x + half;
+				if (path[j].y + half > maxY) maxY = path[j].y + half;
+			}
+		}
+
+		const nPadding = 20;
+		minX = Math.max(0, Math.floor(minX) - nPadding);
+		minY = Math.max(0, Math.floor(minY) - nPadding);
+		maxX = Math.min(this.DrawCanvas.width, Math.ceil(maxX) + nPadding);
+		maxY = Math.min(this.DrawCanvas.height, Math.ceil(maxY) + nPadding);
+
+		const w = maxX - minX;
+		const h = maxY - minY;
+		if (w <= 0 || h <= 0)
+			return null;
+
+		const round = function(v) { return Math.round(v * 100) / 100; };
+		let paths = "";
+		for (let i = 0; i < this.DrawPaths.length; i++)
+		{
+			const path = this.DrawPaths[i];
+			if (!path || path.length < 1)
+				continue;
+
+			const color = path[0].color || this.LineColor;
+			const size = path[0].size || this.LineSize;
+			let d = "M" + round(path[0].x - minX) + " " + round(path[0].y - minY) + " ";
+			if (path.length === 1)
+			{
+				d += "L" + round(path[0].x - minX) + " " + round(path[0].y - minY);
+			}
+			else if (path.length === 2)
+			{
+				d += "L" + round(path[1].x - minX) + " " + round(path[1].y - minY);
+			}
+			else
+			{
+				for (let j = 1; j < path.length - 1; j++)
+				{
+					const mx = (path[j].x + path[j + 1].x) / 2;
+					const my = (path[j].y + path[j + 1].y) / 2;
+					d += "Q" + round(path[j].x - minX) + " " + round(path[j].y - minY) + " " + round(mx - minX) + " " + round(my - minY) + " ";
+				}
+				const last = path[path.length - 1];
+				d += "L" + round(last.x - minX) + " " + round(last.y - minY);
+			}
+			paths += '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="' + size + '" stroke-linecap="round" stroke-linejoin="round"/>';
+		}
+
+		const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' + paths + '</svg>';
+		return AscFormat.CSvgDrawer.toDataUrl(svg);
+	};
+
+	CSignatureFormProps.prototype.getVectorImage = function()
+	{
+		switch (this.Mode)
+		{
+			case 1: return this._getDrawSvgData();
+			case 2: return this._getTypeSvgData();
+		}
+		return null;
+	};
+
 	// ---- Export ----
 
 	window['Asc']['CSignatureFormProps'] = window['Asc'].CSignatureFormProps = CSignatureFormProps;
@@ -3687,6 +3840,7 @@
 	prot['put_PreviewTypeId']   = prot.put_PreviewTypeId;
 	prot['updateView']          = prot.updateView;
 	prot['showFileDialog']      = prot.showFileDialog;
+	prot['putFile']             = prot.putFile;
 	prot['put_ImageUrl']        = prot.put_ImageUrl;
 	prot['put_RemoveBackground'] = prot.put_RemoveBackground;
 	prot['clearImg']            = prot.clearImg;
@@ -3705,6 +3859,7 @@
 	prot['clearType']           = prot.clearType;
 	prot['getSignatureImage']   = prot.getSignatureImage;
 	prot['get_Mode']            = prot.get_Mode;
+	prot['get_FormId']          = prot.get_FormId;
 	prot['getText']             = prot.getText;
 	prot['get_TypeFont']        = prot.get_TypeFont;
 	prot['get_TypeFontSize']    = prot.get_TypeFontSize;
@@ -3713,6 +3868,7 @@
 	prot['serialize']           = prot.serialize;
 	prot['deserialize']         = prot.deserialize;
 	prot['getResult']           = prot.getResult;
+	prot['getVectorImage']      = prot.getVectorImage;
 
 	window['Asc']['CAscTextToTableProperties']				 = window['Asc'].CAscTextToTableProperties = CAscTextToTableProperties;
 	CAscTextToTableProperties.prototype['get_Size']			 = CAscTextToTableProperties.prototype.get_Size;

@@ -176,7 +176,7 @@
 			return finalSectPr;
 		
 		let docPos = element.GetDocumentPositionFromObject();
-		if (!docPos || !docPos.length)
+		if (!element.IsUseInDocument() || !AscWord.isValidDocPos(docPos))
 			return finalSectPr;
 		
 		let topClass = docPos[0].Class;
@@ -356,7 +356,7 @@
 			return -1;
 		
 		let docPos = element.GetDocumentPositionFromObject();
-		if (!docPos || !docPos.length)
+		if (!element.IsUseInDocument() || !AscWord.isValidDocPos(docPos))
 			return -1;
 		
 		let topClass = docPos[0].Class;

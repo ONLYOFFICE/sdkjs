@@ -840,7 +840,10 @@
             const oTempDocument = new CDocument(Asc.editor.WordControl.m_oDrawingDocument, false);
             const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
             AscCommon.pptx_content_loader.Start_UseFullUrl(Asc.editor.insertDocumentUrlsData);
-            if (!oBinaryFileReader.Read(sBinary2)) {
+			AscCommon.g_oIdCounter.m_bRead = true;
+			const res = oBinaryFileReader.Read(sBinary2);
+			AscCommon.g_oIdCounter.m_bRead = false;
+            if (!res) {
                 return null;
             }
             return oTempDocument;
@@ -855,13 +858,13 @@
 
     }
     
-    function mergeDocuments(oTmpDocument) {
+    function mergeDocuments(oTmpDocument, oOptions) {
         Asc.editor.insertDocumentUrlsData = {
             imageMap: oTmpDocument["GetImageMap"](), documents: [], convertCallback: function (_api, url) {
             }, endCallback: function (_api) {
             }
         };
-        mergeBinary(oTmpDocument["GetBinary"](), null, true);
+        mergeBinary(oTmpDocument["GetBinary"](), oOptions);
         Asc.editor.insertDocumentUrlsData = null;
     }
 

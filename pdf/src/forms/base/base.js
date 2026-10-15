@@ -53,6 +53,11 @@
         g: 176,
         b: 255
     };
+    let FIELDS_HIGHLIGHT_OTHER_ROLE = {
+        r: 242,
+        g: 242,
+        b: 242
+    };
 
     //------------------------------------------------------------------------------------------------------------------
 	//
@@ -60,13 +65,6 @@
 	//
 	//------------------------------------------------------------------------------------------------------------------
     
-    let ALIGN_TYPE = {
-        left:   0,
-        center: 1,
-        right:  2,
-        justify:3
-    };
-
     // For Span attributes (start)
     let FONT_STRETCH = ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal",
         "semi-expanded", "expanded", "extra-expanded", "ultra-expanded"];
@@ -85,7 +83,7 @@
 	
 	// freeze objects
     Object.freeze(FIELDS_HIGHLIGHT);
-    Object.freeze(ALIGN_TYPE);
+    Object.freeze(FIELDS_HIGHLIGHT_OTHER_ROLE);
     Object.freeze(FONT_STRETCH);
     Object.freeze(FONT_STYLE);
     Object.freeze(FONT_WEIGHT);
@@ -99,7 +97,7 @@
     function CBaseField(sName, nType, aRect, oDoc)
     {
         this.Id = AscCommon.g_oIdCounter.Get_NewId();
-        if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
+        if (AscCommon.g_oTableId.IsOn()) {
             AscCommon.g_oTableId.Add(this, this.Id);
         }
 
@@ -108,16 +106,14 @@
         this._kids          = [];
         this._apIdx         = undefined; // form index on the page in the original file (in the getInteractiveForms method array), used to get appearance
         this._borderStyle   = undefined;
-        this._lineWidth     = undefined;        // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
-        this._strokeColor   = undefined;     // In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged, although it is still valid for backward compatibility.
         this._borderColor   = undefined;
         this._fillColor     = undefined;
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._fgColor       = undefined;
         this._textColor     = [0,0,0];
-        this._textFont      = "";           // original
-        this._textFontActual= undefined;    // actually used
+        this._textFont      = AscPDF.DEFAULT_FIELD_FONT; // original
+        this._textFontActual= AscPDF.DEFAULT_FIELD_FONT;    // actually used
         this._textSize      = 10;
         this._fontStyle     = 0;    // font style information (bold, italic)
         this._meOptions     = 0;    // middle-east text options (flags)
@@ -155,6 +151,8 @@
         this._wasChanged            = false; // whether the form was changed
         this._bDrawFromStream       = false; // whether to draw from stream
         this._hasOriginView         = false; // whether it has appearance from file
+		this._layer                 = undefined;
+		this._redactIds             = [];
         this._originView = {
             normal:     null,
             mouseDown:  null,
@@ -171,6 +169,7 @@
         oDoc && this.SetDocument(oDoc);
 
         this.kidsContentChanges = new AscCommon.CContentChanges();
+		this.redactsArrayChanges = new AscCommon.CContentChanges();
         this.textMatrix = new AscCommon.CMatrix();
     }
 
@@ -198,19 +197,19 @@
 
         this._apIdx = nIdx;
     };
-    CBaseField.prototype.GetApIdx = function() {
-        if (undefined !== this._apIdx) {
-            return this._apIdx;
-        }
-        else {
-            let nPos = Object.keys(AscCommon.g_oTableId.m_aPairs).indexOf(this.GetId());
-            if (-1 !== nPos) {
-                return Asc.editor.getPDFDoc().GetCurMaxApIdx() + nPos;
-            }
-            
-            return undefined;
-        }
-    };
+	CBaseField.prototype.GetApIdx = function(bSource) {
+		if (undefined !== this._apIdx || bSource) {
+			return this._apIdx;
+		}
+		else {
+			let nApIdx = Asc.editor.getPDFDoc().GetMaxApIdx() + Number(this.GetId().replace("_", ""));
+			if (!isNaN(nApIdx)) {
+				return nApIdx;
+			}
+			
+			return undefined;
+		}
+	};
     CBaseField.prototype.SetMEOptions = function(nFlags) {
         let oParent = this.GetParent(true);
         if (oParent)
@@ -401,7 +400,7 @@
         
         if (oNewPage) {
             let sId = this.GetId();
-            oCurPage.RemoveField(sId);
+            oCurPage.RemoveField(sId, true);
             oNewPage.AddField(this);
 
             let oEditShape = this.GetEditShape();
@@ -430,12 +429,15 @@
 
         this._kids.push(oField);
         oField._parent = this;
+		oField.SetNeedUpdateEditShape(true);
 
         if (false == Asc.editor.getDocumentRenderer().IsOpenFormsInProgress) {
-            if (oField.IsWidget()) {
+            if (oField.IsWidget() && !oField.GetPartialName()) {
                 oField.SyncValue();
             }
         }
+
+        this.SetWasChanged(true);
     };
     CBaseField.prototype.GetKids = function() {
         return this._kids;
@@ -458,7 +460,10 @@
         if (nIndex != -1) {
             this._kids.splice(nIndex, 1);
             AscCommon.History.Add(new CChangesPDFFormKidsContent(this, nIndex, [oField], false))
+			oField.SetNeedUpdateEditShape(true);
             oField._parent = null;
+
+            this.SetWasChanged(true);
             return true;
         }
 
@@ -515,19 +520,13 @@
     };
     
     CBaseField.prototype.GetFullName = function() {
-        if (this._parent)
-        {
-            if (this._partialName != undefined)
-                return this._parent.GetFullName() + "." + this._partialName;
-            else
-                return this._parent.GetFullName();
-        }
-
-        return this._partialName ? this._partialName : "";
+        let sName = this._partialName ? this._partialName : "";
+        let sParent = this._parent ? this._parent.GetFullName() : "";
+        return sParent && sName ? sParent + "." + sName : sParent + sName;
     };
     CBaseField.prototype.SetPartialName = function(sName) {
         if (this._partialName == sName) {
-            return;
+            return true;
         }
 
         AscCommon.History.Add(new CChangesPDFFormPartialName(this, this._partialName, sName));
@@ -535,7 +534,12 @@
         this._partialName = sName;
 
         this.SetWasChanged(true);
-        this.SetNeedUpdateEditShape(true);
+
+		this.GetAllWidgets().forEach(function(widget) {
+			widget.SetNeedUpdateEditShape(true);
+		});
+
+		return true;
     };
     CBaseField.prototype.SetNeedUpdateEditShape = function(bUpdate) {
         this._needUpdateEditShape = bUpdate;
@@ -560,10 +564,10 @@
 	 */
     CBaseField.prototype.SetActions = function(nTriggerType, aActionsInfo) {
         switch (nTriggerType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
-            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.format: {
                 let oParent = this.GetParent(true);
                 if (oParent)
                     return oParent.SetActions(nTriggerType, aActionsInfo);
@@ -612,11 +616,11 @@
                             break;
                         }
                         
-                        oAction = new AscPDF.CActionGoTo(oPageInfo.GetId(), aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
+                        oAction = new AscPDF.CActionGoTo(oPageInfo.GetId(), aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], [oRect.left, oRect.top, oRect.right, oRect.bottom]);
                         aActions.push(oAction);
                         break;
                     case AscPDF.ACTIONS_TYPES.Named:
-                        oAction = new AscPDF.CActionNamed(AscPDF.CActionNamed.GetInternalType(aActionsInfo[i]["N"]));
+                        oAction = new AscPDF.CActionNamed(aActionsInfo[i]["N"]);
                         aActions.push(oAction);
                         break;
                 }
@@ -632,46 +636,61 @@
         AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseUp:
                 this._triggers.MouseUp = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseDown:
                 this._triggers.MouseDown = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseEnter:
                 this._triggers.MouseEnter = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseExit:
                 this._triggers.MouseExit = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.onFocus:
                 this._triggers.OnFocus = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.onBlur:
                 this._triggers.OnBlur = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.keystroke:
                 this._triggers.Keystroke = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.validate:
                 this._triggers.Validate = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.calculate:
                 this._triggers.Calculate = oNewTrigger;
+
+				let oDoc        = this.GetDocument();
+				let canChange	= !oDoc.Viewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges() && !AscCommon.g_oIdCounter.IsLoad();
+        		
+				if (canChange) {
+					let oCalcInfo = oDoc.GetCalculateInfo();
+                    let nApIdx = this.GetApIdx();
+
+					oCalcInfo.RemoveFieldFromOrder(nApIdx);
+                	if (oNewTrigger) {
+						oCalcInfo.AddFieldToOrder(nApIdx);
+					}
+				}
+
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Format:
+            case AscPDF.PDF_TRIGGERS_TYPES.format:
                 this._triggers.Format = oNewTrigger;
                 break;
         }
 
+		this.SetWasChanged(true, false);
         return aActions;
     };
     CBaseField.prototype.GetActions = function(nTriggerType) {
         switch (nTriggerType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
-            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.format: {
                 let oParent = this.GetParent(true);
                 if (oParent)
                     return oParent.GetActions(nTriggerType);
@@ -688,106 +707,12 @@
         // Iterate through all actions associated with the trigger
         for (let i = 0; i < oTrigger.Actions.length; i++) {
             let oAction = oTrigger.Actions[i];
-            let actionInfo = {};
-            
-            // Determine the action type and populate the object with information
-            switch (oAction.GetType()) {
-                case AscPDF.ACTIONS_TYPES.JavaScript:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.JavaScript;
-                    actionInfo["JS"] = oAction.GetScript();
-                    break;
-                case AscPDF.ACTIONS_TYPES.ResetForm:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.ResetForm;
-                    actionInfo["Fields"] = oAction.GetNames();
-                    actionInfo["Flags"] = Number(oAction.GetNeedAllExcept());
-                    break;
-                case AscPDF.ACTIONS_TYPES.URI:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.URI;
-                    actionInfo["URI"] = oAction.GetURI();
-                    break;
-                case AscPDF.ACTIONS_TYPES.HideShow:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.HideShow;
-                    actionInfo["H"] = oAction.GetHidden();
-                    actionInfo["T"] = oAction.GetNames();
-                    break;
-                case AscPDF.ACTIONS_TYPES.GoTo:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.GoTo;
-                    actionInfo["page"] = oAction.GetPageIdx();
-                    actionInfo["pageId"] = oAction.GetPageId();
-                    actionInfo["kind"] = oAction.GetKind();
-                    actionInfo["zoom"] = oAction.GetZoom();
-                    let oRect = oAction.GetRect();
-                    actionInfo["top"] = oRect.top;
-                    actionInfo["right"] = oRect.right;
-                    actionInfo["bottom"] = oRect.bottom;
-                    actionInfo["left"] = oRect.left;
-                    break;
-                case AscPDF.ACTIONS_TYPES.Named:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.Named;
-                    actionInfo["N"] = oAction.GetNameStrType();
-                    break;
-                default:
-                    // If the type is not recognized, add handling or skip
-                    break;
-            }
+            let actionInfo = AscPDF.getJsonActionInfo(oAction);
             
             aActionsInfo.push(actionInfo);
         }
         
         return aActionsInfo;
-    };
-
-
-    /**
-	 * Sets the JavaScript action of the field for a given trigger.
-     * Note: This method will overwrite any action already defined for the chosen trigger.
-	 * @memberof CBaseField
-     * @param {number} nTriggerType - A string that sets the trigger for the action.
-     * @param {string} sScript - The JavaScript code to be executed when the trigger is activated.
-	 * @typeofeditors ["PDF"]
-	 */
-    CBaseField.prototype.SetAction = function(nTriggerType, sScript) {
-        let oDoc        = this.GetDocument();
-        let oCalcInfo   = oDoc.GetCalculateInfo();
-        let oAction     = new AscPDF.CActionRunScript(sScript);
-
-        let oTrigger = new AscPDF.CPdfTrigger(nTriggerType, [oAction]);
-        oTrigger.SetParentField(this);
-
-        switch (nTriggerType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
-                this._triggers.MouseUp = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
-                this._triggers.MouseDown = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
-                this._triggers.MouseEnter = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
-                this._triggers.MouseExit = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
-                this._triggers.OnFocus = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
-                this._triggers.OnBlur = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
-                this._triggers.Keystroke = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
-                this._triggers.Validate = oTrigger;
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
-                this._triggers.Calculate = oTrigger;
-                oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
-                oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
-                break;
-            case AscPDF.PDF_TRIGGERS_TYPES.Format:
-                this._triggers.Format = oTrigger;
-                break;
-        }
     };
 
     /**
@@ -812,10 +737,10 @@
 	 */
     CBaseField.prototype.GetTrigger = function(nType, bInherit) {
         switch (nType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
-            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.format: {
                 let oParent = this.GetParent(true);
                 if (bInherit !== false && oParent)
                     return oParent.GetTrigger(nType);
@@ -823,25 +748,25 @@
         }
 
         switch (nType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseUp:
                 return this._triggers.MouseUp;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseDown:
                 return this._triggers.MouseDown;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseEnter:
                 return this._triggers.MouseEnter;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseExit:
                 return this._triggers.MouseExit;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.onFocus:
                 return this._triggers.OnFocus;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.onBlur:
                 return this._triggers.OnBlur;
-            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.keystroke:
                 return this._triggers.Keystroke;
-            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.validate:
                 return this._triggers.Validate;
-            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.calculate:
                 return this._triggers.Calculate;
-            case AscPDF.PDF_TRIGGERS_TYPES.Format:
+            case AscPDF.PDF_TRIGGERS_TYPES.format:
                 return this._triggers.Format;
         }
 
@@ -850,52 +775,52 @@
     CBaseField.prototype.GetListActions = function(bInherit) {
         let aActions = [];
 
-        let oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+        let oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseUp);
         if (oAction) {
             aActions.push(oAction);
         }
         
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseDown);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseExit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnBlur);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onBlur);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.keystroke, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Validate, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.validate, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Calculate, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.calculate, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
@@ -947,19 +872,19 @@
         let _t = this;
 
         let aActions = [
-            AscPDF.PDF_TRIGGERS_TYPES.MouseUp,
-            AscPDF.PDF_TRIGGERS_TYPES.MouseDown,
-            AscPDF.PDF_TRIGGERS_TYPES.MouseEnter,
-            AscPDF.PDF_TRIGGERS_TYPES.MouseExit,
-            AscPDF.PDF_TRIGGERS_TYPES.OnFocus,
-            AscPDF.PDF_TRIGGERS_TYPES.OnBlur,
+            AscPDF.PDF_TRIGGERS_TYPES.mouseUp,
+            AscPDF.PDF_TRIGGERS_TYPES.mouseDown,
+            AscPDF.PDF_TRIGGERS_TYPES.mouseEnter,
+            AscPDF.PDF_TRIGGERS_TYPES.mouseExit,
+            AscPDF.PDF_TRIGGERS_TYPES.onFocus,
+            AscPDF.PDF_TRIGGERS_TYPES.onBlur,
         ]
 
         Object.values(aActions).forEach(function(type) {
             oCopy.SetActions(type, _t.GetActions(type));
         });
 
-        oCopy.private_SetValue(this.GetParentValue());
+        oCopy.private_SetValue(this.GetLogicValue());
         oCopy.DrainViewPropsFrom(this);
         oCopy.SetMeta(this.GetMeta());
         
@@ -992,24 +917,40 @@
             return this._parent;
         }
 
-        if (this._parent && this._parent.IsAllKidsWidgets()) {
+        if (this._parent && this._parent.IsLogicalRoot()) {
             return this._parent;
         }
         
         return null;
     };
 
+	CBaseField.prototype.IsFilled = function() {
+		let isFilled = false;
+
+		let aWidgets = this.GetAllWidgets();
+		if (this instanceof AscPDF.CBaseCheckBoxField) {
+			isFilled = aWidgets.some(function(widget) {
+				return widget.IsChecked();
+			});
+		}
+		else {
+			let value = this.GetLogicValue();
+			isFilled = Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== "";
+		}
+
+		return isFilled;
+	};
     /**
 	 * Gets form value (which was commited).
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.GetParentValue = function(bInherit) {
+    CBaseField.prototype.GetLogicValue = function(bInherit) {
         let oParent = this.GetParent(true);
         if (oParent == null && this._value == null)
             return undefined;
 		else if (oParent && bInherit !== false) {
-			return oParent.GetParentValue();
+			return oParent.GetLogicValue();
 		}
         else {
             return this._value;
@@ -1020,14 +961,10 @@
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.SetParentValue = function(value) {
-        if (value && typeof(value) !== "string" && value.toString) {
-            value = value.toString();
-        }
-
+    CBaseField.prototype.SetLogicValue = function(value) {
         let oParent = this.GetParent(true);
         if (oParent && this.IsWidget())
-            oParent.SetParentValue(value);
+            oParent.SetLogicValue(value);
         else {
             if (this._value === value) {
                 return true;
@@ -1042,27 +979,26 @@
     };
 
     /**
-	 * Checks if all kids are widgets (and have same names).
+	 * Checks if the field is a widget or all its kids are widgets with the same full name as the parent.
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.IsAllKidsWidgets = function() {
+    CBaseField.prototype.IsLogicalRoot = function() {
+		if (this.IsWidget()) {
+			return true;
+		}
+
         let aKids = this.GetKids();
+        if (0 === aKids.length)
+            return false;
 
-        if (aKids.length > 0) {
-            if (aKids[0].IsWidget() == false)
+        let sFullName = this.GetFullName();
+        for (let nKid = 0; nKid < aKids.length; nKid++) {
+            if (!aKids[nKid].IsWidget() || aKids[nKid].GetFullName() !== sFullName)
                 return false;
-
-            let sFullName = aKids[0].GetFullName();
-            for (let i = 1; i < aKids.length; i++) {
-                if (sFullName != aKids[i].GetFullName() || aKids[i].IsWidget() == false)
-                    return false;
-            }
-
-            return true;
         }
 
-        return false;
+        return true;
     };
     /**
      * Does the actions setted for specifed trigger type.
@@ -1073,6 +1009,12 @@
     CBaseField.prototype.AddActionsToQueue = function() {
         let oThis           = this;
         let oDoc            = this.GetDocument();
+
+		// form roles: in filling mode field actions may be run only by its role
+		if (false === oDoc.GetFormRoles().CanFillField(this)) {
+			return;
+		}
+
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         Object.values(arguments).forEach(function(type) {
@@ -1088,12 +1030,37 @@
         }
     };
     CBaseField.prototype.IsUseInDocument = function() {
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			let aWidgets = this.GetAllWidgets();
+			return !!aWidgets.find(function(widget) {
+				return widget.IsUseInDocument();
+			});
+		}
+		
         let oPage = this.GetParentPage();
-        if (oPage && oPage.fields.includes(this) && oPage.GetIndex() !== -1) {
+        if (oPage && (oPage.fields.includes(this) || oPage.redactedFields.includes(this)) && oPage.GetIndex() !== -1) {
             return true;
         }
 
         return false;
+    };
+    CBaseField.prototype.GetHighlightColor = function() {
+        let oDoc   = this.GetDocument();
+        let oRoles = oDoc.GetFormRoles();
+        if (oRoles) {
+            if (!oRoles.CanFillField(this) && !oDoc.IsEditFieldsMode() || Asc.editor.isRestrictionSignatures()) {
+                return FIELDS_HIGHLIGHT_OTHER_ROLE;
+            }
+
+            let oRole = oRoles.GetRoleByField(this);
+            if (oRole) {
+                let rgb = oRole.GetColor() ? private_hexToRgb(oRole.GetColor()) : null;
+                if (rgb) {
+                    return rgb;
+				}
+            }
+        }
+        return this.IsRequired() ? FIELDS_HIGHLIGHT_REQ : FIELDS_HIGHLIGHT;
     };
     CBaseField.prototype.DrawHighlight = function(oCtx) {
         if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
@@ -1136,10 +1103,8 @@
         
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
-            if (this.IsRequired())
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
-            else 
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
+            let oClr = this.GetHighlightColor();
+            oCtx.fillStyle = 'rgb(' + oClr.r + ', ' + oClr.g + ', ' + oClr.b + ')';
             // position at the center of the circle
             let centerX = X + W / 2;
             let centerY = Y + H / 2;
@@ -1148,12 +1113,10 @@
             oCtx.fill();
             oCtx.closePath();
         }
-        else if (this.GetType() != AscPDF.FIELD_TYPES.button){
+        else {
             oCtx.beginPath();
-            if (this.IsRequired())
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
-            else 
-                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
+            let oClr = this.GetHighlightColor();
+            oCtx.fillStyle = 'rgb(' + oClr.r + ', ' + oClr.g + ', ' + oClr.b + ')';
             oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }
@@ -1187,8 +1150,8 @@
         let nHeight = aOringRect[3] - aOringRect[1];
 
         let color;
-        if (this._strokeColor != null) {
-            color = this.GetRGBColor(this._strokeColor);
+        if (this._borderColor != null) {
+            color = this.GetRGBColor(this._borderColor);
             oGraphicsPDF.SetStrokeStyle(color.r, color.g, color.b);
         }
 
@@ -1534,6 +1497,40 @@
             }
         }
     };
+	CBaseField.prototype.DrawRequiredBorder = function(oGraphicsPDF) {
+        if (this.IsRequired() != true) {
+            return;
+        }
+
+        let nBorderWidth = this.GetBorderWidth();
+        let nLineWidth = nBorderWidth || 1;
+        if (nLineWidth == 0) {
+            return;
+        }
+
+        let aOrigRect = this.GetRect();
+        let X         = aOrigRect[0] + nLineWidth / 2;
+        let Y         = aOrigRect[1] + nLineWidth / 2;
+        let nWidth    = aOrigRect[2] - aOrigRect[0] - nLineWidth;
+        let nHeight   = aOrigRect[3] - aOrigRect[1] - nLineWidth;
+
+        oGraphicsPDF.SetLineWidth(nLineWidth);
+        oGraphicsPDF.SetLineDash([]);
+        oGraphicsPDF.SetStrokeStyle(255, 0, 0);
+        oGraphicsPDF.BeginPath();
+
+        if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
+            let centerX = X + nWidth / 2;
+            let centerY = Y + nHeight / 2;
+            let nRadius = Math.min(nWidth / 2, nHeight / 2);
+            oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
+        }
+        else {
+            oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+        }
+
+        oGraphicsPDF.Stroke();
+    };
     /**
 	 * Gets rgb color object from internal color array.
 	 * @memberof CBaseField
@@ -1604,7 +1601,7 @@
         }
     };
     CBaseField.prototype.DrainLogicFrom = function(oFieldToInherit, bClearFrom) {
-        this.SetParentValue(oFieldToInherit.GetParentValue());
+        this.SetLogicValue(oFieldToInherit.GetLogicValue());
         this.SetDefaultValue(oFieldToInherit.GetDefaultValue());
         this.SetReadOnly(oFieldToInherit.IsReadOnly());
         this.SetNoExport(oFieldToInherit.IsNoExport());
@@ -1614,19 +1611,21 @@
 
         if (bClearFrom !== false) {
             oFieldToInherit.SetDefaultValue(undefined);
-            oFieldToInherit.SetParentValue(undefined);
+            oFieldToInherit.SetLogicValue(undefined);
             oFieldToInherit.SetReadOnly(false);
             oFieldToInherit.SetNoExport(false);
             oFieldToInherit.SetRequired(false);
+            oFieldToInherit.SetTooltip(undefined);
+            oFieldToInherit.SetMEOptions(undefined);
         }
 
         let _t = this;
 
         let aLogicActions = [
-            AscPDF.PDF_TRIGGERS_TYPES.Keystroke,
-            AscPDF.PDF_TRIGGERS_TYPES.Validate,
-            AscPDF.PDF_TRIGGERS_TYPES.Calculate,
-            AscPDF.PDF_TRIGGERS_TYPES.Format
+            AscPDF.PDF_TRIGGERS_TYPES.keystroke,
+            AscPDF.PDF_TRIGGERS_TYPES.validate,
+            AscPDF.PDF_TRIGGERS_TYPES.calculate,
+            AscPDF.PDF_TRIGGERS_TYPES.format
         ]
 
         Object.values(aLogicActions).forEach(function(type) {
@@ -1639,111 +1638,140 @@
     };
 
     CBaseField.prototype.SetName = function(sName) {
-        let oDoc        = this.GetDocument();
-        let nFieldType  = this.GetType();
-
-        while (sName.indexOf('..') != -1)
-            sName = sName.replace(new RegExp("\.\.", "g"), ".");
-
-        let oExistsWidget = oDoc.GetField(sName);
-        // if there's a widget field with this name then don't add
-        if (oExistsWidget && oExistsWidget.GetType() != nFieldType)
-            return false; // TODO throw error for field name change
-
-        // get partial names
-        let aPartNames = sName.split('.').filter(function(item) {
-            if (item != "")
-                return item;
-        });
-
-        // by format no more than 20 nesting levels
-        if (aPartNames.length > 20)
+        if ("string" !== typeof sName)
             return false;
 
-        // remove field from parent
-        let oParent = this.GetParent();
-        if (oParent) {
-            oParent.RemoveKid(this);
-        }
+        let aPartNames = sName.split(".").filter(Boolean);
+        if (0 === aPartNames.length || aPartNames.length > 20)
+            return false;
 
-        let aWidgetForms = oDoc.GetAllWidgets(sName);
+        sName = aPartNames.join(".");
 
-        if (aPartNames.length > 0) {
-            let oExistsField = oDoc.GetField(sName);
-            let oParentField;
+        let sOldFullName = this.GetFullName();
+        if (sName === sOldFullName)
+            return true;
 
-            if (oExistsField) {
-                if (!oExistsField.IsWidget()) {
-                    if (!oExistsField.IsAllKidsWidgets()) {
-                        return false;
-                    }
-                    else {
-                        oParentField = oExistsField;
-                    }
-                }
-            }
+        let oDoc = this.GetDocument();
+        let nFieldType = this.GetType();
+        let oExistsWidget = oDoc.GetField(sName);
 
-            let bParentInherit = !oParentField;
-            if (!oParentField) {
-                if (oExistsField) {
-                    let sFullName = aPartNames[0];
+        if (oExistsWidget && oExistsWidget.IsWidget() && oExistsWidget.GetType() !== nFieldType)
+            return false;
 
-                    for (let i = 0; i < aPartNames.length; i++) {
-                        if (i !== 0) {
-                            sFullName += "." + aPartNames[i];
-                        }
+        let oTargetField = oExistsWidget && oExistsWidget.GetFullName() === sName ? oExistsWidget : null;
 
-                        let oField = oDoc.GetField(sFullName);
-                        if (oField && !oField.IsWidget()) {
-                            oParentField = oField;
-                        }
-                        
-                        if (!oField || oField.IsWidget()) {
-                            let oNewParent = oDoc.CreateField(aPartNames[i], nFieldType, []);
-    
-                            if (oParentField) {
-                                oParentField.AddKid(oNewParent);
-                            }
-                            
-                            oParentField = oNewParent;
-                        }
-                    }
-                }
-                // will be field-widget
-                else {
-                    if (oParent) {
-                        this.DrainLogicFrom(oParent, false);
-                    }
-                    
-                    this.SetPartialName(sName);
-                    return true;
-                }
-            }
+        if (oTargetField && oTargetField.GetType() !== nFieldType)
+            return false;
 
-            if (bParentInherit) {
-                oParentField.DrainLogicFrom(oExistsField);
+        if (oTargetField && !oTargetField.IsWidget() && !oTargetField.IsLogicalRoot())
+            return false;
 
-                aWidgetForms.forEach(function(widget) {
-                    widget.SetPartialName(undefined);
-                    oParentField.AddKid(widget);
-                });
-            }
+        let oPrevLogicParent = this.GetParent(true);
+        let bTargetExists = !!oTargetField;
+        let oNewLogicParent = private_GetOrCreateFieldParent(
+            oDoc, aPartNames, bTargetExists, nFieldType, this
+        );
+        if (false === oNewLogicParent)
+            return false;
 
+        let oCurrentParent = this.GetParent();
+        if (oCurrentParent)
+            oCurrentParent.RemoveKid(this);
+
+        if (bTargetExists) {
             this.SetPartialName(undefined);
-            oParentField.AddKid(this);
         }
+        else {
+            this.SetPartialName(aPartNames[aPartNames.length - 1]);
+            if (oPrevLogicParent)
+                this.DrainLogicFrom(oPrevLogicParent, false);
+        }
+
+        if (oNewLogicParent)
+            oNewLogicParent.AddKid(this);
 
         this.Commit();
-        
+        oDoc.GetFormRoles().RenameField(sOldFullName, this.GetFullName());
+
         return true;
     };
+
+    function private_GetFieldPath(oDoc, aPartNames) {
+        let aFields = [];
+        let sFullName = "";
+
+        for (let nPart = 0; nPart < aPartNames.length; nPart++) {
+            sFullName += (0 === nPart ? "" : ".") + aPartNames[nPart];
+
+            let oField = oDoc.GetField(sFullName);
+            aFields.push(oField && oField.GetFullName() === sFullName ? oField : null);
+        }
+
+        return aFields;
+    }
+
+    function private_GetOrCreateFieldParent(oDoc, aPartNames, bTargetExists, nFieldType, oRenamedField) {
+        let aFieldPath = private_GetFieldPath(oDoc, aPartNames);
+        let nParentsCount = bTargetExists ? aPartNames.length : aPartNames.length - 1;
+
+        let oLogicParent = null;
+        let sFullName = "";
+
+        for (let nPart = 0; nPart < nParentsCount; nPart++) {
+            sFullName += (0 === nPart ? "" : ".") + aPartNames[nPart];
+
+            let oField = aFieldPath[nPart];
+            if (oField) {
+                let bLogicalField = oField.IsLogicalRoot();
+                let bExactTarget = bTargetExists && nPart === nParentsCount - 1;
+                let bRenamedWidget = oField === oRenamedField;
+
+                if (bLogicalField && !bExactTarget && !bRenamedWidget)
+                    return false;
+
+                if (!oField.IsWidget()) {
+                    oLogicParent = oField;
+                    continue;
+                }
+            }
+
+            let oNewParent = oDoc.CreateField(aPartNames[nPart], nFieldType, []);
+            if (oLogicParent)
+                oLogicParent.AddKid(oNewParent);
+
+            if (oField) {
+                let aWidgets = oDoc.GetAllWidgets(sFullName);
+                oNewParent.DrainLogicFrom(oField);
+
+                for (let nWidget = 0; nWidget < aWidgets.length; nWidget++) {
+                    let oWidget = aWidgets[nWidget];
+                    if (oWidget === oRenamedField)
+                        continue;
+
+                    let oWidgetParent = oWidget.GetParent();
+                    if (oWidgetParent)
+                        oWidgetParent.RemoveKid(oWidget);
+
+                    oWidget.SetPartialName(undefined);
+                    oNewParent.AddKid(oWidget);
+                }
+            }
+
+            oLogicParent = oNewParent;
+        }
+
+        return oLogicParent;
+    }
     CBaseField.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };
     CBaseField.prototype.Refresh_RecalcData = function(){};
+    CBaseField.prototype.Refresh_ContentChanges = function(){};
+    CBaseField.prototype.Clear_ContentChanges = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged, viewSync) {
-        let oViewer   = Asc.editor.getDocumentRenderer();
-        let canChange = !oViewer.IsOpenFormsInProgress && AscCommon.History.CanAddChanges() && !AscCommon.g_oIdCounter.IsLoad();
+		let oViewer   		= Asc.editor.getDocumentRenderer();
+        let isNativeBuilder	= AscCommon.IsNativeBuilder();
+		let canChange		= !oViewer.IsOpenFormsInProgress && (AscCommon.History.CanAddChanges() || isNativeBuilder);
 
         let changed = this._wasChanged !== isChanged && canChange;
         if (changed) {
@@ -1758,7 +1786,7 @@
 
     CBaseField.prototype.UndoNotAppliedChanges = function() {
         let isChanged = this.IsChanged();
-        this.SetValue(this.GetParentValue());
+        this.SetValue(this.GetLogicValue());
         this.SetNeedRecalc(true);
         this.SetNeedCommit(false);
 
@@ -1805,12 +1833,16 @@
         this._needDrawHighlight = bDraw;
     };
     CBaseField.prototype.IsNeedDrawHighlight = function() {
-        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm());
+        return false == this.IsReadOnly() && this._needDrawHighlight && !this.IsInForm() && !this.IsRedacted();
     };
 
     CBaseField.prototype.DrawEdit = function(oGraphicsWord) {
         let oDoc = this.GetDocument();
 
+		if (this.IsRedacted()) {
+			return;
+		}
+		
         if (this.IsNeedUpdateEditShape()) {
             this.UpdateEditShape();
         }
@@ -1822,6 +1854,7 @@
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
+		let isRedacted = this.IsRedacted();
         
         if (false == this.IsUseInDocument()) {
             return;
@@ -1829,7 +1862,14 @@
         
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
-                oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
+				let oPageInfo = oViewer.pagesInfo.pages[nPage];
+				if (isRedacted) {
+					oPageInfo.needRedrawDrawings = true;
+					oPageInfo.dirtyDrawingsBounds = null;
+				}
+				else {
+					oPageInfo.needRedrawForms = true;
+				}
                 oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }
@@ -1840,6 +1880,37 @@
     CBaseField.prototype.GetType = function() {
         return this.type;
     };
+	CBaseField.prototype.SetLayer = function(nLayer) {
+		if (this._layer === nLayer) {
+			return;
+		}
+
+		AscCommon.History.Add(new CChangesPDFObjectLayer(this, this._layer, nLayer));
+		this._layer = nLayer;
+		this.AddToRedraw();
+	};
+	CBaseField.prototype.GetLayer = function() {
+		return this._layer;
+	};
+	CBaseField.prototype.AddRedactId = function(id) {
+		AscCommon.History.Add(new CChangesPDFDrawingRedacts(this, this._redactIds.length, [id], true));
+		this._redactIds.push(id);
+	};
+	CBaseField.prototype.GetRedactIds = function() {
+		return this._redactIds;
+	};
+	CBaseField.prototype.RemoveRedactId = function(nPos) {
+		let ids = this._redactIds.splice(nPos, 1);
+		AscCommon.History.Add(new CChangesPDFDrawingRedacts(this, nPos, ids, false));
+		return ids[0];
+	};
+	CBaseField.prototype.ClearRedacts = function() {
+		let nCount = this._redactIds.length;
+		for (let i = 0; i < nCount; i++) {
+			this.RemoveRedactId(0);
+		}
+	};
+	CBaseField.prototype.Add_ContentChanges = function() {};
     CBaseField.prototype.GetStrType = function() {
         switch (this.GetType()) {
             case AscPDF.FIELD_TYPES.button:
@@ -1888,6 +1959,30 @@
             return oParent.IsReadOnly();
 
         return this._readOnly;
+    };
+
+	CBaseField.prototype.SetRedacted = function(isRedacted) {
+        if (this._isRedacted === isRedacted) {
+            return true;
+        }
+
+        AscCommon.History.Add(new CChangesPDFFormRedacted(this, this._isRedacted, isRedacted));
+
+        this._isRedacted = isRedacted;
+
+        let oCurPage = this.GetParentPage();
+
+		let sId = this.GetId();
+		oCurPage.RemoveField(sId);
+		oCurPage.AddRedactedField(this);
+		
+		this.SetWasChanged(true, false);
+        this.AddToRedraw();
+
+        return true;
+    };
+    CBaseField.prototype.IsRedacted = function() {
+        return this._isRedacted;
     };
 
     CBaseField.prototype.SetNoExport = function(bNoExport) {
@@ -1997,14 +2092,14 @@
 
         AscCommon.History.Add(new CChangesPDFFormBorderColor(this, this.GetBorderColor(), aColor));
 
-        this._strokeColor = this._borderColor = aColor;
+        this._borderColor = aColor;
         this.SetWasChanged(true);
         this.AddToRedraw();
 
         return true;
     };
     CBaseField.prototype.GetBorderColor = function() {
-        return this._strokeColor;
+        return this._borderColor;
     };
     CBaseField.prototype.SetBackgroundColor = function(aColor) {
         if (aColor && aColor.length == 0) {
@@ -2028,11 +2123,18 @@
     };
     CBaseField.prototype.IsHidden = function() {
         let nType = this.GetDisplay();
-        if (nType == window["AscPDF"].Api.Types.display["hidden"] || nType == window["AscPDF"].Api.Types.display["noView"])
+        if (nType == AscPDF.Api.Types.display["hidden"] || nType == AscPDF.Api.Types.display["noView"])
             return true;
 
         return false;
     };
+	CBaseField.prototype.IsNoPrint = function() {
+		let nType = this.GetDisplay();
+        if (nType == AscPDF.Api.Types.display["noPrint"] || nType == AscPDF.Api.Types.display["hidden"])
+            return true;
+
+        return false;
+	};
     CBaseField.prototype.SetDisplay = function(nType) {
         AscCommon.History.Add(new CChangesPDFFormDisplay(this, this._display, nType));
 
@@ -2071,7 +2173,7 @@
             return;
         }
         
-        const shouldUpdate = !value && this.GetParentValue() === sOldDefValue || value && !this.GetParentValue();
+        const shouldUpdate = !value && this.GetLogicValue() === sOldDefValue || value && !this.GetLogicValue();
 
         let oWidget = this.IsWidget() ? this : this.GetKid(0);
 
@@ -2081,7 +2183,7 @@
                 oWidget.Commit();
             }
             else {
-                this.SetParentValue(value);
+                this.SetLogicValue(value);
             }
         }
 
@@ -2103,7 +2205,7 @@
     CBaseField.prototype.Reset = function() {
         let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
-            this.SetValue(defValue);
+            this.private_SetValue(defValue);
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
         }
@@ -2218,7 +2320,7 @@
             return true;
     };
     CBaseField.prototype.GetBordersWidth = function() {
-        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
+        let nLineWidth = this._borderWidth != undefined ? this._borderWidth : 1;
 
         if (nLineWidth == 0 || this._borderStyle == undefined) {
             return {
@@ -2318,14 +2420,13 @@
             AscCommon.History.Add(new CChangesPDFFormBorderWidth(this, this._borderWidth, nWidth));
 
             this._borderWidth = nWidth;
-            this._lineWidth = nWidth;
 
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
         }
     };
     CBaseField.prototype.GetBorderWidth = function() {
-        return this._borderWidth || this._lineWidth;
+        return this._borderWidth;
     };
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.
@@ -2475,10 +2576,21 @@
         return null;
     };
 	
-	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
+	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics) {
+		if (pdfGraphics.isPrint) {
+			if (this.IsNoPrint()) {
+				return;
+			}
+		}
+		else if (this.IsHidden() && !Asc.editor.IsEditFieldsMode()) {
 			return;
-		
+		}
+
+		let isRedactClipApplied = false;
+		if (textBoxGraphics && this.GetRedactIds().length != 0) {
+			isRedactClipApplied = AscPDF.CPdfDrawingPrototype.prototype.StartRedactClip.call(this, textBoxGraphics);
+		}
+
         if (pdfGraphics.isThumbnails) {
             this.DrawBorders(pdfGraphics);
         }
@@ -2486,8 +2598,17 @@
             if (this.IsNeedDrawFromStream())
                 this.DrawFromStream(pdfGraphics, textBoxGraphics);
             else
-                this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+                this.DrawFromTextBox(pdfGraphics, textBoxGraphics);
         }
+
+		if (true !== pdfGraphics.isPrint) {
+			this.DrawRequiredBorder(pdfGraphics);
+		}
+		
+		this.DrawLocks(pdfGraphics);
+        this.DrawEdit(textBoxGraphics);
+
+		AscPDF.CPdfDrawingPrototype.prototype.EndRedactClip.call(this, textBoxGraphics, isRedactClipApplied);
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
@@ -2519,9 +2640,6 @@
         // oGraphicsPDF.BeginPath();
         // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
         // oGraphicsPDF.Stroke();
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CBaseField.prototype.DrawLocks = function(oGraphicsPDF) {
         let aOrigRect   = this.GetRect();
@@ -2539,7 +2657,7 @@
 
         oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aRegions);
     };
-	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {
+	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics) {
 		this.Draw(pdfGraphics, textBoxGraphics);
 	};
     CBaseField.prototype.GetTopParent = function() {
@@ -2641,22 +2759,24 @@
             this.contentFormat.SetItalic(oStyle.italic);
         }
     };
-    CBaseField.prototype.SetAlign = function(nAlignType) {
-        if (this._alignment != nAlignType) {
-            AscCommon.History.Add(new CChangesPDFFormAlign(this, this._alignment, nAlignType));
-            this._alignment = nAlignType;
-        }
+	CBaseField.prototype.SetAlign = function(nAlignType) {
+		let nFieldType = this.GetType();
+		if (AscPDF.FIELD_TYPES.text !== nFieldType &&
+			AscPDF.FIELD_TYPES.combobox !== nFieldType &&
+			AscPDF.FIELD_TYPES.listbox !== nFieldType) {
+			return false;
+		}
 
-        let nFieldType = this.GetType();
-        if (AscPDF.FIELD_TYPES.text !== nFieldType &&
-        AscPDF.FIELD_TYPES.combobox !== nFieldType &&
-        AscPDF.FIELD_TYPES.listbox !== nFieldType) {
-            return;
-        }
+		if (this._alignment != nAlignType) {
+			AscCommon.History.Add(new CChangesPDFFormAlign(this, this._alignment, nAlignType));
+			this._alignment = nAlignType;
+		}
 
-        this.SetNeedCheckAlign(true);
-        this.SetWasChanged(true);
+		this.SetNeedCheckAlign(true);
+		this.SetWasChanged(true);
 		this.SetNeedRecalc(true);
+
+		return true;
 	};
     CBaseField.prototype.GetAlign = function() {
         return this._alignment;
@@ -2680,12 +2800,12 @@
 			AscCommon.History.EndNoHistoryMode();
         }
         
-        if (this.GetType() == AscPDF.FIELD_TYPES.button) {
-            this.SetNeedUpdateImage(true);
-        }
-
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+
+		if (this.GetType() == AscPDF.FIELD_TYPES.button) {
+			this.SetNeedUpdateImage(true);
+		}
 
         return true;
     };
@@ -2754,7 +2874,7 @@
         this.SetRect(aNewRect);
     };
     CBaseField.prototype.GetRect = function() {
-        return this._rect;
+        return this._rect ? this._rect.slice() : this._rect;
     };
     CBaseField.prototype.GetWidth = function() {
         let aRect = this.GetRect();
@@ -2775,19 +2895,19 @@
 
     // common triggers
     CBaseField.prototype.onMouseEnter = function() {
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter);
     };
     CBaseField.prototype.onMouseExit = function() {
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseExit);
     };
     CBaseField.prototype.onFocus = function() {
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.onFocus);
     };
     CBaseField.prototype.onBlur = function() {
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.OnBlur);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.onBlur);
     };
     CBaseField.prototype.onMouseUp = function() {
-        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseUp);
     };
     /**
 	 * Escape from form.
@@ -2806,6 +2926,7 @@
         
         if (oDoc.activeForm == this) {
             oDoc.activeForm = null;
+			oDoc.mouseDownField = null;
             this.onBlur();
         }
     };
@@ -2867,7 +2988,7 @@
         memory.WriteLong(annotFlags);
 
         // page
-        memory.WriteLong(this.GetOriginPage());
+        memory.WriteLong(memory.isRedactField ? this.GetPage() : this.GetOriginPage());
 
         // rect
         let aOrigRect = this.GetRect();
@@ -2914,8 +3035,14 @@
                     "color": this.GetTextColor()
                 }
 
-				if (memory.isForSplit && this.contentFormat) {
-					oMeta["formatValue"] = this.GetFormatValue();
+				if (memory.isForSplit) {
+					if (this.contentFormat) {
+						oMeta["formatValue"] = this.GetFormatValue();
+					}
+					if (this.IsRedacted()) {
+						oMeta["isRedacted"] = true;
+						oMeta["isChanged"] = !this.IsNeedDrawFromStream();
+					}
 				}
             }
             memory.WriteString(JSON.stringify(oMeta));
@@ -3232,10 +3359,10 @@
             memory.widgetFlags |= (1 << 2);
         }
 
-        let oParent = this.GetParent(true);
+        let oLogicParent = this.GetParent(true);
         let nFieldType = this.GetType();
 
-        if (!oParent) {
+        if (!oLogicParent) {
             switch (nFieldType) {
                 case AscPDF.FIELD_TYPES.radiobutton: {
                     memory.widgetFlags |= (1 << 15);
@@ -3313,6 +3440,7 @@
         }
 
         // parent
+		let oParent = this.GetParent();
         if (oParent != null) {
             memory.fieldDataFlags |= (1 << 17);
             memory.WriteLong(oParent.GetApIdx());
@@ -3347,6 +3475,8 @@
         let nFlags      = 0;
         memory.Skip(4);
 
+        let isLogicalRoot = this.IsLogicalRoot();
+
         // partial name
         let sName = this.GetPartialName();
         if (sName != null) {
@@ -3354,30 +3484,33 @@
             memory.WriteString(sName);
         }
 
-        // value
-        let value = this.GetParentValue();
-        if (value != null && Array.isArray(value) == false) {
-            nFlags |= (1 << 1);
-            memory.WriteString(value);
-        }
+        let value;
+        if (isLogicalRoot) {
+            // value
+            value = this.GetLogicValue();
+            if (value != null && Array.isArray(value) == false) {
+                nFlags |= (1 << 1);
+                memory.WriteString(value);
+            }
 
-        // default value
-        let defValue = this.GetDefaultValue();
-        if (defValue != null) {
-            nFlags |= (1 << 2);
-            memory.WriteString(defValue);
-        }
+            // default value
+            let defValue = this.GetDefaultValue();
+            if (defValue != null) {
+                nFlags |= (1 << 2);
+                memory.WriteString(defValue);
+            }
 
-        // combobox/listbox
-        let curIdxs = [];
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs();
-        }
-        if (curIdxs.length > 0) {
-            nFlags |= (1 << 3);
-            memory.WriteLong(curIdxs.length);
-            for (let i = 0; i < curIdxs.length; i++) {
-                memory.WriteLong(curIdxs[i]);
+            // combobox/listbox
+            let curIdxs = [];
+            if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+                curIdxs = this.GetLogicCurIdxs();
+            }
+            if (curIdxs.length > 0) {
+                nFlags |= (1 << 3);
+                memory.WriteLong(curIdxs.length);
+                for (let i = 0; i < curIdxs.length; i++) {
+                    memory.WriteLong(curIdxs[i]);
+                }
             }
         }
 
@@ -3388,38 +3521,35 @@
             memory.WriteLong(oParent.GetApIdx());
         }
 
-        if (value != null && Array.isArray(value) == true) {
-            // flag that value is an array
-            nFlags |= (1 << 5);
-            memory.WriteLong(value.length);
-            for (let i = 0; i < value.length; i++) {
-                memory.WriteString(value[i]);
-            }
-        }
-
-        // combobox/listbox, checkbox/radiobutton
-        let aOptions = [];
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.GetType())) {
-            aOptions = this.GetOptions(false);
-            if (aOptions) {
-                nFlags |= (1 << 6);
-
-                memory.WriteLong(aOptions.length);
-                for (let i = 0; i < aOptions.length; i++) {
-                    memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
-                    memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
+        if (isLogicalRoot) {
+            if (value != null && Array.isArray(value) == true) {
+                // flag that value is an array
+                nFlags |= (1 << 5);
+                memory.WriteLong(value.length);
+                for (let i = 0; i < value.length; i++) {
+                    memory.WriteString(value[i]);
                 }
             }
-        }
 
-        // field flags
-        nFlags |= (1 << 7);
+            // combobox/listbox, checkbox/radiobutton
+            let aOptions = [];
+            if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.GetType())) {
+                aOptions = this.GetOptions(false);
+                if (aOptions) {
+                    nFlags |= (1 << 6);
 
-        let nFieldType = this.GetType();
-        let bWriteType = this.IsAllKidsWidgets();
+                    memory.WriteLong(aOptions.length);
+                    for (let i = 0; i < aOptions.length; i++) {
+                        memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
+                        memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
+                    }
+                }
+            }
 
-        let nWidgetFlags = 0;
-        if (bWriteType) {
+            // field flags
+            nFlags |= (1 << 7);
+            let nFieldType = this.GetType();
+            let nWidgetFlags = 0;
             switch (nFieldType) {
                 case AscPDF.FIELD_TYPES.radiobutton: {
                     nWidgetFlags |= (1 << 15);
@@ -3433,80 +3563,80 @@
                     nWidgetFlags |= (1 << 17);
                     break;
                 }
-            }    
-        }
+            }   
 
-        if (this.IsReadOnly && this.IsReadOnly()) {
-            nWidgetFlags |= (1 << 0);
-        }
-        if (this.IsRequired && this.IsRequired()) {
-            nWidgetFlags |= (1 << 1);
-        }
-        if (this.IsNoExport && this.IsNoExport()) {
-            nWidgetFlags |= (1 << 2);
-        }
-        if (this.IsMultiline && this.IsMultiline()) {
-            nWidgetFlags |= (1 << 12);
-        }
-        if (this.IsPassword && this.IsPassword()) {
-            nWidgetFlags |= (1 << 13);
-        }
-        if (this.IsNoToggleToOff && this.IsNoToggleToOff()) {
-            nWidgetFlags |= (1 << 14);
-        }
-        if (this.IsEditable && this.IsEditable()) {
-            nWidgetFlags |= (1 << 18);
-        }
-        if (this.IsFileSelect && this.IsFileSelect()) {
-            nWidgetFlags |= (1 << 20);
-        }
-        if (this.IsMultipleSelection && this.IsMultipleSelection()) {
-            nWidgetFlags |= (1 << 21);
-        }
-        if (this.IsDoNotSpellCheck && this.IsDoNotSpellCheck()) {
-            nWidgetFlags |= (1 << 22);
-        }
-        if (this.IsDoNotScroll && this.IsDoNotScroll()) {
-            nWidgetFlags |= (1 << 23);
-        }
-        if (this.IsComb && this.IsComb()) {
-            nWidgetFlags |= (1 << 24);
-        }
-        if (this.IsRadiosInUnison && this.IsRadiosInUnison()) {
-            nWidgetFlags |= (1 << 25);
-        }
-        if (this.IsCommitOnSelChange && this.IsCommitOnSelChange()) {
-            nWidgetFlags |= (1 << 26);
-        }
-        memory.WriteLong(nWidgetFlags);
+            if (this.IsReadOnly && this.IsReadOnly()) {
+                nWidgetFlags |= (1 << 0);
+            }
+            if (this.IsRequired && this.IsRequired()) {
+                nWidgetFlags |= (1 << 1);
+            }
+            if (this.IsNoExport && this.IsNoExport()) {
+                nWidgetFlags |= (1 << 2);
+            }
+            if (this.IsMultiline && this.IsMultiline()) {
+                nWidgetFlags |= (1 << 12);
+            }
+            if (this.IsPassword && this.IsPassword()) {
+                nWidgetFlags |= (1 << 13);
+            }
+            if (this.IsNoToggleToOff && this.IsNoToggleToOff()) {
+                nWidgetFlags |= (1 << 14);
+            }
+            if (this.IsEditable && this.IsEditable()) {
+                nWidgetFlags |= (1 << 18);
+            }
+            if (this.IsFileSelect && this.IsFileSelect()) {
+                nWidgetFlags |= (1 << 20);
+            }
+            if (this.IsMultipleSelection && this.IsMultipleSelection()) {
+                nWidgetFlags |= (1 << 21);
+            }
+            if (this.IsDoNotSpellCheck && this.IsDoNotSpellCheck()) {
+                nWidgetFlags |= (1 << 22);
+            }
+            if (this.IsDoNotScroll && this.IsDoNotScroll()) {
+                nWidgetFlags |= (1 << 23);
+            }
+            if (this.IsComb && this.IsComb()) {
+                nWidgetFlags |= (1 << 24);
+            }
+            if (this.IsRadiosInUnison && this.IsRadiosInUnison()) {
+                nWidgetFlags |= (1 << 25);
+            }
+            if (this.IsCommitOnSelChange && this.IsCommitOnSelChange()) {
+                nWidgetFlags |= (1 << 26);
+            }
+            memory.WriteLong(nWidgetFlags);
 
-        // actions
-        nFlags |= (1 << 8);
-        let aActions = this.GetListActions();
-        memory.WriteLong(aActions.length);
-        
-        for (let i = 0; i < aActions.length; i++) {
-            aActions[i].WriteToBinary(memory);
-        }
+            // actions
+            nFlags |= (1 << 8);
+            let aActions = this.GetListActions();
+            memory.WriteLong(aActions.length);
+            
+            for (let i = 0; i < aActions.length; i++) {
+                aActions[i].WriteToBinary(memory);
+            }
 
-        // charLimit
-        if (this.GetType() == AscPDF.FIELD_TYPES.text) {
-            nFlags |= (1 << 9);
-            memory.WriteLong(this.GetCharLimit());
-        }
+            // charLimit
+            if (this.GetType() == AscPDF.FIELD_TYPES.text) {
+                nFlags |= (1 << 9);
+                memory.WriteLong(this.GetCharLimit());
+            }
 
-        // tooltip
-        let sTooltip = this.GetTooltip();
-        if (sTooltip) {
-            nFlags |= (1 << 10);
-            memory.WriteString(sTooltip);
-        }
+            // tooltip
+            let sTooltip = this.GetTooltip();
+            if (sTooltip) {
+                nFlags |= (1 << 10);
+                memory.WriteString(sTooltip);
+            }
 
-        // middle east options
-        let nMEOptions = this.GetMEOptions();
-        if (nMEOptions !== 0) {
-            nFlags |= (1 << 11);
-            memory.WriteLong(nMEOptions);
+            // middle east options
+            let nMEOptions = this.GetMEOptions();
+            if (nMEOptions !== 0) {
+                nFlags |= (1 << 11);
+                memory.WriteLong(nMEOptions);
+            }
         }
 
         // write flags
@@ -3525,7 +3655,7 @@
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) ? this.contentFormat : this.content;
         let oldTrMatrix = oContentToDraw.transform;
         oContentToDraw.transform = new AscCommon.CMatrix();
         memory.docRenderer.ClearCacheProps();
@@ -3543,6 +3673,22 @@
     // for format
 
     // private methods
+
+    function private_hexToRgb(sHex)
+	{
+		if (typeof sHex !== "string")
+			return null;
+
+		let s = "#" === sHex.charAt(0) ? sHex.slice(1) : sHex;
+		if (6 !== s.length)
+			return null;
+
+		let n = parseInt(s, 16);
+		if (isNaN(n))
+			return null;
+
+		return { r: (n >> 16) & 0xFF, g: (n >> 8) & 0xFF, b: n & 0xFF };
+	}
 
     function private_GetFieldAlign(sJc)
 	{
@@ -3600,7 +3746,6 @@
 	CBaseField.prototype.hitInBoundingRect = function() {};
 	CBaseField.prototype.IsEditFieldShape = function() {};
 
-	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
 	window["AscPDF"].VALID_ROTATIONS    = VALID_ROTATIONS;
     window["AscPDF"].MAX_TEXT_SIZE      = MAX_TEXT_SIZE;
     window["AscPDF"].FONT_STRETCH       = FONT_STRETCH;

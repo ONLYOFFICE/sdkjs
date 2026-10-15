@@ -2661,6 +2661,13 @@ CFootnotesController.prototype.IsMovingTableBorder = function()
 
 	return this.CurFootnote.IsMovingTableBorder();
 };
+CFootnotesController.prototype.CancelTableBorderMove = function()
+{
+	if (true !== this.private_IsOnFootnoteSelected())
+		return;
+
+	this.CurFootnote.CancelTableBorderMove();
+};
 CFootnotesController.prototype.CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {
 	var oResult = this.private_GetFootnoteByXY(X, Y, PageAbs);

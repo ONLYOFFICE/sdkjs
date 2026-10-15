@@ -373,6 +373,33 @@
 
 		this.WordControl.GoToPage(this.Document.getCurrentPage());
 	};
+	VisioEditorApi.prototype.asc_setViewMode = function(isViewMode)
+	{
+		this.isViewMode = !!isViewMode;
+		if (!this.isLoadFullApi)
+		{
+			return;
+		}
+
+		if (this.isViewMode)
+		{
+			AscCommon.CollaborativeEditing.Set_GlobalLock(true);
+			if (null != this.WordControl.m_oLogicDocument)
+			{
+				this.WordControl.m_oLogicDocument.viewMode = true;
+			}
+			this.turnOffSpecialModes();
+		}
+		else
+		{
+			if (null != this.WordControl.m_oLogicDocument)
+			{
+				this.WordControl.m_oLogicDocument.viewMode = false;
+			}
+		}
+
+		this.checkInputMode();
+	};
 	VisioEditorApi.prototype._coAuthoringInitEnd = function()
 	{
 		//todo other events
@@ -508,8 +535,6 @@
 	window["VisioEditorApi"]                                 = VisioEditorApi;
 	window["VisioEditorApi"].prototype["asc_nativeOpenFile"] = function(base64File, version)
 	{
-		// this.SpellCheckUrl = '';
-
 		this.User = new AscCommon.asc_CUser();
 		this.User.setId("TM");
 		this.User.setUserName("native");
@@ -662,8 +687,9 @@
 		}
 
 		var pagescount = this["asc_nativePrintPagesCount"]();
-		if (options && options["printOptions"] && options["printOptions"]["onlyFirstPage"])
-			pagescount = 1;
+		var pageNum = -1;
+		if (options && options["printOptions"] && options["printOptions"]["savePage"] !== undefined && options["printOptions"]["savePage"] !== -1)
+			pageNum = options["printOptions"]["savePage"];
 
 		var _renderer                         = new AscCommon.CDocumentRenderer();
 		_renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
@@ -676,7 +702,13 @@
 		let nativeOptions = options ? options["nativeOptions"] : undefined;
 		let pages = nativeOptions ? AscCommon.getNativePrintRanges(nativeOptions["pages"], nativeOptions["currentPage"], pagescount) : undefined;
 
-		for (var i = 0; i < pagescount; i++)
+		var i = 0;
+		if (pageNum != -1)
+		{
+			i = pageNum;
+			pagescount = i + 1;
+		}
+		for (; i < pagescount; i++)
 		{
 			if (pages !== undefined && !pages[i])
 				continue;
@@ -944,7 +976,7 @@
 
 		if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType))
 		{
-			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint), fileType);
+			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, {isSelection: options.isPdfPrint}), fileType);
 			return true;
 		}
 
@@ -955,22 +987,25 @@
 				isSelection = true;
 
 			var dd             = this.WordControl.m_oDrawingDocument;
-			dataContainer.data = dd.ToRendererPart(oAdditionalData["nobase64"], isSelection);
+			dataContainer.data = dd.ToRendererPart(oAdditionalData["nobase64"], {isSelection: isSelection});
 		}
 		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
+			var canDownloadFromBytes = !window.isCloudCryptoDownloadAs && AscCommon.DownloadType.None === downloadType
+				&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+				&& !AscCommon.AscBrowser.isAndroidNativeApp;
 			this.saveLogicDocumentToZip(undefined, undefined,
 				function(data) {
 					if (data) {
-						if (c_oAscFileType.VSDX === fileType && !window.isCloudCryptoDownloadAs) {
+						if (c_oAscFileType.VSDX === fileType && canDownloadFromBytes) {
 							AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("vsdx"));
 						} else {
 							dataContainer.data = data;
 							if (window.isCloudCryptoDownloadAs)
 							{
-								window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType);
-								return true;
+								if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+									return true;
 							}
 							t._downloadAsUsingServer(actionType, options, oAdditionalData, dataContainer, downloadType);
 							return;
@@ -992,8 +1027,8 @@
 
 		if (window.isCloudCryptoDownloadAs)
 		{
-			window["AscDesktopEditor"]["CryptoDownloadAs"](dataContainer.data, fileType);
-			return true;
+			if (AscCommon.CryptoProvider.cryptoDownloadAs(dataContainer.data, fileType))
+				return true;
 		}
 	};
 	VisioEditorApi.prototype.asc_getPageName = function(index)
@@ -1008,7 +1043,7 @@
 	{
 		if (this.printPreview)
 			return;
-		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
+		this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
 	};
 	VisioEditorApi.prototype.asc_drawPrintPreview = function(index, paperSize)
 	{
@@ -1047,6 +1082,9 @@
 	VisioEditorApi.prototype.sync_countPagesCallback  = function(count)
 	{
 		this.sendEvent("asc_onCountPages", count);
+	};
+	VisioEditorApi.prototype.sync_updatePrintPreview = function()
+	{
 	};
 	VisioEditorApi.prototype.sync_currentPageCallback = function(number)
 	{
@@ -1137,6 +1175,9 @@
 
 		if (isFromInput !== true && AscCommon.g_inputContext)
 			AscCommon.g_inputContext.setInterfaceEnableKeyEvents(value);
+	};
+	VisioEditorApi.prototype.isSlideShow = function () {
+		return false;
 	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

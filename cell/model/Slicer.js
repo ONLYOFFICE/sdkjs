@@ -2842,13 +2842,12 @@
 			var elem = AscCommonExcel.AutoFiltersOptionsElements();
 			var sharedItem = cacheField.getGroupOrSharedItem(item.x);
 			var num = sharedItem.isDateOrNum() && cacheField.getNumFormat();
-			let name;
+			let pivotItem;
 			if (pivotItems) {
-				const pivotItem = pivotItems[opt_pivotField.getItemIndexByValue(item.x)];
-				name = pivotItem.getName(cacheField, num);
-			} else {
-				name = sharedItem.getCellValue().getTextValue(num);
+				pivotItem = pivotItems[opt_pivotField.getItemIndexByValue(item.x)];
 			}
+			// slicer items can outlive the pivot items they came from, fall back to the cache value
+			let name = pivotItem ? pivotItem.getName(cacheField, num) : sharedItem.getCellValue().getTextValue(num);
 			elem.val = item.x;
 			elem.text = name;
 			elem.visible = item.s;

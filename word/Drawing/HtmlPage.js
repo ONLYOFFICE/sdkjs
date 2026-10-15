@@ -1100,7 +1100,7 @@ function CEditorPage(api)
 			const nPageW = sectPr.GetPageWidth() / AscCommon.AscBrowser.retinaPixelRatio;
 			const nPageH = sectPr.GetPageHeight() / AscCommon.AscBrowser.retinaPixelRatio;
 			const nScale = this.ReaderFontSizes[this.ReaderFontSizeCur] / 16;
-			this.m_oLogicDocument.SetDocumentReadMode(nPageW, nPageH, nScale);
+			this.m_oLogicDocument.SetDocumentReadMode(nPageW, nPageH, nScale, 5, 0, 5, 0);
 			return true;
 		}
 		return false;
@@ -1571,6 +1571,8 @@ function CEditorPage(api)
 			this.m_oScrollHor_.bind("scrollhorizontal", function(evt)
 			{
 				oThis.horizontalScroll(this, evt.scrollD, evt.maxScrollX);
+				if (evt.userScroll)
+					oThis.onUserScroll();
 			});
 			this.m_oScrollHorApi = this.m_oScrollHor_;
 		}
@@ -1692,6 +1694,17 @@ function CEditorPage(api)
 		if (this.m_nZoomType !== 0)
 			return false;
 		return true;
+	};
+
+	this.getMultiPageRowMaxWidth = function()
+	{
+		let width = this.m_oEditor.HtmlElement.width;
+		width /= AscCommon.AscBrowser.retinaPixelRatio;
+
+		if (!this.m_oApi.isMobileVersion)
+			width -= 40;
+
+		return width;
 	};
 
 	this.GetVerticalScrollTo = function(y, page)
@@ -2640,16 +2653,15 @@ function CEditorPage(api)
 			return;
 		}
 
-		if (oWordControl.m_bIsRuler && oWordControl.m_oHorRuler.m_bIsMouseDown)
+		if (oWordControl.m_bIsRuler && oWordControl.m_oHorRuler.m_bIsMouseDown && 27 !== e.keyCode)
 		{
 			AscCommon.check_KeyboardEvent2(e);
 			e.preventDefault();
 			return;
 		}
 
-		// Esc даем делать с клавы, даже когда мышка зажата, чтобы можно было сбросить drag-n-drop, но если у нас
-		// идет работа с автофигурами (любые движения), тогда не пропускаем.
-		if (oWordControl.m_bIsMouseLock === true && (27 !== e.keyCode || true === oWordControl.m_oLogicDocument.Is_TrackingDrawingObjects()))
+		// Esc даем делать с клавы, даже когда мышка зажата, чтобы можно было сбросить drag-n-drop.
+		if (oWordControl.m_bIsMouseLock === true && 27 !== e.keyCode)
 		{
 			if (!window.USER_AGENT_MACOS)
 			{
@@ -3130,8 +3142,7 @@ function CEditorPage(api)
 		}
 		else
 		{
-			let editorWidth = this.m_oEditor.HtmlElement.width;
-			editorWidth /= AscCommon.AscBrowser.retinaPixelRatio;
+			let editorWidth = this.getMultiPageRowMaxWidth();
 
 			let currentBlockW = 0;
 			let currentBlockH = 0;
@@ -3154,7 +3165,7 @@ function CEditorPage(api)
 				if (mm_h > this.m_dDocumentPageHeight)
 					this.m_dDocumentPageHeight = mm_h;
 
-				let _pageWidth = (mm_w * dKoef) >> 0;
+				let _pageWidth = (mm_w * dKoef + 0.5) >> 0;
 				let _pageHeight = (mm_h * dKoef + 0.5) >> 0;
 
 				if (0 === currentBlockW)
@@ -3291,8 +3302,7 @@ function CEditorPage(api)
 		}
 		else
 		{
-			let editorWidth = this.m_oEditor.HtmlElement.width;
-			editorWidth /= AscCommon.AscBrowser.retinaPixelRatio;
+			let editorWidth = this.getMultiPageRowMaxWidth();
 
 			let currentBlockW = 0;
 			let currentBlockH = 0;
@@ -3469,6 +3479,10 @@ function CEditorPage(api)
 		{
 			if (this.m_oEditor && this.m_oEditor.HtmlElement)
 				this.m_oEditor.HtmlElement.fullRepaint = true;
+
+			this.m_oHorRuler.RepaintChecker.BlitAttack = true;
+			this.m_oVerRuler.RepaintChecker.BlitAttack = true;
+
 			this.zoom_Fire(0, this.m_nZoomValue);
 
 			this.m_oBoundsController.ClearNoAttack();

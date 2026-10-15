@@ -525,7 +525,7 @@ CTable.prototype.private_RecalculateGrid = function(pageFields)
 			oPageFields.X      = 0;
 			oPageFields.XLimit = oFramePr.GetW();
 		}
-		else if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.IsInline())
+		else if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.IsInline() && this.Parent)
 		{
 			var _X      = oPageFields.X;
 			var _XLimit = oPageFields.XLimit;
@@ -1601,7 +1601,7 @@ CTable.prototype.private_RecalculateBorders = function()
 							const oLeftCell = oTempRow.GetCell(nTempCurCell - 1);
 							if (this.bPresentation) {
 								const oLeftTopCell = this.GetStartMergedCell(nTempCurCell - 1, CurRow + nTempCurRow);
-								oLeftBorder = this.private_ResolveBordersConflict(oLeftTopCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell, oTempCell === oTopMergedCell);
+								oLeftBorder = this.private_ResolveBordersConflict(oLeftTopCell.GetBorders().Right, oTempCellBorders.Left, false, false, oLeftCell === oLeftTopCell);
 							} else {
 								oLeftBorder = this.private_ResolveBordersConflict(oLeftCell.GetBorders().Right, oTempCellBorders.Left, false, false);
 							}
@@ -1626,7 +1626,7 @@ CTable.prototype.private_RecalculateBorders = function()
 							const oRightCell = oTempRow.GetCell(nTempCurCell + 1);
 							if (this.bPresentation) {
 								const oRightTopCell = this.GetStartMergedCell(nTempCurCell + 1, CurRow + nTempCurRow);
-								oRightBorder = this.private_ResolveBordersConflict(oRightTopCell.GetBorders().Left, oTempCellBorders.Right,false, false, oRightCell === oRightTopCell, oTopMergedCell === oTempCell);
+								oRightBorder = this.private_ResolveBordersConflict(oRightTopCell.GetBorders().Left, oTempCellBorders.Right, false, false, oTempCell !== oTopMergedCell);
 							} else {
 								oRightBorder = this.private_ResolveBordersConflict(oRightCell.GetBorders().Left, oTempCellBorders.Right, false, false);
 							}
@@ -1784,28 +1784,14 @@ CTable.prototype.private_RecalculateCellTopBorder = function(oPrevRow, nCurRow, 
 				nGridCount = nPrevGridCol + nPrevGridSpan - nCurGridCol;
 			}
 			var oPrevBottom = oPrevCell.GetBorders().Bottom;
-			if (this.bPresentation)
-			{
-				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
-				{
-					var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell ? !nCurGrid : false, !arrBorderTopInfo.length);
-					var nBorderW = oBorder.GetWidth();
-					if (nMaxTopBorder < nBorderW)
-						nMaxTopBorder = nBorderW;
-					arrBorderTopInfo.push(oBorder);
-				}
 
-			}
-			else
-			{
-				var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false);
-				var nBorderW = oBorder.GetWidth();
-				if (nMaxTopBorder < nBorderW)
-					nMaxTopBorder = nBorderW;
+			var oBorder  = this.private_ResolveBordersConflict(oPrevBottom, oCellBorders.Top, false, false, bCheckPrevTopMergedCell);
+			var nBorderW = oBorder.GetWidth();
+			if (nMaxTopBorder < nBorderW)
+				nMaxTopBorder = nBorderW;
 
-				for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
-					arrBorderTopInfo.push(oBorder);
-			}
+			for (var nCurGrid = 0; nCurGrid < nGridCount; ++nCurGrid)
+				arrBorderTopInfo.push(oBorder);
 
 			nPrevPos++;
 			nPrevGridCol += nPrevGridSpan;
@@ -2019,7 +2005,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 	var oFootnotes         = (isTopLogicDocument && !isInnerTable ? oTopDocument.Footnotes : null);
 	var nPageAbs           = this.GetAbsolutePage(CurPage);
 	var nColumnAbs         = this.GetAbsoluteColumn(CurPage);
-
+	
     this.TurnOffRecalc = true;
 
     var FirstRow = 0;
@@ -2247,6 +2233,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 // Обсчет такик ячеек произошел ранее
 
                 Cell.Temp.Y = Y_content_start;
+				Cell.Temp.Y_content_end = {};
 
                 if ( VMergeCount > 1 )
                 {
@@ -2524,6 +2511,33 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
     var bNextPage = false;
 
+	// Check keepNext
+	var bKeepNextForced   = false;
+	var nKeepNextForceRow = -1;
+	let topDocument = this.GetTopDocumentContent();
+	if ((topDocument instanceof AscWord.Document) && topDocument.RecalcInfo && topDocument.RecalcInfo.Check_KeepNext(this) && this.IsLastRowKeepWithNext())
+	{
+		nKeepNextForceRow = this.Content.length - 1;
+		while (nKeepNextForceRow > 0 && this.private_IsRowWithKeepNext(nKeepNextForceRow - 1))
+			--nKeepNextForceRow;
+		
+		if (0 === nKeepNextForceRow)
+		{
+			if (0 === CurPage
+				&& this.Get_DocumentPrev()
+				&& (!this.Parent || !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex())))
+			{
+				this.StartFromNewPage();
+				this.TurnOffRecalc = false;
+				return recalcresult_NextPage;
+			}
+			else
+			{
+				nKeepNextForceRow = -1;
+			}
+		}
+	}
+
     // Блок переменных для учета сносок
 	var nFootnotesHeight     = 0;
 	var arrSavedY            = [];
@@ -2557,6 +2571,20 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         }
 
         this.TableRowsBottom[CurRow][CurPage] = Y;
+
+		// Forced move of the last table rows because of the "keepNext" setting 
+		// Rows up to nKeepNextForceRow stay on the current page, and
+		// starting from that row they are moved to the next page
+		if (nKeepNextForceRow > FirstRow && CurRow === nKeepNextForceRow)
+		{
+			bNextPage       = true;
+			bKeepNextForced = true;
+
+			LastRow                          = CurRow - 1;
+			this.Pages[CurPage].LastRow      = CurRow - 1;
+			this.Pages[CurPage].LastRowSplit = false;
+			break;
+		}
 
         var Row         = this.Content[CurRow];
         var CellsCount  = Row.Get_CellsCount();
@@ -2780,6 +2808,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 			}
 			
 			Cell.Temp.Y = Y_content_start;
+			Cell.Temp.Y_content_end = {};
 			Cell.Temp.ClipTop    = Y;
 			Cell.Temp.ClipBottom = Y + RowHValue;
 			Cell.Temp.ClipPage   = CurPage;
@@ -3496,117 +3525,103 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         }
     }
 
-
-    // Просчитаем нижнюю границу таблицы на данной странице
-    var CurRow = LastRow;
-    if ( 0 === CurRow && false === this.RowsInfo[CurRow].FirstPage && 0 === CurPage )
-    {
-        // Таблица сразу переносится на следующую страницу
-        this.Pages[0].MaxBotBorder = 0;
-        this.Pages[0].BotBorders   = [];
-    }
-    else
-    {
-        // Если последняя строка на данной странице не имеет контента, тогда рассчитываем
-        // границу у предыдущей строки.
-        if ( false === this.RowsInfo[CurRow].FirstPage && CurPage === this.RowsInfo[CurRow].StartPage )
-            CurRow--;
-
-        var MaxBotBorder = 0;
-        var BotBorders   = [];
-
-        if (CurRow >= this.Pages[CurPage].FirstRow)
-        {
-            // Для ряда CurRow вычисляем нижнюю границу
-            if (this.Content.length - 1 === CurRow)
-            {
-                // Для последнего ряда уже есть готовые нижние границы
-                var Row        = this.Content[CurRow];
-                var CellsCount = Row.Get_CellsCount();
-                for (var CurCell = 0; CurCell < CellsCount; CurCell++)
-                {
-                    var Cell = Row.Get_Cell(CurCell);
-                    if (vmerge_Continue === Cell.GetVMerge())
-                        Cell = this.Internal_Get_StartMergedCell(CurRow, Row.Get_CellInfo(CurCell).StartGridCol, Cell.Get_GridSpan());
-
-                    var Border_Info = Cell.GetBorderInfo().Bottom;
-
-                    for (var BorderId = 0; BorderId < Border_Info.length; BorderId++)
-                    {
-                        var Border = Border_Info[BorderId];
-                        if (border_Single === Border.Value && MaxBotBorder < Border.Size)
-                            MaxBotBorder = Border.Size;
-
-                        BotBorders.push(Border);
-                    }
-                }
-            }
-            else
-            {
-                var Row         = this.Content[CurRow];
-                var CellSpacing = Row.Get_CellSpacing();
-                var CellsCount  = Row.Get_CellsCount();
-
-                if (null != CellSpacing)
-                {
-                    // BotBorders можно не заполнять, т.к. у каждой ячейки своя граница,
-                    // нам надо только посчитать максимальную толщину.
-                    for (var CurCell = 0; CurCell < CellsCount; CurCell++)
-                    {
-                        var Cell   = Row.Get_Cell(CurCell);
-                        var Border = Cell.Get_Borders().Bottom;
-
-                        if (border_Single === Border.Value && MaxBotBorder < Border.Size)
-                            MaxBotBorder = Border.Size;
-                    }
-                }
-                else
-                {
-                    // Сравниваем нижнюю границу ячейки и нижнюю границу таблицы
-                    for (var CurCell = 0; CurCell < CellsCount; CurCell++)
-                    {
-                        var Cell = Row.Get_Cell(CurCell);
-
-                        if (vmerge_Continue === Cell.GetVMerge())
-                        {
-                            Cell = this.Internal_Get_StartMergedCell(CurRow, Row.Get_CellInfo(CurCell).StartGridCol, Cell.Get_GridSpan());
-                            if (null === Cell)
-                            {
-                                BotBorders.push(TableBorders.Bottom);
-                                continue;
-                            }
-                        }
-
-                        var Border = Cell.Get_Borders().Bottom;
-
-                        // Сравним границы
-                        var Result_Border = this.private_ResolveBordersConflict(Border, TableBorders.Bottom, false, true);
-                        if (border_Single === Result_Border.Value && MaxBotBorder < Result_Border.Size)
-                            MaxBotBorder = Result_Border.Size;
-
-                        BotBorders.push(Result_Border);
-                    }
-                }
-            }
-        }
-
-        this.Pages[CurPage].MaxBotBorder = MaxBotBorder;
-        this.Pages[CurPage].BotBorders   = BotBorders;
-    }
-
     this.Pages[CurPage].Bounds.Bottom = this.Pages[CurPage].Bounds.Top + TableHeight;
     this.Pages[CurPage].Bounds.Left   = X_min + this.Pages[CurPage].X;
     this.Pages[CurPage].Bounds.Right  = X_max + this.Pages[CurPage].X;
     this.Pages[CurPage].Height        = TableHeight;
 
-    if (true === bNextPage)
-    {
-        var LastRow = this.Pages[CurPage].LastRow;
-        if (false === this.RowsInfo[LastRow].FirstPage)
-            this.Pages[CurPage].LastRow = LastRow - 1;
-        else
-            this.Pages[CurPage].LastRowSplit = true;
-    }
+	if (true === bNextPage && false === bKeepNextForced)
+	{
+		let lastRow  = this.Pages[CurPage].LastRow;
+		let originlastRow = lastRow;
+		let docPrev  = this.Get_DocumentPrev();
+		let isNotFirstOnPage = (this.Parent && !this.Parent.IsFirstElementOnPage(this.GetRelativePage(CurPage), this.GetIndex()));
+		let canMoveRows = lastRow || CurPage || (docPrev && isNotFirstOnPage);
+		
+		if (this.RowsInfo[lastRow].FirstPage
+			&& !this.GetRow(lastRow).CanSplit()
+			&& ((lastRow > FirstRow) || (0 === lastRow && 0 === CurPage && docPrev && isNotFirstOnPage)))
+		{
+			this.RowsInfo[lastRow].FirstPage = false;
+		}
+
+		if (false === this.RowsInfo[lastRow].FirstPage)
+		{
+			--lastRow;
+			this.Pages[CurPage].LastRow = lastRow;
+			if (canMoveRows)
+			{
+				while (lastRow > FirstRow && this.private_IsRowWithKeepNext(lastRow))
+				{
+					--lastRow;
+				}
+				
+				if (0 === lastRow && 0 === CurPage && docPrev && isNotFirstOnPage && this.private_IsRowWithKeepNext(0))
+				{
+					this.Pages[CurPage].LastRow = -1;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+				else if (lastRow !== FirstRow || 0 === CurPage)
+				{
+					this.Pages[CurPage].LastRow = lastRow;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+			}
+		}
+		else
+		{
+			this.Pages[CurPage].LastRowSplit = true;
+			
+			if (canMoveRows)
+			{
+				// MS behaviour
+				// If row is splitted into pages, we check "Keep with next" only for this row (if it occurs no on the first page)
+				// If it the first page we can check rows till the first one
+				
+				let moveRows = false;
+				if (0 === CurPage)
+				{
+					let minRow = (docPrev && isNotFirstOnPage) ? -1 : 0;
+					while (lastRow > minRow && this.private_IsRowWithKeepNext(lastRow))
+					{
+						moveRows = true;
+						--lastRow;
+					}
+				}
+				else if (this.private_IsRowWithKeepNext(lastRow))
+				{
+					let _lastRow = lastRow;
+					while (_lastRow > FirstRow && this.private_IsRowWithKeepNext(_lastRow))
+					{
+						--_lastRow;
+					}
+					
+					if (_lastRow !== FirstRow)
+					{
+						lastRow  = _lastRow;
+						moveRows = true;
+					}
+					else if (lastRow > FirstRow)
+					{
+						lastRow  = lastRow - 1;
+						moveRows = true;
+					}
+				}
+				
+				if (moveRows)
+				{
+					this.Pages[CurPage].LastRow = lastRow;
+					this.Pages[CurPage].LastRowSplit = false;
+				}
+			}
+		}
+		
+		// Recalculate vertically merged cells
+		if (this.Pages[CurPage].LastRow < originlastRow)
+			this.private_RecalculateLastRowVMergedCells(CurPage);
+	}
+
+	this.private_RecalculatePageBottomBorders(CurPage);
 
     this.TurnOffRecalc = false;
 
@@ -3616,6 +3631,203 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         return recalcresult_NextPage;
     else
         return recalcresult_NextElement;
+};
+/**
+ * @param {number} iRow - row index
+ * @returns {boolean}
+ */
+CTable.prototype.private_IsRowWithKeepNext = function(iRow)
+{
+	if (iRow < 0 || iRow >= this.Content.length)
+		return false;
+
+	return this.GetRow(iRow).IsContentWithKeepNext();
+};
+
+CTable.prototype.private_RecalculateLastRowVMergedCells = function(curPage)
+{
+	let lastRowIndex  = this.Pages[curPage].LastRow;
+	let firstRowIndex = this.Pages[curPage].FirstRow; 
+	if (lastRowIndex < firstRowIndex || !this.TableRowsBottom[lastRowIndex])
+		return;
+
+	let pageX       = this.Pages[curPage].X;
+	let lastRow     = this.GetRow(lastRowIndex);
+	let cellSpacing = lastRow.GetCellSpacing();
+	
+	if (null === cellSpacing)
+		cellSpacing = 0;
+	else if (lastRowIndex !== this.GetRowsCount() - 1)
+		cellSpacing /= 2;
+
+	let bottomMargin = this.MaxBotMargin[lastRowIndex];
+	let rowBottom    = this.TableRowsBottom[lastRowIndex][curPage] + AscCommon.TwipsToMM(1);
+
+	let vertAlignCells = [];
+	for (let cellIndex = 0, cellCount = lastRow.GetCellsCount(); cellIndex < cellCount; ++cellIndex)
+	{
+		let cell     = lastRow.GetCell(cellIndex);
+		let gridSpan = cell.GetGridSpan();
+		let gridCol  = cell.Metrics.StartGridCol;
+
+		if (this.Internal_GetVertMergeCount(lastRowIndex, gridCol, gridSpan) <= 1)
+			continue;
+
+		let startCell = this.Internal_Get_StartMergedCell(lastRowIndex, gridCol, gridSpan);
+		if (!startCell || startCell.IsVerticalText())
+			continue;
+
+		let cellContent   = startCell.GetContent();
+		let cellPageIndex = curPage - cellContent.GetRelativeStartPage();
+		
+		startCell.Temp.Y_VAlign_offset[cellPageIndex] = 0;
+		if (0 === cellPageIndex && vertalignjc_Top !== startCell.Get_VAlign())
+			vertAlignCells.push(startCell);
+		
+		if (cellPageIndex < 0 || cellPageIndex >= startCell.PagesCount)
+			continue;
+
+		let startRow      = startCell.GetRow();
+		let startRowIndex = startRow.GetIndex();
+		let cellMetrics   = startRow.GetCellInfo(startCell.GetIndex());
+
+		let X_content_start = pageX + cellMetrics.X_content_start;
+		let X_content_end   = pageX + cellMetrics.X_content_end;
+		let Y_content_start = startCell.Temp.Y;
+		let Y_content_end   = rowBottom - bottomMargin - cellSpacing;
+
+		// Check if don't need to calculate anything
+		let cellPageBounds = cellContent.Get_PageBounds(cellPageIndex, undefined, true);
+		if (cellPageBounds.Bottom <= Y_content_end + 0.001)
+			continue;
+
+		if ((0 === startRowIndex && 0 === curPage) || startRowIndex > firstRowIndex)
+		{
+			startCell.PagesCount = 1;
+			cellContent.Set_StartPage(curPage);
+			cellContent.Reset(X_content_start, Y_content_start, X_content_end, Y_content_end);
+			cellPageIndex = curPage - cellContent.GetRelativeStartPage();
+		}
+		else
+		{
+			startCell.Temp.Y_content_end[cellPageIndex] = Y_content_end;
+		}
+		
+		if (recalcresult2_NextPage === cellContent.Recalculate_Page(cellPageIndex, true))
+			startCell.PagesCount = cellContent.Pages.length + 1;
+	}
+	
+	for (let pos = 0; pos < vertAlignCells.length; ++pos)
+	{
+		let cell = vertAlignCells[pos];
+		let vAlign = cell.Get_VAlign();
+		let cellPageIndex = 0;
+		
+		let cellMargins = cell.GetMargins();
+		let row         = cell.GetRow();
+		let rowIndex    = row.GetIndex();
+		
+		let Y_0 = this.RowsInfo[rowIndex].Y[curPage] + cellMargins.Top.W;
+		if (!this.bPresentation && null === row.GetCellSpacing())
+			Y_0 += this.MaxTopBorder[rowIndex];
+
+		let Y_1        = rowBottom - cellMargins.Bottom.W;
+		let cellHeight = Y_1 - Y_0;
+
+		let cellContent       = cell.GetContent();
+		let cellContentBounds = cellContent.Get_PageBounds(cellPageIndex, cellHeight, true);
+		let contentHeight     = cellContentBounds.Bottom - cellContentBounds.Top;
+
+		let extraSpace = cellHeight - contentHeight;
+		if (extraSpace > AscWord.EPSILON)
+		{
+			let shiftY = vertalignjc_Bottom === vAlign ? extraSpace : extraSpace / 2;
+			cell.ShiftCellContent(cellPageIndex, 0, shiftY, true);
+			cell.Temp.Y_VAlign_offset[cellPageIndex] = shiftY;
+		}
+	}
+};
+CTable.prototype.private_RecalculatePageBottomBorders = function(curPage)
+{
+	let page     = this.Pages[curPage];
+	let rowIndex = page.LastRow;
+
+	page.MaxBotBorder = 0;
+	page.BotBorders   = [];
+
+	if (rowIndex < page.FirstRow || (0 === rowIndex && 0 === curPage && false === this.RowsInfo[0].FirstPage))
+		return;
+
+	if (false === this.RowsInfo[rowIndex].FirstPage && curPage === this.RowsInfo[rowIndex].StartPage)
+		--rowIndex;
+
+	if (rowIndex < page.FirstRow)
+		return;
+
+	let maxBotBorder = 0;
+	let botBorders   = [];
+
+	let row        = this.GetRow(rowIndex);
+	let cellsCount = row.GetCellsCount();
+
+	if (this.GetRowsCount() - 1 === rowIndex)
+	{
+		// For the last row we have calculated borders already
+		for (let cellIndex = 0; cellIndex < cellsCount; ++cellIndex)
+		{
+			let cell = row.GetCell(cellIndex);
+			if (vmerge_Continue === cell.GetVMerge())
+				cell = this.Internal_Get_StartMergedCell(rowIndex, row.GetCellInfo(cellIndex).StartGridCol, cell.GetGridSpan());
+
+			let borders = cell.GetBorderInfo().Bottom;
+			for (let borderIndex = 0; borderIndex < borders.length; ++borderIndex)
+			{
+				let border = borders[borderIndex];
+				if (border_Single === border.Value && maxBotBorder < border.Size)
+					maxBotBorder = border.Size;
+
+				botBorders.push(border);
+			}
+		}
+	}
+	else if (null != row.GetCellSpacing())
+	{
+		// No need to fill BotBorders, since each cell has its own border,
+		// need to calculate max thickness only
+		for (let cellIndex = 0; cellIndex < cellsCount; ++cellIndex)
+		{
+			let border = row.GetCell(cellIndex).Get_Borders().Bottom;
+			if (border_Single === border.Value && maxBotBorder < border.Size)
+				maxBotBorder = border.Size;
+		}
+	}
+	else
+	{
+		// Compare the bottom border of the each cell against the bottom border of the whole table
+		let tableBorders = this.Get_Borders();
+		for (let cellIndex = 0; cellIndex < cellsCount; ++cellIndex)
+		{
+			let cell = row.GetCell(cellIndex);
+			if (vmerge_Continue === cell.GetVMerge())
+			{
+				cell = this.Internal_Get_StartMergedCell(rowIndex, row.GetCellInfo(cellIndex).StartGridCol, cell.GetGridSpan());
+				if (null === cell)
+				{
+					botBorders.push(tableBorders.Bottom);
+					continue;
+				}
+			}
+
+			let border = this.private_ResolveBordersConflict(cell.Get_Borders().Bottom, tableBorders.Bottom, false, true);
+			if (border_Single === border.Value && maxBotBorder < border.Size)
+				maxBotBorder = border.Size;
+
+			botBorders.push(border);
+		}
+	}
+
+	page.MaxBotBorder = maxBotBorder;
+	page.BotBorders   = botBorders;
 };
 CTable.prototype.private_RecalculatePrepareHeaderPageRows = function(headerPage)
 {

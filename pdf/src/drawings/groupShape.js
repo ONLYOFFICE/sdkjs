@@ -60,6 +60,7 @@
         this.recalculateTransform();
         this.updateTransformMatrix();
         this.recalcGeometry();
+        this.recalcBounds();
         this.checkExtentsByDocContent(true, true);
         this.recalculate();
         this.SetNeedRecalc(false);

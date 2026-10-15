@@ -54,6 +54,7 @@
 
     CAnnotationTextMarkup.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
     CAnnotationTextMarkup.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationTextMarkup.prototype.recalcGeometry = function() {};
     CAnnotationTextMarkup.prototype.canChangeAdjustments = function() {};
     CAnnotationTextMarkup.prototype.hitToHandles = function() {};
     CAnnotationTextMarkup.prototype.hitInBoundingRect = function() {};
@@ -109,19 +110,80 @@
     CAnnotationTextMarkup.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
+        let aQuads  = this.GetQuads();
+        let oBounds = null;
+
+        if (aQuads && aQuads.length) {
+            for (let i = 0; i < aQuads.length; i++) {
+                let aQuad = aQuads[i];
+                for (let j = 0; j < aQuad.length; j += 2) {
+                    let x = aQuad[j] * g_dKoef_pt_to_mm;
+                    let y = aQuad[j + 1] * g_dKoef_pt_to_mm;
+                    if (!oBounds) {
+                        oBounds = {l: x, t: y, r: x, b: y};
+                    }
+                    else {
+                        oBounds.l = Math.min(oBounds.l, x);
+                        oBounds.t = Math.min(oBounds.t, y);
+                        oBounds.r = Math.max(oBounds.r, x);
+                        oBounds.b = Math.max(oBounds.b, y);
+                    }
+                }
+            }
+        }
+        else {
+            let aRect = this.GetRect && this.GetRect();
+			if (!aRect) {
+				return;
+			}
+            oBounds = {
+                l: Math.min(aRect[0], aRect[2]) * g_dKoef_pt_to_mm,
+                t: Math.min(aRect[1], aRect[3]) * g_dKoef_pt_to_mm,
+                r: Math.max(aRect[0], aRect[2]) * g_dKoef_pt_to_mm,
+                b: Math.max(aRect[1], aRect[3]) * g_dKoef_pt_to_mm
+            };
+        }
         
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
-                oViewer.pagesInfo.pages[nPage].needRedrawMarkups = true;
-                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+                let oPageInfo = oViewer.pagesInfo.pages[nPage];
+                oPageInfo.needRedrawMarkups = true;
+
+                if (oBounds && oPageInfo.dirtyDrawingsBounds !== null) {
+                    let extMM = AscPDF.PARTIAL_REDRAW_EXT;
+                    if (!oPageInfo.dirtyDrawingsBounds) {
+                        oPageInfo.dirtyDrawingsBounds = {l: oBounds.l - extMM, t: oBounds.t - extMM, r: oBounds.r + extMM, b: oBounds.b + extMM};
+                    }
+                    else {
+                        oPageInfo.dirtyDrawingsBounds.l = Math.min(oPageInfo.dirtyDrawingsBounds.l, oBounds.l - extMM);
+                        oPageInfo.dirtyDrawingsBounds.t = Math.min(oPageInfo.dirtyDrawingsBounds.t, oBounds.t - extMM);
+                        oPageInfo.dirtyDrawingsBounds.r = Math.max(oPageInfo.dirtyDrawingsBounds.r, oBounds.r + extMM);
+                        oPageInfo.dirtyDrawingsBounds.b = Math.max(oPageInfo.dirtyDrawingsBounds.b, oBounds.b + extMM);
+                    }
+                }
+
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage, oPageInfo.dirtyDrawingsBounds);
             }
         }
 
         oViewer.paint(setRedrawPageOnRepaint);
     };
-    CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
-        return IsInQuads(this.GetQuads(), x, y);
-    };
+	CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
+		let aQuads = this.GetQuads();
+		if (aQuads.length > 0) {
+			return IsInQuads(this.GetQuads(), x, y);
+		}
+		
+		let aRect = this.GetRect();
+		let nWidth = aRect[2] - aRect[0];
+		let nHeight = aRect[3] - aRect[1];
+		
+		if (x >= aRect[0] && x <= aRect[0] + nWidth && y >= aRect[1] && y <= aRect[1] + nHeight) {
+			return true;
+		}
+		
+		return false;
+	};
     CAnnotationTextMarkup.prototype.DrawSelected = function(overlay) {
         overlay.m_oContext.lineWidth    = 3;
         overlay.m_oContext.globalAlpha  = 1;
@@ -157,7 +219,23 @@
             });
         }
 
-        if (aAllRegions.length > 1) {
+        if (aAllRegions.length === 0) {
+            let aRect = this.GetRect();
+            if (aRect && aRect.length === 4) {
+                resultRegion = {
+                    inverted : false,
+                    regions : [
+                        [
+                            [aRect[0], aRect[1]],
+                            [aRect[2], aRect[1]],
+                            [aRect[2], aRect[3]],
+                            [aRect[0], aRect[3]]
+                        ]
+                    ]
+                };
+            }
+        }
+        else if (aAllRegions.length > 1) {
             resultRegion = fUniter(aAllRegions[0], aAllRegions[1]);
             for (let i = 2; i < aAllRegions.length; i++) {
                 resultRegion = fUniter(resultRegion, aAllRegions[i]);
@@ -273,11 +351,6 @@
             oGraphicsPDF.Fill();
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
-
-        let aUnitedRegion = this.GetUnitedRegion();
-        if (aUnitedRegion) {
-            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
-        }
     };
         
     /**
@@ -359,11 +432,6 @@
             
             oGraphicsPDF.Stroke();
         }
-
-        let aUnitedRegion = this.GetUnitedRegion();
-        if (aUnitedRegion) {
-            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
-        }
     };
     
     /**
@@ -438,11 +506,6 @@
             
             oGraphicsPDF.Stroke();
         }
-
-        let aUnitedRegion = this.GetUnitedRegion();
-        if (aUnitedRegion) {
-            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
-        }
     };
 
     /**
@@ -496,11 +559,6 @@
             let endY   = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? Y2 : Y2 - nIndentY;
     
             drawZigZagLine(oGraphicsPDF, startX, startY, endX, endY, nLineW);
-        }
-    
-        let aUnitedRegion = this.GetUnitedRegion();
-        if (aUnitedRegion) {
-            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
         }
     };
     
@@ -639,11 +697,6 @@
             
             oGraphicsPDF.Stroke();
         }
-
-        let aUnitedRegion = this.GetUnitedRegion();
-        if (aUnitedRegion) {
-            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
-        }
     };
     CAnnotationCaret.prototype.SetCaretSymbol = function(nType) {
         this._caretSymbol = nType;
@@ -704,6 +757,14 @@
     CAnnotationRedact.prototype.IsRedact = function() {
         return true;
     };
+	CAnnotationRedact.prototype.IsUseInDocument = function() {
+		let isUsed = AscPDF.CAnnotationBase.prototype.IsUseInDocument.call(this);
+        if (isUsed && !this.GetRedactId()) {
+			return true;
+		}
+
+        return false;
+    };
     CAnnotationRedact.prototype.SetHovered = function(isHovered) {
         if (this._hovered != isHovered) {
             this.AddToRedraw();
@@ -718,27 +779,28 @@
         AscCommon.History.Add(new CChangesPDFRedactAnnotRedactId(this, this._redactId, sRedactId));
         this._redactId = sRedactId;
 
+		let oDoc = Asc.editor.getPDFDoc();
+		oDoc.CheckComment(this);
+		
         this.AddToRedraw();
     };
     CAnnotationRedact.prototype.GetRedactId = function() {
         return this._redactId;
     };
-    CAnnotationRedact.prototype.IsHidden = function() {
-        return AscPDF.CAnnotationBase.prototype.IsHidden.call(this) || !!this.GetRedactId();
-    };
     CAnnotationRedact.prototype.Draw = function(oGraphicsPDF) {
         let oDoc = Asc.editor.getPDFDoc();
         let oPageInfo = oDoc.GetPageInfo(this.GetPage());
-        
-        let isNeedDrawApplied = false;
-        if (this.GetRedactId() && (oPageInfo.IsRecognized() || undefined == oPageInfo.GetOriginIndex())) {
-            isNeedDrawApplied = true;
+        let isApplied = this.GetRedactId();
+
+        let isNeedDraw = false;
+        if (!isApplied || (isApplied && (oPageInfo.IsRecognized() || undefined == oPageInfo.GetOriginIndex()))) {
+            isNeedDraw = true;
         }
         
-        if (this.IsHidden() == true && !isNeedDrawApplied)
+        if (this.IsHidden() == true || !isNeedDraw)
             return;
 
-        if (this.IsHovered() || isNeedDrawApplied) {
+        if (this.IsHovered() || isApplied) {
             this._DrawHovered(oGraphicsPDF);
         }
         else {
@@ -795,11 +857,6 @@
             }
 
             oGraphicsPDF.Fill();
-        }
-
-        let aUnitedRegion = this.GetUnitedRegion();
-        if (aUnitedRegion) {
-            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
         }
     };
     CAnnotationRedact.prototype._DrawRect = function(oGraphicsPDF) {

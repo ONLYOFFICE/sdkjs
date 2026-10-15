@@ -2259,54 +2259,94 @@ function (window, undefined) {
 		);
 	};
 
-	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
-		let prevPoint;
-		const allIntersections = [];
+	const ARROW_SEGMENT_COEF = 0.1;
 
-		for (let i = 0; i < pathCommands.length; i++) {
+	function getFirstDistinctPoint(tipPoint, pathCommands, searchFromEnd, minDistance) {
+		const epsilon = AscWord.EPSILON;
+
+		const start = searchFromEnd ? pathCommands.length - 1 : 0;
+		const end = searchFromEnd ? -1 : pathCommands.length;
+		const step = searchFromEnd ? -1 : 1;
+
+		let nearestDistinctPoint = null;
+
+		for (let i = start; i !== end; i += step) {
 			const command = pathCommands[i];
-			let intersections = [];
+			let point;
 
-			if (command.id === AscFormat.moveTo) {
-				prevPoint = { x: command.X, y: command.Y };
-				continue;
+			if (command.id === AscFormat.moveTo || command.id === AscFormat.lineTo) {
+				point = { x: command.X, y: command.Y };
+			} else if (command.id === AscFormat.bezier4) {
+				point = { x: command.X2, y: command.Y2 };
 			}
 
-			if (command.id === AscFormat.lineTo) {
-				intersections = getCircleIntersectionsWithLine(circleCenter, circleRadius, prevPoint, { x: command.X, y: command.Y });
-				prevPoint = { x: command.X, y: command.Y };
-			}
-
-			if (command.id === AscFormat.bezier4) {
-				intersections = getCircleIntersectionsWithBezierCurve(
-					circleCenter, circleRadius,
-					prevPoint,
-					{ x: command.X0, y: command.Y0 },
-					{ x: command.X1, y: command.Y1 },
-					{ x: command.X2, y: command.Y2 }
-				);
-				prevPoint = { x: command.X2, y: command.Y2 };
-			}
-
-			if (intersections.length > 0) {
-				allIntersections.push(intersections);
+			if (point) {
+				const distance = getLineLength(point, tipPoint);
+				if (distance > epsilon) {
+					if (!AscFormat.isRealNumber(minDistance) || distance >= minDistance) {
+						return point;
+					}
+					if (!nearestDistinctPoint) {
+						nearestDistinctPoint = point;
+					}
+				}
 			}
 		}
 
-		if (allIntersections.length === 0) {
+		return nearestDistinctPoint;
+	}
+
+	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
+		let tipSegmentIndex = -1;
+		if (searchFromEnd) {
+			for (let i = pathCommands.length - 1; i >= 0; i--) {
+				if (pathCommands[i].id === AscFormat.lineTo || pathCommands[i].id === AscFormat.bezier4) {
+					tipSegmentIndex = i;
+					break;
+				}
+			}
+		} else {
+			for (let i = 0; i < pathCommands.length; i++) {
+				if (pathCommands[i].id === AscFormat.lineTo || pathCommands[i].id === AscFormat.bezier4) {
+					tipSegmentIndex = i;
+					break;
+				}
+			}
+		}
+
+		if (tipSegmentIndex <= 0) {
 			return null;
 		}
 
-		const targetIntersections = searchFromEnd
-			? allIntersections[allIntersections.length - 1]
-			: allIntersections[0];
+		const prevCommand = pathCommands[tipSegmentIndex - 1];
+		const segmentStart = prevCommand.id === AscFormat.bezier4
+			? { x: prevCommand.X2, y: prevCommand.Y2 }
+			: { x: prevCommand.X, y: prevCommand.Y };
 
-		const closestPoint = targetIntersections.reduce(function (best, current) {
+		const command = pathCommands[tipSegmentIndex];
+		let intersections;
+		if (command.id === AscFormat.lineTo) {
+			intersections = getCircleIntersectionsWithLine(circleCenter, circleRadius, segmentStart, { x: command.X, y: command.Y });
+		} else {
+			intersections = getCircleIntersectionsWithBezierCurve(
+				circleCenter, circleRadius,
+				segmentStart,
+				{ x: command.X0, y: command.Y0 },
+				{ x: command.X1, y: command.Y1 },
+				{ x: command.X2, y: command.Y2 }
+			);
+		}
+
+		if (!intersections || intersections.length === 0) {
+			return null;
+		}
+
+		const closestPoint = intersections.reduce(function (best, current) {
 			const isCurrentBetter = searchFromEnd
 				? current.t > best.t
 				: current.t < best.t;
 			return isCurrentBetter ? current : best;
-		}, targetIntersections[0]);
+		}, intersections[0]);
 
 		return closestPoint;
 	}
@@ -2461,18 +2501,21 @@ function (window, undefined) {
 		}
 
 		const arrowTipPoint = { x: commands[0].X, y: commands[0].Y };
-		const arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, false);
-
+		let arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, false);
 		if (!arrowBasePoint) {
-			return null;
+			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, false, arrowLength * ARROW_SEGMENT_COEF);
 		}
 
-		const diffX = arrowTipPoint.x - arrowBasePoint.x;
-		const diffY = arrowTipPoint.y - arrowBasePoint.y;
+		if (arrowBasePoint) {
+			const diffX = arrowTipPoint.x - arrowBasePoint.x;
+			const diffY = arrowTipPoint.y - arrowBasePoint.y;
 
-		const angleInRadians = Math.atan2(diffY, diffX);
-		const angleInDegrees = angleInRadians * 180 / Math.PI;
-		return angleInDegrees;
+			const angleInRadians = Math.atan2(diffY, diffX);
+			const angleInDegrees = angleInRadians * 180 / Math.PI;
+			return angleInDegrees;
+		}
+
+		return 180 + 45;
 	};
 	Path.prototype.getTailArrowAngle = function (arrowLength) {
 		// This path should contain cubicBezierTo, lineTo, and moveTo commands only,
@@ -2488,20 +2531,22 @@ function (window, undefined) {
 		}
 
 		const pathEndPoint = this.getEndPoint();
-
 		const arrowTipPoint = { x: pathEndPoint.x, y: pathEndPoint.y };
-		const arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, true);
-
+		let arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, true);
 		if (!arrowBasePoint) {
-			return null;
+			arrowBasePoint = getFirstDistinctPoint(arrowTipPoint, commands, true, arrowLength * ARROW_SEGMENT_COEF);
 		}
 
-		const diffX = arrowTipPoint.x - arrowBasePoint.x;
-		const diffY = arrowTipPoint.y - arrowBasePoint.y;
+		if (arrowBasePoint) {
+			const diffX = arrowTipPoint.x - arrowBasePoint.x;
+			const diffY = arrowTipPoint.y - arrowBasePoint.y;
 
-		const angleInRadians = Math.atan2(diffY, diffX);
-		const angleInDegrees = angleInRadians * 180 / Math.PI;
-		return angleInDegrees;
+			const angleInRadians = Math.atan2(diffY, diffX);
+			const angleInDegrees = angleInRadians * 180 / Math.PI;
+			return angleInDegrees;
+		}
+
+		return 45;
 	};
 	Path.prototype.isValid = function () {
 		if(this.ArrPathCommand.length === 0) return false;

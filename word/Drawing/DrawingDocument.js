@@ -4484,6 +4484,10 @@ function CDrawingDocument()
 	};
 	this.private_EndDrawSelection = function ()
 	{
+		if (null == this.Overlay) {
+			return;
+		}
+
 		var ctx = this.Overlay.m_oContext;
 
 		ctx.globalAlpha = 0.2;
@@ -4945,6 +4949,9 @@ function CDrawingDocument()
 
 	this.StartTrackTable = function (obj, transform)
 	{
+		if (this.IsTrackTable())
+			return;
+		
 		let touchManager = this.m_oWordControl.MobileTouchManager;
 		if (touchManager && touchManager.isTouchMode())
 		{
@@ -4959,6 +4966,10 @@ function CDrawingDocument()
 
 		if (this.m_oWordControl.MobileTouchManager)
 			this.m_oWordControl.OnUpdateOverlay();
+	};
+	this.GetTrackedTable = function()
+	{
+		return this.TableOutlineDr.TableOutline ? this.TableOutlineDr.TableOutline.Table : null;
 	};
 	this.EndTrackTable = function (pointer, bIsAttack)
 	{
@@ -4985,6 +4996,34 @@ function CDrawingDocument()
 				this.m_oWordControl.OnUpdateOverlay();
 			}
 		}
+	};
+	this.IsTrackTable = function()
+	{
+		return !!(this.TableOutlineDr && this.TableOutlineDr.bIsTracked);
+	};
+	this.CancelTrackTable = function()
+	{
+		if (!this.TableOutlineDr.bIsTracked)
+			return;
+
+		this.TableOutlineDr.TableOutline = null;
+		this.TableOutlineDr.bIsTracked = false;
+		this.TableOutlineDr.InlinePos = null;
+		this.TableOutlineDr.IsResizeTableTrack = false;
+		this.TableOutlineDr.Counter = 0;
+
+		this.m_oWordControl.OnUpdateOverlay();
+	};
+	this.IsTrackRuler = function()
+	{
+		return this.m_oWordControl.m_oHorRuler.IsTracking() || this.m_oWordControl.m_oVerRuler.IsTracking();
+	};
+	this.CancelTrackRuler = function()
+	{
+		if (this.m_oWordControl.m_oHorRuler.IsTracking())
+			this.m_oWordControl.m_oHorRuler.CancelTracking();
+		if (this.m_oWordControl.m_oVerRuler.IsTracking())
+			this.m_oWordControl.m_oVerRuler.CancelTracking();
 	};
 
 	this.DrawFrameTrack = function (overlay)
@@ -5649,8 +5688,17 @@ function CDrawingDocument()
 			}
 		}
 	};
-	
-	this.IsCursorInTableCur = function (x, y, page, checkArea)
+
+	/**
+	 * Checks if the cursor is in the track area of the current table
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} page - absolute page index
+	 * @param {boolean} [checkArea=false] - besides the mover corner, check the strips to the left of and above the table
+	 * @param {boolean} [checkInside=false] - check the whole table area including the strips to the left and above
+	 * @returns {boolean}
+	 */
+	this.IsCursorInTableCur = function (x, y, page, checkArea, checkInside)
 	{
 		var _table = this.TableOutlineDr.TableOutline;
 		if (_table == null)
@@ -5669,7 +5717,7 @@ function CDrawingDocument()
 
 		if ((x > (_x - _dist)) && (x < _r) && (y > (_y - _dist)) && (y < _b))
 		{
-			if ((x < _x && y < _y) || (checkArea && (x < _x || y < _y)))
+			if (checkInside || (x < _x && y < _y) || (checkArea && (x < _x || y < _y)))
 			{
 				this.TableOutlineDr.Counter = 0;
 				this.TableOutlineDr.bIsNoTable = false;
@@ -7121,7 +7169,7 @@ function CDrawingDocument()
     this.GenerateSelectionPrint = function ()
     {
         History.TurnOff();
-        g_oTableId.m_bTurnOff = true;
+        g_oTableId.TurnOff();
 
         this.printedDocument = null;
         try {
@@ -7243,7 +7291,7 @@ function CDrawingDocument()
         {
         }
 
-        g_oTableId.m_bTurnOff = false;
+        g_oTableId.TurnOn();
         History.TurnOn();
     };
 }

@@ -157,6 +157,11 @@ function CCommentData()
 		this.m_nDurableId = AscCommentData.asc_getDurableId();
 		this.m_sUserData  = AscCommentData.asc_getUserData();
 
+		if (Asc.editor.isPdfEditor() && AscCommentData.asc_getAnnotType) {
+			this.m_nAnnotType = AscCommentData.asc_getAnnotType();
+			this.m_bShowStatus = AscCommentData.asc_getShowStatus();
+		}
+
         var RepliesCount  = AscCommentData.asc_getRepliesCount();
         for ( var Index = 0; Index < RepliesCount; Index++ )
         {
@@ -335,17 +340,25 @@ CCommentData.prototype.SetUserData = function(sData)
 };
 CCommentData.prototype.ConvertToSimpleObject = function()
 {
-	var obj = {};
+	let obj = {};
 
-	obj["Text"]      = this.m_sText;
-	obj["Time"]      = this.m_sTime;
-	obj["UserName"]  = this.m_sUserName;
-	obj["QuoteText"] = this.m_sQuoteText;
-	obj["Solved"]    = this.m_bSolved;
-	obj["UserData"]  = this.m_sUserData;
-	obj["Replies"]   = [];
+	if (Asc.editor.isPdfEditor()) {
+		obj["AnnotType"] = AscPDF.GetAnnotTypeStr(this.m_nAnnotType);
+		obj["Time"]      = this.m_sOOTime;
+	}
+	else {
+		obj["QuoteText"] = this.m_sQuoteText;
+		obj["Solved"]    = this.m_bSolved;
+		obj["UserData"]  = this.m_sUserData;	
+		obj["Time"]      = this.m_sTime;
+	}
 
-	for (var nIndex = 0, nCount = this.m_aReplies.length; nIndex < nCount; ++nIndex)
+	obj["Text"]		= this.m_sText;
+	obj["UserName"]	= this.m_sUserName;
+	obj["UserId"]	= this.m_sUserId;
+	obj["Replies"]	= [];
+
+	for (let nIndex = 0, nCount = this.m_aReplies.length; nIndex < nCount; ++nIndex)
 	{
 		obj["Replies"].push(this.m_aReplies[nIndex].ConvertToSimpleObject());
 	}
@@ -640,8 +653,12 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComment.prototype.SetData = function(oData)
 	{
+		let isSolvedChange = (this.IsSolved() !== oData.IsSolved());		
 		AscCommon.History.Add(new CChangesCommentChange(this, this.Data, oData));
 		this.Data = oData;
+		
+		if (isSolvedChange)
+			this.UpdateParentShapeTextCache();
 	};
 	CComment.prototype.GetUserName = function()
 	{
@@ -743,6 +760,15 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			return this.Parent.LogicDocument;
 
 		return null;
+	};
+	CComment.prototype.UpdateParentShapeTextCache = function()
+	{
+		let mark      = AscCommon.g_oTableId.Get_ById(this.GetRangeStart());
+		let paragraph = mark ? mark.GetParagraph() : null;
+		let shape     = paragraph && paragraph.GetParent() ? paragraph.GetParent().Is_DrawingShape(true) : null;
+		
+		if (shape)
+			shape.updateDrawingTextCache();
 	};
 	/**
 	 * Выделяем текст в границах комментария
@@ -1020,7 +1046,17 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComments.prototype.SetUseSolved                = function(isUse)
 	{
+		if (isUse === this.m_bUseSolved)
+			return;
+		
 		this.m_bUseSolved = isUse;
+		
+		for (let commentId in this.m_arrCommentsById)
+		{
+			let comment = this.m_arrCommentsById[commentId];
+			if (comment.IsSolved())
+				comment.UpdateParentShapeTextCache();
+		}
 	};
 	CComments.prototype.IsUseSolved                 = function()
 	{
@@ -1280,15 +1316,25 @@ ParaComment.prototype.IsAnnotationMark = function()
 {
 	return true;
 };
-ParaComment.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRange, CurPage)
+ParaComment.prototype.recalculateRangeAlign = function(alignState)
 {
-	var Para             = PRSA.Paragraph;
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+
+	// TODO: We should move all this logic to AlignRecalcState
+
+	let Para     = alignState.Paragraph;
+	let CurLine  = alignState.CurLine;
+	let CurRange = alignState.CurRange;
+	let CurPage  = alignState.CurPage;
+
 	var DocumentComments = Para.LogicDocument.Comments;
 	var Comment          = DocumentComments.Get_ById(this.CommentId);
 	if (null === Comment)
 		return;
 
-	var X    = PRSA.X;
+	var X    = alignState.X;
 	var Y    = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
 	var H    = Para.Lines[CurLine].Metrics.Ascent + Para.Lines[CurLine].Metrics.Descent;
 	var Page = Para.GetAbsolutePage(CurPage);
@@ -1369,6 +1415,10 @@ ParaComment.prototype.PrepareRecalculateObject = function()
 };
 ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+
 	var DocumentComments = editor.WordControl.m_oLogicDocument.Comments;
 	var Comment          = DocumentComments.Get_ById(this.CommentId);
 	if (null === Comment)
@@ -1380,9 +1430,9 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 		Comment.m_oStartInfo.Y += Dy;
 	}
 };
-ParaComment.prototype.Draw_Lines = function(lineDrawState)
+ParaComment.prototype.drawLines = function(lineDrawState)
 {
-	lineDrawState.handleAnnotationMark(this);
+	lineDrawState.handleCommentMark(this);
 };
 ParaComment.prototype.drawMark = function(x, y, h, graphics, isRTL, lineDrawState)
 {
@@ -1412,12 +1462,12 @@ ParaComment.prototype.getMarkColor = function()
 	let userName = comment.GetUserName();
 	return AscCommon.getUserColorById(userId, userName, 1, false);
 };
-ParaComment.prototype.Draw_HighLights = function(PDSH)
+ParaComment.prototype.drawHighLights = function(highLightState)
 {
 	if (true === this.Start)
-		PDSH.addComment(this.CommentId);
+		highLightState.addComment(this.CommentId);
 	else
-		PDSH.removeComment(this.CommentId);
+		highLightState.removeComment(this.CommentId);
 };
 ParaComment.prototype.Refresh_RecalcData = function()
 {

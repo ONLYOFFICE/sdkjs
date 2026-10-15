@@ -71,9 +71,7 @@
     };
     History.prototype.EndNoHistoryMode = function() {
         this.TurnOn();
-        if (this.IsOn()) {
-            AscCommon.g_oTableId.TurnOn();
-        }
+        AscCommon.g_oTableId.TurnOn();
     };
 	History.prototype.Add = function(_Class, Data) {
 		AscCommon.CHistory.prototype.Add.call(this, _Class, Data);
@@ -262,7 +260,7 @@
                 // lock merge
                 else if (oClass instanceof AscPDF.CPDFDoc && point.Items[changeIndex].Data instanceof CChangesPDFDocumentStartMergePages) {
                     const oLocker = oClass.locks.merge; 
-                    let sId = oLocker.GetId();
+                    let sId = oLocker.Get_Id();
                     let oCheckData = {
                         "type":     AscPDF.AscLockTypeElemPDF.Document,
                         "objId":    sId,

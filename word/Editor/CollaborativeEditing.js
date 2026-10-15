@@ -459,11 +459,27 @@ CWordCollaborativeEditing.prototype.Remove_ForeignCursor = function(UserId)
     this.Remove_ForeignCursorXY(UserId);
     this.Remove_ForeignCursorToShow(UserId);
 };
+CWordCollaborativeEditing.prototype.GetForeignCursorPosition = function(userId)
+{
+	let docPos = this.m_aForeignCursors[userId];
+	if (!docPos)
+	{
+		for (let id in this.m_aForeignCursorsId)
+		{
+			if (userId === this.m_aForeignCursorsId[id])
+			{
+				docPos = this.m_aForeignCursors[id];
+				break;
+			}
+		}
+	}
+	return (docPos && docPos.length ? docPos : null);
+};
 CWordCollaborativeEditing.prototype.Update_ForeignCursorsPositions = function()
 {
-    for (var UserId in this.m_aForeignCursors)
+    for (let userId in this.m_aForeignCursors)
     {
-        var DocPos = this.m_aForeignCursors[UserId];
+        var DocPos = this.m_aForeignCursors[userId];
         if (!DocPos || DocPos.length <= 0)
             continue;
 
@@ -472,7 +488,7 @@ CWordCollaborativeEditing.prototype.Update_ForeignCursorsPositions = function()
         var Run      = DocPos[DocPos.length - 1].Class;
         var InRunPos = DocPos[DocPos.length - 1].Position;
 
-        this.Update_ForeignCursorPosition(UserId, Run, InRunPos, false);
+        this.Update_ForeignCursorPosition(userId, Run, InRunPos, false);
     }
 };
 CWordCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, Run, InRunPos, isRemoveLabel)

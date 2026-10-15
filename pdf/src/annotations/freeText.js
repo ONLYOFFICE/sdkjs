@@ -58,7 +58,7 @@
     */
     function CAnnotationFreeText(sName, aRect, oDoc)
     {
-        AscFormat.CGroupShape.call(this);
+        AscPDF.CPdfGroupShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.FreeText, aRect, oDoc);
         
         initGroupShape(this);
@@ -71,7 +71,7 @@
         this._lineEnd       = undefined;
         this._callout       = [];
         this._rectDiff      = [0, 0, 0, 0];
-        this._alignment     = undefined;
+        this._alignment     = AscPDF.ALIGN_TYPE.left;
         this._defaultStyle  = undefined;
 
         this.recalcInfo.recalculateGeometry = true;
@@ -81,40 +81,49 @@
         this.lastClickCoords = {}; // for onPreMove
     };
     CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
-    AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
+    AscFormat.InitClass(CAnnotationFreeText, AscPDF.CPdfGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
 
 	CAnnotationFreeText.prototype.private_UpdateRect = function(rect) {
+		let bRectProvided = !!rect;
+		let bCallout = AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout == this.GetIntent();
+
 		AscCommon.History.StartNoHistoryMode();
 		let aCurRect = this.GetRect();
-		let aCurRD = this.GetRectangleDiff().slice();
+		let aCurRD = this.GetRectangleDiff();
 		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 		rect && this.SetRect(rect);
 		this.recalcBounds();
 		this.recalcGeometry();
 		this.Recalculate(true);
-		
 		AscCommon.History.EndNoHistoryMode();
-		
+
 		let oGrBounds = this.bounds;
 		let oShapeBounds = this.getRectBounds();
-
-		if (!rect) {
-			rect = [];
-		}
-
-		rect[0] = (oGrBounds.l) * g_dKoef_mm_to_pt;
-		rect[1] = (oGrBounds.t) * g_dKoef_mm_to_pt;
-		rect[2] = (oGrBounds.r) * g_dKoef_mm_to_pt;
-		rect[3] = (oGrBounds.b) * g_dKoef_mm_to_pt;
 
 		this._rect = aCurRect;
 		this._rectDiff = aCurRD;
 
+		if (!bRectProvided) {
+			let aTextBoxRect = [
+				aCurRect[0] + aCurRD[0],
+				aCurRect[1] + aCurRD[1],
+				aCurRect[2] - aCurRD[2],
+				aCurRect[3] - aCurRD[3]
+			];
+
+			let oCalcResult = this.private_CalcBounds(aTextBoxRect);
+
+			oCalcResult.callout && this.SetCallout(oCalcResult.callout);
+			this.SetRect(oCalcResult.rect);
+			this.SetRectangleDiff(oCalcResult.rectDiff);
+			return;
+		}
+
 		this.SetRect(rect);
 
 		let aNewRD;
-		if (AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout == this.GetIntent()) {
+		if (bCallout) {
 			aNewRD = aCurRD.slice();
 			aNewRD[0] += Math.abs(rect[0] - aCurRect[0]);
 			aNewRD[1] += Math.abs(rect[1] - aCurRect[1]);
@@ -315,13 +324,13 @@
         AscCommon.ExecuteNoHistory(function() {
 			if (3 === this.spTree.length) {
 				let oTargetSp = this.spTree[1];
-				let oLine     = oTargetSp.pen;
+				let oLine = oTargetSp.spPr.ln;
 				oLine.setTailEnd(new AscFormat.EndArrow());
 				let nLineEndType = AscPDF.getInnerLineEndType(this.GetLineEnd());
-				
-				
+
 				oLine.tailEnd.setType(nLineEndType);
 				oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
+				oTargetSp.handleUpdateLn();
 			}
 		}, undefined, this);
     };
@@ -500,6 +509,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+		this.bSkipAddToRedraw = true;
+		if (this.IsNeedUpdateLn()) {
+			this.private_UpdateLn();
+		}
         if (this.IsNeedUpdateOpacity()) {
             this.private_UpdateOpacity();
         }
@@ -508,8 +521,10 @@
             this.RecalcSizes();
         }
 
-        if (this.recalcInfo.recalculateGeometry)
+        if (this.recalcInfo.recalculateGeometry) {
             this.RefillGeometry();
+		}
+		this.bSkipAddToRedraw = false;
 
         this.recalculateTransform();
         this.updateTransformMatrix();
@@ -522,6 +537,22 @@
         
         this.SetNeedRecalc(false);
     };
+	CAnnotationFreeText.prototype.setSelectionState = function (selection_state) {
+		this.resetSelection(this);
+		if (selection_state.textObject) {
+			this.selectObject(selection_state.textObject, selection_state.selectStartPage);
+
+			if (this.IsInTextBox()) {
+				this.selection.textSelection = selection_state.textObject;
+				selection_state.textObject.getDocContent().SetSelectionState(selection_state.textSelection, selection_state.textSelection.length - 1);
+			}
+		}
+		else {
+			for (var i = 0; i < selection_state.selection.length; ++i) {
+				this.selectObject(selection_state.selection[i].object, selection_state.selection[i].pageIndex);
+			}
+		}
+	};
     CAnnotationFreeText.prototype.RecalcSizes = function() {
         let oXfrm = this.getXfrm();
         if (oXfrm) {
@@ -617,18 +648,45 @@
     CAnnotationFreeText.prototype.recalcGeometry = function () {
         this.recalcInfo.recalculateGeometry = true;
 	};
-    CAnnotationFreeText.prototype.RemoveComment = function() {
-        this.EditCommentData(undefined);
-    };
     CAnnotationFreeText.prototype.SetContents = function(contents) {
-        if (this._contents == contents)
+        if (this.GetContents() == contents)
             return;
 
-        AscCommon.History.Add(new CChangesPDFAnnotContents(this, this._contents, contents));
-        this._contents = contents;
+        this.SetRichContents([{
+			"alignment": 0,
+			"bold": false,
+			"italic": false,
+			"strikethrough": false,
+			"underlined": false,
+			"size": 10,
+			"color": [
+				0,
+				0,
+				0
+			],
+			"text": (contents || "") + "\r",
+			"actual": "Arial"
+		}]);
 
         this.SetWasChanged(true);
+		this.private_onChangeComment();
     };
+	CAnnotationFreeText.prototype.GetContents = function() {
+		let aRichContents = this.GetRichContents();
+		if (!Array.isArray(aRichContents) || aRichContents.length === 0) {
+			return null;
+		}
+
+		let sText = "";
+		aRichContents.forEach(function(oItem) {
+			if (oItem && typeof oItem.text === "string") {
+				sText += oItem.text;
+			}
+		});
+
+		sText = sText.replace(/[\r\n]/g, "");
+		return sText.length > 0 ? sText : null;
+	};
     CAnnotationFreeText.prototype.IsNeedUpdateRC = function() {
         let aCurRC = this.GetRichContents();
         let aCalcedRC = this.GetRichContents(true);
@@ -816,32 +874,6 @@
 
         return false;
     };
-    CAnnotationFreeText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc.asc_CCommentDataWord(null);
-        if (this._replies.length == 0)
-            return undefined;
-
-        let oMainComm = this._replies[0];
-        oAscCommData.asc_putText(oMainComm.GetContents());
-        oAscCommData.asc_putOnlyOfficeTime(oMainComm.GetModDate().toString());
-        oAscCommData.asc_putUserId(this.GetUserId());
-        oAscCommData.asc_putUserName(oMainComm.GetAuthor());
-        oAscCommData.asc_putSolved(false);
-        oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = oMainComm.GetId();
-
-        this._replies.forEach(function(reply, index) {
-            if (index == 0)
-                return;
-            
-            let oReplyAscCommData = reply.GetAscCommentData();
-            if (oReplyAscCommData) {
-                oAscCommData.m_aReplies.push(oReplyAscCommData);
-            }
-        });
-
-        return oAscCommData;
-    };
     CAnnotationFreeText.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
@@ -871,7 +903,6 @@
         for (var i = this.spTree.length - 1; i >= 0; i--)
             this.spTree[i].draw(graphics);
 
-        this.drawLocks(this.transform, graphics);
         if (oClipRect) {
             graphics.RestoreGrState();
         }
@@ -918,37 +949,8 @@
                 return;
             }
 
-            if (e.ShiftKey) {
-                this.GetDocContent().StartSelectionFromCurPos();
-                this.selectionSetEnd(e, pageObjectMM.x, pageObjectMM.y);
-            }
-            else {
-                this.selectionSetStart(e, pageObjectMM.x, pageObjectMM.y);
-            }
+        	oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
         }
-    };
-    CAnnotationFreeText.prototype.selectionSetStart = function(e, X, Y) {
-        this.selectStartPage = this.GetPage();
-
-        let oTextBoxShape   = this.GetTextBoxShape();
-        let oContent        = this.GetDocContent();
-        
-        let oTransform  = oTextBoxShape.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetStart(xContent, yContent, 0, e);
-        oContent.RecalculateCurPos();
-    };
-    CAnnotationFreeText.prototype.selectionSetEnd = function(e, X, Y) {
-        let oTextBoxShape   = this.GetTextBoxShape();
-        let oContent        = this.GetDocContent();
-        
-        let oTransform  = oTextBoxShape.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetEnd(xContent, yContent, 0, e);
     };
     CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
         let oDoc = this.GetDocument();
@@ -971,11 +973,9 @@
         }
 
         if (this.IsNeedDrawFromStream()) {
-            this.SetDrawFromStream(false);
             this.AddToRedraw();
         }
         else if (this.IsChanged() == false && !isIn) {
-            this.SetDrawFromStream(true);
             this.AddToRedraw();
         }
         
@@ -983,6 +983,9 @@
     };
     CAnnotationFreeText.prototype.IsInTextBox = function() {
         return this.isInTextBox;
+    };
+	CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
+        return this._bDrawFromStream && !this.IsInTextBox();
     };
     CAnnotationFreeText.prototype.GetDocContent = function() {
         if (this.spTree[0])
@@ -1037,40 +1040,156 @@
     };
     /**
 	 * Exit from this annot.
-	 * @memberof CTextField
+	 * @memberof CAnnotationFreeText
 	 * @typeofeditors ["PDF"]
 	 */
-    CAnnotationFreeText.prototype.Blur = function() {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-
-        oContent.SetApplyToAll(true);
-		let sText = oContent.GetSelectedText(false, {ParaSeparator: ''});
-		oContent.SetApplyToAll(false);
+    CAnnotationFreeText.prototype.Blur = function(createNewPoint) {
+        let oDoc = this.GetDocument();
 
         let isNeedUpdateRC = this.IsNeedUpdateRC();
-        if ((this.GetContents() != sText || isNeedUpdateRC) && this.IsInTextBox()) {
-            oDoc.DoAction(function() {
-                this.GetContents() != sText && this.SetContents(sText);
-            
-				let aCurRc = this.GetRichContents();
-				let aNewRc = this.GetRichContents(true);
-                    
-				this._richContents = aNewRc;
+		
+		let _t = this;
+		function doBlur() {
+			let aCurRc = _t.GetRichContents();
+			let aNewRc = _t.GetRichContents(true);
+				
+			_t._richContents = aNewRc;
 
-                if (isNeedUpdateRC) {
-                    oDoc.History.Add(new CChangesFreeTextCallout(this, this._prevCallout, this.GetCallout()));
-                    oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
-                    oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
-					oDoc.History.Add(new CChangesPDFAnnotRC(this, aCurRc, aNewRc));
-                    oDoc.private_UpdateTargetForCollaboration(true);
-                }
-            }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
+			if (isNeedUpdateRC) {
+				oDoc.History.Add(new CChangesFreeTextCallout(_t, _t._prevCallout, _t.GetCallout()));
+				oDoc.History.Add(new CChangesPDFAnnotRD(_t, _t._prevRectDiff, _t.GetRectangleDiff()));
+				oDoc.History.Add(new CChangesPDFAnnotRect(_t, _t._prevRect, _t.GetRect()));
+				oDoc.History.Add(new CChangesPDFAnnotRC(_t, aCurRc, aNewRc));
+				_t.SetWasChanged(true);
+
+				oDoc.private_UpdateTargetForCollaboration(true);
+
+				let oCommentData = new AscCommon.CCommentData();
+				oCommentData.Read_FromAscCommentData(_t.GetAscCommentData());
+				Asc.editor.sync_ChangeCommentData(_t.GetId(), oCommentData);
+			}
+		}
+
+        if (isNeedUpdateRC && this.IsInTextBox()) {
+			if (createNewPoint !== false) {
+				oDoc.DoAction(function() {
+					doBlur();
+				}, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
+			}
+            else {
+				doBlur();
+			}
         }
         
         this.SetInTextBox(false);
         this.resetSelection();
         oDoc.GetDrawingDocument().TargetEnd();
+    };
+
+    CAnnotationFreeText.prototype.private_CalcBounds = function(aTextBoxRect) {
+        let xMin = aTextBoxRect[0];
+        let yMin = aTextBoxRect[1];
+        let xMax = aTextBoxRect[2];
+        let yMax = aTextBoxRect[3];
+
+        let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
+
+        // expand the rect by line width (or cloud border radius)
+        let nLineWidth = this.GetBorderWidth();
+        if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud) {
+            aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 12;
+            aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 12;
+            aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 12;
+            aNewTextBoxRect[3] += this.GetBorderEffectIntensity() * 12;
+        } else {
+            aNewTextBoxRect[0] -= nLineWidth;
+            aNewTextBoxRect[1] -= nLineWidth;
+            aNewTextBoxRect[2] += nLineWidth;
+            aNewTextBoxRect[3] += nLineWidth;
+        }
+
+        // finds the callout exit point for the new textbox rect
+        let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
+
+        // recalculate callout
+        let aCallout    = this.GetCallout();
+        let aNewCallout = (aCallout && aCallout.length != 0) ? aCallout.slice() : null;
+        if (aNewCallout) {
+            switch (nCalloutExitPos) {
+                case AscPDF.CALLOUT_EXIT_POS.left: {
+                    aNewCallout[2 * 2]      = xMin;
+                    aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
+
+                    aNewCallout[2 * 1]      = xMin - this.defaultPerpLength;
+                    aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
+                    break;
+                }
+                case AscPDF.CALLOUT_EXIT_POS.top: {
+                    aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 2 + 1]  = yMin;
+
+                    aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 1 + 1]  = yMin - this.defaultPerpLength;
+                    break;
+                }
+                case AscPDF.CALLOUT_EXIT_POS.right: {
+                    aNewCallout[2 * 2]      = xMax;
+                    aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
+
+                    aNewCallout[2 * 1]      = xMax + this.defaultPerpLength;
+                    aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
+                    break;
+                }
+                case AscPDF.CALLOUT_EXIT_POS.bottom: {
+                    aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 2 + 1]  = yMax;
+
+                    aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 1 + 1]  = yMax + this.defaultPerpLength;
+                    break;
+                }
+            }
+        }
+
+        function findBoundingRectangle(points) {
+            if (!points || points.length == 0) {
+                return null;
+            }
+
+            let minX = points[0];
+            let minY = points[1];
+            let maxX = points[0];
+            let maxY = points[1];
+
+            for (let i = 2; i < points.length; i += 2) {
+                minX = Math.min(minX, points[i]);
+                maxX = Math.max(maxX, points[i]);
+                minY = Math.min(minY, points[i + 1]);
+                maxY = Math.max(maxY, points[i + 1]);
+            }
+
+            return [minX, minY, maxX, maxY];
+        }
+
+        // find arrow rect, considering line ending
+        let aArrowRect = aNewCallout ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
+
+        // find the resulting annotation rect
+        let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]);
+
+        // recalculate RD.
+        let aNewRD = [
+            xMin - aNewRect[0],
+            yMin - aNewRect[1],
+            aNewRect[2] - xMax,
+            aNewRect[3] - yMax
+        ];
+
+        return {
+            callout: aNewCallout,
+            rect: aNewRect,
+            rectDiff: aNewRD
+        };
     };
 
     CAnnotationFreeText.prototype.FitTextBox = function() {
@@ -1110,99 +1229,11 @@
                     break;
             }
     
-            let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
-    
-            // expand the rect by line width (or cloud border radius)
-            let nLineWidth = this.GetBorderWidth();
-            if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud) {
-                aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 12;
-                aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 12;
-                aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 12;
-                aNewTextBoxRect[3] += this.GetBorderEffectIntensity() * 12;
-            } else {
-                aNewTextBoxRect[0] -= nLineWidth;
-                aNewTextBoxRect[1] -= nLineWidth;
-                aNewTextBoxRect[2] += nLineWidth;
-                aNewTextBoxRect[3] += nLineWidth;
-            }
-    
-            // finds the callout exit point for the new textbox rect
-            let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
-    
-            // recalculate callout
-            let aNewCallout = this.GetCallout() ? this.GetCallout().slice() : null;
-            switch (nCalloutExitPos) {
-                case AscPDF.CALLOUT_EXIT_POS.left: {
-                    aNewCallout[2 * 2]      = xMin;
-                    aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
-    
-                    aNewCallout[2 * 1]      = xMin - this.defaultPerpLength;
-                    aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
-                    break;
-                }
-                case AscPDF.CALLOUT_EXIT_POS.top: {
-                    aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
-                    aNewCallout[2 * 2 + 1]  = yMin;
-    
-                    aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
-                    aNewCallout[2 * 1 + 1]  = yMin - this.defaultPerpLength;
-                    break;
-                }
-                case AscPDF.CALLOUT_EXIT_POS.right: {
-                    aNewCallout[2 * 2]      = xMax;
-                    aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
-    
-                    aNewCallout[2 * 1]      = xMax + this.defaultPerpLength;
-                    aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
-                    break;
-                }
-                case AscPDF.CALLOUT_EXIT_POS.bottom: {
-                    aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
-                    aNewCallout[2 * 2 + 1]  = yMax;
-    
-                    aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
-                    aNewCallout[2 * 1 + 1]  = yMax + this.defaultPerpLength;
-                    break;
-                }
-            }
-    
-            function findBoundingRectangle(points) {
-                if (!points || points.length == 0) {
-                    return null;
-                }
-    
-                let minX = points[0];
-                let minY = points[1];
-                let maxX = points[0];
-                let maxY = points[1];
-            
-                for (let i = 2; i < points.length; i += 2) {
-                    minX = Math.min(minX, points[i]);
-                    maxX = Math.max(maxX, points[i]);
-                    minY = Math.min(minY, points[i + 1]);
-                    maxY = Math.max(maxY, points[i + 1]);
-                }
-            
-                return [minX, minY, maxX, maxY];
-            }
-    
-            // find arrow rect, considering line ending
-            let aArrowRect = aNewCallout.length != 0 ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
-    
-            // find the resulting annotation rect
-            let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]);
-            
-            // recalculate RD.
-            let aNewRD = [
-                xMin - aNewRect[0],
-                yMin - aNewRect[1],
-                aNewRect[2] - xMax,
-                aNewRect[3] - yMax
-            ];
-    
-            aNewCallout && this.SetCallout(aNewCallout);
-            this.SetRectangleDiff(aNewRD);
-            this.SetRect(aNewRect);
+            let oCalcResult = this.private_CalcBounds([xMin, yMin, xMax, yMax]);
+
+            oCalcResult.callout && this.SetCallout(oCalcResult.callout);
+            this.SetRectangleDiff(oCalcResult.rectDiff);
+            this.SetRect(oCalcResult.rect);
         }
     };
 
@@ -1503,6 +1534,7 @@
             this.selectedObjects.length = 0;
 		}
 	}
+	CAnnotationFreeText.prototype.normalize = function() {};
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMin = aShapeRect[0];
         let yMin = aShapeRect[1];
@@ -1513,10 +1545,14 @@
 
         if (oRectShape.getDocContent() == null) {
             oRectShape.createTextBody();
-            oRectShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
             oRectShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
             oRectShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
         }
+
+		let nLineWidth = oParentAnnot.GetBorderWidth();
+		let nPadding = nLineWidth * g_dKoef_pt_to_mm;
+
+		oRectShape.txBody.bodyPr.setInsets(nPadding, nPadding, nPadding, nPadding);
 
         oRectShape.setTxBox(true);
         oRectShape.setGroup(oParentAnnot);

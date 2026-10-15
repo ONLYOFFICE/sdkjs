@@ -119,6 +119,10 @@
 		this.needClearBuffer = false;
 
 		this.canUseNewCopy = null;
+
+		this.bPutImage = true;
+
+		this.customCopyData = null;
 	}
 
 	CClipboardBase.prototype =
@@ -150,10 +154,39 @@
                 return;
 			}
 
-			let res = this.Api.asc_CheckCopy(this, formats);
+			let res;
+			if (this.customCopyData)
+			{
+				this.pushCustomData(this, this.customCopyData, formats);
+				res = true;
+			}
+			else
+			{
+				res = this.Api.asc_CheckCopy(this, formats);
+			}
 			this.SendCopyEvent();
 
 			return res;
+		},
+
+		pushCustomData : function(collector, oData, formats)
+		{
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Text) && oData.text != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Text, oData.text);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Html) && oData.html != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Html, oData.html);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Internal) && oData.internal != null)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Internal, oData.internal);
+			}
+			if ((formats & AscCommon.c_oAscClipboardDataFormat.Image) && oData.image)
+			{
+				collector.pushData(AscCommon.c_oAscClipboardDataFormat.Image, Array.isArray(oData.image) ? oData.image : [oData.image]);
+			}
 		},
 
 		_private_oncopy : function(e)
@@ -1077,7 +1110,16 @@
 				{
 					this.bCut = isCut;
 
-					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | c_oAscClipboardDataFormat.Image);
+					let nImageFormat = this.bPutImage ? c_oAscClipboardDataFormat.Image : 0;
+					let nFormats = c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal | nImageFormat;
+					if (this.customCopyData)
+					{
+						this.pushCustomData(copy_data, this.customCopyData, nFormats);
+					}
+					else
+					{
+						this.Api.asc_CheckCopy(copy_data, nFormats);
+					}
 
 					let clipboardData = {};
 					if (copy_data.data[c_oAscClipboardDataFormat.Text]) {
@@ -1112,6 +1154,20 @@
 				}
 			}
 			return false;
+		},
+
+		CopyData : function(oData)
+		{
+			if (!oData)
+			{
+				return false;
+			}
+
+			this.customCopyData = oData;
+			let _ret = this.Button_Copy();
+			this.customCopyData = null;
+
+			return _ret;
 		},
 
 		Check_Paste_New : function(callback)
@@ -1367,13 +1423,41 @@
 			});
 		},
 
+		Paste_Internal : function()
+		{
+			if (null == this.LastCopyBinary || 0 === this.LastCopyBinary.length)
+				return false;
+
+			let format = this.LastCopyBinary[0].type;
+			let data = this.LastCopyBinary[0].data;
+			let text_data = null;
+			for (let i = 0; i < this.LastCopyBinary.length; i++)
+			{
+				if (c_oAscClipboardDataFormat.Internal === this.LastCopyBinary[i].type)
+				{
+					format = c_oAscClipboardDataFormat.Internal;
+					data = this.LastCopyBinary[i].data;
+				}
+				else if (c_oAscClipboardDataFormat.Text === this.LastCopyBinary[i].type)
+				{
+					text_data = this.LastCopyBinary[i].data;
+				}
+			}
+
+			if (!data)
+				return false;
+
+			this.Api.asc_PasteData(format, data, null, text_data);
+			return true;
+		},
+
 		Button_Copy : function(oldCopy)
 		{
 			if (!this.isCopyEnabled()) {
 				this.SendCopyDisabledEvent();
 				return;
 			}
-			if (window["AscDesktopEditor"])
+			if (window["AscDesktopEditor"] && !this.customCopyData)
 			{
 				window["asc_desktop_copypaste"](this.Api, "Copy");
 				return true;
@@ -1516,31 +1600,9 @@
 					_ret = false;
 				}
 
-				if (!_ret && null != oThis.LastCopyBinary)
+				if (!_ret)
 				{
-					var _isInternal = false;
-					var _internal_data = null;
-					var _text_data = null;
-					for (var i = 0; i < oThis.LastCopyBinary.length; i++)
-					{
-						if (c_oAscClipboardDataFormat.Internal === oThis.LastCopyBinary[i].type)
-						{
-							_internal_data = oThis.LastCopyBinary[i].data;
-							_isInternal = true;
-						}
-						else if (c_oAscClipboardDataFormat.Text === oThis.LastCopyBinary[i].type)
-						{
-							_text_data = oThis.LastCopyBinary[i].data;
-						}
-					}
-					if (_isInternal)
-					{
-						oThis.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal_data, null, _text_data);
-					}
-					else if (oThis.LastCopyBinary.length > 0)
-					{
-						oThis.Api.asc_PasteData(oThis.LastCopyBinary[0].type, oThis.LastCopyBinary[0].data, null, _text_data);
-					}
+					oThis.Paste_Internal();
 				}
 				return _ret;
 			}
@@ -1681,6 +1743,8 @@
 		this.endRecalcDocument = false;//for documents, whether document recalculation is finished. needed to correctly calculate paste button icon position
 		this.doNotShowButton = false;
 		this.visiblePasteButton = true;
+		//the paste itself finalizes the action, and such a finalize must not hide the button we have just shown
+		this.doNotHideButtonOnFinalize = false;
 
 		//active range before first paste
 		this.selectionRange = null;
@@ -1794,7 +1858,9 @@
 
 			var _logicDoc = this.Api && this.Api.WordControl ? this.Api.WordControl.m_oLogicDocument : null;
 			if (_logicDoc && _logicDoc.Action && _logicDoc.Action.Start && this.Api._finalizeAction) {
+				this.doNotHideButtonOnFinalize = true;
 				this.Api._finalizeAction();
+				this.doNotHideButtonOnFinalize = false;
 			}
 		},
 		

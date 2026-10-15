@@ -546,7 +546,7 @@ CGraphicObjects.prototype =
             else if(dScale < 0)
             {
                 let nImageW = oProps.get_ImageWidth();
-                let nImageH = oProps.get_ImageWidth();
+                let nImageH = oProps.get_ImageHeight();
                 if(AscFormat.isRealNumber(nImageW) && AscFormat.isRealNumber(nImageH) &&
                     nImageW > 0 && nImageH > 0) {
                     extX = nImageW / 36000;
@@ -580,7 +580,7 @@ CGraphicObjects.prototype =
                 {
                     let oBlipFill = oDrawing.blipFill.createDuplicate();
                     let oEffect = new AscFormat.CAlphaModFix();
-                    let nAmt = ((255 - nOpacity) / 255) * 100000 + 0.5 >> 0;
+                    let nAmt = (nOpacity / 255) * 100000 + 0.5 >> 0;
                     oEffect.amt = Math.max(0, Math.min(100000, nAmt));
                     oBlipFill.Effects.push(oEffect);
                     oDrawing.setBlipFill(oBlipFill);
@@ -589,7 +589,6 @@ CGraphicObjects.prototype =
         }
         else
         {
-            var oTextPropMenu = oProps.get_TextPr();
             oDrawing = new AscFormat.CShape();
             oDrawing.setWordShape(true);
             oDrawing.setBDeleted(false);
@@ -616,23 +615,27 @@ CGraphicObjects.prototype =
             var oContent = oDrawing.getDocContent();
             AscFormat.AddToContentFromString(oContent, oProps.get_Text());
             var oTextPr = new CTextPr();
-            oTextPr.FontSize = (oTextPropMenu.get_FontSize() > 0 ? oTextPropMenu.get_FontSize() : 20);
-            oTextPr.RFonts.SetAll(oTextPropMenu.get_FontFamily().get_Name(), -1);
-            oTextPr.Bold = oTextPropMenu.get_Bold();
-            oTextPr.HighLight = oTextPropMenu.get_HighLight();
-            oTextPr.Italic = oTextPropMenu.get_Italic();
-            oTextPr.Underline = oTextPropMenu.get_Underline();
-            oTextPr.Strikeout = oTextPropMenu.get_Strikeout();
-            oTextPr.TextFill = AscFormat.CreateUnifillFromAscColor(oTextPropMenu.get_Color(), 1);
-            let nOpacity = oProps.get_Opacity();
-            if(AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
-            {
-                oTextPr.TextFill.transparent = (nOpacity >> 0);
-            }
-            if(null !== oTextPropMenu.get_Lang())
-            {
-                oTextPr.SetLang(oTextPropMenu.get_Lang());
-            }
+            var oTextPropMenu = oProps.get_TextPr();
+			if (oTextPropMenu)
+			{
+				oTextPr.FontSize = (oTextPropMenu.get_FontSize() > 0 ? oTextPropMenu.get_FontSize() : 20);
+				oTextPr.RFonts.SetAll(oTextPropMenu.get_FontFamily().get_Name(), -1);
+				oTextPr.Bold = oTextPropMenu.get_Bold();
+				oTextPr.HighLight = oTextPropMenu.get_HighLight();
+				oTextPr.Italic = oTextPropMenu.get_Italic();
+				oTextPr.Underline = oTextPropMenu.get_Underline();
+				oTextPr.Strikeout = oTextPropMenu.get_Strikeout();
+				if(null !== oTextPropMenu.get_Lang())
+				{
+					oTextPr.SetLang(oTextPropMenu.get_Lang());
+				}
+			}
+			oTextPr.TextFill = AscFormat.CreateUnifillFromAscColor(oTextPropMenu && oTextPropMenu.get_Color() ? oTextPropMenu.get_Color() : new Asc.asc_CColor(0, 0, 0), 1);
+			let nOpacity = oProps.get_Opacity();
+			if(AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
+			{
+				oTextPr.TextFill.transparent = (nOpacity >> 0);
+			}
             oContent.SetApplyToAll(true);
             oContent.AddToParagraph(new ParaTextPr(oTextPr));
             oContent.SetParagraphAlign(AscCommon.align_Center);
@@ -658,9 +661,10 @@ CGraphicObjects.prototype =
             oDrawing.setBodyPr(oBodyPr);
 
             var oContentSize = AscFormat.GetContentOneStringSizes(oContent);
+			oContentSize.w = AscFormat.CTextBody.prototype.getContentWidth.call({ content: oContent }) + 0.1;
             oXfrm.setExtX(oContentSize.w + 1);
             oXfrm.setExtY(oContentSize.h);
-            if(oTextPropMenu.get_FontSize() < 0)
+            if(oTextPropMenu && oTextPropMenu.get_FontSize() < 0)
             {
                 if(!bZeroAngle)
                 {
@@ -675,6 +679,7 @@ CGraphicObjects.prototype =
                 oContent.AddToParagraph(new ParaTextPr(oTextPr));
                 oContent.SetApplyToAll(false);
                 oContentSize = AscFormat.GetContentOneStringSizes(oContent);
+				oContentSize.w = AscFormat.CTextBody.prototype.getContentWidth.call({ content: oContent }) + 0.1;
                 oXfrm.setExtX(extX + 1);
                 oXfrm.setExtY(oContentSize.h);
             }
@@ -788,6 +793,9 @@ CGraphicObjects.prototype =
 
     checkSelectedObjectsForMove: DrawingObjectsController.prototype.checkSelectedObjectsForMove,
 
+	private_GetSlideJumpScreenTip: function (value, fallback) {
+		return fallback;
+	},
     getDrawingProps: DrawingObjectsController.prototype.getDrawingProps,
     getDrawingPropsFromArray: DrawingObjectsController.prototype.getDrawingPropsFromArray,
     getSelectedObjectsByTypes: DrawingObjectsController.prototype.getSelectedObjectsByTypes,
@@ -947,6 +955,10 @@ CGraphicObjects.prototype =
 		if (isRealObject(hyperlink_props))
 		{
 			ret.push(hyperlink_props);
+		}
+		if (isRealObject(props_by_types.horizontalRuleProps))
+		{
+			ret.push(props_by_types.horizontalRuleProps);
 		}
 
         return ret;
@@ -1580,6 +1592,13 @@ CGraphicObjects.prototype =
         return false;
     },
 
+    cancelSelectionTableBorder: function()
+    {
+        var content = this.getTargetDocContent();
+        if(content)
+            content.CancelTableBorderMove();
+    },
+
 
     getTableByXY: function(x, y, pageIndex, documentContent)
     {
@@ -1600,7 +1619,7 @@ CGraphicObjects.prototype =
         this.checkInkState();
         var nSavedSelType = this.document.Selection.Type;
         this.curState.onMouseDown(e, x, y, pageIndex);
-        if(this.arrTrackObjects.length === 0)
+        if(this.arrTrackObjects.length === 0 && this.arrPreTrackObjects.length === 0)
         {
             this.document.GetApi().sendEvent("asc_onSelectionEnd");
         }
@@ -2372,10 +2391,41 @@ CGraphicObjects.prototype =
 		{
 			if(this.document)
 			{
-				this.document.LoadDocumentState(this.startDocState);
+				if(this.isStartDocStateAlive())
+				{
+					this.document.LoadDocumentState(this.startDocState);
+				}
+				else
+				{
+					this.document.SetDocPosType(AscCommonWord.docpostype_Content);
+					this.document.RemoveSelection();
+					this.document.NeedUpdateTarget = true;
+					this.document.UpdateSelection();
+				}
 			}
 			this.startDocState = null;
 		}
+	},
+
+	isStartDocStateAlive: function() {
+		if(AscCommonWord.docpostype_DrawingObjects !== this.startDocState.CurPos.Type)
+		{
+			return true;
+		}
+		const selectionState = this.startDocState.DrawingsSelectionState;
+		if(!selectionState || !selectionState.selection)
+		{
+			return true;
+		}
+		const selection = selectionState.selection;
+		for(let index = 0; index < selection.length; ++index)
+		{
+			if(selection[index].object.IsUseInDocument())
+			{
+				return true;
+			}
+		}
+		return false;
 	},
 
     documentUpdateRulersState: function()
@@ -2736,7 +2786,10 @@ CGraphicObjects.prototype =
                 return null;
         }
         this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        var savedNoNeedUpdateCursorType = this.noNeedUpdateCursorType;
+        this.noNeedUpdateCursorType = true;
         var cursor_type = this.nullState.onMouseDown(global_mouseEvent, x, y, pageIndex);
+        this.noNeedUpdateCursorType = savedNoNeedUpdateCursorType;
         this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         var object;
         if(cursor_type )
@@ -3063,6 +3116,64 @@ CGraphicObjects.prototype =
     },
 
     getGroup: DrawingObjectsController.prototype.getGroup,
+
+    convertImageToShapes: DrawingObjectsController.prototype.convertImageToShapes,
+
+    getSingleSelectedSvgImage: DrawingObjectsController.prototype.getSingleSelectedSvgImage,
+
+    private_ApplySvgToShapes: DrawingObjectsController.prototype.private_ApplySvgToShapes,
+
+    private_InsertShapesFromSvg: function(image, shapes)
+    {
+        let paraDrawing = image.parent;
+        if (!paraDrawing || !paraDrawing.Get_ParentParagraph())
+            return;
+
+        let trackRevisions = false;
+        if (this.document.IsTrackRevisions())
+        {
+            trackRevisions = this.document.GetLocalTrackRevisions();
+            this.document.SetLocalTrackRevisions(false);
+        }
+
+        let baseX = image.x, baseY = image.y;
+        let extX = image.extX, extY = image.extY;
+
+        let group = new AscFormat.CGroupShape();
+        group.setBDeleted(false);
+        group.setSpPr(new AscFormat.CSpPr());
+        group.spPr.setParent(group);
+        group.spPr.setXfrm(new AscFormat.CXfrm());
+        let groupXfrm = group.spPr.xfrm;
+        groupXfrm.setParent(group.spPr);
+        groupXfrm.setOffX(0);
+        groupXfrm.setOffY(0);
+        groupXfrm.setExtX(extX);
+        groupXfrm.setExtY(extY);
+        groupXfrm.setChOffX(0);
+        groupXfrm.setChOffY(0);
+        groupXfrm.setChExtX(extX);
+        groupXfrm.setChExtY(extY);
+
+        for (let i = 0; i < shapes.length; ++i)
+        {
+            let shape = shapes[i];
+            shape.spPr.xfrm.setOffX(shape.spPr.xfrm.offX - baseX);
+            shape.spPr.xfrm.setOffY(shape.spPr.xfrm.offY - baseY);
+            shape.setGroup(group);
+            group.addToSpTree(group.spTree.length, shape);
+        }
+
+        group.setParent(paraDrawing);
+        paraDrawing.Set_GraphicObject(group);
+        image.setBDeleted(true);
+
+        this.resetSelection();
+        this.selectObject(group, paraDrawing.pageIndex);
+
+        if (false !== trackRevisions)
+            this.document.SetLocalTrackRevisions(trackRevisions);
+    },
 
 	addObjectOnPage : function(pageIndex, object)
 	{
@@ -3700,6 +3811,22 @@ CGraphicObjects.prototype =
         return this.maximalGraphicObjectZIndex;
     },
 
+    IsTableBorderInDrawing: function(X, Y, nPageIndex){
+        this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        const savedNoNeedUpdateCursorType = this.noNeedUpdateCursorType;
+        this.noNeedUpdateCursorType = true;
+        const ret = this.curState.onMouseDown(global_mouseEvent, X, Y, nPageIndex);
+        this.noNeedUpdateCursorType = savedNoNeedUpdateCursorType;
+        this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+        if(ret && ret.objectId)
+        {
+            const oObject = AscCommon.g_oTableId.Get_ById(ret.objectId);
+            if(oObject)
+                return oObject.IsTableBorder(X, Y, nPageIndex);
+        }
+        return null;
+    },
+
     IsInDrawingObject: function(X, Y, nPageIndex, oContent){
         var _X, _Y, oTransform, oInvertTransform;
         if(oContent){
@@ -3725,7 +3852,10 @@ CGraphicObjects.prototype =
     {
         var ret;
         this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        var savedNoNeedUpdateCursorType = this.noNeedUpdateCursorType;
+        this.noNeedUpdateCursorType = true;
         ret = this.curState.onMouseDown(global_mouseEvent, x, y, pageIndex);
+        this.noNeedUpdateCursorType = savedNoNeedUpdateCursorType;
         this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         if(isRealObject(ret))
         {
@@ -4931,6 +5061,10 @@ CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prot
 CGraphicObjects.prototype.setDrawingDocPosType = function() {
 	const oDoc = this.document;
 	if(oDoc && false == this.api.isDocumentRenderer()) {
+		const inlineForm = oDoc.GetSelectedElementsInfo().GetInlineLevelSdt();
+		if (inlineForm && inlineForm.IsForm())
+			inlineForm.MoveCursorOutsideForm(false);
+		oDoc.DrawingDocument.TargetEnd();
 		if (AscCommonWord.docpostype_HdrFtr !== oDoc.CurPos.Type) {
 			oDoc.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
 			oDoc.Selection.Use   = true;

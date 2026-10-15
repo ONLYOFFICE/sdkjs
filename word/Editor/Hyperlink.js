@@ -86,6 +86,20 @@ ParaHyperlink.prototype.Copy = function(Selected, oPr)
     NewHyperlink.Visited = this.Visited;
     return NewHyperlink;
 };
+ParaHyperlink.prototype.Copy2 = function(oPr)
+{
+	const CopyHyperlink = new ParaHyperlink();
+	CopyHyperlink.SetValue(this.Value);
+	CopyHyperlink.SetToolTip(this.ToolTip);
+	CopyHyperlink.SetAnchor(this.Anchor);
+	CopyHyperlink.Visited = this.Visited;
+	var Count = this.Content.length;
+	for (var Index = 0; Index < Count; Index++)
+	{
+		CopyHyperlink.AddToContent(Index, this.Content[Index].Copy2());
+	}
+	return CopyHyperlink;
+};
 
 ParaHyperlink.prototype.GetSelectedElementsInfo = function(Info, ContentPos, Depth)
 {
@@ -219,18 +233,18 @@ ParaHyperlink.prototype.Draw_Elements = function(PDSE)
     PDSE.Hyperlink        = false;
 };
 
-ParaHyperlink.prototype.Draw_Lines = function(PDSL)
+ParaHyperlink.prototype.drawLines = function(lineDrawState)
 {
-	PDSL.VisitedHyperlink = this.Visited;
-	PDSL.Hyperlink        = true;
-	CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
-	PDSL.VisitedHyperlink = false;
-	PDSL.Hyperlink        = false;
+	lineDrawState.VisitedHyperlink = this.Visited;
+	lineDrawState.Hyperlink        = true;
+	CParagraphContentWithParagraphLikeContent.prototype.drawLines.apply(this, arguments);
+	lineDrawState.VisitedHyperlink = false;
+	lineDrawState.Hyperlink        = false;
 };
-ParaHyperlink.prototype.Draw_HighLights = function(drawState)
+ParaHyperlink.prototype.drawHighLights = function(drawState)
 {
 	drawState.pushHyperlink(this);
-	CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 	drawState.popHyperlink();
 };
 //-----------------------------------------------------------------------------------
@@ -243,6 +257,7 @@ ParaHyperlink.prototype.GetVisited = function()
 ParaHyperlink.prototype.SetVisited = function(isVisited)
 {
 	this.Visited = isVisited;
+	this.private_UpdatePresentationOutline();
 };
 ParaHyperlink.prototype.SetToolTip = function(ToolTip)
 {
@@ -281,9 +296,9 @@ ParaHyperlink.prototype.GetToolTip = function()
 				return AscCommon.translateManager.getValue(str);
 			}
 
-			if (this.Value.indexOf("ppaction://hlinkfile") === 0)
+			if (AscCommon.IsLinkPPActionFile(this.Value))
 			{
-				return this.Value.substring("ppaction://hlinkfile?file=".length);
+				return AscCommon.GetPPActionFilePath(this.Value);
 			}
 
 			const mask = "ppaction://hlinksldjumpslide";
@@ -310,8 +325,9 @@ ParaHyperlink.prototype.GetToolTip = function()
 };
 ParaHyperlink.prototype.Set_Value = function(Value)
 {
-    AscCommon.History.Add(new CChangesHyperlinkValue(this, this.Value, Value));
-    this.Value = Value;
+    let change = new CChangesHyperlinkValue(this, this.Value, Value);
+    AscCommon.History.Add(change);
+    change.Redo();
 };
 ParaHyperlink.prototype.GetAnchor = function()
 {
@@ -519,6 +535,7 @@ CHyperlinkAnchor.prototype.GetHeadingParagraph = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaHyperlink = ParaHyperlink;
+window["AscWord"].ParaHyperlink = ParaHyperlink;
 
 CHyperlinkAnchor.prototype['asc_GetType']             = CHyperlinkAnchor.prototype.GetType;
 CHyperlinkAnchor.prototype['asc_GetBookmarkName']     = CHyperlinkAnchor.prototype.GetBookmarkName;

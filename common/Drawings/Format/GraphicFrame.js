@@ -96,6 +96,7 @@
 	CGraphicFrame.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
 
 	CGraphicFrame.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
+	CGraphicFrame.prototype.collectRedrawSlides = CShape.prototype.collectRedrawSlides;
 	CGraphicFrame.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 	CGraphicFrame.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 	CGraphicFrame.prototype.hit = CShape.prototype.hit;
@@ -274,6 +275,20 @@
 		if (this.graphicObject) {
 			this.graphicObject.Search(SearchEngine, Type);
 		}
+	};
+
+	CGraphicFrame.prototype.GetAllParaMaths = function (arrParaMaths) {
+		if (!arrParaMaths) {
+			arrParaMaths = [];
+		}
+		if (this.graphicObject && this.graphicObject.GetAllParagraphs) {
+			let aParagraphs = [];
+			this.graphicObject.GetAllParagraphs({All: true}, aParagraphs);
+			for (let i = 0; i < aParagraphs.length; ++i) {
+				aParagraphs[i].GetAllParaMaths(arrParaMaths);
+			}
+		}
+		return arrParaMaths;
 	};
 
 	CGraphicFrame.prototype.GetSearchElementId = function (bNext, bCurrent) {
@@ -471,6 +486,15 @@
 		}
 	};
 
+	CGraphicFrame.prototype.GetWidth = function () {
+		this.recalculate();
+		return this.extX;
+	};
+	CGraphicFrame.prototype.GetHeight = function () {
+		this.recalculate();
+		return this.extY;
+	};
+
 	CGraphicFrame.prototype.IsSelectedSingleElement = function () {
 		return true;
 	};
@@ -619,6 +643,9 @@
 			xfrm.setOffY(newY);
 			bResult = true;
 			this.recalculate();
+
+			if (this.isTable())
+				Asc.editor.addMacroStepData("SetDrawingPos", {x: newX, y: newY});
 		}
 		return bResult;
 	};

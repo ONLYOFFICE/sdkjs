@@ -592,6 +592,8 @@ CDocumentControllerBase.prototype.GetSelectionBounds = function(){return null;};
  */
 CDocumentControllerBase.prototype.IsMovingTableBorder = function(){return false;};
 /**
+CDocumentControllerBase.prototype.CancelTableBorderMove = function(){};
+/**
  * Проверяем попадает ли заданная позиция в селект.
  * @param X
  * @param Y

@@ -147,9 +147,8 @@
 		return other.count + this.count - 2 * shared;
 	};
 
-	function changeFirstTextElement(oTextIterator, oRun)
+	function changeFirstTextElement(oElement, oRun)
 	{
-		const oElement = oTextIterator.getCurrentElement();
 		oElement.elements[0] = oRun.Content[0];
 		oElement.firstRun = oRun;
 	}
@@ -185,7 +184,7 @@
 		oTextIterator.addToCollectBack(oRun);
 		if (this.elementIndex === 0 && this.innerElementIndex === 0)
 		{
-			changeFirstTextElement(oTextIterator, oRun);
+			oTextIterator.changeFirstTextElement(oRun);
 		}
 
 
@@ -318,7 +317,7 @@
 			}
 			else
 			{
-				changeFirstTextElement(oTextIterator, oRun);
+				oTextIterator.changeFirstTextElement(oRun);
 			}
 		}
 	};
@@ -621,7 +620,7 @@
 		oTextIterator.addToCollectBack(oSplitRun);
 		if (this.elementIndex === 0 && this.innerElementIndex === 0)
 		{
-			changeFirstTextElement(oTextIterator, oSplitRun);
+			oTextIterator.changeFirstTextElement(oSplitRun);
 		}
 		oTextIterator.setCollectTextPrRuns(null);
 		const arrRuns = oPartner.collectRuns;
@@ -1043,7 +1042,7 @@
     CNode.prototype.copyRunWithMockParagraph = function (oRun, mockParagraph, comparison) {
         const oTempParagraph = oRun.Paragraph;
         oRun.Paragraph = mockParagraph;
-        const oNewRun = oRun.Copy2(comparison.copyPr);
+        const oNewRun = oRun.CopyComparison(comparison.copyPr);
         oRun.Paragraph = oTempParagraph;
 
         return oNewRun;
@@ -1258,6 +1257,7 @@
                             if(k <= oCurRun.Content.length && bFind)
                             {
                                 const oNewRun = oCurRun.Split2(k, applyingParagraph, j);
+								changeFirstTextElement(oFirstText, oNewRun);
                                 comparison.checkOriginalAndSplitRun(oCurRun, oNewRun)
                                 //TODO: think about it
                                 this.applyInsert(aContentToInsert, [], j + 1, comparison);
@@ -1353,6 +1353,7 @@
                     if(t > 0)
                     {
                         const oNewRun = oChildElement.Split2(t, oApplyParagraph, k);
+						changeFirstTextElement(oFirstText, oNewRun);
                         comparison.checkOriginalAndSplitRun(oChildElement, oNewRun);
                         arrSetRemoveReviewType.push(oNewRun);
                         nInsertPosition++;
@@ -1981,7 +1982,7 @@
         {
             if(this.elements[i] instanceof AscWord.CRunText)
             {
-                sResultString += String.fromCharCode(this.elements[i].GetCodePoint());
+                sResultString += this.elements[i].ToString();
             }
             else if(this.elements[i] instanceof AscWord.CRunSpace)
             {
@@ -2111,6 +2112,7 @@
 			this.formatting = true;
 			this.whiteSpace = true;
 	    this.comments = true;
+	    this.authorName = "";
 			
 	    this.insertionsAndDeletions = true;
 	    // this.moves = true;
@@ -2128,6 +2130,7 @@
     ComparisonOptions.prototype["getTextBoxes"] = ComparisonOptions.prototype.getTextBoxes = function(){return this.textBoxes;};
     // ComparisonOptions.prototype["getFields"] = ComparisonOptions.prototype.getFields = function(){return this.fields;};
     ComparisonOptions.prototype["getWords"] = ComparisonOptions.prototype.getWords = function(){return this.words;};
+    ComparisonOptions.prototype["getAuthorName"] = ComparisonOptions.prototype.getAuthorName = function(){return this.authorName;};
 
 
     ComparisonOptions.prototype["putInsertionsAndDeletions"] = ComparisonOptions.prototype.putInsertionsAndDeletions = function(v){this.insertionsAndDeletions = v;};
@@ -2142,6 +2145,53 @@
     ComparisonOptions.prototype["putTextBoxes"] = ComparisonOptions.prototype.putTextBoxes = function(v){this.textBoxes = v;};
     // ComparisonOptions.prototype["putFields"] = ComparisonOptions.prototype.putFields = function(v){this.fields = v;};
     ComparisonOptions.prototype["putWords"] = ComparisonOptions.prototype.putWords = function(v){this.words = v;};
+    ComparisonOptions.prototype["putAuthorName"] = ComparisonOptions.prototype.putAuthorName = function(v){this.authorName = v;};
+
+    ComparisonOptions.prototype["toObject"] = ComparisonOptions.prototype.toObject = function()
+    {
+        return {
+            "words"             : this.words,
+            "formatting"        : this.formatting,
+            "caseChanges"       : this.caseChanges,
+            "whiteSpace"        : this.whiteSpace,
+            "tables"            : this.tables,
+            "headersAndFooters" : this.headersAndFooters,
+            "footnotes"         : this.footNotes,
+            "textBoxes"         : this.textBoxes,
+            "comments"          : this.comments,
+            "authorName"        : this.authorName
+        };
+    };
+
+    function readComparisonOptions(pr)
+    {
+        const options = new ComparisonOptions();
+        if (!pr || typeof pr !== "object")
+        {
+            return options;
+        }
+        if (typeof pr["words"] === "boolean")
+            options.words = pr["words"];
+        if (typeof pr["formatting"] === "boolean")
+            options.formatting = pr["formatting"];
+        if (typeof pr["caseChanges"] === "boolean")
+            options.caseChanges = pr["caseChanges"];
+        if (typeof pr["whiteSpace"] === "boolean")
+            options.whiteSpace = pr["whiteSpace"];
+        if (typeof pr["tables"] === "boolean")
+            options.tables = pr["tables"];
+        if (typeof pr["headersAndFooters"] === "boolean")
+            options.headersAndFooters = pr["headersAndFooters"];
+        if (typeof pr["footnotes"] === "boolean")
+            options.footNotes = pr["footnotes"];
+        if (typeof pr["textBoxes"] === "boolean")
+            options.textBoxes = pr["textBoxes"];
+        if (typeof pr["comments"] === "boolean")
+            options.comments = pr["comments"];
+        if (typeof pr["authorName"] === "string")
+            options.authorName = pr["authorName"];
+        return options;
+    }
 
 
     function CDocumentComparison(oOriginalDocument, oRevisedDocument, oOptions, bIsWordsByOneSymbol)
@@ -2272,6 +2322,10 @@
     };
     CDocumentComparison.prototype.getUserName = function()
     {
+        if (typeof this.options.authorName === "string" && this.options.authorName.length > 0)
+        {
+            return this.options.authorName;
+        }
         const oCore = this.revisedDocument.Core;
         if(oCore && typeof oCore.lastModifiedBy === "string" && oCore.lastModifiedBy.length > 0)
         {
@@ -2727,6 +2781,10 @@
     };
 	CDocumentComparison.prototype.getNewParaPrWithDiff = function (oElementPr, oPartnerPr)
 	{
+		if (!this.options.formatting)
+		{
+			return null;
+		}
 		const oOldParaPr = oElementPr.Copy(undefined, undefined);
 
 		this.firstCheckNumId = oOldParaPr.NumPr && oOldParaPr.NumPr.NumId;
@@ -3028,6 +3086,9 @@
         }
     };
 	CDocumentComparison.prototype.applyChangesToTablePr = function (oNode) {
+		if (!this.options.formatting) {
+			return;
+		}
 		if (oNode.partner) {
 			const oMainTable = oNode.element;
 			const oRevisedTable = oNode.partner.element;
@@ -3080,6 +3141,7 @@
                 oElement.Content.splice(oChange.anchor.index, 0, oChange.insert[j].element.Copy(oElement, this.copyPr));
                 AscCommon.History.Add(new CChangesTableAddRow(oElement, oChange.anchor.index, [oElement.Content[oChange.anchor.index]]));
             }
+            oElement.private_LinkAllRows();
             oElement.Internal_ReIndexing(0);
             if (oElement.Content.length > 0 && oElement.Content[0].Get_CellsCount() > 0)
                 oElement.CurCell = oElement.Content[0].Get_Cell(0);
@@ -3113,6 +3175,9 @@
 			}
 		};
 	CDocumentComparison.prototype.setTableElementChange = function (oMainElement, oRevisedElement) {
+		if (!this.options.formatting) {
+			return;
+		}
 		const oMainPr = oMainElement.Pr;
 		const oRevisedPr = oRevisedElement.Pr;
 
@@ -3882,7 +3947,10 @@
             const oTempDocument = new CDocument(Asc.editor.WordControl.m_oDrawingDocument, false);
             const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
             AscCommon.pptx_content_loader.Start_UseFullUrl(Asc.editor.insertDocumentUrlsData);
-            if (!oBinaryFileReader.Read(sBinary2))
+			AscCommon.g_oIdCounter.m_bRead = true;
+			const res = oBinaryFileReader.Read(sBinary2);
+			AscCommon.g_oIdCounter.m_bRead = false;
+            if (!res)
             {
                 return null;
             }
@@ -3934,11 +4002,12 @@
 
 
     // TODO: Remove backward compatibility with old signature CompareDocuments(oApi, oTmpDocument) after a few versions
-    function CompareDocuments(oTmpDocument)
+    function CompareDocuments(oTmpDocument, oOptions)
     {
         if (oTmpDocument && typeof oTmpDocument["GetBinary"] !== "function")
         {
             oTmpDocument = arguments[1];
+            oOptions = arguments[2];
         }
 
         Asc.editor.insertDocumentUrlsData = {
@@ -3946,7 +4015,7 @@
             }, endCallback: function (_api) {
             }
         };
-        CompareBinary(oTmpDocument["GetBinary"](), null, true);
+        CompareBinary(oTmpDocument["GetBinary"](), oOptions, true);
         Asc.editor.insertDocumentUrlsData = null;
     }
 
@@ -4505,6 +4574,10 @@
 	{
 		this.addToCollect(this.getRun());
 	};
+	CRunCollector.prototype.changeFirstTextElement = function (oRun) {
+		const oElement = this.getCurrentElement();
+		changeFirstTextElement(oElement, oRun);
+	}
 	CRunCollector.prototype.nextRun = function () {
 		do {
 			this.runIndex -= 1;
@@ -4527,6 +4600,7 @@
 
     window['AscCommonWord']['CompareBinary'] =  window['AscCommonWord'].CompareBinary = CompareBinary;
     window['AscCommonWord']['ComparisonOptions'] = window['AscCommonWord'].ComparisonOptions = ComparisonOptions;
+    window['AscCommonWord']['readComparisonOptions'] = window['AscCommonWord'].readComparisonOptions = readComparisonOptions;
     window['AscCommonWord']['CompareDocuments'] = window['AscCommonWord'].CompareDocuments = CompareDocuments;
     window['AscCommonWord'].CDocumentComparison = CDocumentComparison;
     window['AscCommonWord'].CNode = CNode;

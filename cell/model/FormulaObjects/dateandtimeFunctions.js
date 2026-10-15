@@ -110,7 +110,7 @@ function (window, undefined) {
 	}
 
 	function diffDate(d1, d2, mode) {
-		var date1 = d1.getUTCDate(), month1 = d1.getUTCMonth() + 1, year1 = d1.getUTCFullYear(),
+		let date1 = d1.getUTCDate(), month1 = d1.getUTCMonth() + 1, year1 = d1.getUTCFullYear(),
 			date2 = d2.getUTCDate(), month2 = d2.getUTCMonth() + 1, year2 = d2.getUTCFullYear();
 
 		switch (mode) {
@@ -292,7 +292,70 @@ function (window, undefined) {
 		}
 	}
 
+	function actualDays(a, b) {
+		return Math.round((a - b) / c_msPerDay);
+	}
+
+	function daysInYearBasisFinancial(issue, settl, basis) {
+		switch (basis) {
+			case DayCountBasis.UsPsa30_360:         // 0=USA (NASD) 30/360
+			case DayCountBasis.Actual360:         // 2=exact/360
+			case DayCountBasis.Europ30_360:         // 4=Europe 30/360
+				return new cNumber(360);
+			case DayCountBasis.ActualActual: {         // 1=exact/exact
+				if (!lessOrEqualToAYearApart(issue, settl)) {
+					let actualYears = (settl.getFullYear() - issue.getFullYear()) + 1;
+					let totalDays = actualDays(new Date(settl.getFullYear() + 1, 0, 1), new Date(issue.getFullYear(), 0, 1));
+
+					return totalDays / actualYears;
+				}
+				return considerAsLeap(issue, settl) ? 366 : 365;
+			}
+			case DayCountBasis.Actual365:         //3=exact/365
+				return new cNumber(365);
+			default:
+				return new cError(cErrorType.not_numeric);
+		}
+	}
+
+	function lessOrEqualToAYearApart(issue, settl) {
+		if (settl.getFullYear() - issue.getFullYear() > 1) {
+			return false;
+		} 
+
+		if (settl.getFullYear() === issue.getFullYear()) {
+			return true;
+		} 
+
+		// exactly 1 year apart in calendar years
+		return settl.getMonth() < issue.getMonth() || (settl.getMonth() === issue.getMonth() && settl.getDate() <= issue.getDate());
+	}
+
+	function isLeapYearByNumber (year) {
+		return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 || year === 1900;
+	}
+
+	function considerAsLeap(issue, settl) {
+		if (issue.getFullYear() === settl.getFullYear()) {
+			return issue.isLeapYear();
+		}
+		
+		// spans two calendar years - check if either year's Feb 29 falls in [issue, settl]
+		let y1 = issue.getFullYear(), y2 = settl.getFullYear(); // years - simple numbers
+		for (let y = y1; y <= y2; y++) {
+			if (isLeapYearByNumber(y)) {
+				let feb29 = new Date(y, 1, 29);
+				if (feb29 >= issue && feb29 <= settl) {
+					return true;
+				} 
+			}
+		}
+		return false;
+	}
+
+
 	function getCorrectDate(val) {
+		// function with shift for dates of the first two months of 1900 (until February)
 		if (!AscCommon.bDate1904) {
 			if (val < 60) {
 				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
@@ -408,7 +471,69 @@ function (window, undefined) {
 		return res;
 	}
 
-	function getHolidays(val) {
+	function getWeekendsFromObject(val) {
+		// Array of weekend number to 7-element Monday-based
+		const twoDayArrs = {
+			1:  [0,0,0,0,0,1,1], // Sat, Sun
+			2:  [1,0,0,0,0,0,1], // Sun, Mon
+			3:  [1,1,0,0,0,0,0], // Mon, Tue
+			4:  [0,1,1,0,0,0,0], // Tue, Wed
+			5:  [0,0,1,1,0,0,0], // Wed, Thu
+			6:  [0,0,0,1,1,0,0], // Thu, Fri
+			7:  [0,0,0,0,1,1,0], // Fri, Sat
+		};
+		const oneDayArrs = {
+			11: [0,0,0,0,0,0,1], // Sun(6)
+			12: [1,0,0,0,0,0,0], // Mon(0)
+			13: [0,1,0,0,0,0,0], // Tue(1)
+			14: [0,0,1,0,0,0,0], // Wed(2)
+			15: [0,0,0,1,0,0,0], // Thu(3)
+			16: [0,0,0,0,1,0,0], // Fri(4)
+			17: [0,0,0,0,0,1,0], // Sat(5)
+		};
+		
+		if (!val) {
+			return twoDayArrs[1].slice();
+		}
+		
+		if (cElementType.number === val.type) {
+			let numberVal = val.getValue();
+			if (numberVal === null || numberVal === undefined) {
+				return twoDayArrs[1].slice();
+			}
+			if (twoDayArrs[numberVal]) {
+				return twoDayArrs[numberVal].slice();
+			}
+			if (oneDayArrs[numberVal]) {
+				return oneDayArrs[numberVal].slice();
+			}
+			return new cError(cErrorType.not_numeric);
+		} else if (cElementType.string === val.type) {
+			let stringVal = val.getValue();
+			if (stringVal.length !== 7) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			let res = [];
+			for (let i = 0; i < 7; i++) {
+				switch (stringVal[i]) {
+					case '0':
+						res[i] = 0;
+						break;
+					case '1':
+						res[i] = 1;
+						break;
+					default:
+						return new cError(cErrorType.wrong_value_type);
+				}
+			}
+			return res;
+		} else {
+			return new cError(cErrorType.not_numeric);
+		}
+	}
+
+	function getHolidaysOld(val) {
 		var holidays = [];
 		if (val) {
 			if (val instanceof cRef) {
@@ -469,6 +594,84 @@ function (window, undefined) {
 		}
 
 		for (var i = 0; i < holidays.length; i++) {
+			holidays[i] = cDate.prototype.getDateFromExcel(holidays[i].getValue());
+		}
+
+		return holidays;
+	}
+
+	function getHolidays(val) {
+		const holidays = [];
+		if (val) {
+			if (val.type === cElementType.cell || val.type === cElementType.cell3D) {
+				let a = val.getValue();
+				if (a.type === cElementType.number && a.getValue() >= 0) {
+					holidays.push(a);
+				}
+			} else if (val.type === cElementType.cellsRange || val.type === cElementType.cellsRange3D) {
+				let arr = val.getValue();
+				for (let i = 0; i < arr.length; i++) {
+					if (arr[i].type === cElementType.number && arr[i].getValue() >= 0) {
+						holidays.push(arr[i]);
+					}
+				}
+			} else if (val.type === cElementType.array) {
+				let bIsError;
+
+				val.foreach(function (elem) {
+					if (elem) {
+						if (elem.type === cElementType.error) {
+							bIsError = elem;
+							return true;
+						} else if (elem.type === cElementType.bool) {
+							bIsError = new cError(cErrorType.wrong_value_type);
+							return true;
+						} else if (elem.type === cElementType.number) {
+							holidays.push(elem);
+						} else if (elem.type === cElementType.string) {
+							let res = elem.tocNumber();
+							if (elem.type === cElementType.error) {
+								bIsError = elem;
+								return true;
+							}
+
+							let d = new cDate(elem.getValue());
+							if (isNaN(d)) {
+								d = g_oFormatParser.parseDate(elem.getValue(), AscCommon.g_oDefaultCultureInfo);
+								if (d === null) {
+									bIsError = new cError(cErrorType.wrong_value_type);
+									return true;
+								}
+								res = d.value;
+							} else {
+								res = (d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay +
+									(AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1));
+							}
+
+							if (res && res > 0) {
+								holidays.push(new cNumber(parseInt(res)));
+							} else {
+								bIsError = new cError(cErrorType.wrong_value_type);
+								return true;
+							}
+						}
+					}
+				});
+
+				if (bIsError) {
+					return bIsError;
+				}
+			} else {
+				val = val.tocNumber();
+				if (val.type === cElementType.error) {
+					return val;
+				} else if (val.type === cElementType.number) {
+					holidays.push(val);
+				}
+			}
+		}
+
+		for (let i = 0; i < holidays.length; i++) {
 			holidays[i] = cDate.prototype.getDateFromExcel(holidays[i].getValue());
 		}
 
@@ -629,7 +832,7 @@ function (window, undefined) {
 			res = new cNumber(60);
 		} else {
 			var _num = Math.round(new cDate(Date.UTC(year, month - 1, day)).getExcelDate());
-			if (_num < 0 || _num > 2958465) {
+			if (_num < 0 || _num > AscCommonExcel.getMaxDate()) {
 				return new cError(cErrorType.not_numeric);
 			}
 			res = new cNumber(_num);
@@ -1197,26 +1400,39 @@ function (window, undefined) {
 	cEOMONTH.prototype.argumentsType = [argType.any, argType.any];
 	cEOMONTH.prototype.enabledToSingle = {"0": true, "1": true};
 	cEOMONTH.prototype.Calculate = function (arg) {
+		// in this function it is important to check for empty before getting the value from the reference
 		let arg0 = arg[0], arg1 = arg[1];
+
+		// Arg0 check
+		if (cElementType.empty === arg0.type) {
+			return new cError(cErrorType.not_available);
+		}
+
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			arg0 = arg0.cross(arguments[1]);
+			return new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.array === arg0.type) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			arg0 = arg0.getValue();
 		}
 
+		if (cElementType.bool === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		// Arg1 check
+		if (cElementType.empty === arg1.type) {
+			return new cError(cErrorType.not_available);
+		}
+
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			arg1 = arg1.cross(arguments[1]);
+			return new cError(cErrorType.wrong_value_type);
 		} else if (cElementType.array === arg1.type) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 			arg1 = arg1.getValue();
 		}
 
-		if (cElementType.bool === arg0.type) {
-			return new cError(cErrorType.wrong_value_type);
-		}
 		if (cElementType.bool === arg1.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -1535,18 +1751,21 @@ function (window, undefined) {
 	cNETWORKDAYS.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cNETWORKDAYS.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cNETWORKDAYS.prototype.Calculate = function (arg) {
-		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
-		let argClone = oArguments.args;
-
 		let arg0 = arg[0],
 			arg1 = arg[1],
 			arg2 = arg[2];
 
 		// arg0 type check
+		if (cElementType.empty === arg0.type) {
+			return new cError(cErrorType.not_available);
+		}
+
 		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			arg0 = arg0.getValue();
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			if (arg0.isOneElement()) {
+			if (cElementType.cellsRange3D === arg0.type && !arg0.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			} else if (arg0.isOneElement()) {
 				arg0 = arg0.getFirstElement();
 			} else {
 				return new cError(cErrorType.wrong_value_type);
@@ -1562,10 +1781,16 @@ function (window, undefined) {
 		}
 
 		// arg1 type check
+		if (cElementType.empty === arg1.type) {
+			return new cError(cErrorType.not_available);
+		}
+
 		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 			arg1 = arg1.getValue();
 		} else if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			if (arg1.isOneElement()) {
+			if (cElementType.cellsRange3D === arg1.type && !arg1.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			} else if (arg1.isOneElement()) {
 				arg1 = arg1.getFirstElement();
 			} else {
 				return new cError(cErrorType.wrong_value_type);
@@ -1599,16 +1824,19 @@ function (window, undefined) {
 			return new cNumber(0);
 		}
 
-		let argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
 		//function weekday also don't separate < 60
 		val0 = getCorrectDate2(val0);
 		val1 = getCorrectDate2(val1);
 
 		//Holidays
+		if (arg2 && cElementType.cellsRange3D === arg2.type) { 
+			if (!arg2.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			} else if (arg2.isOneElement()) {
+				arg2 = arg2.getFirstElement();
+			}
+		}
+
 		let holidays = getHolidays(arg2);
 		if (holidays.type === cElementType.error) {
 			return holidays;
@@ -1655,26 +1883,113 @@ function (window, undefined) {
 	cNETWORKDAYS_INTL.prototype.argumentsMin = 2;
 	cNETWORKDAYS_INTL.prototype.argumentsMax = 4;
 	cNETWORKDAYS_INTL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cNETWORKDAYS_INTL.prototype.arrayIndexes = {2: 1, 3: 1};
+	cNETWORKDAYS_INTL.prototype.arrayIndexes = {3: 1};
 	cNETWORKDAYS_INTL.prototype.argumentsType = [argType.any, argType.any, argType.number, argType.any];
-	//TODO in this case there are differences with MS. With 3 and 4 arguments, the result is not replaced with an error.
-	cNETWORKDAYS_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
+	// cNETWORKDAYS_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cNETWORKDAYS_INTL.prototype.enabledToSingle = {"0": true, "1": true, "3": true};
 	cNETWORKDAYS_INTL.prototype.Calculate = function (arg) {
-		var tempArgs = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
-		var oArguments = this._prepareArguments(tempArgs, arguments[1]);
-		var argClone = oArguments.args;
-
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1].tocNumber();
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(1), arg3 = arg[3] ? arg[3] : new cNumber(0);
+		if (arg0.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		} 
+		
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
 		}
 
-		var arg0 = argClone[0], arg1 = argClone[1], arg2 = argClone[2], arg3 = arg[3];
-		var val0 = arg0.getValue(), val1 = arg1.getValue();
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if ((arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) && !arg0.isOneElement()) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		}
+
+
+		if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		} 
+		
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.getValue();
+		}
+
+		if (arg1.type === cElementType.cellsRange3D && !arg1.isSingleSheet()) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if ((arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) && !arg1.isOneElement()) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		arg1 = arg1.tocNumber();
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		}
+
+		//Weekend
+		if (arg2 && cElementType.cellsRange3D === arg2.type) { 
+			if (!arg2.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			} else if (arg2.isOneElement()) {
+				arg2 = arg2.getFirstElement();
+			}
+		}
+
+		if (arg2.type === cElementType.cell || arg2.type === cElementType.cell3D) {
+			arg2 = arg2.getValue();
+		}
+
+		if (arg2.type === cElementType.error) {
+			return arg2;
+		}
+		
+		if (arg2.type === cElementType.empty) {
+			arg2 = new cNumber(1);
+		} else if (arg2.type === cElementType.bool) {
+			arg2 = arg2.tocNumber();
+		}
+
+		
+		let weekends = getWeekendsFromObject(arg2);
+		if (weekends.type !== undefined && weekends.type === cElementType.error) {
+			return weekends;
+		}
+
+		//Holidays
+		if (arg3 && cElementType.cellsRange3D === arg3.type) { 
+			if (!arg3.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			} else if (arg3.isOneElement()) {
+				arg3 = arg3.getFirstElement();
+			}
+		}
+
+		if (arg3.type === cElementType.cell || arg3.type === cElementType.cell3D) {
+			arg3 = arg3.getValue();
+		}
+
+		if (arg3.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		arg3 = arg3.tocNumber();
+		if (arg3.type === cElementType.error) {
+			return arg3;
+		}
+		
+
+		let holidays = getHolidays(arg3);
+		if (holidays.type !== undefined && holidays.type === cElementType.error) {
+			return holidays;
+		}
+
+		let val0 = arg0.getValue(), val1 = arg1.getValue();
 
 		if (val0 < 0) {
 			return new cError(cErrorType.not_numeric);
@@ -1682,50 +1997,35 @@ function (window, undefined) {
 		if (val1 < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
+		
+		val0 = getCorrectDate2(Math.floor(val0));
+		val1 = getCorrectDate2(Math.floor(val1));
 
-		val0 = getCorrectDate(val0);
-		val1 = getCorrectDate(val1);
+		const calcDate = function () {
+			let count = 0,
+				start = val0,
+				end = val1,
+				dif = val1 - val0;
 
-		//Weekend
-		var weekends = getWeekends(arg2);
-		if (weekends instanceof cError) {
-			return weekends;
-		}
-
-		//Holidays
-		var holidays = getHolidays(arg3);
-		if (holidays instanceof cError) {
-			return holidays;
-		}
-
-		var calcDate = function () {
-			var count = 0;
-			var start = val0;
-			var end = val1;
-			var dif = val1 - val0;
 			if (dif < 0) {
 				start = val1;
 				end = val0;
 			}
 
-			var difAbs = (end - start);
-			difAbs = (difAbs + (c_msPerDay)) / c_msPerDay;
+			let difAbs = Math.round((end - start) / c_msPerDay) + 1;
 
-			var date = new cDate(start);
-			var startTime = date.getTime();
-			var startDay = date.getUTCDay();
-			for (var i = 0; i < difAbs; i++) {
-				if (!weekends[startDay] && !_includeInHolidaysTime(startTime, holidays)) {
+			let date = new cDate(start);
+			let startTime = date.getTime();
+
+			let dayOfWeek = (date.getUTCDay() + 6) % 7; // Monday-based
+
+
+			for (let i = 0; i < difAbs; i++) {
+				if (weekends[dayOfWeek] !== 1 && !_includeInHolidaysTime(startTime, holidays)) {
 					count++;
 				}
-				startDay = (startDay + 1) % 7;
+				dayOfWeek = (dayOfWeek + 1) % 7;
 				startTime += AscCommonExcel.c_msPerDay;
-
-				// date.setTime(startTime + i * AscCommonExcel.c_msPerDay);
-				//
-				// if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
-				// 	count++;
-				// }
 			}
 
 			return new cNumber((dif < 0 ? -1 : 1) * count);
@@ -2347,27 +2647,24 @@ function (window, undefined) {
 			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
 				return new cError(cErrorType.wrong_value_type);
 			} else if (curArg.type === cElementType.string) {
+				// only the locale-aware format parser is used: ("31-Feb-2025" -> "03.03.2025")
 				val = curArg.tocNumber();
-				if (val.type === cElementType.error || val.type === cElementType.empty) {
-					let d = new cDate(curArg.getValue());
-					if (isNaN(d)) {
-						return new cError(cErrorType.wrong_value_type);
-					} else {
-						val = Math.floor((d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1)));
-					}
-				} else {
-					val = curArg.tocNumber().getValue();
+				if (val.type === cElementType.error) {
+					return new cError(cErrorType.wrong_value_type);
 				}
+				val = val.getValue();
 			}
 
 			if (val < 0) {
 				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
-			} else {
-				if (AscCommon.bDate1904 && val === 0) {
-					val += 1;
-				}
-				return t.setCalcValue(new cNumber((new cDate((val - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay)).getUTCFullYear()), 0);
 			}
+			// Excel rounds the date-time serial to the nearest second before taking the date part,
+			// so 23:59:59.5 and later already belong to the next day
+			let day = Math.floor(Math.floor((val * c_sPerDay + 0.5).toFixed(cExcelDateTimeDigits)) / c_sPerDay);
+			if (day > AscCommonExcel.getMaxDate()) {
+				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
+			}
+			return t.setCalcValue(new cNumber(new cDate((day - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay).getUTCFullYear()), 0);
 		};
 
 		let arg0 = arg[0], res;
@@ -2455,8 +2752,10 @@ function (window, undefined) {
 	window['AscCommonExcel'].DayCountBasis = DayCountBasis;
 	window['AscCommonExcel'].yearFrac = yearFrac;
 	window['AscCommonExcel'].diffDate = diffDate;
+	window['AscCommonExcel'].GetDiffDate = GetDiffDate;
 	window['AscCommonExcel'].days360 = days360;
 	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;
+	window['AscCommonExcel'].daysInYearBasisFinancial = daysInYearBasisFinancial;
 	window['AscCommonExcel'].getLastDayInMonth = getLastDayInMonth;
 })(window);

@@ -1983,21 +1983,26 @@ CDocumentContentBase.prototype.private_UpdateSelectionPosOnRemove = function(nPo
 };
 /**
  * Соединяем параграф со следующим в заданной позиции
- * @param nPosition {number}
- * @param isUseConcatedStyle {boolean} использовать ли стиль присоединяемого параграфа для итогового параграфа
+ * @param pos {number}
+ * @param useConcatedStyle {boolean} использовать ли стиль присоединяемого параграфа для итогового параграфа
  * @returns {boolean}
  */
-CDocumentContentBase.prototype.ConcatParagraphs = function(nPosition, isUseConcatedStyle)
+CDocumentContentBase.prototype.ConcatParagraphs = function(pos, useConcatedStyle)
 {
-	if (nPosition < this.Content.length - 1 && this.Content[nPosition].IsParagraph() && this.Content[nPosition + 1].IsParagraph())
-	{
-		this.Content[nPosition].Concat(this.Content[nPosition + 1], isUseConcatedStyle);
-		this.RemoveFromContent(nPosition + 1, 1);
-		this.Content[nPosition].CorrectContent();
-		return true;
-	}
+	if (pos >= this.Content.length - 1
+		|| !this.Content[pos].IsParagraph()
+		|| !this.Content[pos + 1].IsParagraph())
+		return false;
+	
+	let paragraph     = this.Content[pos];
+	let nextParagraph = this.Content[pos + 1];
+	
+	if (!useConcatedStyle)
+		paragraph.CopyPr(nextParagraph);
 
-	return false;
+	nextParagraph.ConcatBefore(paragraph, null, true);
+	this.RemoveFromContent(pos, 1);
+	return true;
 };
 /**
  * Специальная функция удаления параграфа во время приема/отклонения изменений
@@ -2548,6 +2553,7 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 		paraPr.CanEditBlockCC    = selectedInfo.CanEditBlockSdts();
 		paraPr.CanDeleteInlineCC = selectedInfo.CanDeleteInlineSdts();
 		paraPr.CanEditInlineCC   = selectedInfo.CanEditInlineSdts();
+		paraPr.InPlainTextCC     = selectedInfo.IsInPlainTextSdt();
 	}
 	
 	if (paraPr.Tabs)
@@ -2789,7 +2795,11 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 {
 	if (!prevState)
 		return null;
-	
+
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsMovingTableBorder())
+		return null;
+
 	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 33 || action.event.KeyCode > 40))
 		return null;
 	
@@ -3082,4 +3092,26 @@ CDocumentContentBase.prototype.UpdateSectionsBeforeRemove = function(items, chec
 CDocumentContentBase.prototype.IsFirstOnDocumentPage = function(curPage)
 {
 	return false;
+};
+/**
+ * Get the selection direction
+ * @returns {AscWord.Direction} The selection direction. 1 - forward direction, -1 - backward direction
+ */
+CDocumentContentBase.prototype.GetSelectDirection = function()
+{
+	let startPos = this.GetContentPosition(true, true);
+	let endPos   = this.GetContentPosition(true, false);
+
+	for (var pos = 0, nLen = Math.min(startPos.length, endPos.length); pos < nLen; ++pos)
+	{
+		if (!endPos[pos] || !startPos[pos] || startPos[pos].Class !== endPos[pos].Class)
+			return AscWord.Direction.FORWARD;
+
+		if (startPos[pos].Position < endPos[pos].Position)
+			return AscWord.Direction.FORWARD;
+		else if (startPos[pos].Position > endPos[pos].Position)
+			return AscWord.Direction.BACKWARD;
+	}
+
+	return AscWord.Direction.FORWARD;
 };

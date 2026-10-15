@@ -815,6 +815,66 @@ window.startPluginApi = function() {
 		window.Asc.plugin.executeMethod("SendEventInternal", [name, data]);
 	};
 
+	if (!("Editor" in window))
+	{
+		var editorMethods = {
+			"RunMacro" : function(func)
+			{
+				var args = Array.prototype.slice.call(arguments, 1);
+				var callback = typeof args[args.length - 1] === "function" ? args.pop() : null;
+
+				var macro = "function() {"
+					+ "try {"
+					+ "return (" + func.toString() + ").apply(null, " + JSON.stringify(args) + ");"
+					+ "} catch (e) {"
+					+ "var name = e && e.name !== undefined ? String(e.name) : \"\";"
+					+ "var message = e && e.message !== undefined ? String(e.message) : String(e);"
+					+ "return { \"onlyoffice_id_error_message\" : (name ? name + \": \" : \"\") + message };"
+					+ "}"
+					+ "}";
+
+				if (callback)
+					return Plugin.callCommand(macro, false, true, callback);
+
+				return new Promise(function(resolve, reject)
+				{
+					Plugin.callCommand(macro, false, true, function(result)
+					{
+						if (result && result["onlyoffice_id_error_message"])
+							reject(new Error(result["onlyoffice_id_error_message"]));
+						else
+							resolve(result);
+					});
+				});
+			}
+		};
+
+		window.Editor = new Proxy(editorMethods, {
+			get: function(target, name)
+			{
+				if (typeof name !== "string" || name === "then")
+					return undefined;
+
+				if (Object.prototype.hasOwnProperty.call(target, name))
+					return target[name];
+
+				return function()
+				{
+					var args = Array.from(arguments);
+					var callback = typeof args[args.length - 1] === "function" ? args.pop() : null;
+
+					if (callback)
+						return Plugin.executeMethod(name, args, callback);
+
+					return new Promise(function(resolve)
+					{
+						Plugin.executeMethod(name, args, resolve);
+					});
+				};
+			}
+		});
+	}
+
 };
 
 

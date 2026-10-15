@@ -96,6 +96,8 @@
 		this.IsDrawSmart = false;
 		this.IsPrintMode = false;
 		this.IsPrintPreview = false;
+		this.IsDrawSlideBackground = true;
+		// this.
 
 		if (true === isUseGrState)
 		{
@@ -204,9 +206,9 @@
 			if (mode === 1)
 				this._darkMode1();
 			else if (mode === 2)
-				this.darkMode2();
+				this._darkMode2();
 			else
-				this.darkMode3();
+				this._darkMode3();
 		}
 	};
 
@@ -876,7 +878,11 @@
 	{
 	};
 
-	CGraphicsBase.prototype.tg = function(text,x,y,codepoints)
+	CGraphicsBase.prototype.tg = function(text,x,y,codepoints, advX, advY)
+	{
+	};
+
+	CGraphicsBase.prototype.DrawSpace = function(x, y, width, codePoint)
 	{
 	};
 
@@ -909,6 +915,28 @@
 	};
 	
 	CGraphicsBase.prototype.SetBorder = function(border)
+	{
+	};
+	CGraphicsBase.prototype.SetBaseTransform = function(m)
+	{
+		this.m_oBaseTransform = m;
+	};
+	CGraphicsBase.prototype.ResetBaseTransform = function()
+	{
+		this.m_oBaseTransform = null;
+	};
+	CGraphicsBase.prototype.GetBaseTransform = function()
+	{
+		return this.m_oBaseTransform;
+	};
+
+	CGraphicsBase.prototype.drawpath = function(type)
+	{
+	};
+	CGraphicsBase.prototype.beginCommand = function()
+	{
+	};
+	CGraphicsBase.prototype.endCommand = function()
 	{
 	};
 

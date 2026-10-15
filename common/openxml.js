@@ -489,7 +489,9 @@
 		var rels = this.getRelationships();
 		for (var i = 0; i < rels.length; ++i) {
 			var part = this.pkg.getPartByUri(rels[i].targetFullName);
-			parts.push(part);
+			if (part) {
+				parts.push(part);
+			}
 		}
 		return parts;
 	}
@@ -507,7 +509,9 @@
 		var rels = this.getRelationshipsByRelationshipType(relationshipType);
 		for (var i = 0; i < rels.length; ++i) {
 			var part = this.pkg.getPartByUri(rels[i].targetFullName);
-			parts.push(part);
+			if (part) {
+				parts.push(part);
+			}
 		}
 		return parts;
 	}
@@ -521,9 +525,10 @@
 	}
 
 	openXml.OpenXmlPart.prototype.getRelationshipsByContentType = function(contentType) {
+		var pkg = this.pkg;
 		var rels = this.getRelationships();
 		return rels.filter(function (rel) {
-			return this.getContentType(rel.targetFullName) === contentType;
+			return pkg.getContentType(rel.targetFullName) === contentType;
 		});
 	}
 
@@ -532,7 +537,9 @@
 		var rels = this.getRelationshipsByContentType(contentType);
 		for (var i = 0; i < rels.length; ++i) {
 			var part = this.pkg.getPartByUri(rels[i].targetFullName);
-			parts.push(part);
+			if (part) {
+				parts.push(part);
+			}
 		}
 		return parts;
 	}
@@ -706,7 +713,7 @@
 		footnotes: {dir: "", filename: "footnotes.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes"},
 		gif: {dir: "", filename: "gif.xml", contentType: "image/gif"},
 		glossaryDocument: {dir: "glossary", filename: "document.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/glossaryDocument"},
-		handoutMaster: {dir: "", filename: "handoutMaster.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.handoutMaster+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/handoutMaster"},
+		handoutMaster: {dir: "handoutMasters", filename: "handoutMaster[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.handoutMaster+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/handoutMaster"},
 		header: {dir: "", filename: "header[N].xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header"},
 		jpeg: {dir: "", filename: "jpeg.xml", contentType: "image/jpeg"},
 		mainDocument: {dir: "word", filename: "document.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"},
@@ -721,6 +728,7 @@
 		package: {dir: "../embeddings", filename: "Embedding[N].xlsx", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/package"},
 		png: {dir: "", filename: "png.xml", contentType: "image/png"},
 		presentation: {dir: "ppt", filename: "presentation.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"},
+		presentationComments: {dir: "comments", filename: "comment[N].xml", relationType: "http://schemas.onlyoffice.com/comments", enumerateType: "comments/comment"},
 		presentationProperties: {dir: "", filename: "presProps.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.presProps+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps"},
 		presentationTemplate: {dir: "", filename: "presentationTemplate.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.template.main+xml"},
 		queryTable: {dir: "../queryTables", filename: "queryTable[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.queryTable+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/queryTable"},
@@ -731,7 +739,7 @@
 		slicerCache: {dir: "slicerCaches", filename: "slicerCache[N].xml", contentType: "application/vnd.ms-excel.slicerCache+xml", relationType: "http://schemas.microsoft.com/office/2007/relationships/slicerCache"},
 		slicers: {dir: "../slicers", filename: "slicer[N].xml", contentType: "application/vnd.ms-excel.slicer+xml", relationType: "http://schemas.microsoft.com/office/2007/relationships/slicer"},
 		slide: {dir: "slides", filename: "slide[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slide+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide"},
-		slideComments: {dir: "comments", filename: "slideComments.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.comments+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"},
+		slideComments: {dir: "../comments", filename: "comment[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.comments+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments", enumerateType: "comments/comment"},
 		slideLayout: {dir: "slideLayouts", filename: "slideLayout[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout"},
 		slideMaster: {dir: "slideMasters", filename: "slideMaster[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster"},
 		slideShow: {dir: "", filename: "slideShow.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml"},

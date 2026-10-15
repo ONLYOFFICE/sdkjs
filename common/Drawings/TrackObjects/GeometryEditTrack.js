@@ -528,6 +528,10 @@
 	EditShapeGeometryTrack.prototype.trackEnd = function (bWord) {
 		this.addCommandsInPathInfo();
 
+		if (this.originalObject.group) {
+			this.originalObject.getMainGroup().normalize();
+		}
+
 		const oSpPr = this.originalObject.spPr;
 		const oXfrm = oSpPr.xfrm;
 
@@ -555,8 +559,11 @@
 				oXfrm.setOffY(oOffset.OffY);
 			}
 
-			oSpPr.setGeometry(this.geometry.createDuplicate());
+			const oNewGeometry = this.geometry.createDuplicate();
+			oSpPr.setGeometry(oNewGeometry);
 			this.originalObject.checkDrawingBaseCoords();
+
+			Asc.editor.addMacroStepData("SetCustomGeometry", {id: this.originalObject.getFormatIdString(), geometry: oNewGeometry, width: dExtX, height: dExtY});
 		}
 
 		if (this.addedPointIdx !== null) {

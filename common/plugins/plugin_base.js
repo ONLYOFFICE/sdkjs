@@ -440,11 +440,20 @@
 			(0 !== url.indexOf("file://")) &&
 			(0 !== url.indexOf("www.")))
 		{
-			let location  = window.location;
+			let location = window.location;
 			let start = location.pathname.lastIndexOf('/') + 1;
 			let file = location.pathname.substring(start);
-			url = location.href.replace(file, url);
+
+			if (file !== "")
+				url = location.href.replace(file, url);
+			else
+			{
+				let pos = location.href.lastIndexOf("/") + 1;
+				url = location.href.slice(0, pos) + url + location.href.slice(pos);
+			}
 		}
+
+
 
 		if (-1 === url.indexOf(".html?"))
 			url += "?windowID=";
@@ -779,7 +788,9 @@
 					if (isNaN(_buttonId))
 						_buttonId = pluginData.button;
 
-					if (!window.Asc.plugin.button && -1 === _buttonId && undefined === pluginData.buttonWindowId)
+					if (!window.Asc.plugin.button)
+						window.Asc.plugin.executeCommand("close", "");
+					else if (-1 === _buttonId && undefined === pluginData.buttonWindowId)
 						window.Asc.plugin.executeCommand("close", "");
 					else
 						window.Asc.plugin.button(_buttonId, pluginData.buttonWindowId);

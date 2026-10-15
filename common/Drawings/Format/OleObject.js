@@ -43,6 +43,7 @@
 function (window, undefined) {
 
     const SPREADSHEET_APPLICATION_ID = 'Excel.Sheet.12';
+    const VISIO_APPLICATION_ID_PREFIX = 'Visio.Drawing'; // versioned progId (Visio.Drawing.11/.15/...), match by prefix
 
         function COleSize(w, h){
             this.w = w;
@@ -66,7 +67,7 @@ function (window, undefined) {
 	    {
 		    this.Class.m_aBinaryData = oPr;
 	    }
-			
+
 	    function CChangesPartOleObjectBinary(Class, Old, New, Color) {
 		    AscDFH.CChangesPartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetPartBinaryData, Color);
 	    }
@@ -153,7 +154,7 @@ function (window, undefined) {
 				const oApi = Asc.editor || editor;
 		    if (oApi.isOpenOOXInBrowser && !AscCommon.checkOOXMLSignature(this.m_aBinaryData))
 		    {
-			    const base64 = oApi.frameManager.getEncodedArray(this.m_aBinaryData).toUtf8();
+			    const base64 = AscCommon.Utf8.encode(oApi.frameManager.getEncodedArray(this.m_aBinaryData), true);
 					const oThis = this;
 			    oApi.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
 				    if (arrBinaryData)
@@ -178,7 +179,17 @@ function (window, undefined) {
         this.m_sApplicationId = sApplicationId;
         if (this.m_sApplicationId === SPREADSHEET_APPLICATION_ID) {
             this.setOleType(AscCommon.c_oAscOleObjectTypes.spreadsheet);
+        } else if (this.private_isVisioApplicationId(this.m_sApplicationId)) {
+            this.setOleType(AscCommon.c_oAscOleObjectTypes.visio);
         }
+    };
+    COleObject.prototype.private_isVisioApplicationId = function(sApplicationId)
+    {
+        return typeof sApplicationId === "string" && sApplicationId.indexOf(VISIO_APPLICATION_ID_PREFIX) === 0;
+    };
+    COleObject.prototype.isVisioOleObject = function()
+    {
+        return this.m_nOleType === AscCommon.c_oAscOleObjectTypes.visio || this.private_isVisioApplicationId(this.m_sApplicationId);
     };
     COleObject.prototype.setPixSizes = function(nPixWidth, nPixHeight)
     {

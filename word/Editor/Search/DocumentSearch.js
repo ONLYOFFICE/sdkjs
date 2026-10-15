@@ -41,13 +41,14 @@
 	 * Механизм поиска. Хранит параграфы с найденной строкой
 	 * @constructor
 	 */
-	function CDocumentSearch(oLogicDocument)
+	function DocumentSearch(oLogicDocument)
 	{
 		this.LogicDocument = oLogicDocument;
 		this.Text          = "";
 		this.MatchCase     = false;
 		this.Word          = false;
 		this.Pattern       = new AscCommonWord.CSearchPatternEngine();
+		this.RegExp        = null;
 
 		this.Prefix        = [];
 
@@ -57,7 +58,7 @@
 		this.ReplacedId    = [];
 		this.CurId         = -1;
 		this.Direction     = true; // направление true - вперед, false - назад
-		this.ClearOnRecalc = true; // Флаг, говорящий о том, запустился ли пересчет из-за Replace
+		this.ClearOnRecalc = true; // flag: false when need to replace search results
 		this.Selection     = false;
 		this.Footnotes     = [];
 		this.Endnotes      = [];
@@ -70,22 +71,23 @@
 		this.TextAroundEmpty  = true; // Флаг, что все очищено, чтобы не очищать повторно
 	}
 
-	CDocumentSearch.prototype.Reset = function()
+	DocumentSearch.prototype.Reset = function()
 	{
 		this.Text      = "";
 		this.MatchCase = false;
 		this.Word	   = false;
+		this.RegExp    = null;
 	};
 	/**
 	 * @param {AscCommon.CSearchSettings} oProps
 	 */
-	CDocumentSearch.prototype.Compare = function(oProps)
+	DocumentSearch.prototype.Compare = function(oProps)
 	{
 		return (oProps && this.Text === oProps.GetText()
 			&& this.MatchCase === oProps.IsMatchCase()
 			&& this.Word === oProps.IsWholeWords());
 	};
-	CDocumentSearch.prototype.Clear = function()
+	DocumentSearch.prototype.Clear = function()
 	{
 		this.Reset();
 
@@ -106,13 +108,13 @@
 		this.StopTextAround();
 		this.SendClearAllTextAround();
 	};
-	CDocumentSearch.prototype.Add = function(Paragraph)
+	DocumentSearch.prototype.Add = function(Paragraph)
 	{
 		this.Count++;
 		this.Elements[this.Id++] = Paragraph;
 		return (this.Id - 1);
 	};
-	CDocumentSearch.prototype.GetElementsMap = function()
+	DocumentSearch.prototype.GetElementsMap = function()
 	{
 		let map = {};
 		for (let searchId in this.Elements)
@@ -123,7 +125,7 @@
 		}
 		return map;
 	};
-	CDocumentSearch.prototype.Select = function(nId, bUpdateStates)
+	DocumentSearch.prototype.Select = function(nId, bUpdateStates)
 	{
 		var Paragraph = this.Elements[nId];
 		if (Paragraph)
@@ -143,7 +145,7 @@
 			this.SetCurrent(nId);
 		}
 	};
-	CDocumentSearch.prototype.SetCurrent = function(nId)
+	DocumentSearch.prototype.SetCurrent = function(nId)
 	{
 		this.CurId = undefined !== nId ? nId : -1;
 		let nIndex = -1 !== this.CurId ? this.GetElementIndexById(this.CurId) : -1;
@@ -151,19 +153,19 @@
 		let oApi = this.LogicDocument.GetApi()
 		oApi.sync_setSearchCurrent(nIndex, this.Count);
 	};
-	CDocumentSearch.prototype.ResetCurrent = function()
+	DocumentSearch.prototype.ResetCurrent = function()
 	{
 		this.SetCurrent(-1);
 	};
-	CDocumentSearch.prototype.GetCount = function()
+	DocumentSearch.prototype.GetCount = function()
 	{
 		return this.Count;
 	};
-	CDocumentSearch.prototype.GetCurrent = function()
+	DocumentSearch.prototype.GetCurrent = function()
 	{
 		return this.CurId;
 	};
-	CDocumentSearch.prototype.Replace = function(sReplaceString, Id, bRestorePos)
+	DocumentSearch.prototype.Replace = function(sReplaceString, Id, bRestorePos)
 	{
 		this.InsertPattern.Set(sReplaceString);
 
@@ -265,7 +267,7 @@
 
 		return false;
 	};
-	CDocumentSearch.prototype.private_AddReplacedId = function(nId)
+	DocumentSearch.prototype.private_AddReplacedId = function(nId)
 	{
 		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos)
 		{
@@ -275,7 +277,7 @@
 
 		this.ReplacedId.push(nId);
 	};
-	CDocumentSearch.prototype.private_AddReplacedStringToRun = function(oRun, nInRunPos)
+	DocumentSearch.prototype.private_AddReplacedStringToRun = function(oRun, nInRunPos)
 	{
 		var isMathRun = oRun.IsMathRun();
 		for (var nIndex = 0, nAdd = 0, nCount = this.InsertPattern.GetLength(); nIndex < nCount; ++nIndex)
@@ -288,7 +290,7 @@
 			}
 		}
 	};
-	CDocumentSearch.prototype.GetElementIndexById = function(nId)
+	DocumentSearch.prototype.GetElementIndexById = function(nId)
 	{
 		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos)
 		{
@@ -300,9 +302,10 @@
 
 		return (nId - this.ReplacedId.length);
 	};
-	CDocumentSearch.prototype.ReplaceAll = function(NewStr, bUpdateStates)
+	DocumentSearch.prototype.ReplaceAll = function(NewStr, bUpdateStates)
 	{
-		this.RemoveEvent = false;
+		this.RemoveEvent   = false;
+		this.ClearOnRecalc = false;
 
 		for (var Id = this.Id; Id >= 0; --Id)
 		{
@@ -310,62 +313,84 @@
 				this.Replace(NewStr, Id, true);
 		}
 
-		this.RemoveEvent = true;
+		this.ClearOnRecalc = true;
+		this.RemoveEvent   = true;
 
 		this.Clear();
 	};
 	/**
 	 * @param {AscCommon.CSearchSettings} oProps
 	 */
-	CDocumentSearch.prototype.Set = function(oProps)
+	DocumentSearch.prototype.Set = function(oProps)
 	{
 		if (!oProps)
 			return;
-
+		
+		this.RegExp    = null;
 		this.Text      = oProps.GetText();
 		this.MatchCase = oProps.IsMatchCase();
 		this.Word      = oProps.IsWholeWords();
-
-		var _sText = this.Text;
-		if (!this.MatchCase)
-			_sText = this.Text.toLowerCase();
-
-		this.Pattern.Set(_sText);
+		
+		if (this.Text instanceof RegExp)
+		{
+			this.SetRegExp(this.Text);
+		}
+		else
+		{
+			var _sText = this.Text;
+			if (!this.MatchCase)
+				_sText = this.Text.toLowerCase();
+			
+			this.Pattern.Set(_sText);
+			this.private_CalculatePrefix();
+		}
+	};
+	DocumentSearch.prototype.SetRegExp = function(regExp)
+	{
+		this.RegExp = null;
+		this.Pattern.Set("");
 		this.private_CalculatePrefix();
 	};
-	CDocumentSearch.prototype.IsWholeWords = function()
+	DocumentSearch.prototype.IsEmpty = function()
+	{
+		if (this.RegExp)
+			return false;
+
+		return !this.Pattern.GetLength();
+	};
+	DocumentSearch.prototype.IsWholeWords = function()
 	{
 		return this.Word;
 	};
-	CDocumentSearch.prototype.IsMatchCase = function()
+	DocumentSearch.prototype.IsMatchCase = function()
 	{
 		return this.MatchCase;
 	};
-	CDocumentSearch.prototype.SetFootnotes = function(arrFootnotes)
+	DocumentSearch.prototype.SetFootnotes = function(arrFootnotes)
 	{
 		this.Footnotes = arrFootnotes;
 	};
-	CDocumentSearch.prototype.SetEndnotes = function(arrEndnotes)
+	DocumentSearch.prototype.SetEndnotes = function(arrEndnotes)
 	{
 		this.Endnotes = arrEndnotes;
 	};
-	CDocumentSearch.prototype.GetFootnotes = function()
+	DocumentSearch.prototype.GetFootnotes = function()
 	{
 		return this.Footnotes;
 	};
-	CDocumentSearch.prototype.GetEndnotes = function()
+	DocumentSearch.prototype.GetEndnotes = function()
 	{
 		return this.Endnotes;
 	};
-	CDocumentSearch.prototype.GetDirection = function()
+	DocumentSearch.prototype.GetDirection = function()
 	{
 		return this.Direction;
 	};
-	CDocumentSearch.prototype.SetDirection = function(bDirection)
+	DocumentSearch.prototype.SetDirection = function(bDirection)
 	{
 		this.Direction = bDirection;
 	};
-	CDocumentSearch.prototype.private_CalculatePrefix = function()
+	DocumentSearch.prototype.private_CalculatePrefix = function()
 	{
 		var nLen = this.Pattern.GetLength();
 
@@ -384,11 +409,11 @@
 			this.Prefix[nPos] = nK;
 		}
 	};
-	CDocumentSearch.prototype.GetPrefix = function(nIndex)
+	DocumentSearch.prototype.GetPrefix = function(nIndex)
 	{
 		return this.Prefix[nIndex];
 	};
-	CDocumentSearch.prototype.StartTextAround = function()
+	DocumentSearch.prototype.StartTextAround = function()
 	{
 		if (!this.TextAroundUpdate)
 			return this.SendAllTextAround();
@@ -408,7 +433,7 @@
 
 		this.TextArround = [];
 	};
-	CDocumentSearch.prototype.ContinueGetTextAround = function()
+	DocumentSearch.prototype.ContinueGetTextAround = function()
 	{
 		let arrResult = [];
 
@@ -448,7 +473,7 @@
 			this.LogicDocument.GetApi().sync_endTextAroundSearch();
 		}
 	};
-	CDocumentSearch.prototype.StopTextAround = function()
+	DocumentSearch.prototype.StopTextAround = function()
 	{
 		if (this.TextAroundTimer)
 		{
@@ -459,7 +484,7 @@
 		this.TextAroundTimer = null;
 		this.TextAroundId    = -1;
 	};
-	CDocumentSearch.prototype.SendAllTextAround = function()
+	DocumentSearch.prototype.SendAllTextAround = function()
 	{
 		if (this.TextAroundTimer)
 			return;
@@ -478,7 +503,7 @@
 		oApi.sync_getTextAroundSearchPack(arrResult);
 		oApi.sync_endTextAroundSearch();
 	};
-	CDocumentSearch.prototype.SendClearAllTextAround = function()
+	DocumentSearch.prototype.SendClearAllTextAround = function()
 	{
 		if (this.TextAroundEmpty)
 			return;
@@ -494,8 +519,12 @@
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------
+	window['AscWord'] = window['AscWord'] || {};
+	AscWord.DocumentSearch  = DocumentSearch;
+
+	// for backward compatibility
 	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CDocumentSearch = CDocumentSearch;
+	window['AscCommonWord'].CDocumentSearch = DocumentSearch;
 
 })(window);
 

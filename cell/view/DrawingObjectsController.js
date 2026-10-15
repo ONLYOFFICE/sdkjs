@@ -52,47 +52,6 @@ if(window.editor === "undefined" && window["Asc"]["editor"])
 	window.editor;
 }
 
-// ToDo remove this from here!!!
-AscCommon.CContentChangesElement.prototype.Refresh_BinaryData = function()
-{
-    if(this.m_aPositions.length > 0){
-        this.m_pData.Pos = this.m_aPositions[0];
-    }
-    this.m_pData.UseArray = true;
-    this.m_pData.PosArray = this.m_aPositions;
-	if(editor && editor.isPresentationEditor)
-	{
-		var Binary_Writer = History.BinaryWriter;
-		var Binary_Pos = Binary_Writer.GetCurPosition();
-
-        this.m_pData.Data.UseArray = true;
-        this.m_pData.Data.PosArray = this.m_aPositions;
-
-        if ((Asc.editor || editor).binaryChanges) {
-            Binary_Writer.WriteWithLen(this, function() {
-                Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-                Binary_Writer.WriteLong(this.m_pData.Data.Type);
-                this.m_pData.Data.WriteToBinary(Binary_Writer);
-            });
-        } else {
-            Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-            Binary_Writer.WriteLong(this.m_pData.Data.Type);
-            this.m_pData.Data.WriteToBinary(Binary_Writer);
-        }
-        var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
-
-		this.m_pData.Binary.Pos = Binary_Pos;
-		this.m_pData.Binary.Len = Binary_Len;
-	}
-	else if(this.m_pData.Data && this.m_pData.Item)
-	{
-		this.m_pData.Data.UseArray = true;
-		this.m_pData.Data.PosArray = this.m_aPositions;
-
-		History.Refresh_SpreadsheetChanges(this.m_pData.Item);
-	}
-};
-
 function CheckIdSatetShapeAdd(state)
 {
     return !(state instanceof AscFormat.NullState);
@@ -603,17 +562,9 @@ DrawingObjectsController.prototype.canIncreaseParagraphLevel = function(bIncreas
     if(oDocContent)
     {
         let oTextObject = AscFormat.getTargetTextObject(this);
-        if(oTextObject && oTextObject.getObjectType() === AscDFH.historyitem_type_Shape)
+        if(oTextObject && oTextObject.isCanIncreaseParagraphLevel && oTextObject.isCanIncreaseParagraphLevel(bIncrease))
         {
-            if(oTextObject.isPlaceholder())
-            {
-                let nPhType = oTextObject.getPlaceholderType();
-                if(nPhType === AscFormat.phType_title || nPhType === AscFormat.phType_ctrTitle)
-                {
-                    return false;
-                }
-            }
-            return oDocContent.Can_IncreaseParagraphLevel(bIncrease);
+            return true;
         }
     }
     return false;

@@ -2710,8 +2710,32 @@ function CHorRuler()
 			update |= 1;
 			update |= 2;
 		}
-		
+
 		return update;
+	};
+
+	this.IsTracking = function()
+	{
+		return AscWord.RULER_DRAG_TYPE.none !== this.DragType;
+	};
+	this.CancelTracking = function()
+	{
+		if (!this.IsTracking())
+			return;
+
+		this.SimpleChanges.Clear();
+		this.DragType         = AscWord.RULER_DRAG_TYPE.none;
+		this.m_bIsMouseDown   = false;
+		this.DragTablePos     = -1;
+		this.m_lCurrentTab    = -1;
+		this.m_oWordControl.m_oDrawingDocument.UnlockCursorType();
+		this.m_oWordControl.OnUpdateOverlay();
+		this.m_oWordControl.UpdateHorRuler();
+
+		const drawingDocument = this.m_oWordControl.m_oDrawingDocument;
+		const curPage         = drawingDocument.m_lCurrentPage;
+		if (curPage >= 0 && curPage < drawingDocument.m_lPagesCount)
+			this.OnMouseMove(drawingDocument.m_arrPages[curPage].drawingPage.left, 0, AscCommon.global_mouseEvent);
 	};
 }
 
@@ -3741,4 +3765,26 @@ function CVerRuler()
 			this.m_oWordControl.m_oLogicDocument.FinalizeAction();
         }
     }
+
+	this.IsTracking = function()
+	{
+		return 0 !== this.DragType;
+	};
+	this.CancelTracking = function()
+	{
+		if (!this.IsTracking())
+			return;
+
+		this.SimpleChanges.Clear();
+		this.DragType     = 0;
+		this.DragTablePos = -1;
+		this.m_oWordControl.m_oDrawingDocument.UnlockCursorType();
+		this.m_oWordControl.OnUpdateOverlay();
+		this.m_oWordControl.UpdateVerRuler();
+
+		const drawingDocument = this.m_oWordControl.m_oDrawingDocument;
+		const curPage         = drawingDocument.m_lCurrentPage;
+		if (curPage >= 0 && curPage < drawingDocument.m_lPagesCount)
+			this.OnMouseMove(0, drawingDocument.m_arrPages[curPage].drawingPage.top, AscCommon.global_mouseEvent);
+	};
 }

@@ -1006,14 +1006,16 @@
 			}
 			this.handlers.trigger("drawSelection");
 		};
-		CCollaborativeEditing.prototype.getForeignSelectIntersection = function (col, row) {
+		CCollaborativeEditing.prototype.getForeignSelectIntersection = function (col, row, sheetId) {
 			var res = null;
 			for (var i in this.m_aForeignCursorsData) {
-				if (this.m_aForeignCursorsData[i]) {
-					for (var j = 0; j < this.m_aForeignCursorsData[i].ranges.length; j++) {
-						if (this.m_aForeignCursorsData[i].ranges[j].contains(col, row)) {
-							res = this.m_aForeignCursorsData[i];
+				var cursor = this.m_aForeignCursorsData[i];
+				if (cursor && cursor.sheetId === sheetId) {
+					for (var j = 0; j < cursor.ranges.length; j++) {
+						if (cursor.ranges[j].contains(col, row)) {
+							res = cursor;
 							res.userId = i;
+							res.intersectionIndex = j;
 						}
 					}
 				}

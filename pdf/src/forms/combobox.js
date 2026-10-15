@@ -64,15 +64,12 @@
     AscFormat.InitClass(CComboBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Combobox_Field);
 
     CComboBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-
         let oDoc = this.GetDocument();
         
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
-        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.format) && !this.IsInForm() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // remember current content
 
         if (oDoc.activeForm == this)
@@ -86,9 +83,6 @@
         
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CComboBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -231,7 +225,10 @@
                     return;
                 }
                 
-                editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);
+				if (oDoc.GetFormRoles().CanFillField(this)) {
+					Asc.editor.sendEvent("asc_onShowPDFFormsActions", this);
+				}
+				
                 this.content.MoveCursorToStartPos();
             }
             
@@ -240,7 +237,7 @@
             }
         }
 
-        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         // call cursor positioning after onFocus. If already in focus, then immediately.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
@@ -248,10 +245,10 @@
             callbackAfterFocus.bind(this, x, y, e)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown, AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         }
     };
     
@@ -302,8 +299,13 @@
         }
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
+        let aOptions = this.GetOptions();
+        if (aOptions.length == 0) {
+            return;
+        }
+        
         if (this.IsWidget()) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetLogicCurIdxs(), aIdxs));
 
             let aOptions = this.GetOptions();
             if (undefined !== aIdxs[0]) {
@@ -314,10 +316,10 @@
             this.UpdateDisplayValue(sDisplayValue)
 
             if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
-                this.SetParentCurIdxs(aIdxs);
+                this.SetLogicCurIdxs(aIdxs);
         }
         else 
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicCurIdxs(aIdxs);
 
         this.SetNeedCommit(false);
     };
@@ -346,24 +348,32 @@
                 }
             }
             
-            if (sTextToAdd == "")
-                sTextToAdd = sValue;
+			if (sTextToAdd == "") {
+				if (this.IsEditable()) {
+					sTextToAdd = sValue;
+				}
+				else {
+					return false;
+				}
+			}
 
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetParentValue(), sValue));
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetLogicValue(), sValue));
 
             this.UpdateDisplayValue(sTextToAdd);
             this.SetNeedRecalc(true);
             this.SetWasChanged(true);
 
             if (isOnOpen) {
-                this.SetParentValue(sValue);
-                this.SetParentCurIdxs(aIdxs);
+                this.SetLogicValue(sValue);
+                this.SetLogicCurIdxs(aIdxs);
             }
         }
         else {
-            this.SetParentValue(sValue);
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicValue(sValue);
+            this.SetLogicCurIdxs(aIdxs);
         }
+
+		return true;
     };
     CComboBoxField.prototype.private_SetValue = function(sValue) {
         let aIdxs = [];
@@ -394,8 +404,8 @@
             this.SetNeedRecalc(true);
         }
         else {
-            this.SetParentValue(sValue);
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicValue(sValue);
+            this.SetLogicCurIdxs(aIdxs);
         }
     };
     
@@ -403,13 +413,13 @@
         AscPDF.CBaseField.prototype.DrainLogicFrom.call(this, oFieldToInherit, bClearFrom);
 
         this.SetOptions(oFieldToInherit.GetOptions());
-        this.SetParentCurIdxs(oFieldToInherit.GetParentCurIdxs());
+        this.SetLogicCurIdxs(oFieldToInherit.GetLogicCurIdxs());
         this.SetEditable(oFieldToInherit.IsEditable());
         this.SetCommitOnSelChange(oFieldToInherit.IsCommitOnSelChange());
 
         if (bClearFrom !== false) {
             oFieldToInherit.SetOptions([]);
-            oFieldToInherit.SetParentCurIdxs([]);
+            oFieldToInherit.SetLogicCurIdxs([]);
             oFieldToInherit.SetEditable(false);
             oFieldToInherit.SetCommitOnSelChange(false);
         }
@@ -419,7 +429,7 @@
 		if (!oKeystrokeEvent["rc"])
 			return false;
 		
-		let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
+		let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.keystroke);
         if (oKeystrokeTrigger) {
             aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oKeystrokeEvent["change"]);
         }
@@ -442,25 +452,21 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.Commit = function() {
-        let oDoc        = this.GetDocument();
-        let aFields     = oDoc.GetAllWidgets(this.GetFullName());
-
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+		
+        let aFields = this.GetAllWidgets();
         let aCurIdxs = this.GetCurIdxs();
-        let aApiIdxs = this.GetParentCurIdxs();
+        let aApiIdxs = this.GetLogicCurIdxs();
 
         let sFormatValueBefore = this.GetFormatValue();
         this.DoFormatAction();
         let sFormatValue = this.GetFormatValue();
 
         let sNewValue = this.GetValue();
-        let isChanged = sNewValue !== this.GetParentValue();
-        for (let i = 0; i < aCurIdxs.length; i++) {
-            if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
-                isChanged = true;
-                break;
-            }
-        }
-        
+        let isChanged = !aApiIdxs || sNewValue !== this.GetLogicValue() || false == AscCommon.isEqualSortedArrays(aCurIdxs, aApiIdxs);
         if (!isChanged && sFormatValueBefore === sFormatValue) {
             return;
         }
@@ -498,8 +504,8 @@
             aFields[i].SetFormatValue(sFormatValue);
         }
 
-        this.SetParentValue(this.GetValue());
-        this.SetParentCurIdxs(aCurIdxs);
+        this.SetLogicValue(this.GetValue());
+        this.SetLogicCurIdxs(aCurIdxs);
 
         // when alignment is center or right, then after
         // content width becomes larger than form size, alignment becomes left, until text is smaller than form size again
@@ -509,6 +515,10 @@
 
         this.SetNeedCommit(false);
     };
+	CComboBoxField.prototype.SetPlaceholder = function(sText) {
+		this.SetEditable(true);
+		return AscPDF.CTextField.prototype.SetPlaceholder.call(this, sText);
+	};
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);
 	};
@@ -538,7 +548,7 @@
             }
         }
 
-        this.SetParentCurIdxs([nIdx]);
+        this.SetLogicCurIdxs([nIdx]);
         return nIdx;
     };
     
@@ -681,12 +691,12 @@
         return [];
     };
     CComboBoxField.prototype.SyncValue = function() {
-        const aCurIdxs = this.GetParentCurIdxs();
+        const aCurIdxs = this.GetLogicCurIdxs();
         if (aCurIdxs.length != 0) {
             this.SetCurIdxs(aCurIdxs);
         }
         else {
-            this.SetValue(this.GetParentValue());
+            this.SetValue(this.GetLogicValue());
         }
 
         this.SetFormatValue(this.GetFormatValue());
@@ -711,8 +721,10 @@
     	    return nTextHeight;
 
         let nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
-        oRun.SetFontSize(nNewFontSize);
-        oPara.Recalculate_Page(0);
+		oPara.SetApplyToAll(true);
+		oPara.Add(new AscCommonWord.ParaTextPr({FontSize : nNewFontSize}));
+		oPara.SetApplyToAll(false);
+		oPara.Recalculate_Page(0);
 
         oTextPr.FontSize    = nNewFontSize;
         oTextPr.FontSizeCS  = nNewFontSize;
@@ -740,7 +752,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let value = this.GetParentValue(memory.isCopyPaste);
+        let value = this.GetLogicValue(memory.isCopyPaste);
         if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(value);
@@ -767,15 +779,14 @@
         }
 
         // I array (selected list values)
-        let curIdxs;
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs(memory.isCopyPaste);
-        }
-        if (curIdxs) {
-            memory.fieldDataFlags |= (1 << 14);
-            memory.WriteLong(curIdxs.length);
-            for (let i = 0; i < curIdxs.length; i++) {
-                memory.WriteLong(curIdxs[i]);
+        if (memory.isCopyPaste || this.IsLogicalRoot()) {
+            let curIdxs = this.GetLogicCurIdxs(false);
+            if (curIdxs && curIdxs.length !== 0) {
+                memory.fieldDataFlags |= (1 << 14);
+                memory.WriteLong(curIdxs.length);
+                for (let i = 0; i < curIdxs.length; i++) {
+                    memory.WriteLong(curIdxs[i]);
+                }
             }
         }
 
@@ -851,9 +862,8 @@
     CComboBoxField.prototype.GetDateFormat          = AscPDF.CTextField.prototype.GetDateFormat;
     CComboBoxField.prototype.GetFormatType          = AscPDF.CTextField.prototype.GetFormatType;
     CComboBoxField.prototype.GetFormatArgs          = AscPDF.CTextField.prototype.GetFormatArgs;
-    CComboBoxField.prototype.GetValidateType        = AscPDF.CTextField.prototype.GetValidateType;
-    CComboBoxField.prototype.GetValidateArgs        = AscPDF.CTextField.prototype.GetValidateArgs;
-    CComboBoxField.prototype.SetPlaceholder         = AscPDF.CTextField.prototype.SetPlaceholder;
+	CComboBoxField.prototype.GetKeystrokeType       = AscPDF.CTextField.prototype.GetKeystrokeType;
+    CComboBoxField.prototype.GetKeystrokeArgs       = AscPDF.CTextField.prototype.GetKeystrokeArgs;
     CComboBoxField.prototype.GetPlaceholder         = AscPDF.CTextField.prototype.GetPlaceholder;
     CComboBoxField.prototype.SetRegularExp          = AscPDF.CTextField.prototype.SetRegularExp;
     CComboBoxField.prototype.GetRegularExp          = AscPDF.CTextField.prototype.GetRegularExp;

@@ -522,25 +522,27 @@
         this.private_UpdateRichContent();
         this.SetNeedRecalc(true);
     };
-    CAnnotationLine.prototype.private_UpdateRect = function() {
-        this.recalcBounds();
-        this.recalcGeometry();
-        this.SetNeedRecalcSizes(true);
-        this.Recalculate(true);
+	CAnnotationLine.prototype.private_UpdateRect = function(rect) {
+		if (!rect) {
+			this.recalcBounds();
+			this.recalcGeometry();
+			this.SetNeedRecalcSizes(true);
+			this.Recalculate(true);
 
-        let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+			let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 
-        let oGrBounds = this.bounds;
+			let oGrBounds = this.bounds;
 
-        let aRect = [
-            (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt,
-            (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt,
-            (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt,
-            (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt
-        ];
+			rect = [
+				(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt
+			];
+		}
 
-        this.SetRect(aRect);
-    };
+		this.SetRect(rect);
+	};
     CAnnotationLine.prototype.IsDoCaption = function() {
         return this._doCaption;
     };
@@ -756,31 +758,6 @@
         return this._lineEnd;
     };
 
-    // for work with comments
-    CAnnotationLine.prototype.RemoveComment = function() {
-        if (!this.IsUseContentAsComment()) {
-            AscPDF.CAnnotationFreeText.prototype.RemoveComment.call(this);
-        }
-        else {
-            AscPDF.CAnnotationBase.prototype.RemoveComment.call(this);
-        }
-    };
-    CAnnotationLine.prototype.SetContents = function(contents) {
-        if (!this.IsUseContentAsComment()) {
-            AscPDF.CAnnotationFreeText.prototype.SetContents.call(this, contents);
-        }
-        else {
-            AscPDF.CAnnotationBase.prototype.SetContents.call(this, contents);
-        }
-    };
-    CAnnotationLine.prototype.GetAscCommentData = function() {
-        if (!this.IsUseContentAsComment()) {
-            return AscPDF.CAnnotationFreeText.prototype.GetAscCommentData.call(this);
-        }
-        else {
-            return AscPDF.CAnnotationBase.prototype.GetAscCommentData.call(this);
-        }
-    };
     //////////////////////////////////////
 
     CAnnotationLine.prototype.WriteToBinary = function(memory) {
@@ -950,7 +927,7 @@
                 nInnerType = AscFormat.LineEndType.Slash;
                 break;
             default:
-                nInnerType = AscFormat.LineEndType.Arrow;
+                nInnerType = AscFormat.LineEndType.None;
                 break;
         }
 

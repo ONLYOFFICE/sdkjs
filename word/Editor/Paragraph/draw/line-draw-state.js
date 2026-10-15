@@ -44,10 +44,12 @@
 	 */
 	function ParagraphLineDrawState(drawState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.drawState = drawState;
 		
 		this.Paragraph = undefined;
 		this.Graphics  = undefined;
+		this.BgColor   = undefined;
 		
 		this.logicDocument = null;
 		
@@ -77,9 +79,10 @@
 		this.X               = 0;
 		this.BaseLine        = 0;
 		this.UnderlineOffset = 0;
-		this.Spaces          = 0;
 		this.LineY0          = 0;
 		this.LineY1          = 0;
+		this.Spaces          = 0;
+		this.SpacesSkip      = 0;
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		this.contentControls = [];
@@ -119,22 +122,34 @@
 		this.currentCustomMarks = [];
 		this.customMarkInRun    = null;
 		this.customMarkPos      = 0;
-		
-		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
+	ParagraphLineDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphLineDrawState.prototype.constructor = ParagraphLineDrawState;
+	
 	ParagraphLineDrawState.prototype.init = function()
 	{
 		this.Paragraph = this.drawState.getParagraph();
 		this.Graphics  = this.drawState.getGraphics();
+		this.BgColor   = this.drawState.getBgColor();
 		
 		this.logicDocument = this.GetLogicDocument();
 		if (this.logicDocument && this.logicDocument.IsDocumentEditor())
 		{
 			this.ulTrailSpace     = this.logicDocument.IsUnderlineTrailSpace();
 			this.activePermRanges = this.logicDocument.IsEditCommentsMode() || this.logicDocument.IsViewModeInEditor();
-			
-			this.customMarks = this.logicDocument.GetCustomMarks();
+
+			let commentManager        = this.logicDocument.GetCommentsManager();
+			this.isDrawComments       = commentManager && commentManager.isUse();
+			this.isDrawSolvedComments = commentManager && commentManager.isUseSolved();
 		}
+		else
+		{
+			this.isDrawComments       = false;
+			this.isDrawSolvedComments = false;
+		}
+
+		if (this.logicDocument && this.logicDocument.GetCustomMarks)
+			this.customMarks = this.logicDocument.GetCustomMarks();
 	};
 	ParagraphLineDrawState.prototype.resetPage = function(page)
 	{
@@ -168,17 +183,33 @@
 		
 		this.CustomLines = {};
 	};
-	ParagraphLineDrawState.prototype.beginRange = function(range, x, spaces)
+	ParagraphLineDrawState.prototype.beginRange = function(rangeNum, x)
 	{
 		this.run = null;
 		
-		this.Range  = range;
+		this.Range  = rangeNum;
 		this.X      = x;
-		this.Spaces = spaces;
 		
-		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+		let range = this.Paragraph.Lines[this.Line].Ranges[this.Range];
+		this.paraLineRange = range;
 		
-		this.paraLineRange = this.Paragraph.Lines[this.Line].Ranges[this.Range];
+		let isRtl = this.Paragraph.isRtlDirection();
+		
+		this.SpacesSkip = isRtl && !this.ulTrailSpace ? range.SpacesLeft : 0;
+		this.Spaces     = range.Spaces;
+		
+		if (this.ulTrailSpace)
+			this.Spaces += range.SpacesLeft + range.SpacesRight;
+		else if (isRtl)
+			this.Spaces += range.SpacesRight;
+		else
+			this.Spaces += range.SpacesLeft;
+		
+		// TODO: Numering strikeout and underline are rendering in Draw_Element, we should move it here
+		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && !isRtl)
+			this.X += this.Paragraph.Numbering.WidthVisible;
+
+		this.bidiFlow.begin(isRtl);
 	};
 	ParagraphLineDrawState.prototype.endRange = function()
 	{
@@ -200,18 +231,29 @@
 		
 		this.checkCustomMarks(inRunPos);
 		
-		this.bidiFlow.add([element, run, inRunPos, misspell, this.annotationMarks, this.currentCustomMarks.length ? this.currentCustomMarks.slice() : null], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, inRunPos, misspell, this.annotationMarks, this.currentCustomMarks.length ? this.currentCustomMarks.slice() : null], element.getBidiType());
 		
 		this.annotationMarks = [];
 	};
-	ParagraphLineDrawState.prototype.handleBidiFlow = function(data, direction)
+	ParagraphLineDrawState.prototype.handleParaMath = function(paraMath)
 	{
-		let element     = data[0];
-		let run         = data[1];
-		let inRunPos    = data[2];
-		let misspell    = data[3];
-		let marks       = data[4];
-		let customMarks = data[5];
+		if (paraMath.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.add([para_Math, paraMath], paraMath.getBidiType());
+	};
+	ParagraphLineDrawState.prototype.handleMathBase = function(mathBase)
+	{
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
+	};
+	ParagraphLineDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element     = data[1];
+		let run         = data[2];
+		let inRunPos    = data[3];
+		let misspell    = data[4];
+		let marks       = data[5];
+		let customMarks = data[6];
 		
 		this.handleRun(run);
 		
@@ -250,14 +292,17 @@
 				this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				break;
 			case para_Space:
-				if (this.paraLineRange)
+				if (this.SpacesSkip)
 				{
-					startX = this.paraLineRange.CorrectX(startX);
-					endX   = this.paraLineRange.CorrectX(endX);
+					--this.SpacesSkip;
 				}
-				
-				if (this.Spaces > 0 || this.ulTrailSpace)
+				else if (this.Spaces)
 				{
+					if (this.paraLineRange)
+					{
+						startX = this.paraLineRange.CorrectX(startX);
+						endX   = this.paraLineRange.CorrectX(endX);
+					}					
 					--this.Spaces;
 					this.addLines(startX, endX, undefined, oTextDrawerInfo);
 				}
@@ -301,9 +346,155 @@
 		
 		this.X = endX;
 	};
+	ParagraphLineDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
+	{
+		let paraMath = data[1];
+		let FirstRPrp = paraMath.GetFirstRPrp();
+
+		let Para = this.Paragraph;
+
+		let aUnderline  = this.Underline;
+
+		// TODO: Check bgColor
+		
+		let X          = this.X;
+		let Y          = this.Baseline;
+		let UndOff     = this.UnderlineOffset;
+		let UnderlineY = Y + UndOff;
+		let LineW      = (FirstRPrp.FontSize / 18) * g_dKoef_pt_to_mm;
+		let BgColor    = this.BgColor;
+		if ( undefined !== FirstRPrp.Shd && Asc.c_oAscShdNil !== FirstRPrp.Shd.Value )
+			BgColor = FirstRPrp.Shd.Get_Color( Para );
+		let AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
+		let CurColor, RGBA, Theme = this.Paragraph.Get_Theme(), ColorMap = this.Paragraph.Get_ColorMap();
+
+		if ( true === this.VisitedHyperlink && ( undefined === FirstRPrp.Color && undefined === FirstRPrp.Unifill ) )
+			CurColor = new CDocumentColor( 128, 0, 151 );
+		else if ( true === FirstRPrp.Color.Auto && !FirstRPrp.Unifill)
+			CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
+		else
+		{
+			if(FirstRPrp.Unifill)
+			{
+				FirstRPrp.Unifill.check(Theme, ColorMap);
+				RGBA = FirstRPrp.Unifill.getRGBAColor();
+				CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
+			}
+			else
+			{
+				CurColor = new CDocumentColor( FirstRPrp.Color.r, FirstRPrp.Color.g, FirstRPrp.Color.b );
+			}
+		}
+
+		let Bound = paraMath.Root.Get_LineBound(this.Line, this.Range),
+			Width = Bound.W;
+
+		if ( true === FirstRPrp.Underline )
+		{
+			aUnderline.set(UnderlineY, LineW);
+			aUnderline.Add(X, X + Width, CurColor);
+		}
+		paraMath.Root.drawLines(this);
+
+		this.X = Bound.X + Width;
+	};
+	ParagraphLineDrawState.prototype.handleBidiFlowMathBase = function(data, direction)
+	{
+		let mathBase = data[1];
+
+		let CtrPrp		= mathBase.Get_CompiledCtrPrp(false);
+
+		let aStrikeout	= this.Strikeout;
+		let aDStrikeout	= this.DStrikeout;
+
+		let ReviewType	= mathBase.GetReviewType();
+		let bAddReview	= reviewtype_Add === ReviewType ? true : false;
+		let bRemReview	= reviewtype_Remove === ReviewType ? true : false;
+		let ReviewColor	= null;
+
+		if (bAddReview || bRemReview)
+			ReviewColor	= mathBase.ReviewInfo.Get_Color();
+
+		let ArgSize		= mathBase.Get_CompiledArgSize();
+		let fontCoeff	= MatGetKoeffArgSize(CtrPrp.FontSize, ArgSize.value);
+
+		// calculate y-coordinate and LineW like we do it in AscWord.Run
+		let X     = this.X;
+		let Y     = this.Baseline - CtrPrp.FontSize * fontCoeff * g_dKoef_pt_to_mm * 0.27;
+		let LineW = (CtrPrp.FontSize / 18) * g_dKoef_pt_to_mm;
+		let Para  = this.Paragraph;
+
+		// set aStrikeout && aDStrikeout
+		if (true === bRemReview || true === CtrPrp.Strikeout)
+			aStrikeout.set(Y, LineW);
+		else if (true === CtrPrp.DStrikeout)
+			aDStrikeout.set(Y, LineW);
+
+		let BgColor = this.BgColor;
+		if (CtrPrp.Shd && !CtrPrp.Shd.IsNil())
+			BgColor = CtrPrp.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
+
+		let AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() )
+			? new CDocumentColor( 255, 255, 255, false)
+			: new CDocumentColor( 0, 0, 0, false );
+
+		let CurColor,
+			RGBA,
+			Theme		= this.Paragraph.Get_Theme(),
+			ColorMap	= this.Paragraph.Get_ColorMap();
+
+		// stroke color
+		if ( true === this.VisitedHyperlink && ( undefined === mathBase.Pr.Color && undefined === mathBase.Pr.Unifill ) )
+			CurColor = new CDocumentColor( 128, 0, 151 );
+		else if ( true === CtrPrp.Color.Auto && !CtrPrp.Unifill)
+			CurColor = new CDocumentColor( AutoColor.r, AutoColor.g, AutoColor.b );
+		else
+		{
+			if(CtrPrp.Unifill)
+			{
+				CtrPrp.Unifill.check(Theme, ColorMap);
+				RGBA = CtrPrp.Unifill.getRGBAColor();
+				CurColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B );
+			}
+			else
+			{
+				CurColor = new CDocumentColor( CtrPrp.Color.r, CtrPrp.Color.g, CtrPrp.Color.b );
+			}
+		}
+
+		let CurLine		= this.Line - mathBase.StartLine;
+		let CurRange	= ( 0 === CurLine ? this.Range - mathBase.StartRange : this.Range );
+		let Bound		= mathBase.Bounds.Get_LineBound(CurLine, CurRange);
+
+		if ( true === bRemReview )
+			aStrikeout.Add( X, X + Bound.W, CurColor );
+		else if ( true === CtrPrp.DStrikeout )
+			aDStrikeout.Add( X, X + Bound.W, CurColor );
+		else if ( true === CtrPrp.Strikeout )
+			aStrikeout.Add( X, X + Bound.W, CurColor );
+
+		mathBase.drawLinesForContent(this);
+
+		this.X = Bound.X + Bound.W;
+	};
 	ParagraphLineDrawState.prototype.handleAnnotationMark = function(mark)
 	{
 		this.annotationMarks.push(mark);
+	};
+	ParagraphLineDrawState.prototype.handleCommentMark = function(paraComment)
+	{
+		if (!this.isDrawComments)
+			return;
+		
+		let commentId = paraComment.GetCommentId();
+		let docComments = this.logicDocument.GetComments();
+		let comment = docComments.Get_ById(commentId);
+		if (!comment
+			|| (!this.isDrawSolvedComments && comment.IsSolved())
+			|| !AscCommon.UserInfoParser.canViewComment(comment.GetUserName()))
+			return;
+		
+		this.handleAnnotationMark(paraComment);
 	};
 	/**
 	 * Получаем количество орфографических ошибок в данном месте

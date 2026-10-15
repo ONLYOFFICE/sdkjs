@@ -83,10 +83,6 @@ AscFormat.CShape.prototype.recalculate = function ()
 		return;
 	}
 
-	if(this.parent.getObjectType() === AscDFH.historyitem_type_Notes){
-		return;
-	}
-
 	// var check_slide_placeholder = !this.isPlaceholder() || (this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide));
 	let check_placeholder = !this.isPlaceholder() || (this.parent && this.parent.IsVisioEditor());
 	AscFormat.ExecuteNoHistory(function(){
@@ -288,7 +284,7 @@ AscCommon.CShapeDrawer.prototype.ds = function(saveToPdfMode) {
 	}
 };
 
-function parseFieldPictureFormat(vsdxFieldValue, vsdxFieldFormat) {
+function parseFieldPictureFormat(vsdxFieldFormat) {
 	// See 2.5.9.4	vFieldPicture
 	let res = "@";
 	if (vsdxFieldFormat.f && vsdxFieldFormat.f !== "Inh") {
@@ -606,72 +602,67 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 	var oDateTime;
 	if(typeof this.FieldType === 'string')
 	{
-		let format;
-		if (this.vsdxFieldFormat) {
-			format = parseFieldPictureFormat(this.vsdxFieldValue, this.vsdxFieldFormat);
-		}
 		let logicDocument = this.Paragraph && this.Paragraph.GetLogicDocument();
 		const sFieldType = this.FieldType.toUpperCase();
 
-		// let's not use formula (valueCell.f) for now
-		// first convert value (valueCell.v) which is inches by default to units set in valueCell.u
-		let val = convertConsiderUnits(this.vsdxFieldValue.v, this.vsdxFieldValue.u);
+		let format;
+		if (this.vsdxFieldFormat) {
+			format = parseFieldPictureFormat(this.vsdxFieldFormat);
+		}
 
-
-		// get known functions and get val otherwise return tag text
-		// time formats are not handled correctly for now so date formats are commented
-
-		// todo check INH sFieldType
-
-		if("PAGECOUNT()" === sFieldType)
-		{
+		// page fields do not need the value cell, so resolve them before touching it
+		let val;
+		if ("PAGECOUNT()" === sFieldType) {
 			if (logicDocument) {
 				val = logicDocument.getCountPages();
 			}
-		}
-		// else if("PAGENUMBER()" === sFieldType) {
-			// todo add recalculate on page load
-		// 	if (logicDocument) {
-		// 		val = logicDocument.getCurrentPage();
-		// 	}
-		// }
- 		// else if("NOW()" === sFieldType)
-		// {
-		// 	let oDateTime = new Asc.cDate();
-		// 	val = oDateTime.getExcelDateWithTime(true);
-		// }
-		// else if("DOCCREATION()" === sFieldType)
-		// {
-		// 	let oDateTime
-		// 	if (logicDocument.core && logicDocument.core.created) {
-		// 		oDateTime = new Asc.cDate(logicDocument.core.created);
-		// 	} else {
-		// 		oDateTime = new Asc.cDate(val);
-		// 	}
-		// 	val = oDateTime.getExcelDateWithTime(true);
-		// }
-		else if("CREATOR()" === sFieldType)
-		{
-			if (logicDocument.core && logicDocument.core.creator) {
-				val = logicDocument.core.creator;
+		} else if ("PAGENUMBER()" === sFieldType) {
+			if (AscFormat.isRealNumber(this.SlideNum)) {
+				// field on a regular page uses its own page index, cached on the field SlideNum like presentations
+				val = this.SlideNum + 1;
+			} else if (logicDocument) {
+				// shared/background page field falls back to the current page, kept fresh by the draw-time refresh
+				val = logicDocument.getCurrentPage() + 1;
 			}
-		}
-		// else if("WIDTH" === sFieldType)
-		// {
-		// 	//todo display units
-		// 	//leave value
-		// }
-		else if ((this.vsdxFieldValue.u === "STR" || !this.vsdxFieldValue.u) && (sFieldType === "INH" || !sFieldType)
-			&& (!this.vsdxFieldFormat || "General" === format || "@" === format)) {
-		// else if (this.vsdxFieldValue.u === "STR" && (sFieldType === "INH" || !sFieldType)) {
-			// handle simple values. consider is function is INH value is calculated correctly already
-			// like
-			// <Cell N='Value' V='1' F='Inh'/>
-			val = this.vsdxFieldValue.v;
-		}
-		else
-		{
-			return;
+		} else {
+			// every other field type is driven by the value cell
+			if (!this.vsdxFieldValue) {
+				return;
+			}
+			// convert value (valueCell.v) which is inches by default to units set in valueCell.u
+			val = convertConsiderUnits(this.vsdxFieldValue.v, this.vsdxFieldValue.u);
+			// else if("NOW()" === sFieldType)
+			// {
+			// 	let oDateTime = new Asc.cDate();
+			// 	val = oDateTime.getExcelDateWithTime(true);
+			// }
+			// else if("DOCCREATION()" === sFieldType)
+			// {
+			// 	let oDateTime
+			// 	if (logicDocument.core && logicDocument.core.created) {
+			// 		oDateTime = new Asc.cDate(logicDocument.core.created);
+			// 	} else {
+			// 		oDateTime = new Asc.cDate(val);
+			// 	}
+			// 	val = oDateTime.getExcelDateWithTime(true);
+			// }
+			if ("CREATOR()" === sFieldType) {
+				if (logicDocument.core && logicDocument.core.creator) {
+					val = logicDocument.core.creator;
+				}
+			}
+			// else if("WIDTH" === sFieldType)
+			// {
+			// 	//todo display units
+			// 	//leave value
+			// }
+			else if ((this.vsdxFieldValue.u === "STR" || !this.vsdxFieldValue.u) && (sFieldType === "INH" || !sFieldType)
+				&& (!this.vsdxFieldFormat || "General" === format || "@" === format)) {
+				// INH means the value is already calculated like <Cell N='Value' V='1' F='Inh'/>
+				val = this.vsdxFieldValue.v;
+			} else {
+				return;
+			}
 		}
 
 		// if (this.vsdxFieldValue.u === "DATE") {
@@ -689,8 +680,13 @@ AscCommonWord.CPresentationField.prototype.private_GetString = function()
 		// 	// const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
 		// 	// sStr =  format._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
 		// } else {
-		const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
-		sStr =  oFormat._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
+		if (format === undefined || format === null) {
+			// no Visio format cell (e.g. a cloned field) - stringify to avoid a crash in the number format engine
+			sStr = (val === undefined || val === null) ? null : String(val);
+		} else {
+			const oFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.Excel);
+			sStr =  oFormat._formatToText(val, AscCommon.CellValueType.String, 15, oCultureInfo);
+		}
 		// sStr = val + "";
 		// }
 	}

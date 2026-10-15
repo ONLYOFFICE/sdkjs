@@ -1407,6 +1407,62 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
         return 0;
     };
+    DrawingBase.prototype.getModelWorksheet = function() {
+        return this.graphicObject ? this.graphicObject.worksheet : null;
+    };
+    DrawingBase.prototype.getModelColWidth = function(col) {
+        const worksheet = this.getModelWorksheet();
+        if (worksheet.getColHidden(col)) {
+            return 0;
+        }
+        let width = worksheet.getColWidth(col);
+        if (!(width > 0)) {
+            width = AscCommonExcel.oDefaultMetrics.ColWidthChars;
+        }
+        return worksheet.modelColWidthToColWidth(width) * AscCommon.g_dKoef_pix_to_mm;
+    };
+    DrawingBase.prototype.getModelRowHeight = function(row) {
+        const worksheet = this.getModelWorksheet();
+        if (worksheet.getRowHidden(row)) {
+            return 0;
+        }
+        let height = worksheet.getRowHeight(row);
+        if (!(height > 0)) {
+            height = AscCommonExcel.oDefaultMetrics.RowHeight;
+        }
+        return AscCommonExcel.convertPtToPx(height) * AscCommon.g_dKoef_pix_to_mm;
+    };
+    DrawingBase.prototype.calculateModelCoords = function(cell) {
+        const coords = {x: 0, y: 0};
+        for (let col = 0; col < cell.col; ++col) {
+            coords.x += this.getModelColWidth(col);
+        }
+        coords.x += Math.min(cell.colOff, this.getModelColWidth(cell.col));
+        for (let row = 0; row < cell.row; ++row) {
+            coords.y += this.getModelRowHeight(row);
+        }
+        coords.y += Math.min(cell.rowOff, this.getModelRowHeight(cell.row));
+        return coords;
+    };
+    DrawingBase.prototype.calculateModelTo = function() {
+        let col = this.from.col;
+        let colWidth = this.getModelColWidth(col);
+        let colOff = Math.min(this.from.colOff, colWidth) + this.ext.cx;
+        while (col < AscCommon.gc_nMaxCol0 && colOff > colWidth) {
+            colOff -= colWidth;
+            col++;
+            colWidth = this.getModelColWidth(col);
+        }
+        let row = this.from.row;
+        let rowHeight = this.getModelRowHeight(row);
+        let rowOff = Math.min(this.from.rowOff, rowHeight) + this.ext.cy;
+        while (row < AscCommon.gc_nMaxRow0 && rowOff > rowHeight) {
+            rowOff -= rowHeight;
+            row++;
+            rowHeight = this.getModelRowHeight(row);
+        }
+        return {col: col, colOff: colOff, row: row, rowOff: rowOff};
+    };
 
     // GraphicObject: x, y, extX, extY
     DrawingBase.prototype.getGraphicObjectMetrics = function() {
@@ -1438,6 +1494,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                     if (this.worksheet.getRightToLeft()) {
                         metrics.x -= metrics.extX;
                     }
+                } else if (this.getModelWorksheet()) {
+                    coordsFrom = this.calculateModelCoords(_t.from);
+                    metrics.x = coordsFrom.x;
+                    metrics.y = coordsFrom.y;
+                    metrics.extX = this.ext.cx;
+                    metrics.extY = this.ext.cy;
                 }
                 break;
             }
@@ -1460,6 +1522,13 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
                         metrics.x = this.pxToMm( coordsTo.x );
                     }
+                } else if (this.getModelWorksheet()) {
+                    coordsFrom = this.calculateModelCoords(_t.from);
+                    coordsTo = this.calculateModelCoords(_t.to);
+                    metrics.x = coordsFrom.x;
+                    metrics.y = coordsFrom.y;
+                    metrics.extX = coordsTo.x - coordsFrom.x;
+                    metrics.extY = coordsTo.y - coordsFrom.y;
                 }
                 break;
             }
@@ -1634,9 +1703,11 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             var bounds = _t.graphicObject.bounds;
 
 
-            var fromX =  this.mmToPx(bounds.x > 0 ? bounds.x : 0), fromY =  this.mmToPx(bounds.y > 0 ? bounds.y : 0),
+            var isRtl = this.worksheet.getRightToLeft();
+
+            var fromX =  this.mmToPx(isRtl ? bounds.x : (bounds.x > 0 ? bounds.x : 0)), fromY =  this.mmToPx(bounds.y > 0 ? bounds.y : 0),
                 toX = this.mmToPx(bounds.x + bounds.w), toY = this.mmToPx(bounds.y + bounds.h);
-            if(toX < 0)
+            if(!isRtl && toX < 0)
             {
                 toX = 0;
             }
@@ -1645,7 +1716,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 toY = 0;
             }
 
-            if (this.worksheet.getRightToLeft()) {
+            if (isRtl) {
                 let temp = fromX;
                 fromX = toX;
                 toX = temp;
@@ -2539,7 +2610,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     //-----------------------------------------------------------------------------------
 
 
-    _this.calculateObjectMetrics = function (object, width, height, opt_checkRtl) {
+    _this.calculateObjectMetrics = function (object, width, height, opt_checkRtl, opt_noLimit) {
         // Processing high resolution images
         var bCorrect = false;
         var metricCoeff = 1;
@@ -2549,7 +2620,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         var realLeftOffset = coordsFrom.x;
 
         var areaWidth = worksheet._getColLeft(worksheet.getLastVisibleCol()) - worksheet._getColLeft(worksheet.getFirstVisibleCol(true)); 	// by width
-        if (areaWidth < width) {
+        if (!opt_noLimit && areaWidth < width) {
             metricCoeff = width / areaWidth;
 
             width = areaWidth;
@@ -2558,7 +2629,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
 
         var areaHeight = worksheet._getRowTop(worksheet.getLastVisibleRow()) - worksheet._getRowTop(worksheet.getFirstVisibleRow(true)); 	// by height
-        if (areaHeight < height) {
+        if (!opt_noLimit && areaHeight < height) {
             metricCoeff = height / areaHeight;
 
             height = areaHeight;
@@ -2601,7 +2672,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 oSize = new AscCommon.asc_CImageSize(Math.max((options.width * AscCommon.g_dKoef_pix_to_mm), 1),
                     Math.max((options.height * AscCommon.g_dKoef_pix_to_mm), 1), true);
             }
-            var bCorrect = _this.calculateObjectMetrics(drawingObject, mmToPx(oSize.asc_getImageWidth()), mmToPx(oSize.asc_getImageHeight()), true);
+            var bCorrect = _this.calculateObjectMetrics(drawingObject, mmToPx(oSize.asc_getImageWidth()), mmToPx(oSize.asc_getImageHeight()), true, true);
 			const isRtl = worksheet.getRightToLeft();
 
 			const coordsFrom = _this.calculateCoords(drawingObject.from);

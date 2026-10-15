@@ -1368,6 +1368,10 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     }
             }
             }
+            if(this.originalObject.group)
+            {
+                this.originalObject.getMainGroup().normalize();
+            }
             if(this.chartSpace)
             {
                 var oObjectToSet = this.originalObject;
@@ -1438,7 +1442,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         xfrm.setExtY(this.resizedExtY/scale_coefficients.cy);
 						Asc.editor.addMacroStepData("SetShapeSize", {width: this.resizedExtX, height: this.resizedExtY});
                         let oHR = this.originalObject.getHorizontalRule && this.originalObject.getHorizontalRule();
-                        if (oHR) {
+                        if (oHR && oHR.pct !== 0) {
                             let oParaDrawing = this.originalObject.parent;
                             if (oParaDrawing) {
                                 let oParagraph = oParaDrawing.Get_ParentParagraph && oParaDrawing.Get_ParentParagraph();
@@ -1447,6 +1451,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                                     if (oSectPr) {
                                         let nColIdx = oParagraph.ColumnNum || 0;
                                         let contentWidth = oSectPr.GetColumnWidth(nColIdx);
+                                        let paraInd = oParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+                                        contentWidth -= paraInd.Left + paraInd.Right;
+                                        contentWidth = Math.max(1, contentWidth);
                                         let newPct = (this.resizedExtX / scale_coefficients.cx) / contentWidth * 1000;
                                         if (newPct > 1000) {
                                             newPct = 1000;
@@ -1589,7 +1596,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             if(!this.originalObject.isCrop)
             {
-                this.originalObject.ResetParametersWithResize();
+                this.originalObject.ResetParametersWithResize(false, this.resizedExtX !== this.originalExtX, this.resizedExtY !== this.originalExtY);
                 this.originalObject.checkDrawingBaseCoords();
                 if(this.originalObject.checkExtentsByDocContent)
                 {
@@ -2314,10 +2321,7 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
             if(!this.bIsTracked){
                 return;
             }
-            if(!AscCommon.isRealObject(this.original.group))
-            {
-                this.original.normalize();
-            }
+            this.original.getMainGroup().normalize();
 
             if(!this.original.spPr)
             {

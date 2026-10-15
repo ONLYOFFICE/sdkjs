@@ -523,7 +523,7 @@
 	function OverlayRasterIcon()
 	{
 		AscCommon.BaseImageCtrl.call(this);
-		this.baseUrl = "../../../../sdkjs/common/Images/icons";
+		this.baseUrl = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/icons";
 	}
 	OverlayRasterIcon.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
 	OverlayRasterIcon.prototype.constructor = OverlayRasterIcon;
@@ -580,7 +580,7 @@
 	function PI()
 	{
 		AscCommon.BaseImageCtrl.call(this);
-		this.baseUrl = "../../../../sdkjs/common/Images/placeholders";
+		this.baseUrl = AscCommon.RELATIVE_SDKJS_PATH + "common/Images/placeholders";
 	}
 	PI.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
 	PI.prototype.constructor = PI;
@@ -1215,7 +1215,7 @@
 		function CCI(baseUrl)
 		{
 			AscCommon.BaseImageCtrl.call(this);
-			this.baseUrl = baseUrl ? baseUrl : "../../../../sdkjs/common/Images/content_controls";
+			this.baseUrl = baseUrl ? baseUrl : (AscCommon.RELATIVE_SDKJS_PATH + "common/Images/content_controls");
 		}
 		CCI.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
 		CCI.prototype.constructor = CCI;
@@ -1918,6 +1918,12 @@
 		return (!this.IsNoUseButtons()
 			&& this.formInfo
 			&& (Asc.c_oAscContentControlSpecificType.Picture === this.type || Asc.c_oAscContentControlSpecificType.Signature === this.type));
+	};
+	CContentControlTrack.prototype.isDrawPictureSignInTheMiddle = function()
+	{
+		return (this.formInfo 
+			&& Asc.c_oAscContentControlSpecificType.Picture === this.type
+			&& this.base.IsPlaceHolder());
 	};
 	CContentControlTrack.prototype.isHitInMoveRect = function(xPos, yPos, koefX, koefY)
 	{
@@ -3627,6 +3633,7 @@
 		this.isUseMoveRect = true;
 		this.isCombobox = false;
 		this.isImage = false;
+		this.isDrawImageSign = false;
 
 		this.wideOutlineX = 0;
 		this.wideOutlineY = 0;
@@ -3685,6 +3692,7 @@
 			case Asc.c_oAscContentControlSpecificType.Picture:
 			{
 				this.isImage = true;
+				this.isDrawImageSign = object.isDrawPictureSignInTheMiddle();
 				break;
 			}
 			default:
@@ -4280,7 +4288,7 @@
 					}
 					
 					// Hover and normal states are rendering in the main context
-					if (this.isImage && 0 === object.ActiveButtonIndex)
+					if (this.isImage && 0 === object.ActiveButtonIndex && this.isDrawImageSign)
 					{
 						_x1 = (drPage.left + koefX * (this.bounds.x + object.OffsetX)) * rPR;
 						_y1 = (drPage.top + koefY * (this.bounds.y + object.OffsetY)) * rPR;
@@ -4543,7 +4551,7 @@
 					}
 
 					// Hover and normal states now are rendering in the main context
-					if (this.isImage && 0 === object.ActiveButtonIndex)
+					if (this.isImage && 0 === object.ActiveButtonIndex && this.isDrawImageSign)
 					{
 						var imageW = CONTENT_CONTROL_TRACK_H / koefX; // 1x scale!
 						var imageH = CONTENT_CONTROL_TRACK_H / koefY;

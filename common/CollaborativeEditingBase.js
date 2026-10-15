@@ -1013,7 +1013,7 @@
             }
         }
     };
-    CCollaborativeEditingBase.prototype.Show_ForeignCursorLabel = function(UserId) {
+    CCollaborativeEditingBase.prototype.Show_ForeignCursorLabel = function(UserId, hideTime) {
         var Api = this.GetEditorApi();
         if(!Api) {
             return;
@@ -1034,7 +1034,7 @@
         {
             Cursor.ShowId = null;
             Api.sendEvent("asc_onHideForeignCursorLabel", UserId);
-        }, AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
+        }, hideTime ? hideTime : AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
 
         var UserShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;
         var Color  = AscCommon.getUserColorById(UserShortId, null, true);
@@ -1139,6 +1139,7 @@
     };
     CCollaborativeEditingBase.prototype.WatchDocumentPositionsByState = function(DocState)
 	{
+		DocState.TrackedPositions = this.m_aDocumentPositions.GetState();
         this.Clear_DocumentPositions();
 
         if (DocState.Pos)
@@ -1205,6 +1206,9 @@
             this.Update_DocumentPosition(DocState.FootnotesEnd.StartPos);
         if (DocState.FootnotesEnd && DocState.FootnotesEnd.EndPos)
             this.Update_DocumentPosition(DocState.FootnotesEnd.EndPos);
+
+		if (DocState.TrackedPositions)
+			this.m_aDocumentPositions.RestoreState(DocState.TrackedPositions);
     };
     CCollaborativeEditingBase.prototype.Update_ForeignCursorLabelPosition = function(UserId, X, Y, Color)
     {
@@ -1388,9 +1392,37 @@
     CDocumentPositionsManager.prototype.Clear_DocumentPositions = function()
     {
         this.m_aDocumentPositions      = [];
+		this.m_aDocumentPositionsRight = [];
         this.m_aDocumentPositionsSplit = [];
         this.m_aDocumentPositionsMap   = [];
     };
+	CDocumentPositionsManager.prototype.GetState = function()
+	{
+		return {
+			positions : this.m_aDocumentPositions.slice(),
+			right     : this.m_aDocumentPositionsRight.slice(),
+			map       : this.m_aDocumentPositionsMap.slice()
+		};
+	};
+	CDocumentPositionsManager.prototype.RestoreState = function(state)
+	{
+		// TODO: Temporary solution so that tracked positions are not lost on nested SaveDocumentState/LoadDocumentState.
+		//       Positions accumulate until the next clear, needs to be reworked properly
+		for (let index = 0, count = state.positions.length; index < count; ++index)
+		{
+			if (-1 !== this.m_aDocumentPositions.indexOf(state.positions[index]))
+				continue;
+
+			this.m_aDocumentPositions.push(state.positions[index]);
+			this.m_aDocumentPositionsRight.push(state.right[index]);
+		}
+
+		for (let index = 0, count = state.map.length; index < count; ++index)
+		{
+			if (-1 === this.m_aDocumentPositionsMap.indexOf(state.map[index]))
+				this.m_aDocumentPositionsMap.push(state.map[index]);
+		}
+	};
     CDocumentPositionsManager.prototype.Add_DocumentPosition = function(Position, isRight)
     {
         this.m_aDocumentPositions.push(Position);
@@ -1499,7 +1531,7 @@
         else if (DocPos.length > 0 && DocPos[DocPos.length - 1].Class instanceof AscCommonWord.ParaRun)
         {
             var Run = DocPos[DocPos.length - 1].Class;
-            var RunPos = DocPos[DocPos.length - 1].Position;
+            var RunPos = Math.min(DocPos[DocPos.length - 1].Position, Run.Content.length);
             var Para = Run.GetParagraph();
             if (AscCommonWord.CanUpdatePosition(Para, Run))
             {

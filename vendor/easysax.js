@@ -1295,16 +1295,29 @@ StaxParser.prototype.MoveToNextAttribute = function() {
             } else if (quoteChar === 39) { // "'"
                 i = xml.indexOf("'", textStart);
             } else {
-                // Fallback for other quotes
-                i = xml.indexOf(xml.charAt(i + 1), textStart);
+                var quoteIndex = i + 1;
+                while (quoteIndex < len && (quoteChar === 32 || (quoteChar >= 9 && quoteChar <= 13))) {
+                    quoteChar = xml.charCodeAt(++quoteIndex);
+                }
+                if (quoteChar !== 34 && quoteChar !== 39) {
+                    break;
+                }
+                textStart = quoteIndex + 1;
+                i = xml.indexOf(quoteChar === 34 ? '"' : "'", textStart);
             }
             
             if (i !== -1) {
-                // Only trim if name has leading/trailing spaces
-                if (rawName.charCodeAt(0) === 32 || rawName.charCodeAt(nameEnd - nameStart - 1) === 32) {
+                // Only trim if name has leading/trailing XML whitespace
+                var firstNameChar = rawName.charCodeAt(0);
+                if (firstNameChar === 32 || (firstNameChar >= 9 && firstNameChar <= 13)) {
                     this.name = rawName.trim();
                 } else {
-                    this.name = rawName;
+                    var lastNameChar = rawName.charCodeAt(nameEnd - nameStart - 1);
+                    if (lastNameChar === 32 || (lastNameChar >= 9 && lastNameChar <= 13)) {
+                        this.name = rawName.trim();
+                    } else {
+                        this.name = rawName;
+                    }
                 }
                 this.text = xml.substring(textStart, i);
                 this.index = i + 1;
@@ -1492,6 +1505,36 @@ StaxParser.prototype.GetValueDecodeXml = function () {
 };
 StaxParser.prototype.GetValueDecodeXmlExt = function () {
     return this.GetValueDecodeXml();
+};
+StaxParser.prototype.GetValueDecodeXmlEntities = function () {
+    return this.DecodeXmlEntities(this.text);
+};
+// Plain XML decoding: literal line ends become LF first, then named and numeric character references are decoded, _xHHHH_ stays literal text
+StaxParser.prototype.DecodeXmlEntities = function (text) {
+    if (-1 !== text.indexOf('\r')) {
+        text = text.replace(/\r\n?/g, '\n');
+    }
+    if (-1 === text.indexOf('&')) {
+        return text;
+    }
+    return text.replace(/&(lt|gt|amp|quot|apos|#x[0-9A-Fa-f]+|#[0-9]+);/g, function (match, name) {
+        switch (name) {
+            case 'lt': return '<';
+            case 'gt': return '>';
+            case 'amp': return '&';
+            case 'quot': return '"';
+            case 'apos': return "'";
+        }
+        var code = 'x' === name.charAt(1) ? parseInt(name.substring(2), 16) : parseInt(name.substring(1), 10);
+        if (!(code > 0 && code <= 0x10FFFF)) {
+            return match;
+        }
+        if (code < 0x10000) {
+            return String.fromCharCode(code);
+        }
+        code -= 0x10000;
+        return String.fromCharCode(0xD800 | (code >> 10), 0xDC00 | (code & 0x3FF));
+    });
 };
 StaxParser.prototype.DecodeXml = function (text) {
     // Detect &amp; and _xHHHH_ patterns
@@ -2046,6 +2089,9 @@ XmlWriterContext.prototype.addSlideMasterRel = function(sRel) {
 };
 XmlWriterContext.prototype.addNotesMasterRel = function(sRel) {
     this.notesMasterIdLst.push(sRel);
+};
+XmlWriterContext.prototype.addHandoutMasterRel = function(sRel) {
+    this.handoutMasterIdLst.push(sRel);
 };
 XmlWriterContext.prototype.addFieldMasterPart = function(oFieldMaster, oPart) {
     this.fieldMastersPartMap[oFieldMaster.Id] = oPart;

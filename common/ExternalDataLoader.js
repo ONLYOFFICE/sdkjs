@@ -231,11 +231,17 @@
 			const bIsXLSX = sFileType === "xlsx";
 
 			if ((sFileUrl && !bIsXLSX) || !isSupportOOXML) {
+				//fCurCallback/insertDocumentUrlsData are single slots: sharing them crosses the socket answers of two conversions
+				if (oThis.api.insertDocumentUrlsData) {
+					oThis.resolveStream(null, fResolve);
+					return;
+				}
+
 				const oDocument = {url: sFileUrl, format: sFileType, token: sToken};
 				oThis.api.getConvertedXLSXFileFromUrl(oDocument, nOutputFormat,
 					function (arrBinaryData) {
 						oThis.resolveStream(arrBinaryData, fResolve);
-					});
+					}, true);
 			} else if (sDirectUrl || sFileUrl) {
 				oThis.api._downloadOriginalFile(sDirectUrl, sFileUrl, sFileType, sToken, function (arrStream) {
 					oThis.resolveStream(arrStream, fResolve);

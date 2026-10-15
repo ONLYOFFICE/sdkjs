@@ -85,7 +85,7 @@
         if (!oCommentData)
             return null;
             
-        let oCD = new AscCommon.CCommentData();
+        let oCD = new AscCommon.CSlideCommentData();
 		oCD.ReadFromSimpleObject(oCommentData);
 		oCD.m_sGuid = AscCommon.CreateGUID();
 

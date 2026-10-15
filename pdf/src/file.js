@@ -417,13 +417,62 @@ void main() {\n\
     };
 
     // TEXT
-    CFile.prototype.getPageTextStream = function(pageIndex) {
-        let textCommands = this.pages[pageIndex].text;
-        if (!textCommands || 0 === textCommands.length)
-            return null;
+	CFile.prototype.getPageTextStream = function(pageIndex, onlyPageContent) {
+		let page = this.pages[pageIndex];
+		if (window["NATIVE_EDITOR_ENJINE"]) {
+			if (!page.text && undefined !== page.originIndex) {
+				page.text = this.getText(page.originIndex);
+			}
+		}
 
-        return new TextStreamReader(textCommands, textCommands.length);
-    };
+		let textLen = page.text ? page.text.length : 0;
+		let drawingsTextLen = page.drawingsText ? page.drawingsText.length : 0;
+
+		let oDoc = this.viewer.getPDFDoc();
+		let oPageInfo = oDoc.GetPageInfo(pageIndex);
+		let aDrawings = oPageInfo.drawings;
+
+		if (onlyPageContent || aDrawings.length == 0) {
+			if (page.isRecognized || !page.text) {
+				return null;
+			}
+			else {
+				return new TextStreamReader(page.text, textLen);
+			}
+		}
+
+		if (!page.drawingsText) {
+			page.drawingsText = this.getDrawingsGlyphs(pageIndex);
+		}
+		
+		drawingsTextLen = page.drawingsText.length;
+		if (page.isRecognized || textLen == 0) {
+			return new TextStreamReader(page.drawingsText, drawingsTextLen);
+		}
+
+		let totalLen = textLen + drawingsTextLen;
+		let merged = new Uint8Array(totalLen);
+		merged.set(page.text, 0);
+		merged.set(page.drawingsText, textLen);
+
+		return new TextStreamReader(merged, merged.length);
+	};
+	CFile.prototype.getDrawingsGlyphs = function(pageIndex) {
+		let oDoc = this.viewer.getPDFDoc();
+		let oPageInfo = oDoc.GetPageInfo(pageIndex);
+		let aDrawings = oPageInfo.drawings;
+		if (aDrawings.length == 0) {
+			return [];
+		}
+
+		let metafile = new AscPDF.CPdfTextMetafile();
+		aDrawings.forEach(function(drawing) {
+			drawing.draw(metafile);
+		});
+		
+		metafile.endLine();
+		return new Uint8Array(metafile.getData());
+	};
     CFile.prototype.removeSelection = function() {
         this.Selection = {
 			Page1 : 0,
@@ -534,15 +583,108 @@ void main() {\n\
     CFile.prototype.getSelection = function() {
         return this.Selection;
     };
+    CFile.prototype.getGlyphCoord = function(page, line, glyph) {
+        let stream = this.getPageTextStream(page);
+        if (!stream) return null;
+
+        // line < 0 means "before first line" → treat as start of line 0
+        if (line < 0) {
+            line  = 0;
+            glyph = -2;
+        }
+
+        let _lineX = 0, _lineY = 0, _lineEx = 1, _lineEy = 0;
+        let _lineWidth = 0;
+        let _linePrevCharX = 0;
+        let _arrayGlyphOffsets = [];
+        let nChars = 0;
+        let iLine = -1;
+
+        while (stream.pos < stream.size) {
+            iLine++;
+            _lineEx = 1;
+            _lineEy = 0;
+            _linePrevCharX = 0;
+            _arrayGlyphOffsets.splice(0, _arrayGlyphOffsets.length);
+
+            _lineX = stream.GetDouble();
+            _lineY = stream.GetDouble();
+            if (stream.GetChar()) {
+                _lineEx = stream.GetDouble();
+                _lineEy = stream.GetDouble();
+            }
+            stream.GetDouble(); // _lineAscent (skip, not needed)
+            stream.GetDouble(); // _lineDescent (skip, not needed)
+            _lineWidth = stream.GetDouble();
+
+            nChars = stream.GetLong();
+            for (let i = 0; i < nChars; ++i) {
+                if (i) _linePrevCharX += stream.GetDouble();
+                _arrayGlyphOffsets[i] = _linePrevCharX;
+                stream.Skip(8);
+            }
+
+            if (iLine === line) {
+                break;
+            }
+        }
+
+        if (iLine < 0) return null;
+        // iLine < line means the stream ended before reaching the requested line
+        // (e.g. Line2 = _numLine + 1 from selectWholePage) → use last available line as-is
+
+        let off;
+        if (glyph === -2) {
+            off = 0;
+        } else if (glyph === -1) {
+            off = _lineWidth + 10;
+        } else {
+            let left  = _arrayGlyphOffsets[glyph] || 0;
+            let right = (glyph + 1 < nChars) ? _arrayGlyphOffsets[glyph + 1] : _lineWidth;
+            off = (left + right) / 2;
+        }
+
+        return {
+            x: _lineX + off * _lineEx,
+            y: _lineY + off * _lineEy
+        };
+    };
+    CFile.prototype.getSelectionCoords = function() {
+        if (!this.isSelectionUse()) {
+            return null;
+        }
+
+        let sel = this.sortSelection();
+        let startCoord = this.getGlyphCoord(sel.Page1, sel.Line1, sel.Glyph1);
+        let endCoord   = this.getGlyphCoord(sel.Page2, sel.Line2, sel.Glyph2);
+
+        if (!startCoord || !endCoord) return null;
+
+        return {
+            start: { page: sel.Page1, x: startCoord.x, y: startCoord.y },
+            end:   { page: sel.Page2, x: endCoord.x,   y: endCoord.y }
+        };
+    };
+    CFile.prototype.getPageLastLine = function(pageIndex) {
+        let stream = this.getPageTextStream(pageIndex);
+        if (!stream) return -1;
+        let _numLine = -1;
+        while (stream.pos < stream.size) {
+            _numLine++;
+            stream.Skip(8);
+            if (stream.GetChar())
+                stream.Skip(8);
+            stream.Skip(12);
+            stream.Skip(12 * stream.GetLong() - 4);
+        }
+        return _numLine;
+    };
     CFile.prototype.onMouseDown = function(pageIndex, x, y) {
         let isRedactTool = Asc.editor.IsRedactTool();
         let isLinkTool   = Asc.editor.IsLinkTool();
 
-        if (this.pages[pageIndex].isRecognized && !isRedactTool && !isLinkTool)
-            return;
-        
         let ret = this.getNearestPos(pageIndex, x, y);
-        let sel = this.Selection;
+		let sel = this.Selection;
 
         let isTextSel = ret.Glyph >= 0 && ret.Line >= 0;
 
@@ -593,7 +735,7 @@ void main() {\n\
         this.onUpdateOverlay();
     };
     CFile.prototype.updateCursorType = function(pageIndex, x, y) {
-        let ret = this.getNearestPos(pageIndex, x, y);
+        let ret = this.getNearestPos(pageIndex, x, y, undefined, undefined, Asc.editor.canEdit());
         
         if (ret.Glyph < 0 || ret.Line < 0) {
             if (Asc.editor.IsRedactTool() || Asc.editor.IsLinkTool()) {
@@ -678,11 +820,11 @@ void main() {\n\
             }, AscDFH.historydescription_Pdf_AddAnnot);
         }
     };
-    CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos) {
-        let stream = this.getPageTextStream(pageIndex);
+    CFile.prototype.getNearestPos = function(pageIndex, x, y, bNeedLinePos, bSnapToBoundary, onlyPageContent) {
+        let stream = this.getPageTextStream(pageIndex, onlyPageContent);
         if (!stream) return { Line : -1, Glyph : -1 };
 
-        if (this.type === 2)
+        if (this.type === 2 || this.type === 3)
         {
             let k = 72 / 96;
             x *= k;
@@ -711,6 +853,24 @@ void main() {\n\
         let _linePos = 0;
         let _minLinePos = 0;
         let tmp = 0;
+
+        function resolveGlyph(d, nChars) {
+            let g;
+            for (g = 1; g < nChars; ++g) {
+                if (_arrayGlyphOffsets[g] > d)
+                    break;
+            }
+            --g;
+
+            if (bSnapToBoundary !== false && g >= 0 && g < nChars) {
+                let _left  = _arrayGlyphOffsets[g];
+                let _right = (g + 1 < nChars) ? _arrayGlyphOffsets[g + 1] : _lineWidth;
+                if (d > (_left + _right) * 0.5)
+                    g = (g + 1 < nChars) ? g + 1 : -1;
+            }
+
+            return g;
+        }
 
         while (stream.pos < stream.size)
         {
@@ -747,15 +907,11 @@ void main() {\n\
                 let _distX = x - _lineX;
                 if (y >= (_lineY - _lineAscent) && y <= (_lineY + _lineDescent) && _distX >= 0 && _distX <= _lineWidth)
                 { // hit inside the line
-                    for (_glyph = 1; _glyph < nChars; ++_glyph)
-                    { // if characters overlap, the current one is selected at the intersection with the start of the next one
-                        if (_arrayGlyphOffsets[_glyph] > _distX)
-                            break;
-                    }
+                    _glyph = resolveGlyph(_distX, nChars);
 
                     let result = {
                         Line: _numLine,
-                        Glyph: --_glyph
+                        Glyph: _glyph
                     };
                     
                     if (bNeedLinePos) {
@@ -769,7 +925,7 @@ void main() {\n\
                 if (y > _lineY - _lineAscent * 2)
                 {
                     if (_distX >= 0 && _distX <= _lineWidth)
-                        tmp = y - _lineY;
+                        tmp = Math.abs(y - _lineY);
                     else if (_distX < 0)
                         tmp = Math.sqrt((x - _lineX) * (x - _lineX) + (y - _lineY) * (y - _lineY));
                     else if (_distX > _lineWidth)
@@ -795,14 +951,7 @@ void main() {\n\
                     else if (_distX > _lineWidth)
                         _glyph = -1;
                     else
-                    {
-                        for (_glyph = 1; _glyph < nChars; ++_glyph)
-                        {
-                            if (_arrayGlyphOffsets[_glyph] > _distX)
-                                break;
-                        }
-                        --_glyph;
-                    }
+                        _glyph = resolveGlyph(_distX, nChars);
                 }
                 // Nothing to do, a "closer" line has already been found
             }
@@ -818,15 +967,11 @@ void main() {\n\
 
                 if (w >= 0 && w <= _lineWidth && h >= 0 && h <= (_lineDescent + _lineAscent))
                 { // hit inside the line
-                    for (_glyph = 1; _glyph < nChars; ++_glyph)
-                    {
-                        if (_arrayGlyphOffsets[_glyph] > w)
-                            break;
-                    }
+                    _glyph = resolveGlyph(w, nChars);
 
                     let result = {
                         Line: _numLine,
-                        Glyph: --_glyph
+                        Glyph: _glyph
                     };
                     
                     if (bNeedLinePos) {
@@ -858,14 +1003,7 @@ void main() {\n\
                     else if (w > _lineWidth)
                         _glyph = -1;
                     else
-                    {
-                        for (_glyph = 1; _glyph < nChars; ++_glyph)
-                        {
-                            if (_arrayGlyphOffsets[_glyph] > w)
-                                break;
-                        }
-                        --_glyph;
-                    }
+                        _glyph = resolveGlyph(w, nChars);
                 }
             }
             _predY = _lineY;
@@ -884,7 +1022,7 @@ void main() {\n\
         return result;
     };
     CFile.prototype.selectWholeWord = function(pageIndex, x, y) {
-        let ret = this.getNearestPos(pageIndex, x, y, true);
+        let ret = this.getNearestPos(pageIndex, x, y, true, false);
         if (ret.Glyph < 0)
             return;
 
@@ -1118,7 +1256,7 @@ void main() {\n\
         for (let iPage = Page1; iPage <= Page2; ++iPage)
         {
             let stream = this.getPageTextStream(iPage);
-            if (!stream || this.pages[iPage].isRecognized)
+            if (!stream)
                 continue;
 
             let oInfo = { page: iPage, quads: [] };
@@ -1293,9 +1431,6 @@ void main() {\n\
             return;
         }
 
-        if (this.pages[pageIndex].isRecognized)
-            return;
-        
         let stream = this.getPageTextStream(pageIndex);
         if (!stream)
             return;
@@ -1494,8 +1629,8 @@ void main() {\n\
             if (iLine > endLine)
                 break;
 
-            let startChar = pageIndex == Page1 && iLine == Line1 ? Glyph1 : 0;
-            let endChar   = pageIndex == Page2 && iLine == Line2 ? Glyph2 : Infinity;
+            let startChar = pageIndex == Page1 && iLine == Line1 ? Glyph1 : -2;
+            let endChar   = pageIndex == Page2 && iLine == Line2 ? Glyph2 : -1;
 
             if (startChar == -2)
                 startChar = 0;
@@ -1576,7 +1711,7 @@ void main() {\n\
     CFile.prototype.copyPageTextWithQuads = function(pageIndex)
     {
         let stream = this.getPageTextStream(pageIndex);
-        if (!stream || this.pages[pageIndex].isRecognized)
+        if (!stream)
             return [];
 
         let result = [];
@@ -1667,8 +1802,6 @@ void main() {\n\
         let ret = "<div>";
         for (let i = page1; i <= page2; ++i)
         {
-            if (this.pages[i].isRecognized)
-                continue;
             ret += this.copySelection(i, _text_format);
         }
         ret += "</div>";
@@ -1774,15 +1907,17 @@ void main() {\n\
             pageLines:  []
         };
 
-        let searchText = oSearchEngine.Text;
+        // Text may be a RegExp (see DocumentSearch.prototype.Set)
+        let oRegExp    = oSearchEngine.Text instanceof RegExp ? oSearchEngine.Text : null;
+        let searchText = oRegExp ? oRegExp.source : oSearchEngine.Text;
         if (0 == searchText.length)
             return oResult;
 
-        let stream = this.getPageTextStream(pageIndex);
+        let stream = this.getPageTextStream(pageIndex, Asc.editor.canEdit());
         if (!stream)
             return oResult;
-        
-        if (!oSearchEngine.MatchCase)
+
+        if (!oRegExp && !oSearchEngine.MatchCase)
             searchText = searchText.toLowerCase();
 
         // textline parameters
@@ -1792,12 +1927,14 @@ void main() {\n\
         let _lineDescent = 0;
         
         let curLine = "";
+        let aLinesPos = []; // stream position of every line start
 
         while (stream.pos < stream.size)
         {
             _lineEx = 1;
             _lineEy = 0;
             curLine = "";
+            aLinesPos[oResult.pageLines.length] = stream.pos;
 
             //curLine.X = stream.GetDouble();
             //curLine.Y = stream.GetDouble();
@@ -1844,6 +1981,59 @@ void main() {\n\
         let _ignoreFirstSpace = true;
         let _arrayGlyphOffsets = [];
         let _skip = false;
+
+        if (oRegExp)
+        {
+            let sFlags = oRegExp.flags.replace(/[gy]/g, "") + "g";
+            if (!oSearchEngine.MatchCase && -1 == sFlags.indexOf("i"))
+                sFlags += "i";
+
+            // a line break is a space for the search, so the whole page is searched as a single string
+            // (lines are already collected, their positions in that string are kept in aLineStart)
+            let aLineStart = [];
+            for (let i = 0, nPos = 0; i < oResult.pageLines.length; ++i)
+            {
+                aLineStart[i] = nPos;
+                nPos += oResult.pageLines[i].length + 1;
+            }
+            let sPageText = oResult.pageLines.join(" ");
+
+            let oRe = new RegExp(oRegExp.source, sFlags);
+            let oExec;
+            while (null != (oExec = oRe.exec(sPageText)))
+            {
+                if (0 == oExec[0].length)
+                { // empty match, otherwise exec loops forever
+                    oRe.lastIndex++;
+                    continue;
+                }
+
+                let nMatchEnd  = oExec.index + oExec[0].length;
+                let nFirstLine = GetLineByPos(aLineStart, oExec.index);
+                let nLastLine  = GetLineByPos(aLineStart, nMatchEnd - 1);
+
+                let nStartChar = oExec.index - aLineStart[nFirstLine];
+                if (nStartChar >= oResult.pageLines[nFirstLine].length)
+                { // the match starts at a line break, i.e. on the next line
+                    nFirstLine++;
+                    nStartChar = 0;
+                }
+
+                let nEndChar = nMatchEnd - aLineStart[nLastLine];
+                if (nEndChar >= oResult.pageLines[nLastLine].length)
+                    nEndChar = -1; // till the end of the line
+
+                let rects = new PdfPageMatch();
+                // + 1: GetMatches stops right after the last line of the match
+                GetMatches(rects, stream, {Line: nFirstLine, Char: nStartChar, StreamPos: aLinesPos[nFirstLine]},
+                    nLastLine, nEndChar, aLinesPos[nLastLine] + 1);
+
+                if (rects.length)
+                    oResult.matches.push(rects);
+            }
+
+            return oResult;
+        }
 
         let posInText = 0;
         if (searchText[posInText] == ' ')
@@ -1949,6 +2139,8 @@ void main() {\n\
                         _endChar = -1;
                     GetMatches(rects, stream, oMatch, _numLine, _endChar, stream.pos);
                     oResult.matches.push(rects);
+                    // continue right after the found text: with the match start + 1
+                    oMatch = {Line: _numLine, Char: i, StreamPos: _linePos};
                     _skip = true;
                     break;
                 }
@@ -1967,25 +2159,26 @@ void main() {\n\
             }
         }
 
+        // position in the page text (lines joined by a space) -> line index
+        function GetLineByPos(aLineStart, nPos)
+        {
+            for (let i = aLineStart.length - 1; i > 0; --i)
+            {
+                if (nPos >= aLineStart[i])
+                    return i;
+            }
+            return 0;
+        }
+
         function GetMatches(rects, stream, oMatch, curLine, curChar, curStreamPos)
         {
-            _numLine = oMatch.Line;
+            let numLine = oMatch.Line;
             stream.pos = oMatch.StreamPos;
             let _text = "";
             while (stream.pos < curStreamPos)
             {
-                let startChar = _numLine == oMatch.Line ? oMatch.Char : -2;
-                let endChar   = _numLine == curLine     ? curChar     : -1;
-
-                if (startChar == -2)
-                    startChar = 0;
-                else if (startChar == -1)
-                    startChar = Infinity;
-
-                if (endChar == -2)
-                    endChar = 0;
-                else if (endChar == -1)
-                    endChar = Infinity;
+                let startChar = numLine == oMatch.Line ? oMatch.Char : -2;
+                let endChar   = numLine == curLine     ? curChar     : -1;
 
                 _text = "";
                 _lineEx = 1;
@@ -2004,6 +2197,19 @@ void main() {\n\
                 _lineDescent = stream.GetDouble();
                 _lineWidth   = stream.GetDouble();
                 let nChars = stream.GetLong();
+
+				let startPos = startChar; 
+				if (startChar == -2)
+                    startPos = 0;
+                else if (startChar == -1)
+                    startPos = nChars - 1;
+
+				let endPos = endChar; 
+                if (endChar == -2)
+                    endPos = 0;
+                else if (endChar == -1)
+                    endPos = nChars - 1;
+
                 for (let i = 0; i < nChars; ++i)
                 {
                     if (i)
@@ -2011,17 +2217,17 @@ void main() {\n\
                     _arrayGlyphOffsets[i] = _linePrevCharX;
                     let nChar = stream.GetLong();
                     stream.Skip(4);
-                    if (i >= endChar)
+                    if (i >= endPos)
                         break;
-                    if (i >= startChar)
+                    if (i >= startPos)
                         _text += (nChar == 0xFFFF ? " " : String.fromCharCode(nChar));
                 }
 
-                let off1 = _arrayGlyphOffsets[startChar];
-                let off2 = _arrayGlyphOffsets[endChar];
-                if (startChar == Infinity)
+                let off1 = _arrayGlyphOffsets[startPos];
+                let off2 = _arrayGlyphOffsets[endPos];
+				if (startChar == -1)
                     off1 = _lineWidth;
-                if (endChar == Infinity)
+                if (endChar == -1)
                     off2 = _lineWidth;
 
                 if (off2 < off1)
@@ -2029,7 +2235,7 @@ void main() {\n\
 
                 rects.push({
                     PageNum : pageIndex,
-                    LineNum: _numLine,
+                    LineNum: numLine,
                     Char1: startChar,
                     Char2: endChar,
                     X : _lineX + _lineAscent * _lineEy + off1 * _lineEx,
@@ -2041,7 +2247,7 @@ void main() {\n\
                     Text: _text
                 });
 
-                _numLine++;
+                numLine++;
             }
         }
 
@@ -2139,10 +2345,19 @@ void main() {\n\
     };
 	window["AscViewer"].createEmptyFile = function()
 	{
-		return new CFile();
+		let file = new CFile();
+        file.addPage = function(pageIndex, pageObj) {
+			this.pages.splice(pageIndex, 0, pageObj);
+		};
+		file.removePage = function(pageIndex) {
+			return this.pages.splice(pageIndex, 1);
+		};
+		
+		return file;
 	};
 
     //--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'].PdfPageMatch = PdfPageMatch;
+	window['AscPDF'].TextStreamReader = TextStreamReader;
 
 })(window, undefined);

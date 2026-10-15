@@ -110,7 +110,7 @@
 	{
 		state.checkPermRange(this);
 	};
-	ParagraphPermBase.prototype.Draw_Lines = function(lineDrawState)
+	ParagraphPermBase.prototype.drawLines = function(lineDrawState)
 	{
 		lineDrawState.handleAnnotationMark(this);
 	};
@@ -206,9 +206,9 @@
 	{
 		return true;
 	};
-	ParagraphPermStart.prototype.Draw_HighLights = function(PDSH)
+	ParagraphPermStart.prototype.drawHighLights = function(drawState)
 	{
-		PDSH.addPermRange(this.rangeId);
+		drawState.addPermRange(this.rangeId);
 	};
 	ParagraphPermStart.prototype.Recalculate_PageEndInfo = function(PRSI, curLine, curRange)
 	{
@@ -326,9 +326,9 @@
 	{
 		return true;
 	};
-	ParagraphPermEnd.prototype.Draw_HighLights = function(PDSH)
+	ParagraphPermEnd.prototype.drawHighLights = function(drawState)
 	{
-		PDSH.removePermRange(this.rangeId);
+		drawState.removePermRange(this.rangeId);
 	};
 	ParagraphPermEnd.prototype.Recalculate_PageEndInfo = function(PRSI, curLine, curRange)
 	{

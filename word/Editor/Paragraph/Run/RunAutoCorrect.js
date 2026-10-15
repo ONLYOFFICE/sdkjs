@@ -62,7 +62,11 @@
 		0x005D : 1, // ]
 		0x007D : 1, // {
 		0x007B : 1, // }
-		
+
+		0x00A2 : 1, // ¢
+		0x00A3 : 1, // £
+		0x00A5 : 1, // ¥
+
 		0x2018 : 1, // ‘
 		0x2019 : 1, // ’
 		0x201C : 1, // “
@@ -179,7 +183,7 @@
 	{
 		// Если автозамены будем включать в формах при каких-либо условиях, тогда нужно проверять, что
 		// выполнение автозамены не выходит за пределы формы
-		if (this.Run.GetParentForm())
+		if (this.Run.GetParentForm() || !this.Document || !this.Document.CanDoAutoCorrect())
 			return AUTOCORRECT_FLAGS_NONE;
 
 		return nFlags;
@@ -800,7 +804,7 @@
 			if (para_Text !== arrElements[nIndex].Type)
 				return false;
 
-			var sTemp = String.fromCharCode(arrElements[nIndex].Value);
+			var sTemp = arrElements[nIndex].ToString();
 			if (sTemp.toUpperCase() === sTemp && !arrElements[nIndex].IsNBSP())
 				return false;
 		}
@@ -858,7 +862,7 @@
 					if (!oElement.IsLetter())
 						break;
 
-					sCheckException = String.fromCharCode(oElement.Value) + sCheckException;
+					sCheckException = oElement.ToString() + sCheckException;
 				}
 
 				if (autoCorrectSettings.CheckFirstLetterException(sCheckException, nLang))

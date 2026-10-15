@@ -807,11 +807,7 @@
 		if (formToCheck[formId])
 			delete formToCheck[formId];
 		
-		let para = form.GetParagraph();
-		if (!para)
-			return;
-		
-		let logicDocument = para.GetLogicDocument();
+		let logicDocument = form.GetLogicDocument();
 		if (!logicDocument || !logicDocument.IsDocumentEditor())
 			return;
 		
@@ -835,8 +831,7 @@
 	}
 	function unregisterForm(form)
 	{
-		let para = form.GetParagraph();
-		let logicDocument = para.GetLogicDocument();
+		let logicDocument = form.GetLogicDocument();
 		if (!logicDocument || !logicDocument.IsDocumentEditor())
 			return;
 		

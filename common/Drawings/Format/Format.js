@@ -932,6 +932,7 @@
 			ret.history = this.history;
 			ret.highlightClick = this.highlightClick;
 			ret.endSnd = this.endSnd;
+			ret.slideJumpTargetId = this.slideJumpTargetId;
 			return ret;
 		};
 
@@ -956,6 +957,36 @@
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetId] = function (oClass, value) {
 			oClass.id = value;
 		};
+		drawingsChangesMap[AscDFH.historyitem_CSld_SetBg] = function (oClass, value, FromLoad) {
+			oClass.Bg = value;
+			if (FromLoad && typeof AscCommon.CollaborativeEditing !== "undefined") {
+				let Fill = oClass.Bg && oClass.Bg.bgPr && oClass.Bg.bgPr.Fill;
+				let sRasterImageId = Fill && Fill.checkRasterImageId && Fill.checkRasterImageId();
+				if (sRasterImageId) {
+					AscCommon.CollaborativeEditing.Add_NewImage(sRasterImageId);
+				}
+			}
+		};
+		drawingsChangesMap[AscDFH.historyitem_CSld_SetName] = function (oClass, value) {
+			oClass.name = value;
+		};
+		AscDFH.drawingContentChanges[AscDFH.historyitem_CSld_AddToSpTree]      = function(oClass){
+			if (oClass.parent && oClass.parent.handleAfterCSldSpTreeChange) {
+				oClass.parent.handleAfterCSldSpTreeChange();
+			}
+			return oClass.spTree;
+		};
+		AscDFH.drawingContentChanges[AscDFH.historyitem_CSld_RemoveFromSpTree] = function(oClass){
+			if (oClass.parent && oClass.parent.handleAfterCSldSpTreeChange) {
+				oClass.parent.handleAfterCSldSpTreeChange();
+			}
+			return oClass.spTree;
+		};
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_SetBg]              = AscDFH.CChangesDrawingsObjectNoId;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_SetName]            = AscDFH.CChangesDrawingsString;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_AddToSpTree]        = AscDFH.CChangesDrawingsContentPresentation;
+		AscDFH.changesFactory[AscDFH.historyitem_CSld_RemoveFromSpTree]   = AscDFH.CChangesDrawingsContentPresentation;
+		AscDFH.drawingsConstructorsMap[AscDFH.historyitem_CSld_SetBg]     = AscFormat.CBg;
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetName] = function (oClass, value) {
 			oClass.name = value;
 		};
@@ -970,9 +1001,11 @@
 		};
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetHlinkClick] = function (oClass, value) {
 			oClass.hlinkClick = value;
+			oClass.checkSlideJumpLink();
 		};
 		drawingsChangesMap[AscDFH.historyitem_CNvPr_SetHlinkHover] = function (oClass, value) {
 			oClass.hlinkHover = value;
+			oClass.checkSlideJumpLink();
 		};
 		drawingsChangesMap[AscDFH.historyitem_NvPr_SetIsPhoto] = function (oClass, value) {
 			oClass.isPhoto = value;
@@ -1196,6 +1229,7 @@
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkClick] = CT_Hyperlink;
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkHover] = CT_Hyperlink;
 		drawingConstructorsMap[AscDFH.historyitem_CustomPropertiesAddProperty] = CCustomProperty;
+		drawingConstructorsMap[AscDFH.historyitem_CSld_SetBg] = CBg;
 
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetSpPr] = CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetBodyPr] = CChangesDrawingsObjectNoId;
@@ -1331,9 +1365,55 @@
 			return 1;
 		}
 
+		function isLocalImagePath(sSrc) {
+			if (typeof sSrc !== "string" || 0 === sSrc.length)
+				return false;
+			if (0 === sSrc.toLowerCase().indexOf("file://"))
+				return true;
+			if (0 === sSrc.indexOf("\\\\"))
+				return true;
+			// "/pictures/a.png" is a path; "//host/share/a.png" is an address in the
+			// protocol-relative form, and it must not be handed to the host as a file
+			if ('/' === sSrc.charAt(0) && '/' !== sSrc.charAt(1))
+				return true;
+			if (sSrc.length > 2 && ':' === sSrc.charAt(1) && ('/' === sSrc.charAt(2) || '\\' === sSrc.charAt(2))) {
+				var nLetter = sSrc.charCodeAt(0);
+				if ((nLetter >= 0x41 && nLetter <= 0x5A) || (nLetter >= 0x61 && nLetter <= 0x7A))
+					return true;
+			}
+			return false;
+		}
+
+		function prepareLocalImageSrc(sSrc) {
+			if (!isLocalImagePath(sSrc))
+				return sSrc;
+
+			if (AscCommon.g_oDocumentUrls) {
+				let sKnown = AscCommon.g_oDocumentUrls.getImageLocal(sSrc);
+				if (sKnown && sKnown !== sSrc)
+					return sSrc;
+			}
+
+			let url = undefined;
+			try {
+				if (window["native"] && window["native"]["GetImageUrl"])
+					url = window["native"]["GetImageUrl"](sSrc);
+				else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["LocalFileGetImageUrl"])
+					url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sSrc);
+			} catch (e) {
+				return sSrc;
+			}
+
+			if (typeof url !== "string" || 0 === url.length || "error" === url)
+				return sSrc;
+
+			return url;
+		}
+
 		function checkRasterImageId(rasterImageId) {
-			var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(rasterImageId);
-			return imageLocal ? imageLocal : rasterImageId;
+			var sSrc = prepareLocalImageSrc(rasterImageId);
+			var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(sSrc);
+			return imageLocal ? imageLocal : sSrc;
 		}
 
 
@@ -1547,17 +1627,14 @@
 		function ExecuteNoHistory(f, oThis, args, notOffTableId) {
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
-			var b_table_id = false;
-			if (!notOffTableId && g_oTableId && !g_oTableId.m_bTurnOff) {
-				g_oTableId.m_bTurnOff = true;
-				b_table_id = true;
-			}
+			if (!notOffTableId && g_oTableId)
+				g_oTableId.TurnOff();
 
 			var ret = f.apply(oThis, args);
 			AscCommon.History.TurnOn && AscCommon.History.TurnOn();
-			if (b_table_id) {
-				g_oTableId.m_bTurnOff = false;
-			}
+			if (!notOffTableId && g_oTableId)
+				g_oTableId.TurnOn();
+			
 			return ret;
 		}
 
@@ -1614,7 +1691,8 @@
 			LAYOUT: 1,
 			MASTER: 2,
 			NOTES: 3,
-			NOTES_MASTER: 4
+			NOTES_MASTER: 4,
+			HANDOUT_MASTER: 5
 		};
 
 
@@ -1935,88 +2013,16 @@
 			return duplicate;
 		};
 		CColorModifiers.prototype.RGB2HSL = function (R, G, B, HLS) {
-			var iMin = (R < G ? R : G);
-			iMin = iMin < B ? iMin : B;//Math.min(R, G, B);
-			var iMax = (R > G ? R : G);
-			iMax = iMax > B ? iMax : B;//Math.max(R, G, B);
-			var iDelta = iMax - iMin;
-			var dMax = (iMax + iMin) / 255.0;
-			var dDelta = iDelta / 255.0;
-			var H = 0;
-			var S = 0;
-			var L = dMax / 2.0;
-
-			if (iDelta != 0) {
-				if (L < 0.5) S = dDelta / dMax;
-				else S = dDelta / (2.0 - dMax);
-
-				dDelta = dDelta * 1530.0;
-				var dR = (iMax - R) / dDelta;
-				var dG = (iMax - G) / dDelta;
-				var dB = (iMax - B) / dDelta;
-
-				if (R == iMax) H = dB - dG;
-				else if (G == iMax) H = cd13 + dR - dB;
-				else if (B == iMax) H = cd23 + dG - dR;
-
-				if (H < 0.0) H += 1.0;
-				if (H > 1.0) H -= 1.0;
-			}
-
-			H = H * max_hls;
-			if (H < 0)
-				H = 0;
-			if (H > 255)
-				H = 255;
-
-			S = S * max_hls;
-			if (S < 0)
-				S = 0;
-			if (S > 255)
-				S = 255;
-
-			L = L * max_hls;
-			if (L < 0)
-				L = 0;
-			if (L > 255)
-				L = 255;
-
-			HLS.H = H;
-			HLS.S = S;
-			HLS.L = L;
+			var hsl = AscCommon.CU.rgbToHsl({R: R, G: G, B: B});
+			HLS.H = hsl.H;
+			HLS.S = hsl.S;
+			HLS.L = hsl.L;
 		};
 		CColorModifiers.prototype.HSL2RGB = function (HSL, RGB, bRoundValues) {
-			if (HSL.S == 0) {
-				const clampL = bRoundValues ? AscFormat.ClampColor(HSL.L) : HSL.L;
-				RGB.R = clampL;
-				RGB.G = clampL;
-				RGB.B = clampL;
-			} else {
-				var H = HSL.H / max_hls;
-				var S = HSL.S / max_hls;
-				var L = HSL.L / max_hls;
-				var v2 = 0;
-				if (L < 0.5)
-					v2 = L * (1.0 + S);
-				else
-					v2 = L + S - S * L;
-
-				var v1 = 2.0 * L - v2;
-
-				var R = (255 * this.Hue_2_RGB(v1, v2, H + cd13));
-				var G = (255 * this.Hue_2_RGB(v1, v2, H));
-				var B = (255 * this.Hue_2_RGB(v1, v2, H - cd13));
-
-				if (bRoundValues) {
-					RGB.R = AscFormat.ClampColor(R);
-					RGB.G = AscFormat.ClampColor(G);
-					RGB.B = AscFormat.ClampColor(B);
-				} else {
-					RGB.R = R;
-					RGB.G = G;
-					RGB.B = B;
-				}
-			}
+			var rgb = AscCommon.CU.hslToRgb(HSL, bRoundValues);
+			RGB.R = rgb.R;
+			RGB.G = rgb.G;
+			RGB.B = rgb.B;
 		};
 		CColorModifiers.prototype.Hue_2_RGB = function (v1, v2, vH) {
 			if (vH < 0.0)
@@ -2032,16 +2038,10 @@
 			return v1;
 		};
 		CColorModifiers.prototype.standardToLinear = function(nColorValue) {
-			if (nColorValue <= 0.04045) {
-				return nColorValue / 12.92;
-			}
-			return Math.pow((nColorValue + 0.055) / 1.055, 2.4);
+			return AscCommon.CU.srgbToLinear(nColorValue);
 		}
 		CColorModifiers.prototype.linearToStandard = function(nColorValue) {
-			if (nColorValue <= 0.0031308) {
-				return  12.92 * nColorValue;
-			}
-			return 1.055 * Math.pow(nColorValue, 1 / 2.4) - 0.055;
+			return AscCommon.CU.linearToSrgb(nColorValue);
 		}
 		CColorModifiers.prototype.RgbtoCrgbColor = function (c) {
 			if (this.isUsePow) {
@@ -2878,13 +2878,9 @@
 		MODS_MAP["shade"] = true;
 		MODS_MAP["tint"] = true;
 
-		function toHex(c) {
-			var res = Number(c).toString(16).toUpperCase();
-			return res.length === 1 ? "0" + res : res;
-		}
-
 		function fRGBAToHexString(oRGBA) {
-			return "" + toHex(oRGBA.R) + toHex(oRGBA.G) + toHex(oRGBA.B);
+			var byteToHex = AscCommon.ByteToHex;
+			return "" + byteToHex(oRGBA.R) + byteToHex(oRGBA.G) + byteToHex(oRGBA.B);
 		}
 
 		/**
@@ -3621,6 +3617,13 @@
 		CBlipFill.prototype.setRasterImageId = function (rasterImageId) {
 			this.RasterImageId = checkRasterImageId(rasterImageId);
 		};
+		CBlipFill.prototype.ReplaceImageUrl = function (mapUrl) {
+			if (typeof this.RasterImageId !== "string") return false;
+			const sId = this.RasterImageId;
+			if (!mapUrl[sId]) return false;
+			this.RasterImageId = checkRasterImageId(mapUrl[sId]);
+			return true;
+		};
 		CBlipFill.prototype.createDuplicate = function () {
 			var duplicate = new CBlipFill();
 			duplicate.RasterImageId = this.RasterImageId;
@@ -3840,14 +3843,6 @@
 				}
 			}
 		};
-		CBlipFill.prototype.createDuplicateNoRaster = function(transparent) {
-			let sId = this.RasterImageId;
-			this.RasterImageId = null;
-			let copy = this.createDuplicate();
-			this.RasterImageId = sId;
-			return copy;
-		};
-
 		CBlipFill.prototype.getTile = function () { return this.tile; };
 		CBlipFill.prototype.setTile = function (tile) { this.tile = tile; };
 		CBlipFill.prototype.getStretch = function () { return this.stretch; };
@@ -6722,6 +6717,9 @@
 				return true;
 			}
 		};
+		CUniFill.prototype.isPatternFill = function () {
+			return !!(this.fill && this.fill.type === c_oAscFill.FILL_TYPE_PATT);
+		};
 		CUniFill.prototype.checkTransparent = function() {
 			let oFill = this.fill;
 			if(oFill) {
@@ -6774,16 +6772,71 @@
 				return this.fill.RasterImageId;
 			return null;
 		};
-		CUniFill.prototype.reassignImageUrl = function(mapUrl) {
-			const sId = this.checkRasterImageId();
-			if (sId && mapUrl[sId] && mapUrl[sId] !== sId) {
-				const oNewBlipFill = this.fill.createDuplicate();
-				oNewBlipFill.setRasterImageId(mapUrl[sId]);
-				const oNewUniFill = this.createDuplicate();
-				oNewUniFill.setFill(oNewBlipFill);
-				return oNewUniFill;
+		CUniFill.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.fill && this.fill.ReplaceImageUrl ? this.fill.ReplaceImageUrl(mapUrl) : false;
+		};
+		CUniFill.prototype.getLnColor = function () {
+			let RGBA = null;
+			switch (this.fill.type)
+			{
+				case c_oAscFill.FILL_TYPE_BLIP:
+				{
+					RGBA = new AscFormat.CUniColor().RGBA;
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_SOLID:
+				{
+					if(this.fill.color)
+					{
+						RGBA = this.fill.color.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_GRAD:
+				{
+					var _c = this.fill.colors;
+					if (_c == 0)
+						RGBA = new AscFormat.CUniColor().RGBA;
+					else
+					{
+						if(this.fill.colors[0].color)
+						{
+							RGBA = this.fill.colors[0].color.RGBA;
+						}
+						else
+						{
+							RGBA = new AscFormat.CUniColor().RGBA;
+						}
+					}
+
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_PATT:
+				{
+					if(this.fill.fgClr)
+					{
+						RGBA = this.fill.fgClr.RGBA;
+					}
+					else
+					{
+						RGBA = new AscFormat.CUniColor().RGBA;
+					}
+					break;
+				}
+				case c_oAscFill.FILL_TYPE_NOFILL:
+				{
+					break;
+				}
+				default:
+				{
+					break;
+				}
 			}
-			return null;
+			return RGBA;
 		};
 
 		function CBuBlip() {
@@ -6794,6 +6847,9 @@
 		InitClass(CBuBlip, CBaseNoIdObject, 0);
 		CBuBlip.prototype.setBlip = function (oPr) {
 			this.blip = oPr;
+		};
+		CBuBlip.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.blip && this.blip.ReplaceImageUrl ? this.blip.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBuBlip.prototype.fillObject = function (oCopy, oIdMap) {
 			if (this.blip) {
@@ -7834,16 +7890,8 @@
 		CLn.prototype.checkRasterImageId = function() {
 			return this.Fill && this.Fill.checkRasterImageId();
 		};
-		CLn.prototype.reassignImageUrl = function(mapUrl) {
-			if (this.Fill) {
-				const oNewFill = this.Fill.reassignImageUrl(mapUrl);
-				if (oNewFill) {
-					const oNewLn = this.createDuplicate();
-					oNewLn.setFill(oNewFill);
-					return oNewLn;
-				}
-			}
-			return null;
+		CLn.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Fill && this.Fill.ReplaceImageUrl ? this.Fill.ReplaceImageUrl(mapUrl) : false;
 		};
 		CLn.prototype.GetCapCode = function (sVal) {
 			switch (sVal) {
@@ -8181,10 +8229,24 @@
 		CNvPr.prototype.setHlinkClick = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CNvPr_SetHlinkClick, this.hlinkClick, pr));
 			this.hlinkClick = pr;
+			this.checkSlideJumpLink();
 		};
 		CNvPr.prototype.setHlinkHover = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CNvPr_SetHlinkHover, this.hlinkHover, pr));
 			this.hlinkHover = pr;
+			this.checkSlideJumpLink();
+		};
+		CNvPr.prototype.checkSlideJumpLink = function () {
+			let logicDocument = Asc.editor.getLogicDocument();
+			if (!logicDocument || !logicDocument.bindSlideJumpLink) {
+				return;
+			}
+			if (this.hlinkClick && AscFormat.IsSlideJumpLinkValue(this.hlinkClick.id)) {
+				logicDocument.bindSlideJumpLink(this.hlinkClick);
+			}
+			if (this.hlinkHover && AscFormat.IsSlideJumpLinkValue(this.hlinkHover.id)) {
+				logicDocument.bindSlideJumpLink(this.hlinkHover);
+			}
 		};
 		CNvPr.prototype.setTitle = function (title) {
 			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_CNvPr_SetTitle, this.title, title));
@@ -8231,18 +8293,26 @@
 			CBaseNoIdObject.call(this);
 			this.type = null;
 			this.media = null;
+			this.start = null;
+			this.end = null;
 		}
 
 		InitClass(UniMedia, CBaseNoIdObject, 0);
 		UniMedia.prototype.Write_ToBinary = function (w) {
 			var bType = this.type !== null && this.type !== undefined;
 			var bMedia = typeof this.media === 'string';
+			var bStart = typeof this.start === 'number';
+			var bEnd = typeof this.end === 'number';
 			var nFlags = 0;
 			bType && (nFlags |= 1);
 			bMedia && (nFlags |= 2);
+			bStart && (nFlags |= 4);
+			bEnd && (nFlags |= 8);
 			w.WriteLong(nFlags);
 			bType && w.WriteLong(this.type);
 			bMedia && w.WriteString2(this.media);
+			bStart && w.WriteDouble(this.start);
+			bEnd && w.WriteDouble(this.end);
 		};
 		UniMedia.prototype.Read_FromBinary = function (r) {
 			var nFlags = r.GetLong();
@@ -8252,11 +8322,19 @@
 			if (nFlags & 2) {
 				this.media = r.GetString2();
 			}
+			if (nFlags & 4) {
+				this.start = r.GetDouble();
+			}
+			if (nFlags & 8) {
+				this.end = r.GetDouble();
+			}
 		};
 		UniMedia.prototype.createDuplicate = function () {
 			var _ret = new UniMedia();
 			_ret.type = this.type;
 			_ret.media = this.media;
+			_ret.start = this.start;
+			_ret.end = this.end;
 			return _ret;
 		};
 
@@ -9486,8 +9564,7 @@
 			this.handleUpdateGeometry();
 		};
 		CSpPr.prototype.setFill = function (pr) {
-			if(!pr || !pr.isBlipFill() || !Asc.editor.evalCommand)
-				AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
+			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
 			this.Fill = pr;
 			if (this.parent && this.parent.handleUpdateFill) {
 				this.parent.handleUpdateFill();
@@ -9503,6 +9580,7 @@
 		CSpPr.prototype.setEffectPr = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetEffectPr, this.effectProps, pr));
 			this.effectProps = pr;
+			this.handleUpdateGeometry();
 		};
 		CSpPr.prototype.handleUpdatePosition = function () {
 			if (this.parent && this.parent.handleUpdatePosition) {
@@ -10058,6 +10136,7 @@
 		InitClass(FontScheme, CBaseNoIdObject, 0);
 		FontScheme.prototype.createDuplicate = function () {
 			var oCopy = new FontScheme();
+			oCopy.name = this.name;
 			oCopy.majorFont.setLatin(this.majorFont.latin);
 			oCopy.majorFont.setEA(this.majorFont.ea);
 			oCopy.majorFont.setCS(this.majorFont.cs);
@@ -10281,23 +10360,20 @@
 			}
 		};
 		FmtScheme.prototype.Reassign_ImageUrls = function(oImageMap) {
-			const aFillLists = [this.fillStyleLst, this.bgFillStyleLst];
+			this.ReplaceImageUrl(oImageMap);
+		};
+		FmtScheme.prototype.ReplaceImageUrl = function(mapUrl) {
+			let bChanged = false;
+			const aFillLists = [this.fillStyleLst, this.bgFillStyleLst, this.lnStyleLst];
 			for(let i = 0; i < aFillLists.length; ++i) {
 				for(let nIdx = 0; nIdx < aFillLists[i].length; ++nIdx) {
-					const oUnifill = aFillLists[i][nIdx];
-					const sId = oUnifill && oUnifill.checkRasterImageId();
-					if(sId && oImageMap[sId]) {
-						oUnifill.fill.RasterImageId = oImageMap[sId];
+					const oItem = aFillLists[i][nIdx];
+					if (oItem && oItem.ReplaceImageUrl && oItem.ReplaceImageUrl(mapUrl)) {
+						bChanged = true;
 					}
 				}
 			}
-			for(let nIdx = 0; nIdx < this.lnStyleLst.length; ++nIdx) {
-				const oLn = this.lnStyleLst[nIdx];
-				const sId = oLn && oLn.checkRasterImageId();
-				if(sId && oImageMap[sId]) {
-					oLn.Fill.fill.RasterImageId = oImageMap[sId];
-				}
-			}
+			return bChanged;
 		};
 		
 		function CEffectStyle() {
@@ -10771,15 +10847,12 @@
 						if(oPresentation) {
 							oPresentation.bNeedUpdateThemes = true;
 							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
-							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
-								oThemedObjects.masters[nIdx].checkSlideColorScheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
-								oThemedObjects.layouts[nIdx].checkSlideColorScheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
-								oThemedObjects.slides[nIdx].checkSlideColorScheme();
-								oThemedObjects.slides[nIdx].addToRecalculate();
+							for (let sKey in oThemedObjects) {
+								const arrSlides = oThemedObjects[sKey];
+								for(let nIdx = 0; nIdx < arrSlides.length; ++nIdx) {
+									arrSlides[nIdx].checkSlideColorScheme();
+									arrSlides[nIdx].addToRecalculate();
+								}
 							}
 							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 						}
@@ -11023,6 +11096,9 @@
 			if (fill_image_id !== null)
 				images.push(fill_image_id);
 		};
+		CBgPr.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Fill && this.Fill.ReplaceImageUrl ? this.Fill.ReplaceImageUrl(mapUrl) : false;
+		};
 
 
 
@@ -11042,6 +11118,9 @@
 		};
 		CBg.prototype.setBgRef = function (pr) {
 			this.bgRef = pr;
+		};
+		CBg.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.bgPr && this.bgPr.ReplaceImageUrl ? this.bgPr.ReplaceImageUrl(mapUrl) : false;
 		};
 		CBg.prototype.merge = function (bg) {
 			if (this.bgPr == null) {
@@ -11082,16 +11161,130 @@
 				this.bgRef.Read_FromBinary(r);
 			}
 		};
+		CBg.prototype.recalculate = function(theme, slide, layout, master, RGBA) {
+			const ret = {RGBA: null, backFill: null};
+			if (this.bgPr) {
+				ret.backFill = this.bgPr.Fill;
+			} else if (this.bgRef) {
+				this.bgRef.Color.Calculate(theme, slide, layout, master, RGBA);
+				ret.RGBA = this.bgRef.Color.RGBA;
+				ret.backFill = theme.themeElements.fmtScheme.GetFillStyle(this.bgRef.idx, this.bgRef.Color);
+			}
+			return ret;
+		};
 
 		function CSld(parent) {
-			CBaseNoIdObject.call(this);
+			CBaseFormatObject.call(this);
 			this.name = "";
 			this.Bg = null;
 			this.spTree = [];//new GroupShape();
-			this.parent = parent;
+			this.parent = parent || null;
+			this.drawingNameAllocator = null;
+			this.m_oContentChanges = new AscCommon.CContentChanges();
+			this.collaborativeMarks = null;
 		}
 
-		InitClass(CSld, CBaseNoIdObject, 0);
+		InitClass(CSld, CBaseFormatObject, AscDFH.historyitem_type_CSld);
+		CSld.prototype.setBg = function (bg) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CSld_SetBg, this.Bg, bg));
+			this.Bg = bg;
+		};
+		CSld.prototype.getBgFill = function () {
+			return this.Bg && this.Bg.bgPr ? this.Bg.bgPr.Fill : null;
+		};
+		CSld.prototype.setName = function (name) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_CSld_SetName, this.name, name));
+			this.name = name;
+		};
+		CSld.prototype.addToSpTree = function (pos, item) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_AddToSpTree, pos, [item], true, true));
+			this.spTree.splice(pos, 0, item);
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Update_OnAdd(pos);
+			}
+			this.processSlideJumpLinks(item, true);
+		};
+		CSld.prototype.removeFromSpTree = function (pos, count) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_CSld_RemoveFromSpTree, pos, this.spTree.slice(pos, pos + count), false));
+			let aRemoved = this.spTree.splice(pos, count);
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Update_OnRemove(pos, count);
+			}
+			for (let i = 0; i < aRemoved.length; ++i) {
+				this.processSlideJumpLinks(aRemoved[i], false);
+			}
+			return aRemoved;
+		};
+		CSld.prototype.processSlideJumpLinks = function (item, isAdd) {
+			let logicDocument = Asc.editor.getLogicDocument();
+			if (logicDocument && logicDocument.processSlideJumpLinksInSubtree) {
+				logicDocument.processSlideJumpLinksInSubtree(item, isAdd);
+			}
+		};
+		CSld.prototype.Clear_CollaborativeMarks = function () {
+			if (this.collaborativeMarks) {
+				this.collaborativeMarks.Clear();
+			}
+		};
+		CSld.prototype.Refresh_RecalcData = function (data) {
+			if (this.parent && this.parent.handleCSldRecalc) {
+				this.parent.handleCSldRecalc(data);
+			}
+		};
+		CSld.prototype.fillObject = function (oCopy, oPr) {
+			if (typeof this.name === "string" && this.name.length > 0) {
+				oCopy.setName(this.name);
+			}
+			if (this.Bg) {
+				oCopy.setBg(this.Bg.createFullCopy());
+			}
+			if (!oPr) {
+				oPr = new AscFormat.CCopyObjectProperties();
+			}
+			if (!oPr.idMap) oPr.idMap = {};
+			for (let i = 0; i < this.spTree.length; ++i) {
+				let oSp = this.spTree[i];
+				let oSpCopy = oSp.copy(oPr);
+				oPr.idMap[oSp.Id] = oSpCopy.Id;
+				oCopy.addToSpTree(oCopy.spTree.length, oSpCopy);
+				if (oCopy.parent) {
+					oSpCopy.setParent2(oCopy.parent);
+				}
+			}
+		};
+		CSld.prototype.Refresh_RecalcData2 = function (pageIndex, object) {
+			if (this.parent && this.parent.Refresh_RecalcData2) {
+				this.parent.Refresh_RecalcData2(pageIndex, object);
+			}
+		};
+		CSld.prototype.initCollaborativeMarks = function () {
+			if (!this.collaborativeMarks && typeof CRunCollaborativeMarks !== "undefined") {
+				this.collaborativeMarks = new CRunCollaborativeMarks();
+			}
+		};
+		CSld.prototype.Clear_ContentChanges = function () {
+			this.m_oContentChanges.Clear();
+		};
+		CSld.prototype.Add_ContentChanges = function (changes) {
+			this.m_oContentChanges.Add(changes);
+		};
+		CSld.prototype.Refresh_ContentChanges = function () {
+			this.m_oContentChanges.Refresh();
+		};
+		CSld.prototype.checkAndAssignName = function (item) {
+			item.assignNameInContainer(this);
+		};
+		CSld.prototype.getNextNameIndex = function () {
+			if (!this.drawingNameAllocator) this.drawingNameAllocator = new AscCommon.CDrawingNameAllocator();
+			return this.drawingNameAllocator.next(this.countDrawings());
+		};
+		CSld.prototype.countDrawings = function () {
+			let count = 0;
+			for (let i = 0; i < this.spTree.length; ++i) {
+				count += this.spTree[i].countDrawings();
+			}
+			return count;
+		};
 		CSld.prototype.removeAllInks = function () {
 			const oController = this.parent && this.parent.graphicObjects;
 			if (!oController) {
@@ -11146,8 +11339,11 @@
 		};
 		CSld.prototype.forEachSp = function(fCallback) {
 			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
-				fCallback(this.spTree[nSp]);
+				if (fCallback(this.spTree[nSp])) {
+					return true;
+				}
 			}
+			return false;
 		};
 		CSld.prototype.handleAllContents = function(fCallback) {
 			this.forEachSp(function(oSp) {
@@ -11165,6 +11361,25 @@
 			if(bNoHistory) {
 				AscCommon.History.RecalculateData.Update = bOldUpdate;
 			}
+		};
+		CSld.prototype.recalculateBackground = function(theme, slide, layout, master, RGBA) {
+			if (this.Bg) {
+				return this.Bg.recalculate(theme, slide, layout, master, RGBA);
+
+			}
+			return {backFill: null, RGBA: null};
+		};
+		CSld.prototype.getContentShape = function () {
+			let matchingShape;
+			function forEachSpCallback(shape) {
+				const placeholderType = shape.getPlaceholderTypeWithDefault();
+				if (placeholderType === AscFormat.phType_subTitle || placeholderType === AscFormat.phType_obj || placeholderType === AscFormat.phType_body) {
+					matchingShape = shape;
+					return true;
+				}
+			}
+			this.forEachSp(forEachSpCallback);
+			return matchingShape;
 		};
 
 		function RefreshContentAllFields(oContent) {
@@ -12521,11 +12736,19 @@
 		CBullet.prototype.isBullet = function () {
 			return this.bulletType != null && this.bulletType.type != null;
 		};
+		CBullet.prototype.ReplaceImageUrl = function (mapUrl) {
+			return this.Bullet && this.Bullet.ReplaceImageUrl ? this.Bullet.ReplaceImageUrl(mapUrl) : false;
+		};
 		CBullet.prototype.isNone = function() {
 			if (!this.bulletType)
 				return true;
-			
+
 			return this.bulletType.type === AscFormat.BULLET_TYPE_TYPEFACE_NONE;
+		};
+		CBullet.prototype.getChar = function() {
+			if (this.bulletType && AscFormat.BULLET_TYPE_BULLET_CHAR === this.bulletType.type && typeof this.bulletType.Char === "string")
+				return this.bulletType.Char;
+			return "";
 		};
 		CBullet.prototype.getPresentationBullet = function (theme, color) {
 			var para_pr = new CParaPr();
@@ -14796,6 +15019,15 @@
 		CApp.prototype.asc_getAppVersion = function () {
 			return this.AppVersion;
 		};
+		CApp.prototype.isLegacyMS = function () {
+			let msApps = ["Microsoft Office Word", "Microsoft Excel", "Microsoft Office PowerPoint",
+				"Microsoft Macintosh Word", "Microsoft Macintosh Excel", "Microsoft Macintosh PowerPoint"];
+			if (msApps.indexOf(this.Application) === -1) {
+				return false;
+			}
+			let version = parseInt(this.AppVersion, 10);
+			return AscFormat.isRealNumber(version) && version < 14;
+		};
 		CApp.prototype.asc_getCharacters = function () {
 			return this.Characters;
 		};
@@ -15458,6 +15690,10 @@
 		};
 		CVariant.prototype.typeStrToEnum = function (name) {
 			switch (name) {
+				case "variant": {
+					return c_oVariantTypes.vtVariant;
+					break;
+				}
 				case "vector": {
 					return c_oVariantTypes.vtVector;
 					break;
@@ -16030,7 +16266,7 @@
 									for (var i = 0; i < lCount; i++) {
 										s.Skip2(1);
 
-										var _author = new AscCommon.CCommentAuthor();
+										var _author = new AscCommon.CSlideCommentAuthor();
 
 										var _end_rec3 = s.cur + s.GetLong() + 4;
 										s.Skip2(1); // start attributes
@@ -16392,7 +16628,7 @@
 		}
 
 		function GenerateDefaultMasterSlide(theme) {
-			var master = new MasterSlide(theme.presentation, theme);
+			var master = new AscCommonSlide.MasterSlide();
 			master.Theme = theme;
 
 			master.sldLayoutLst[0] = GenerateDefaultSlideLayout(master);
@@ -16401,21 +16637,11 @@
 		}
 
 		function GenerateDefaultSlideLayout(master) {
-			var layout = new SlideLayout();
+			var layout = new AscCommonSlide.SlideLayout();
 			layout.Theme = master.Theme;
 			layout.Master = master;
 			layout.setPreserve(true);
 			return layout;
-		}
-
-		function GenerateDefaultSlide(layout) {
-			var slide = new Slide(layout.Master.presentation, layout, 0);
-			slide.Master = layout.Master;
-			slide.Theme = layout.Master.Theme;
-			slide.setNotes(AscCommonSlide.CreateNotes());
-			slide.notes.setNotesMaster(layout.Master.presentation.notesMasters[0]);
-			slide.notes.setSlide(slide);
-			return slide;
 		}
 
 		function CreateDefaultTextRectStyle() {
@@ -17187,166 +17413,312 @@
 		 * Common Functions For Builder
 		 * @return {CShape}
 		 */
-		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
-			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0);
-			oShapeTrack.track({}, nWidth, nHeight, true);
-			var oShape = oShapeTrack.getShape(bWord === true, oDrawingDocument, null);
-			oShape.setParent(oParent);
+		function builder_CreateShape(type, width, height, fill, stroke, parent, theme, drawingDocument, isWord, worksheet, drawingObjects) {
+			let shapeTrack = new AscFormat.NewShapeTrack(type, 0, 0, theme, null, null, null, 0, undefined, undefined, undefined, true);
+			shapeTrack.track({}, width, height, true);
+			let shape = shapeTrack.getShape(isWord === true, drawingDocument, type === "textRect" ? drawingObjects : null);
+			shape.setParent(parent);
 			if (worksheet) {
-				oShape.setWorksheet(worksheet);
+				shape.setWorksheet(worksheet);
 			}
-			oShape.spPr.setFill(oFill);
-			oShape.spPr.setLn(oStroke);
-			return oShape;
+			if (fill) {
+				shape.spPr.setFill(fill);
+			}
+			if (stroke) {
+				shape.spPr.setLn(stroke);
+			}
+			return shape;
 		}
 
-		function ChartBuilderTypeToInternal(sType) {
-			switch (sType) {
-				case "bar": {
-					return Asc.c_oAscChartTypeSettings.barNormal;
-				}
-				case "barStacked": {
-					return Asc.c_oAscChartTypeSettings.barStacked;
-				}
-				case "barStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.barStackedPer;
-				}
-				case "bar3D": {
-					return Asc.c_oAscChartTypeSettings.barNormal3d;
-				}
-				case "barStacked3D": {
-					return Asc.c_oAscChartTypeSettings.barStacked3d;
-				}
-				case "barStackedPercent3D": {
-					return Asc.c_oAscChartTypeSettings.barStackedPer3d;
-				}
-				case "barStackedPercent3DPerspective": {
-					return Asc.c_oAscChartTypeSettings.barNormal3dPerspective;
-				}
-				case "horizontalBar": {
-					return Asc.c_oAscChartTypeSettings.hBarNormal;
-				}
-				case "horizontalBarStacked": {
-					return Asc.c_oAscChartTypeSettings.hBarStacked;
-				}
-				case "horizontalBarStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.hBarStackedPer;
-				}
-				case "horizontalBar3D": {
-					return Asc.c_oAscChartTypeSettings.hBarNormal3d;
-				}
-				case "horizontalBarStacked3D": {
-					return Asc.c_oAscChartTypeSettings.hBarStacked3d;
-				}
-				case "horizontalBarStackedPercent3D": {
-					return Asc.c_oAscChartTypeSettings.hBarStackedPer3d;
-				}
-				case "lineNormal": {
-					return Asc.c_oAscChartTypeSettings.lineNormal;
-				}
-				case "lineStacked": {
-					return Asc.c_oAscChartTypeSettings.lineStacked;
-				}
-				case "lineStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.lineStackedPer;
-				}
-				case "lineNormalMarker": {
-					return Asc.c_oAscChartTypeSettings.lineNormalMarker;
-				}
-				case "lineStackedMarker": {
-					return Asc.c_oAscChartTypeSettings.lineStackedMarker;
-				}
-				case "lineStackedPerMarker": {
-					return Asc.c_oAscChartTypeSettings.lineStackedPerMarker;
-				}
-				case "line3D": {
-					return Asc.c_oAscChartTypeSettings.line3d;
-				}
-				case "pie": {
-					return Asc.c_oAscChartTypeSettings.pie;
-				}
-				case "pie3D": {
-					return Asc.c_oAscChartTypeSettings.pie3d;
-				}
-				case "doughnut": {
-					return Asc.c_oAscChartTypeSettings.doughnut;
-				}
-				case "scatter": {
-					return Asc.c_oAscChartTypeSettings.scatter;
-				}
-				case "scatterLine": {
-					return Asc.c_oAscChartTypeSettings.scatterLine;
-				}
-				case "scatterLineMarker": {
-					return Asc.c_oAscChartTypeSettings.scatterLineMarker;
-				}
-				case "scatterSmooth": {
-					return Asc.c_oAscChartTypeSettings.scatterSmooth;
-				}
-				case "scatterSmoothMarker": {
-					return Asc.c_oAscChartTypeSettings.scatterSmoothMarker;
-				}
-				case "stock": {
-					return Asc.c_oAscChartTypeSettings.stock;
-				}
-				case "area": {
-					return Asc.c_oAscChartTypeSettings.areaNormal;
-				}
-				case "areaStacked": {
-					return Asc.c_oAscChartTypeSettings.areaStacked;
-				}
-				case "areaStackedPercent": {
-					return Asc.c_oAscChartTypeSettings.areaStackedPer;
-				}
-				case "comboCustom": {
-					return Asc.c_oAscChartTypeSettings.comboCustom;
-				}
-				case "comboBarLine": {
-					return Asc.c_oAscChartTypeSettings.comboBarLine;
-				}
-				case "comboBarLineSecondary": {
-					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
-				}
-				case "radar": {
-					return Asc.c_oAscChartTypeSettings.radar;
-				}
-				case "radarMarker": {
-					return Asc.c_oAscChartTypeSettings.radarMarker;
-				}
-				case "radarFilled": {
-					return Asc.c_oAscChartTypeSettings.radarFilled;
-				}
+		let chartBuilderTypes = null;
 
-				// Unhandled cases from Asc.c_oAscChartTypeSettings (v9.0.0)
-				// case "scatterMarker": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterMarker;
-				// }
-				// case "scatterNone": {
-				// 	return Asc.c_oAscChartTypeSettings.scatterNone;
-				// }
-				// case "comboAreaBar": {
-				// 	return Asc.c_oAscChartTypeSettings.comboAreaBar;
-				// }
-				// case "contour": {
-				// 	return Asc.c_oAscChartTypeSettings.contourNormal;
-				// }
-				// case "contourWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.contourWireframe;
-				// }
-				// case "surfaceNormal": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceNormal;
-				// }
-				// case "surfaceWireframe": {
-				// 	return Asc.c_oAscChartTypeSettings.surfaceWireframe;
-				// }
+		let chartBuilderTypesByLowerCase = null;
 
-				default: return null;
+
+
+		function getChartBuilderTypes() {
+
+			if (chartBuilderTypes)
+
+				return chartBuilderTypes;
+
+
+
+			let types = Asc.c_oAscChartTypeSettings;
+
+			chartBuilderTypes = {
+
+				"ColumnClustered"                      : types.barNormal,
+
+				"ColumnStacked"                        : types.barStacked,
+
+				"ColumnStacked100"                     : types.barStackedPer,
+
+				"3DColumnClustered"                    : types.barNormal3d,
+
+				"3DColumnStacked"                      : types.barStacked3d,
+
+				"3DColumnStacked100"                   : types.barStackedPer3d,
+
+				"3DColumn"                             : types.barNormal3dPerspective,
+
+				"BarClustered"                         : types.hBarNormal,
+
+				"BarStacked"                           : types.hBarStacked,
+
+				"BarStacked100"                        : types.hBarStackedPer,
+
+				"3DBarClustered"                       : types.hBarNormal3d,
+
+				"3DBarStacked"                         : types.hBarStacked3d,
+
+				"3DBarStacked100"                      : types.hBarStackedPer3d,
+
+				"Line"                                 : types.lineNormal,
+
+				"LineStacked"                          : types.lineStacked,
+
+				"LineStacked100"                       : types.lineStackedPer,
+
+				"LineMarkers"                          : types.lineNormalMarker,
+
+				"LineMarkersStacked"                   : types.lineStackedMarker,
+
+				"LineMarkersStacked100"                : types.lineStackedPerMarker,
+
+				"3DLine"                               : types.line3d,
+
+				"Pie"                                  : types.pie,
+
+				"3DPie"                                : types.pie3d,
+
+				"Doughnut"                             : types.doughnut,
+
+				"XYScatter"                            : types.scatter,
+
+				"XYScatterLinesNoMarkers"              : types.scatterLine,
+
+				"XYScatterLines"                       : types.scatterLineMarker,
+
+				"XYScatterSmoothNoMarkers"             : types.scatterSmooth,
+
+				"XYScatterSmooth"                      : types.scatterSmoothMarker,
+
+				"StockHLC"                             : types.stock,
+
+				"StockOHLC"                            : types.stock,
+
+				"StockVHLC"                            : types.stock,
+
+				"StockVOHLC"                           : types.stock,
+
+				"Area"                                 : types.areaNormal,
+
+				"AreaStacked"                          : types.areaStacked,
+
+				"AreaStacked100"                       : types.areaStackedPer,
+
+				"Combo"                                : types.comboCustom,
+
+				"ComboColumnClusteredLine"             : types.comboBarLine,
+
+				"ComboColumnClusteredLineSecondaryAxis": types.comboBarLineSecondary,
+
+				"Radar"                                : types.radar,
+
+				"RadarMarkers"                         : types.radarMarker,
+
+				"RadarFilled"                          : types.radarFilled,
+
+
+
+				"bar"                                  : types.barNormal,
+
+				"barStacked"                           : types.barStacked,
+
+				"barStackedPercent"                    : types.barStackedPer,
+
+				"bar3D"                                : types.barNormal3d,
+
+				"barStacked3D"                         : types.barStacked3d,
+
+				"barStackedPercent3D"                  : types.barStackedPer3d,
+
+				"barStackedPercent3DPerspective"       : types.barNormal3dPerspective,
+
+				"horizontalBar"                        : types.hBarNormal,
+
+				"horizontalBarStacked"                 : types.hBarStacked,
+
+				"horizontalBarStackedPercent"          : types.hBarStackedPer,
+
+				"horizontalBar3D"                      : types.hBarNormal3d,
+
+				"horizontalBarStacked3D"               : types.hBarStacked3d,
+
+				"horizontalBarStackedPercent3D"        : types.hBarStackedPer3d,
+
+				"lineNormal"                           : types.lineNormal,
+
+				"lineStacked"                          : types.lineStacked,
+
+				"lineStackedPercent"                   : types.lineStackedPer,
+
+				"lineNormalMarker"                     : types.lineNormalMarker,
+
+				"lineStackedMarker"                    : types.lineStackedMarker,
+
+				"lineStackedPerMarker"                 : types.lineStackedPerMarker,
+
+				"line3D"                               : types.line3d,
+
+				"pie"                                  : types.pie,
+
+				"pie3D"                                : types.pie3d,
+
+				"doughnut"                             : types.doughnut,
+
+				"scatter"                              : types.scatter,
+
+				"scatterLine"                          : types.scatterLine,
+
+				"scatterLineMarker"                    : types.scatterLineMarker,
+
+				"scatterSmooth"                        : types.scatterSmooth,
+
+				"scatterSmoothMarker"                  : types.scatterSmoothMarker,
+
+				"stock"                                : types.stock,
+
+				"area"                                 : types.areaNormal,
+
+				"areaStacked"                          : types.areaStacked,
+
+				"areaStackedPercent"                   : types.areaStackedPer,
+
+				"comboCustom"                          : types.comboCustom,
+
+				"comboBarLine"                         : types.comboBarLine,
+
+				"comboBarLineSecondary"                : types.comboBarLineSecondary,
+
+				"radar"                                : types.radar,
+
+				"radarMarker"                          : types.radarMarker,
+
+				"radarFilled"                          : types.radarFilled,
+
+				"3DArea"                               : null,
+				"3DAreaStacked"                        : null,
+				"3DAreaStacked100"                     : null,
+				"AreaEx"                               : null,
+				"AreaStackedEx"                        : null,
+				"AreaStacked100Ex"                     : null,
+				"ColumnClusteredEx"                    : null,
+				"ColumnStackedEx"                      : null,
+				"ColumnStacked100Ex"                   : null,
+				"BarClusteredEx"                       : null,
+				"BarStackedEx"                         : null,
+				"BarStacked100Ex"                      : null,
+				"LineEx"                               : null,
+				"LineStackedEx"                        : null,
+				"LineStacked100Ex"                     : null,
+				"PieEx"                                : null,
+				"PieExploded"                          : null,
+				"3DPieExploded"                        : null,
+				"PieOfPie"                             : null,
+				"BarOfPie"                             : null,
+				"DoughnutEx"                           : null,
+				"DoughnutExploded"                     : null,
+				"XYScatterEx"                          : null,
+				"Bubble"                               : null,
+				"Bubble3DEffect"                       : null,
+				"BubbleEx"                             : null,
+				"Boxwhisker"                           : null,
+				"Funnel"                               : null,
+				"Histogram"                            : null,
+				"Pareto"                               : null,
+				"RegionMap"                            : null,
+				"Sunburst"                             : null,
+				"Treemap"                              : null,
+				"Waterfall"                            : null,
+				"SuggestedChart"                       : null,
+				"OtherCombinations"                    : null,
+				"ComboAreaStackedColumnClustered"      : null,
+				"ConeBarClustered"                     : null,
+				"ConeBarStacked"                       : null,
+				"ConeBarStacked100"                    : null,
+				"ConeCol"                              : null,
+				"ConeColClustered"                     : null,
+				"ConeColStacked"                       : null,
+				"ConeColStacked100"                    : null,
+				"CylinderBarClustered"                 : null,
+				"CylinderBarStacked"                   : null,
+				"CylinderBarStacked100"                : null,
+				"CylinderCol"                          : null,
+				"CylinderColClustered"                 : null,
+				"CylinderColStacked"                   : null,
+				"CylinderColStacked100"                : null,
+				"PyramidBarClustered"                  : null,
+				"PyramidBarStacked"                    : null,
+				"PyramidBarStacked100"                 : null,
+				"PyramidCol"                           : null,
+				"PyramidColClustered"                  : null,
+				"PyramidColStacked"                    : null,
+				"PyramidColStacked100"                 : null,
+				"Surface"                              : null,
+				"SurfaceWireframe"                     : null,
+				"SurfaceTopView"                       : null,
+				"SurfaceTopViewWireframe"              : null
+
+			};
+
+			chartBuilderTypesByLowerCase = {};
+
+			for (let name in chartBuilderTypes) {
+
+				let lowerName = name.toLowerCase();
+
+				if (!chartBuilderTypesByLowerCase.hasOwnProperty(lowerName))
+
+					chartBuilderTypesByLowerCase[lowerName] = chartBuilderTypes[name];
+
 			}
+
+			return chartBuilderTypes;
+
 		}
+
+
+
+		function ChartBuilderTypeToInternal(type) {
+
+			let types = getChartBuilderTypes();
+
+			if (typeof type !== "string")
+
+				return null;
+
+			if (types.hasOwnProperty(type))
+
+				return types[type];
+
+
+
+			let lowerType = type.toLowerCase();
+
+			return chartBuilderTypesByLowerCase.hasOwnProperty(lowerType) ? chartBuilderTypesByLowerCase[lowerType] : null;
+
+		}
+
+
 
 		function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats) {
 			let settings = new Asc.asc_ChartSettings();
-			settings.type = ChartBuilderTypeToInternal(sType);
+			settings.type = ChartBuilderTypeToInternal(sType || "bar");
+			if (settings.type === null) {
+				return null;
+			}
 			let aAscSeries = [];
 			let aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 			let oCat, i;
@@ -17547,7 +17919,7 @@
 		function builder_CreateBlipFill(sImageUrl, sBlipFillType) {
 			var oUniFill = new AscFormat.CUniFill();
 			oUniFill.fill = new AscFormat.CBlipFill();
-			oUniFill.fill.RasterImageId = sImageUrl;
+			oUniFill.fill.RasterImageId = prepareLocalImageSrc(sImageUrl);
 			if (sBlipFillType === "tile") {
 				oUniFill.fill.tile = new AscFormat.CBlipFillTile();
 			} else if (sBlipFillType === "stretch") {
@@ -17567,39 +17939,46 @@
 			return oLn;
 		}
 
-		function builder_CreateChartTitle(sTitle, nFontSize, bIsBold, oDrawingDocument) {
+		function builder_CreateChartTitle(sTitle, oDrawingDocument) {
 			if (typeof sTitle === "string" && sTitle.length > 0) {
 				var oTitle = new AscFormat.CTitle();
 				oTitle.setOverlay(false);
 				oTitle.setTx(new AscFormat.CChartText());
-				var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, oDrawingDocument, oTitle.tx);
-				if (AscFormat.isRealNumber(nFontSize)) {
-					oTextBody.content.SetApplyToAll(true);
-					oTextBody.content.AddToParagraph(new ParaTextPr({FontSize: nFontSize, Bold: bIsBold}));
-					oTextBody.content.SetApplyToAll(false);
-				}
-				oTitle.tx.setRich(oTextBody);
+				oTitle.tx.setRich(AscFormat.CreateTextBodyFromString(sTitle, oDrawingDocument, oTitle.tx));
 				return oTitle;
 			}
 			return null;
 		}
 
 
-		function builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace) {
+		function builder_CreateTitle(sTitle, oChartSpace) {
 			if (typeof sTitle === "string" && sTitle.length > 0) {
 				var oTitle = new AscFormat.CTitle();
 				oTitle.setOverlay(false);
 				oTitle.setTx(new AscFormat.CChartText());
-				var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, oChartSpace.getDrawingDocument(), oTitle.tx);
-				if (AscFormat.isRealNumber(nFontSize)) {
-					oTextBody.content.SetApplyToAll(true);
-					oTextBody.content.AddToParagraph(new ParaTextPr({FontSize: nFontSize, Bold: bIsBold}));
-					oTextBody.content.SetApplyToAll(false);
-				}
-				oTitle.tx.setRich(oTextBody);
+				oTitle.tx.setRich(AscFormat.CreateTextBodyFromString(sTitle, oChartSpace.getDrawingDocument(), oTitle.tx));
 				return oTitle;
 			}
 			return null;
+		}
+
+		function builder_SetTitleTextPr(oTitle, nFontSize, bIsBold) {
+			const hasFontSize = AscFormat.isRealNumber(nFontSize);
+			const hasBold = AscFormat.isRealBool(bIsBold);
+			if (!oTitle || !hasFontSize && !hasBold) {
+				return;
+			}
+			const textPr = {};
+			if (hasFontSize) {
+				textPr.FontSize = nFontSize;
+			}
+			if (hasBold) {
+				textPr.Bold = bIsBold;
+			}
+			const content = oTitle.tx.rich.content;
+			content.SetApplyToAll(true);
+			content.AddToParagraph(new ParaTextPr(textPr));
+			content.SetApplyToAll(false);
 		}
 
 		function builder_ApplyChartStyleToElement(oChartSpace, oElement) {
@@ -17612,8 +17991,9 @@
 
 		function builder_SetChartTitle(oChartSpace, sTitle, nFontSize, bIsBold) {
 			if (oChartSpace) {
-				oChartSpace.chart.setTitle(builder_CreateChartTitle(sTitle, nFontSize, bIsBold, oChartSpace.getDrawingDocument()));
+				oChartSpace.chart.setTitle(builder_CreateChartTitle(sTitle, oChartSpace.getDrawingDocument()));
 				builder_ApplyChartStyleToElement(oChartSpace, oChartSpace.chart.title);
+				builder_SetTitleTextPr(oChartSpace.chart.title, nFontSize, bIsBold);
 			}
 		}
 
@@ -17632,8 +18012,9 @@
 			if (oChartSpace) {
 				var horAxis = oChartSpace.chart.plotArea.getHorizontalAxis();
 				if (horAxis) {
-					horAxis.setTitle(builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace));
+					horAxis.setTitle(builder_CreateTitle(sTitle, oChartSpace));
 					builder_ApplyChartStyleToElement(oChartSpace, horAxis.title);
+					builder_SetTitleTextPr(horAxis.title, nFontSize, bIsBold);
 				}
 			}
 		}
@@ -17643,7 +18024,7 @@
 				var verAxis = oChartSpace.chart.plotArea.getVerticalAxis();
 				if (verAxis) {
 					if (typeof sTitle === "string" && sTitle.length > 0) {
-						verAxis.setTitle(builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace));
+						verAxis.setTitle(builder_CreateTitle(sTitle, oChartSpace));
 						if (verAxis.title) {
 							var _body_pr = new AscFormat.CBodyPr();
 							_body_pr.reset();
@@ -17654,6 +18035,7 @@
 							_text_body.setBodyPr(_body_pr);
 							verAxis.title.setOverlay(false);
 							builder_ApplyChartStyleToElement(oChartSpace, verAxis.title);
+							builder_SetTitleTextPr(verAxis.title, nFontSize, bIsBold);
 						}
 					} else {
 						verAxis.setTitle(null);
@@ -17773,89 +18155,272 @@
 			builder_SetObjectFontSize(oChartSpace.chart.plotArea.getVerticalAxis(), nFontSize, oChartSpace.getDrawingDocument());
 		}
 
+		function builder_MergeObjectDefaultTextPr(object, textPr, drawingDocument) {
+			if (!object || !textPr) {
+				return false;
+			}
 
-		function builder_SetShowPointDataLabel(oChartSpace, nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPerecent) {
-			if (oChartSpace && oChartSpace.chart && oChartSpace.chart.plotArea && oChartSpace.chart.plotArea.charts[0]) {
-				var oChart = oChartSpace.chart.plotArea.charts[0];
-				var bPieChart = oChart.getObjectType() === AscDFH.historyitem_type_PieChart || oChart.getObjectType() === AscDFH.historyitem_type_DoughnutChart;
-				var ser = oChart.series[nSeriesIndex];
-				if (ser) {
-					{
-						var bNewSerDLbls = false;
-						if (!ser.dLbls) {
-							if (oChart.dLbls) {
-								ser.setDLbls(oChart.dLbls.createDuplicate());
-							} else {
-								ser.setDLbls(new AscFormat.CDLbls());
-								ser.dLbls.setSeparator(",");
-								ser.dLbls.setShowSerName(false);
-								ser.dLbls.setShowCatName(false);
-								ser.dLbls.setShowVal(false);
-								ser.dLbls.setShowLegendKey(false);
-								if (bPieChart) {
-									ser.dLbls.setShowPercent(false);
-								}
-								ser.dLbls.setShowBubbleSize(false);
-								bNewSerDLbls = true;
-							}
+			if (!object.txPr) {
+				object.setTxPr(new AscFormat.CTextBody());
+			}
+			if (!object.txPr.bodyPr) {
+				object.txPr.setBodyPr(new AscFormat.CBodyPr());
+			}
+			if (!object.txPr.content) {
+				object.txPr.setContent(new AscFormat.CDrawingDocContent(object.txPr, drawingDocument, 0, 0, 100, 500, false, false, true));
+			}
+
+			const propCopy = object.txPr.content.Content[0].Pr.Copy();
+			if (!propCopy.DefaultRunPr) {
+				propCopy.DefaultRunPr = new AscCommonWord.CTextPr();
+			}
+
+			propCopy.DefaultRunPr.Merge(textPr);
+			object.txPr.content.Content[0].Set_Pr(propCopy);
+			return true;
+		}
+
+		function builder_InitDLblsShowFlags(chart, dLbls) {
+			const objectType = chart.getObjectType();
+			const isCircleChart = (
+				objectType === AscDFH.historyitem_type_PieChart ||
+				objectType === AscDFH.historyitem_type_DoughnutChart
+			);
+
+			dLbls.setSeparator(',');
+			dLbls.setShowSerName(false);
+			dLbls.setShowCatName(false);
+			dLbls.setShowVal(false);
+			dLbls.setShowLegendKey(false);
+			if (isCircleChart) {
+				dLbls.setShowPercent(false);
+			}
+			dLbls.setShowBubbleSize(false);
+		}
+
+		function builder_SetDataLabelsTextPr(chartSpace, textPr) {
+			const chart = (
+				chartSpace &&
+				chartSpace.chart &&
+				chartSpace.chart.plotArea &&
+				chartSpace.chart.plotArea.charts[0]
+			);
+
+			if (!chart) {
+				return false;
+			}
+
+			if (!chart.dLbls) {
+				chart.setDLbls(new AscFormat.CDLbls());
+				builder_InitDLblsShowFlags(chart, chart.dLbls);
+			}
+
+			const drawingDocument = chartSpace.getDrawingDocument();
+			for (let i = 0; i < chart.series.length; ++i) {
+				const ser = chart.series[i];
+				if (!ser.dLbls) {
+					ser.setDLbls(chart.dLbls.createDuplicate());
+				}
+				builder_MergeObjectDefaultTextPr(ser.dLbls, textPr, drawingDocument);
+
+				const labelArray = ser.dLbls.dLbl;
+				for (let j = 0; j < labelArray.length; ++j) {
+					const dLbl = labelArray[j];
+					if (dLbl) {
+						if (ser.dLbls.txPr && !dLbl.txPr) {
+							dLbl.setTxPr(ser.dLbls.txPr.createDuplicate());
 						}
-						if (bNewSerDLbls) {
-							builder_ApplyChartStyleToElement(oChartSpace, ser.dLbls);
-						}
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(nPointIndex);
-						var bNewDLbl = false;
-						if (!dLbl) {
-							dLbl = new AscFormat.CDLbl();
-							dLbl.setIdx(nPointIndex);
-							if (ser.dLbls.txPr) {
-								dLbl.merge(ser.dLbls);
-							}
-							ser.dLbls.addDLbl(dLbl);
-							bNewDLbl = true;
-						}
-						dLbl.setSeparator(",");
-						dLbl.setShowSerName(true == bShowSerName);
-						dLbl.setShowCatName(true == bShowCatName);
-						dLbl.setShowVal(true == bShowVal);
-						dLbl.setShowLegendKey(false);
-						if (bPieChart) {
-							dLbl.setShowPercent(true === bShowPerecent);
-						}
-						dLbl.setShowBubbleSize(false);
-						if (bNewDLbl) {
-							builder_ApplyChartStyleToElement(oChartSpace, dLbl);
-						}
+						builder_MergeObjectDefaultTextPr(dLbl, textPr, drawingDocument);
 					}
+				}
+			}
+
+			chartSpace.handleUpdateDataLabels();
+			return true;
+		}
+
+		function builder_SetPointDataLabelTextPr(chartSpace, seriesIndex, pointIndex, textPr) {
+			const chart = (
+				chartSpace &&
+				chartSpace.chart &&
+				chartSpace.chart.plotArea &&
+				chartSpace.chart.plotArea.charts[0]
+			);
+			if (!chart) {
+				return false;
+			}
+
+			const ser = chart.series[seriesIndex];
+			if (!ser) {
+				return false;
+			}
+
+			if (!chart.dLbls) {
+				chart.setDLbls(new AscFormat.CDLbls());
+				builder_InitDLblsShowFlags(chart, chart.dLbls);
+			}
+
+			if (!ser.dLbls) {
+				ser.setDLbls(chart.dLbls.createDuplicate());
+			}
+
+			let dLbl = ser.dLbls.findDLblByIdx(pointIndex);
+			if (!dLbl) {
+				dLbl = new AscFormat.CDLbl();
+				dLbl.setIdx(pointIndex);
+				dLbl.merge(ser.dLbls);
+				ser.dLbls.addDLbl(dLbl);
+			}
+
+			const result = builder_MergeObjectDefaultTextPr(dLbl, textPr, chartSpace.getDrawingDocument());
+			if (result) {
+				chartSpace.handleUpdateDataLabels();
+			}
+			return result;
+		}
+
+		function builder_SetShowPointDataLabel(oChartSpace, nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent) {
+			const chart = (
+				oChartSpace &&
+				oChartSpace.chart &&
+				oChartSpace.chart.plotArea &&
+				oChartSpace.chart.plotArea.charts[0]
+			);
+			if (!chart) {
+				return;
+			}
+
+			const objectType = chart.getObjectType();
+			const isCircleChart = (
+				objectType === AscDFH.historyitem_type_PieChart ||
+				objectType === AscDFH.historyitem_type_DoughnutChart
+			);
+
+			const ser = chart.series[nSeriesIndex];
+			if (!ser) {
+				return;
+			}
+
+			let bNewSerDLbls = false;
+			if (!ser.dLbls) {
+				if (chart.dLbls) {
+					ser.setDLbls(chart.dLbls.createDuplicate());
+				} else {
+					ser.setDLbls(new AscFormat.CDLbls());
+					ser.dLbls.setSeparator(",");
+					ser.dLbls.setShowSerName(false);
+					ser.dLbls.setShowCatName(false);
+					ser.dLbls.setShowVal(false);
+					ser.dLbls.setShowLegendKey(false);
+					if (isCircleChart) {
+						ser.dLbls.setShowPercent(false);
+					}
+					ser.dLbls.setShowBubbleSize(false);
+					bNewSerDLbls = true;
+				}
+			}
+			if (bNewSerDLbls) {
+				builder_ApplyChartStyleToElement(oChartSpace, ser.dLbls);
+			}
+
+			let dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(nPointIndex);
+			let bNewDLbl = false;
+			if (!dLbl) {
+				dLbl = new AscFormat.CDLbl();
+				dLbl.setIdx(nPointIndex);
+				if (ser.dLbls.txPr) {
+					dLbl.merge(ser.dLbls);
+				}
+				ser.dLbls.addDLbl(dLbl);
+				bNewDLbl = true;
+			}
+			if (bNewDLbl) {
+				builder_ApplyChartStyleToElement(oChartSpace, dLbl);
+			}
+
+			dLbl.setSeparator(",");
+			dLbl.setShowSerName(true === bShowSerName);
+			dLbl.setShowCatName(true === bShowCatName);
+			dLbl.setShowVal(true === bShowVal);
+			dLbl.setShowLegendKey(false);
+			if (isCircleChart) {
+				dLbl.setShowPercent(true === bShowPercent);
+			}
+			dLbl.setShowBubbleSize(false);
+		}
+
+		function builder_ApplyDLblsShowFlags(dLbls, isCircleChart, showSerName, showCatName, showVal, showPercent) {
+			dLbls.setShowSerName(true === showSerName);
+			dLbls.setShowCatName(true === showCatName);
+			dLbls.setShowVal(true === showVal);
+			dLbls.setShowLegendKey(false);
+			if (isCircleChart) {
+				dLbls.setShowPercent(true === showPercent);
+			}
+			dLbls.setShowBubbleSize(false);
+
+			const labelArray = dLbls.dLbl;
+			if (!Array.isArray(labelArray)) {
+				return;
+			}
+			for (let i = 0; i < labelArray.length; ++i) {
+				if (labelArray[i]) {
+					builder_ApplyDLblsShowFlags(labelArray[i], isCircleChart, showSerName, showCatName, showVal, showPercent);
 				}
 			}
 		}
 
-		function builder_SetShowDataLabels(oChartSpace, bShowSerName, bShowCatName, bShowVal, bShowPerecent) {
-			if (oChartSpace && oChartSpace.chart && oChartSpace.chart.plotArea && oChartSpace.chart.plotArea.charts[0]) {
-				var oChart = oChartSpace.chart.plotArea.charts[0];
-				var bPieChart = oChart.getObjectType() === AscDFH.historyitem_type_PieChart || oChart.getObjectType() === AscDFH.historyitem_type_DoughnutChart;
-				if (false == bShowSerName && false == bShowCatName && false == bShowVal && (bPieChart && bShowPerecent === false)) {
-					if (oChart.dLbls) {
-						oChart.setDLbls(null);
+		function builder_SetShowDataLabels(chartSpace, showSerName, showCatName, showVal, showPercent) {
+			const chart = (
+				chartSpace &&
+				chartSpace.chart &&
+				chartSpace.chart.plotArea &&
+				chartSpace.chart.plotArea.charts[0]
+			);
+			if (!chart) {
+				return;
+			}
+
+			const objectType = chart.getObjectType();
+			const isCircleChart = (
+				objectType === AscDFH.historyitem_type_PieChart ||
+				objectType === AscDFH.historyitem_type_DoughnutChart
+			);
+
+			const clearDataLabels = (
+				showSerName === false &&
+				showCatName === false &&
+				showVal === false &&
+				(!isCircleChart || showPercent === false)
+			);
+			if (clearDataLabels) {
+				if (chart.dLbls) {
+					chart.setDLbls(null);
+				}
+				for (let i = 0; i < chart.series.length; ++i) {
+					if (chart.series[i].dLbls) {
+						chart.series[i].setDLbls(null);
 					}
 				}
-				var bNewDLbls = false;
-				if (!oChart.dLbls) {
-					oChart.setDLbls(new AscFormat.CDLbls());
-					bNewDLbls = true;
-				}
-				oChart.dLbls.setSeparator(",");
-				oChart.dLbls.setShowSerName(true == bShowSerName);
-				oChart.dLbls.setShowCatName(true == bShowCatName);
-				oChart.dLbls.setShowVal(true == bShowVal);
-				oChart.dLbls.setShowLegendKey(false);
-				if (bPieChart) {
-					oChart.dLbls.setShowPercent(true === bShowPerecent);
-				}
+				return;
+			}
 
-				oChart.dLbls.setShowBubbleSize(false);
-				if (bNewDLbls) {
-					builder_ApplyChartStyleToElement(oChartSpace, oChart.dLbls);
+			let newChartDLbls = false;
+			if (!chart.dLbls) {
+				chart.setDLbls(new AscFormat.CDLbls());
+				newChartDLbls = true;
+			}
+
+			chart.dLbls.setSeparator(',');
+			builder_ApplyDLblsShowFlags(chart.dLbls, isCircleChart, showSerName, showCatName, showVal, showPercent);
+			if (newChartDLbls) {
+				builder_ApplyChartStyleToElement(chartSpace, chart.dLbls);
+			}
+
+			for (let i = 0; i < chart.series.length; ++i) {
+				const ser = chart.series[i];
+				if (ser.dLbls) {
+					builder_ApplyDLblsShowFlags(ser.dLbls, isCircleChart, showSerName, showCatName, showVal, showPercent);
 				}
 			}
 		}
@@ -20578,6 +21143,9 @@
 		window['AscFormat'].CLn = CLn;
 		window['AscFormat'].DefaultShapeDefinition = DefaultShapeDefinition;
 		window['AscFormat'].CNvPr = CNvPr;
+		window['AscFormat'].IsSlideJumpLinkValue = function (value) {
+			return typeof value === "string" && (0 === value.indexOf("ppaction://hlinksldjumpslide") || "ppaction://noaction" === value);
+		};
 		window['AscFormat'].NvPr = NvPr;
 		window['AscFormat'].Ph = Ph;
 		window['AscFormat'].UniNvPr = UniNvPr;
@@ -20618,7 +21186,6 @@
 		window['AscFormat'].GenerateDefaultVisioTheme = GenerateDefaultVisioTheme;
 		window['AscFormat'].GenerateDefaultMasterSlide = GenerateDefaultMasterSlide;
 		window['AscFormat'].GenerateDefaultSlideLayout = GenerateDefaultSlideLayout;
-		window['AscFormat'].GenerateDefaultSlide = GenerateDefaultSlide;
 		window['AscFormat'].CreateDefaultTextRectStyle = CreateDefaultTextRectStyle;
 		window['AscFormat'].GenerateDefaultColorMap = GenerateDefaultColorMap;
 		window['AscFormat'].CreateAscFill = CreateAscFill;
@@ -20671,6 +21238,8 @@
 		window['AscFormat'].builder_SetHorAxisFontSize = builder_SetHorAxisFontSize;
 		window['AscFormat'].builder_SetVerAxisFontSize = builder_SetVerAxisFontSize;
 		window['AscFormat'].builder_SetShowPointDataLabel = builder_SetShowPointDataLabel;
+		window['AscFormat'].builder_SetDataLabelsTextPr = builder_SetDataLabelsTextPr;
+		window['AscFormat'].builder_SetPointDataLabelTextPr = builder_SetPointDataLabelTextPr;
 
 
 		window['AscFormat'].Ax_Counter = Ax_Counter;
@@ -20857,6 +21426,8 @@
 		window['AscFormat'].CBaseFormatNoIdObject = CBaseFormatNoIdObject;
 		window['AscFormat'].CBaseNoIdObject = CBaseNoIdObject;
 		window['AscFormat'].checkRasterImageId = checkRasterImageId;
+		window['AscFormat'].isLocalImagePath = isLocalImagePath;
+		window['AscFormat'].prepareLocalImageSrc = prepareLocalImageSrc;
 		window['AscFormat'].IdEntry = IdEntry;
 		window['AscFormat'].CEffectStyle = CEffectStyle;
 

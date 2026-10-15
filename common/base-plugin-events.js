@@ -88,7 +88,18 @@
  * @memberof Plugin
  * @alias onChangeRestrictions
  * @description The function called when the restrictions in the editor are changed.
- * @param {number} value - The restrictions value.
+ * @param {EditorRestrictions} value - The restrictions value.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeRestrictions.js
+ */
+
+/**
+ * Event: onFloatActionButtonClick
+ * @event Plugin#onFloatActionButtonClick
+ * @memberof Plugin
+ * @alias onFloatActionButtonClick
+ * @description The function called when the floating action button has been clicked.
+ * @param {string} id - Button ID.
+ * @since 10.0.0
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onFloatActionButtonClick.js
  */
 

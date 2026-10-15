@@ -117,7 +117,7 @@
 
     CPresentationField.prototype.Copy2 = function()
     {
-        this.Copy();
+        return this.Copy();
     };
 
     CPresentationField.prototype.SetGuid = function(sGuid)
@@ -205,26 +205,40 @@
                     {
                         nFirstSlideNum = oStylesObject.presentation.getFirstSlideNumber();
                     }
-                    if(oStylesObject.slide)
+                    if(oStylesObject.outlineView)
                     {
-                        this.Slide = oStylesObject.slide;
-                        if(AscFormat.isRealNumber(this.Slide.num))
+                        const numInfo = oStylesObject.outlineView.getSlideNumPresentationFieldInfo(this.Paragraph);
+                        if(AscFormat.isRealNumber(numInfo.slideIndex) && numInfo.slideIndex > -1)
                         {
-                            this.SlideNum = this.Slide.num;
-                            sStr = '' + (this.Slide.num + nFirstSlideNum);
+                            this.SlideNum = numInfo.slideIndex;
+                            sStr = '' + numInfo.slideNum;
+                        }
+                        else
+                        {
+                            sStr = '<#>';
                         }
                     }
-                    else if(oStylesObject.notes)
+                    else if(oStylesObject.slide)
                     {
-                        if(oStylesObject.notes.slide)
-                        {
-                            this.Slide = oStylesObject.notes.slide;
-                            if(AscFormat.isRealNumber(this.Slide.num))
-                            {
-                                this.SlideNum = this.Slide.num;
-                                sStr = '' + (this.Slide.num + nFirstSlideNum);
-                            }
-                        }
+											if (oStylesObject.slide.isNote()) {
+												if(oStylesObject.slide.slide)
+												{
+													this.Slide = oStylesObject.slide.slide;
+													if(AscFormat.isRealNumber(this.Slide.num))
+													{
+														this.SlideNum = this.Slide.num;
+														sStr = '' + (this.Slide.num + nFirstSlideNum);
+													}
+												}
+											} else {
+												this.Slide = oStylesObject.slide;
+												if(AscFormat.isRealNumber(this.Slide.num))
+												{
+													this.SlideNum = this.Slide.num;
+													sStr = '' + (this.Slide.num + nFirstSlideNum);
+												}
+											}
+
                     }
                     else if(oStylesObject.layout || oStylesObject.master)
                     {
@@ -289,6 +303,28 @@
                     }
                 }
             }
+            else if("cellrange" === sFieldType)
+            {
+                if(this.Paragraph && this.Paragraph.Parent)
+                {
+                    oStylesObject = this.Paragraph.Parent.Get_Styles();
+                    if(oStylesObject.shape && oStylesObject.shape.getDataLabelsRangeString)
+                    {
+                        sStr = oStylesObject.shape.getDataLabelsRangeString();
+                    }
+                }
+            }
+            else if("seriesname" === sFieldType)
+            {
+                if(this.Paragraph && this.Paragraph.Parent)
+                {
+                    oStylesObject = this.Paragraph.Parent.Get_Styles();
+                    if(oStylesObject.shape && oStylesObject.shape.getSeriesName)
+                    {
+                        sStr = oStylesObject.shape.getSeriesName();
+                    }
+                }
+            }
             else if(sFieldType.indexOf("datetime") === 0)
             {
                 oFormat = this.private_GetDateTimeFormat(sFieldType);
@@ -312,6 +348,10 @@
 
     CPresentationField.prototype.private_GetDateTimeFormat = function(sFieldType)
     {
+        if(!oDateTimeFormats[sFieldType] && "datetime" !== sFieldType && "datetimefigureout" !== sFieldType)
+        {
+            return AscCommon.oNumFormatCache.get(this.FieldType.substring("datetime".length), AscCommon.NumFormatType.WordFieldDate);
+        }
         let sResultFiledType = sFieldType;
         let oFormat = null;
         const nLang = this.Get_CompiledPr().Lang.Val;
@@ -357,14 +397,6 @@
             oFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.WordFieldDate);
         }
         return oFormat;
-    };
-
-    CPresentationField.prototype.Recalculate_MeasureContent = function()
-    {
-        if (!this.RecalcInfo.IsMeasureNeed())
-            return;
-        this.private_CalculateContent();
-        ParaRun.prototype.Recalculate_MeasureContent.call(this);
     };
 
     CPresentationField.prototype.Recalculate_MeasureContent = function()

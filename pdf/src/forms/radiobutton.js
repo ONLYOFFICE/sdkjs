@@ -50,68 +50,12 @@
         this._noToggleToOff = true;
 
         this._chStyle       = AscPDF.CHECKBOX_STYLES.circle;
+		this._borderColor	= [0];
+		this._borderStyle	= AscPDF.BORDER_TYPES.inset;
+		this._borderWidth	= 1;
     }
 	CRadioButtonField.prototype.constructor = CRadioButtonField;
     AscFormat.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
-    
-    /**
-	 * Updates all field with this field name.
-	 * @memberof CRadioButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    CRadioButtonField.prototype.UpdateAll = function() {
-        let aOptions    = this.GetOptions();
-        let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
-        let value       = this.GetParentValue();
-
-        let bFromOpt = false;
-        let sExportValue;
-        
-        // if there's opt array, then value is 99% of the time an index in opt array (export values)
-        if (aOptions && aOptions[value]) {
-            sExportValue = aOptions[value];
-            bFromOpt = true;
-        }
-        else {
-            sExportValue = value;
-        }
-
-        if (this.IsRadiosInUnison()) {
-            aFields.forEach(function(field) {
-                if (field.GetExportValue() == sExportValue) {
-                    field.SetChecked(true);
-                }
-                else {
-                    field.SetChecked(false);
-                }
-            });
-        }
-        else {
-            let oFirstField = null;
-            aFields.forEach(function(field, index) {
-                // set by index from Opt
-                if (bFromOpt) {
-                    if (index == value) {
-                        field.SetChecked(true);
-                    }
-                    else {
-                        field.SetChecked(false);
-                    }
-                }
-                else {
-                    // keep only first one checked if not by index from Opt
-                    if (oFirstField == null && field.GetExportValue() == sExportValue) {
-                        field.SetChecked(true);
-                        oFirstField = field;
-                    }
-                    else {
-                        field.SetChecked(false);
-                    }
-                }
-                
-            })
-        }
-    };
     
     /**
 	 * Applies value of this field to all field with the same name
@@ -164,10 +108,11 @@
             return oParent.SetRadiosInUnison(bValue);
 
         if (this._radiosInUnison === bValue) {
+			this.UpdateAll();
             return true;
         }
         
-        AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
+		AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
 
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);

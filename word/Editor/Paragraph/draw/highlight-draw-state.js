@@ -54,6 +54,7 @@
 	 */
 	function ParagraphHighlightDrawState(drawState)
 	{
+		AscWord.ParagraphBidiFlow.call(this);
 		this.drawState = drawState;
 		
 		this.Page   = 0;
@@ -81,7 +82,7 @@
 		this.haveCurrentComment = false;
 		this.currentCommentId   = null;
 		this.comments           = []; // current list of comments
-		this.permRanges         = {};
+		this.permRanges         = [];
 		
 		this.hyperlinks = [];
 		
@@ -94,14 +95,13 @@
 		this.Y0 = 0;
 		this.Y1 = 0;
 		
-		this.spaces = 0;
+		this.spaces     = 0;
+		this.spacesSkip = 0;
 		
 		this.InlineSdt = [];
 		this.CollectFixedForms = false;
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
-		
-		this.bidiFlow = new AscWord.BidiFlow(this);
 		
 		this.run       = null;
 		this.highlight = highlight_None;
@@ -111,6 +111,9 @@
 		
 		this.permColor = null;
 	}
+	ParagraphHighlightDrawState.prototype = Object.create(AscWord.ParagraphBidiFlow.prototype);
+	ParagraphHighlightDrawState.prototype.constructor = ParagraphHighlightDrawState;
+
 	ParagraphHighlightDrawState.prototype.init = function(paragraph, graphics)
 	{
 		this.Paragraph = paragraph;
@@ -168,7 +171,7 @@
 		this.Y0   = top;
 		this.Y1   = bottom;
 	};
-	ParagraphHighlightDrawState.prototype.beginRange = function(range, X, spaceCount)
+	ParagraphHighlightDrawState.prototype.beginRange = function(rangeNum, X)
 	{
 		this.High.Clear();
 		this.Coll.Clear();
@@ -179,15 +182,20 @@
 		this.CFields.Clear();
 		this.HyperCF.Clear();
 		this.Perm.Clear();
-		
-		this.Range = range;
+
+		this.Range = rangeNum;
 		this.X = X;
-		
-		if (!this.Paragraph.isRtlDirection())
+
+		let isRtl = this.Paragraph.isRtlDirection();
+		let range = this.Paragraph.Lines[this.Line].Ranges[this.Range];
+
+		if (!isRtl)
 			this.checkNumbering(false);
-		
-		this.spaces = spaceCount;
-		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
+
+		this.spaces     = range.Spaces + (isRtl ? range.SpacesRight : range.SpacesLeft);
+		this.spacesSkip = isRtl ? range.SpacesLeft : 0;
+
+		this.bidiFlow.begin(isRtl);
 		
 		this.InlineSdt = [];
 		
@@ -278,20 +286,33 @@
 		
 		let flags = this.getFlags(element, !!collaborationColor);
 		let hyperlink = this.getHyperlinkObject();
-		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
+		this.bidiFlow.add([para_RunBase, element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
-	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
+	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
 	{
-		let element    = data[0];
-		let run        = data[1];
-		let flags      = data[2];
-		let hyperlink  = data[3];
-		let collColor  = data[4];
-		let comments   = data[5];
-		let curComment = data[6];
+		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.add([para_Math, math], math.getBidiType());
+	};
+	ParagraphHighlightDrawState.prototype.handleMathBase = function(mathBase)
+	{
+		this.bidiFlow.add([para_Math_Composition, mathBase], mathBase.getBidiType());
+	};
+	ParagraphHighlightDrawState.prototype.handleBidiFlowRunElement = function(data, direction)
+	{
+		let element    = data[1];
+		let run        = data[2];
+		let flags      = data[3];
+		let hyperlink  = data[4];
+		let collColor  = data[5];
+		let comments   = data[6];
+		let curComment = data[7];
 		let highlightAdditional;
 		
 		let w = element.GetWidthVisible();
+		
+		flags = this.updateFlags(element, flags);
 		
 		this.handleRun(run);
 
@@ -302,12 +323,9 @@
 		
 		this.X += w;
 	};
-	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowParaMath = function(data, direction)
 	{
-		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
-			return;
-		
-		this.bidiFlow.end();
+		let math = data[1];
 		
 		let y0 = this.Y0;
 		let y1 = this.Y1;
@@ -318,7 +336,7 @@
 		this.Coll = new CParaDrawingRangeLines();
 		this.Comm = new CParaDrawingRangeLines();
 		
-		math.Root.Draw_HighLights(this);
+		math.Root.drawHighLights(this);
 		
 		let mathComments = this.Comm.getNext();
 		if (mathComments)
@@ -341,9 +359,9 @@
 		this.Y0 = y0;
 		this.Y1 = y1;
 	};
-	ParagraphHighlightDrawState.prototype.handleMathBase = function(element)
+	ParagraphHighlightDrawState.prototype.handleBidiFlowMathBase = function(data, direction)
 	{
-		this.bidiFlow.end();
+		let element = data[1];
 		
 		let textPr = element.Get_CompiledCtrPrp();
 		
@@ -367,7 +385,7 @@
 		
 		for (let pos = startPos; pos <= endPos; ++pos)
 		{
-			element.Content[pos].Draw_HighLights(this);
+			element.Content[pos].drawHighLights(this);
 		}
 		
 		// Add after because we are rendering in reverse direction
@@ -552,8 +570,24 @@
 			flags |= FLAG_COMPLEX_FIELD;
 		if (this.permRanges.length > 0)
 			flags |= FLAG_PERM_RANGE;
+		if (this.DrawComments && this.comments.length > 0)
+			flags |= FLAG_COMMENT;
+		if (this.DrawColl && isCollaboration)
+			flags |= FLAG_COLLABORATION;
 		
-		if (element.Type !== para_End)
+		return flags;
+	};
+	ParagraphHighlightDrawState.prototype.updateFlags = function(element, f)
+	{
+		let flags = 0;
+		if (f & FLAG_SEARCH)
+			flags |= FLAG_SEARCH;
+		if (f & FLAG_COMPLEX_FIELD)
+			flags |= FLAG_COMPLEX_FIELD;
+		if (f & FLAG_PERM_RANGE)
+			flags |= FLAG_PERM_RANGE;
+		
+		if (element.Type !== para_End && element.Type !== para_Space)
 			flags |= FLAG_SHD;
 		
 		switch (element.Type)
@@ -575,23 +609,29 @@
 			case para_EndnoteReference:
 			case para_EndnoteRef:
 			{
-				if (this.DrawComments && this.comments.length > 0)
+				if (f & FLAG_COMMENT)
 					flags |= FLAG_COMMENT;
 				else
 					flags |= FLAG_HIGHLIGHT;
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (f & FLAG_SEARCH)
 					flags |= FLAG_SEARCH;
-				else if (this.DrawColl && isCollaboration)
+				else if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
 			}
 			case para_Space:
 			{
-				if (this.spaces > 0)
+				if (this.spacesSkip)
 				{
-					if (this.DrawComments && this.comments.length > 0)
+					--this.spacesSkip;
+				}
+				else if (this.spaces)
+				{
+					flags |= FLAG_SHD;
+					
+					if (f & FLAG_COMMENT)
 						flags |= FLAG_COMMENT;
 					else
 						flags |= FLAG_HIGHLIGHT;
@@ -599,16 +639,16 @@
 					--this.spaces;
 				}
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (f & FLAG_SEARCH)
 					flags |= FLAG_SEARCH;
-				else if (this.DrawColl && isCollaboration)
+				else if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
 			}
 			case para_End:
 			{
-				if (this.DrawColl && isCollaboration)
+				if (f & FLAG_COLLABORATION)
 					flags |= FLAG_COLLABORATION;
 				
 				break;
@@ -617,14 +657,14 @@
 			{
 				if (element.IsVisual())
 				{
-					if (this.DrawComments && this.comments.length > 0)
+					if (f & FLAG_COMMENT)
 						flags |= FLAG_COMMENT;
 					else
 						flags |= FLAG_HIGHLIGHT;
 					
-					if (this.DrawSearch && this.searchCounter > 0)
+					if (f & FLAG_SEARCH)
 						flags |= FLAG_SEARCH;
-					else if (this.DrawColl && isCollaboration)
+					else if (f & FLAG_COLLABORATION)
 						flags |= FLAG_COLLABORATION;
 					
 					if (element.IsFormField())

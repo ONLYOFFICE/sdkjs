@@ -79,6 +79,7 @@
     
     CAnnotationText.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
     CAnnotationText.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationText.prototype.recalcGeometry = function() {};
     CAnnotationText.prototype.canChangeAdjustments = function() {};
     CAnnotationText.prototype.hitToHandles = function() {};
     CAnnotationText.prototype.hitInBoundingRect = function() {};
@@ -126,36 +127,6 @@
     CAnnotationText.prototype.ClearReplies = function() {
         this._replies = [];
     };
-    CAnnotationText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc.asc_CCommentDataWord(null);
-        if (null == this.GetContents()) {
-            return undefined;
-        }
-
-        oAscCommData.asc_putText(this.GetContents());
-        let sModDate = this.GetModDate();
-        if (sModDate)
-            oAscCommData.asc_putOnlyOfficeTime(sModDate.toString());
-        oAscCommData.asc_putUserId(this.GetUserId());
-        oAscCommData.asc_putUserName(this.GetAuthor());
-        
-        let nState = this.GetState();
-        let bSolved;
-        if (nState == TEXT_ANNOT_STATE.Accepted || nState == TEXT_ANNOT_STATE.Completed)
-            bSolved = true;
-        oAscCommData.asc_putSolved(bSolved);
-        oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = this.GetId();
-
-        this._replies.forEach(function(reply) {
-            let oReplyAscCommData = reply.GetAscCommentData();
-            if (oReplyAscCommData) {
-                oAscCommData.m_aReplies.push(oReplyAscCommData);
-            }
-        });
-
-        return oAscCommData;
-    };
 
     CAnnotationText.prototype.SetIconType = function(nType) {
         if (nType == this._noteIcon) {
@@ -165,6 +136,7 @@
         AscCommon.History.Add(new CChangesPDFTextAnnotIcon(this, this._noteIcon, nType));
         this._noteIcon = nType;
         this.SetWasChanged(true);
+		this.AddToRedraw();
     };
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
@@ -238,6 +210,8 @@
         let oCtx = oGraphics.GetContext();
         oCtx.save();
         oGraphics.EnableTransform();
+		oGraphics.SetGlobalAlpha(this.GetOpacity());
+
         oCtx.iconFill = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
 
         let nScale = 1 / (oGraphics.isThumbnails ? 1 : oDoc.Viewer.zoom);
@@ -253,7 +227,6 @@
             [nX, nY + nHeight]
         ]];
 
-        oGraphics.DrawLockObjectRect(this.Lock.Get_Type(), aRegions);
         //// draw rect
         // oGraphics.SetLineWidth(1);
         // oGraphics.SetStrokeStyle(0, 255, 255);
@@ -262,51 +235,10 @@
         // oGraphics.Rect(nX, nY, nWidth, nHeight);
         // oGraphics.Stroke();
     };
-    CAnnotationText.prototype.drawLocks = function (transform, oGraphicsPDF) {
-		if (AscCommon.IsShapeToImageConverter) {
-			return;
-		}
-		var bNotes = !!(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES);
-		if (!this.group && !bNotes) {
-			var oLock;
-			if (this.parent instanceof AscCommonWord.ParaDrawing) {
-				oLock = this.parent.Lock;
-			} else if (this.Lock) {
-				oLock = this.Lock;
-			}
-			if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
-				var bCoMarksDraw = true;
-				var oApi = editor || Asc['editor'];
-				if (oApi) {
-
-					switch (oApi.getEditorId()) {
-						case AscCommon.c_oEditorId.Word: {
-							bCoMarksDraw = (true === oApi.isCoMarksDraw || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
-							break;
-						}
-						case AscCommon.c_oEditorId.Presentation: {
-							bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
-							break;
-						}
-						case AscCommon.c_oEditorId.Spreadsheet: {
-							bCoMarksDraw = (!oApi.collaborativeEditing.getFast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
-							break;
-						}
-					}
-				}
-				if (bCoMarksDraw && oGraphicsPDF.DrawLockObjectRect) {
-					oGraphicsPDF.transform3(transform);
-					oGraphicsPDF.DrawLockObjectRect(oLock.Get_Type(), 0, 0, this.extX, this.extY);
-					return true;
-				}
-			}
-		}
-		return false;
-	};
     CAnnotationText.prototype.IsNeedDrawFromStream = function() {
         return false;
     };
-    CAnnotationText.prototype.IsComment = function() {
+    CAnnotationText.prototype.IsText = function() {
         return true;
     };
     CAnnotationText.prototype.DrawSelected = function(overlay) {

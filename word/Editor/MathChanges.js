@@ -209,6 +209,7 @@ CChangesMathContentAddItem.prototype.Undo = function()
 	var oMathContent = this.Class;
 	oMathContent.Content.splice(this.Pos, this.Items.length);
 	oMathContent.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
+	oMathContent.private_UpdatePresentationOutline();
 };
 CChangesMathContentAddItem.prototype.Redo = function()
 {
@@ -231,6 +232,7 @@ CChangesMathContentAddItem.prototype.Redo = function()
 		
 		item.Recalc_RunsCompiledPr();
 	}
+	mathContent.private_UpdatePresentationOutline();
 };
 CChangesMathContentAddItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -263,6 +265,7 @@ CChangesMathContentAddItem.prototype.Load = function(Color)
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oMathContent, Pos);
 		}
 	}
+	oMathContent.private_UpdatePresentationOutline();
 };
 CChangesMathContentAddItem.prototype.IsRelated = function(oChanges)
 {
@@ -307,12 +310,14 @@ CChangesMathContentRemoveItem.prototype.Undo = function()
 		
 		item.Recalc_RunsCompiledPr();
 	}
+	mathContent.private_UpdatePresentationOutline();
 };
 CChangesMathContentRemoveItem.prototype.Redo = function()
 {
 	var oMathContent = this.Class;
 	oMathContent.Content.splice(this.Pos, this.Items.length);
 	oMathContent.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
+	oMathContent.private_UpdatePresentationOutline();
 };
 CChangesMathContentRemoveItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -336,6 +341,7 @@ CChangesMathContentRemoveItem.prototype.Load = function(Color)
 		oMathContent.private_UpdateSelectionPosOnRemove(ChangesPos, 1);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oMathContent, ChangesPos, 1);
 	}
+	oMathContent.private_UpdatePresentationOutline();
 };
 CChangesMathContentRemoveItem.prototype.IsRelated = function(oChanges)
 {
@@ -372,6 +378,7 @@ CChangesMathContentTextPr.prototype.private_SetValue = function(Value)
 {
 	var oCMathContent = this.Class;
 	oCMathContent.CtrPrp = Value;
+	oCMathContent.private_UpdatePresentationOutline();
 };
 CChangesMathContentTextPr.prototype.Load = function(Color)
 {
@@ -614,6 +621,7 @@ CChangesMathContentArgSize.prototype.private_SetValue = function(Value)
 	var oMathContent = this.Class;
 	oMathContent.ArgSize.SetValue(Value);
 	oMathContent.Recalc_RunsCompiledPr();
+	oMathContent.private_UpdatePresentationOutline();
 };
 
 /**
@@ -631,6 +639,7 @@ CChangesMathParaJc.prototype.Type = AscDFH.historyitem_MathPara_Jc;
 CChangesMathParaJc.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetAlign(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -648,10 +657,12 @@ CChangesMathBaseAddItems.prototype.Type = AscDFH.historyitem_MathBase_AddItems;
 CChangesMathBaseAddItems.prototype.Undo = function()
 {
 	this.Class.raw_RemoveFromContent(this.Pos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathBaseAddItems.prototype.Redo = function()
 {
 	this.Class.raw_AddToContent(this.Pos, this.Items, false);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathBaseAddItems.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -685,6 +696,7 @@ CChangesMathBaseAddItems.prototype.Load = function(Color)
 	}
 
 	oMathBase.fillContent();
+	oMathBase.private_UpdatePresentationOutline();
 };
 CChangesMathBaseAddItems.prototype.IsRelated = function(oChanges)
 {
@@ -711,10 +723,12 @@ CChangesMathBaseRemoveItems.prototype.Type = AscDFH.historyitem_MathBase_RemoveI
 CChangesMathBaseRemoveItems.prototype.Undo = function()
 {
 	this.Class.raw_AddToContent(this.Pos, this.Items, false);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathBaseRemoveItems.prototype.Redo = function()
 {
 	this.Class.raw_RemoveFromContent(this.Pos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathBaseRemoveItems.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -737,6 +751,7 @@ CChangesMathBaseRemoveItems.prototype.Load = function()
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oMathBase, ChangesPos, 1);
 	}
 	oMathBase.fillContent();
+	oMathBase.private_UpdatePresentationOutline();
 };
 CChangesMathBaseRemoveItems.prototype.IsRelated = function(oChanges)
 {
@@ -835,6 +850,7 @@ CChangesMathBaseUnderline.prototype.Type = AscDFH.historyitem_MathBase_Underline
 CChangesMathBaseUnderline.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetUnderline(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -850,6 +866,7 @@ CChangesMathBaseStrikeout.prototype.Type = AscDFH.historyitem_MathBase_Strikeout
 CChangesMathBaseStrikeout.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetStrikeout(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -865,6 +882,7 @@ CChangesMathBaseDoubleStrikeout.prototype.Type = AscDFH.historyitem_MathBase_Dou
 CChangesMathBaseDoubleStrikeout.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_Set_DoubleStrikeout(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -880,6 +898,7 @@ CChangesMathBaseItalic.prototype.Type = AscDFH.historyitem_MathBase_Italic;
 CChangesMathBaseItalic.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetItalic(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1278,6 +1297,7 @@ CChangesMathBoxAlnAt.prototype.Type = AscDFH.historyitem_MathBox_AlnAt;
 CChangesMathBoxAlnAt.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_setAlnAt(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathBoxAlnAt.prototype.Merge = function(oChange)
 {
@@ -1303,6 +1323,7 @@ CChangesMathBoxForcedBreak.prototype.Type = AscDFH.historyitem_MathBox_ForcedBre
 CChangesMathBoxForcedBreak.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_ForcedBreak(Value, this.Class.Pr.Get_AlnAt());
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathBoxForcedBreak.prototype.Merge = function(oChange)
 {
@@ -1330,6 +1351,7 @@ CChangesMathFractionType.prototype.Type = AscDFH.historyitem_MathFraction_Type;
 CChangesMathFractionType.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetFractionType(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1347,6 +1369,7 @@ CChangesMathRadicalHideDegree.prototype.Type = AscDFH.historyitem_MathRadical_Hi
 CChangesMathRadicalHideDegree.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetHideDegree(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1364,6 +1387,7 @@ CChangesMathNaryLimLoc.prototype.Type = AscDFH.historyitem_MathNary_LimLoc;
 CChangesMathNaryLimLoc.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetLimLoc(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1379,6 +1403,7 @@ CChangesMathNaryUpperLimit.prototype.Type = AscDFH.historyitem_MathNary_UpperLim
 CChangesMathNaryUpperLimit.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_HideUpperIterator(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1394,6 +1419,7 @@ CChangesMathNaryLowerLimit.prototype.Type = AscDFH.historyitem_MathNary_LowerLim
 CChangesMathNaryLowerLimit.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_HideLowerIterator(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1411,6 +1437,7 @@ CChangesMathDelimBegOper.prototype.Type = AscDFH.historyitem_MathDelimiter_BegOp
 CChangesMathDelimBegOper.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_HideBegOperator(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1426,6 +1453,7 @@ CChangesMathDelimEndOper.prototype.Type = AscDFH.historyitem_MathDelimiter_EndOp
 CChangesMathDelimEndOper.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_HideEndOperator(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1441,6 +1469,7 @@ CChangesMathDelimiterGrow.prototype.Type = AscDFH.historyitem_MathDelimiter_Grow
 CChangesMathDelimiterGrow.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetGrow(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1456,6 +1485,7 @@ CChangesMathDelimiterShape.prototype.Type = AscDFH.historyitem_MathDelimiter_Sha
 CChangesMathDelimiterShape.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetShape(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1471,6 +1501,7 @@ CChangesMathDelimiterSetColumn.prototype.Type = AscDFH.historyitem_MathDelimiter
 CChangesMathDelimiterSetColumn.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetColumn(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1492,6 +1523,7 @@ CChangesMathGroupCharPr.prototype.private_CreateObject = function()
 CChangesMathGroupCharPr.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetPr(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1509,6 +1541,7 @@ CChangesMathLimitType.prototype.Type = AscDFH.historyitem_MathLimit_Type;
 CChangesMathLimitType.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetType(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1526,6 +1559,7 @@ CChangesMathBorderBoxTop.prototype.Type = AscDFH.historyitem_MathBorderBox_Top;
 CChangesMathBorderBoxTop.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetTop(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1541,6 +1575,7 @@ CChangesMathBorderBoxBot.prototype.Type = AscDFH.historyitem_MathBorderBox_Bot;
 CChangesMathBorderBoxBot.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetBot(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1556,6 +1591,7 @@ CChangesMathBorderBoxLeft.prototype.Type = AscDFH.historyitem_MathBorderBox_Left
 CChangesMathBorderBoxLeft.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetLeft(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1571,6 +1607,7 @@ CChangesMathBorderBoxRight.prototype.Type = AscDFH.historyitem_MathBorderBox_Rig
 CChangesMathBorderBoxRight.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetRight(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1586,6 +1623,7 @@ CChangesMathBorderBoxHor.prototype.Type = AscDFH.historyitem_MathBorderBox_Hor;
 CChangesMathBorderBoxHor.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetHor(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1601,6 +1639,7 @@ CChangesMathBorderBoxVer.prototype.Type = AscDFH.historyitem_MathBorderBox_Ver;
 CChangesMathBorderBoxVer.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetVer(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1616,6 +1655,7 @@ CChangesMathBorderBoxTopLTR.prototype.Type = AscDFH.historyitem_MathBorderBox_To
 CChangesMathBorderBoxTopLTR.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetTopLTR(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1631,6 +1671,7 @@ CChangesMathBorderBoxTopRTL.prototype.Type = AscDFH.historyitem_MathBorderBox_To
 CChangesMathBorderBoxTopRTL.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetTopRTL(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1648,6 +1689,7 @@ CChangesMathBarLinePos.prototype.Type = AscDFH.historyitem_MathBar_LinePos;
 CChangesMathBarLinePos.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetLinePos(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -1671,10 +1713,12 @@ CChangesMathMatrixAddRow.prototype.Type = AscDFH.historyitem_MathMatrix_AddRow;
 CChangesMathMatrixAddRow.prototype.Undo = function()
 {
 	this.Class.raw_RemoveRow(this.Pos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixAddRow.prototype.Redo = function()
 {
 	this.Class.raw_AddRow(this.Pos, this.Items);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixAddRow.prototype.WriteToBinary = function(Writer)
 {
@@ -1733,6 +1777,7 @@ CChangesMathMatrixAddRow.prototype.Load = function()
 {
 	var nPos = this.UseArray ? this.PosArray[0] : this.Pos;
 	this.Class.raw_AddRow(nPos, this.Items);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1754,10 +1799,12 @@ CChangesMathMatrixRemoveRow.prototype.Type = AscDFH.historyitem_MathMatrix_Remov
 CChangesMathMatrixRemoveRow.prototype.Undo = function()
 {
 	this.Class.raw_AddRow(this.Pos, this.Items);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixRemoveRow.prototype.Redo = function()
 {
 	this.Class.raw_RemoveRow(this.Pos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixRemoveRow.prototype.WriteToBinary = function(Writer)
 {
@@ -1835,6 +1882,7 @@ CChangesMathMatrixRemoveRow.prototype.Load = function()
 {
 	var nPos = this.UseArray ? this.PosArray[0] : this.Pos;
 	this.Class.raw_RemoveRow(nPos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1856,10 +1904,12 @@ CChangesMathMatrixAddColumn.prototype.Type = AscDFH.historyitem_MathMatrix_AddCo
 CChangesMathMatrixAddColumn.prototype.Undo = function()
 {
 	this.Class.raw_RemoveColumn(this.Pos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixAddColumn.prototype.Redo = function()
 {
 	this.Class.raw_AddColumn(this.Pos, this.Items);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixAddColumn.prototype.WriteToBinary  = CChangesMathMatrixAddRow.prototype.WriteToBinary;
 CChangesMathMatrixAddColumn.prototype.ReadFromBinary = CChangesMathMatrixAddRow.prototype.ReadFromBinary;
@@ -1877,6 +1927,7 @@ CChangesMathMatrixAddColumn.prototype.Load = function()
 {
 	var nPos = this.UseArray ? this.PosArray[0] : this.Pos;
 	this.Class.raw_AddColumn(nPos, this.Items);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1898,10 +1949,12 @@ CChangesMathMatrixRemoveColumn.prototype.Type = AscDFH.historyitem_MathMatrix_Re
 CChangesMathMatrixRemoveColumn.prototype.Undo = function()
 {
 	this.Class.raw_AddColumn(this.Pos, this.Items);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixRemoveColumn.prototype.Redo = function()
 {
 	this.Class.raw_RemoveColumn(this.Pos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixRemoveColumn.prototype.WriteToBinary  = CChangesMathMatrixRemoveRow.prototype.WriteToBinary;
 CChangesMathMatrixRemoveColumn.prototype.ReadFromBinary = CChangesMathMatrixRemoveRow.prototype.ReadFromBinary;
@@ -1919,6 +1972,7 @@ CChangesMathMatrixRemoveColumn.prototype.Load = function()
 {
 	var nPos = this.UseArray ? this.PosArray[0] : this.Pos;
 	this.Class.raw_RemoveColumn(nPos, this.Items.length);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 /**
@@ -1935,6 +1989,7 @@ CChangesMathMatrixBaseJc.prototype.Type = AscDFH.historyitem_MathMatrix_BaseJc;
 CChangesMathMatrixBaseJc.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetBaseJc(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 /**
  * @constructor
@@ -1952,6 +2007,7 @@ CChangesMathMatrixColumnJc.prototype.Type = AscDFH.historyitem_MathMatrix_Column
 CChangesMathMatrixColumnJc.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetColumnJc(Value, this.ColumnIndex);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixColumnJc.prototype.WriteToBinary = function(Writer)
 {
@@ -2033,6 +2089,7 @@ CChangesMathMatrixInterval.prototype.Type = AscDFH.historyitem_MathMatrix_Interv
 CChangesMathMatrixInterval.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetInterval(this.ItemType, Value.Rule, Value.Gap);
+	this.Class.private_UpdatePresentationOutline();
 };
 CChangesMathMatrixInterval.prototype.WriteToBinary = function(Writer)
 {
@@ -2127,6 +2184,7 @@ CChangesMathMatrixPlh.prototype.Type = AscDFH.historyitem_MathMatrix_Plh;
 CChangesMathMatrixPlh.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_HidePlh(Value);
+	this.Class.private_UpdatePresentationOutline();
 };
 
 
@@ -2144,4 +2202,5 @@ CChangesMathDegreeSubSupType.prototype.Type = AscDFH.historyitem_MathDegree_SubS
 CChangesMathDegreeSubSupType.prototype.private_SetValue = function(Value)
 {
 	this.Class.raw_SetType(Value);
+	this.Class.private_UpdatePresentationOutline();
 };

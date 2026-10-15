@@ -369,12 +369,6 @@ CHistory.prototype =
 
         // Удаляем ненужные точки
         this.Points.length = this.Index + 1;
-		
-		if(!window['AscCommon'].g_specialPasteHelper.pasteStart)
-		{
-			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
-		}
-
 		return true;
     },
 
@@ -456,7 +450,10 @@ CHistory.prototype =
 			_Class.CheckNeedRecalculate();
 		
 		if (!this.CanAddChanges())
+		{
+			this.UpdateDocumentPositions(_Class, null);
 			return;
+		}
 
 		this._CheckCanNotAddChanges();
 
@@ -490,27 +487,42 @@ CHistory.prototype =
 
 		this.Points[this.Index].Items.push(Item);
 
+		if (this.Document && this.Document.ClearSearchOnChange)
+			this.Document.ClearSearchOnChange();
+
 		if (!this.CollaborativeEditing || !_Class)
 			return;
 		
-		if (_Class.IsContentChange() && this.CollaborativeEditing.IsTrackingPositions())
-		{
-			var bAdd  = _Class.IsAdd();
-			var Count = _Class.GetItemsCount();
-			
-			var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, Data.Pos, Count, Item);
-			Class.Add_ContentChanges(ContentChanges);
-			this.CollaborativeEditing.Add_NewDC(Class);
-			
-			if (true === bAdd)
-				this.CollaborativeEditing.Update_DocumentPositionsOnAdd(Class, Data.Pos);
-			else
-				this.CollaborativeEditing.Update_DocumentPositionsOnRemove(Class, Data.Pos, Count);
-		}
+		this.UpdateDocumentPositions(_Class, Item);
+		
 		if (_Class.IsPosExtChange())
 		{
 			this.CollaborativeEditing.AddPosExtChanges(Item, _Class);
 		}
+	},
+	
+	UpdateDocumentPositions : function(change, binaryData)
+	{
+		if (AscCommon.g_oIdCounter.IsLoad()
+			|| !this.CollaborativeEditing 
+			|| !this.CollaborativeEditing.IsTrackingPositions()
+			|| !change
+			|| !change.GetClass
+			|| !change.IsContentChange())
+			return;
+		
+		var bAdd  = change.IsAdd();
+		var Count = change.GetItemsCount();
+		var obj   = change.GetClass();
+		
+		var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, change.Pos, Count, binaryData);
+		obj.Add_ContentChanges(ContentChanges);
+		this.CollaborativeEditing.Add_NewDC(obj);
+		
+		if (true === bAdd)
+			this.CollaborativeEditing.Update_DocumentPositionsOnAdd(obj, change.Pos);
+		else
+			this.CollaborativeEditing.Update_DocumentPositionsOnRemove(obj, change.Pos, Count);
 	},
 
     RecalcData_Add : function(Data)
@@ -961,6 +973,14 @@ CHistory.prototype =
         this.OnEnd_GetRecalcData();
         return this.RecalculateData;
     },
+	
+	ResetRecalcIndexToPoint : function(pointIndex)
+	{
+		if (pointIndex > 0)
+			this.RecIndex = Math.min(this.RecIndex, pointIndex - 1);
+		else
+			this.RecIndex = Math.min(this.RecIndex, this.Index + pointIndex);
+	},
 
     Reset_RecalcIndex : function()
     {
@@ -1035,6 +1055,41 @@ CHistory.prototype =
                 }
             }
         } catch (e) {
+        }
+    },
+
+    RefreshBinaryDataItem : function(item)
+    {
+        let Binary_Pos = this.BinaryWriter.GetCurPosition();
+        let _t         = this;
+        if ((Asc.editor || editor).binaryChanges) {
+            this.BinaryWriter.WriteWithLen(this, function () {
+                _t.BinaryWriter.WriteString2(item.Class.Get_Id());
+                _t.BinaryWriter.WriteLong(item.Data.Type);
+                item.Data.WriteToBinary(_t.BinaryWriter);
+            });
+        } else {
+            this.BinaryWriter.WriteString2(item.Class.Get_Id());
+            this.BinaryWriter.WriteLong(item.Data.Type);
+            item.Data.WriteToBinary(this.BinaryWriter);
+        }
+        let Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
+        item.Binary.Pos = Binary_Pos;
+        item.Binary.Len = Binary_Len;
+    },
+
+    RewriteImageUrlsInLastPoint : function(mapUrl)
+    {
+        if (this.Index < 0 || !this.Points[this.Index])
+            return;
+        let items = this.Points[this.Index].Items;
+        for (let i = 0; i < items.length; ++i) {
+            let item   = items[i];
+            let change = item.Data;
+            if (!change || !change.ReplaceImageUrl || !change.ReplaceImageUrl(mapUrl))
+                continue;
+            this.RefreshBinaryDataItem(item);
+            change.Redo();
         }
     }
 };
@@ -1208,7 +1263,6 @@ CHistory.prototype.private_IsContentChange = function(Class, Data)
 {
 	// TODO: Заменить на проверку через change.IsContentChange
 	var bPresentation = !(typeof CPresentation === "undefined");
-	var bSlide = !(typeof Slide === "undefined");
 	if ( ( Class instanceof CDocument        && ( AscDFH.historyitem_Document_AddItem        === Data.Type || AscDFH.historyitem_Document_RemoveItem        === Data.Type ) ) ||
 		(((Class instanceof CDocumentContent || Class instanceof AscFormat.CDrawingDocContent)) && ( AscDFH.historyitem_DocumentContent_AddItem === Data.Type || AscDFH.historyitem_DocumentContent_RemoveItem === Data.Type ) ) ||
 		( Class instanceof CTable           && ( AscDFH.historyitem_Table_AddRow            === Data.Type || AscDFH.historyitem_Table_RemoveRow            === Data.Type ) ) ||
@@ -1217,7 +1271,7 @@ CHistory.prototype.private_IsContentChange = function(Class, Data)
 		( Class instanceof ParaHyperlink    && ( AscDFH.historyitem_Hyperlink_AddItem       === Data.Type || AscDFH.historyitem_Hyperlink_RemoveItem       === Data.Type ) ) ||
 		( Class instanceof ParaRun          && ( AscDFH.historyitem_ParaRun_AddItem         === Data.Type || AscDFH.historyitem_ParaRun_RemoveItem         === Data.Type ) ) ||
 		( bPresentation && Class instanceof CPresentation && (AscDFH.historyitem_Presentation_AddSlide === Data.Type || AscDFH.historyitem_Presentation_RemoveSlide === Data.Type)) ||
-		( bSlide && Class instanceof Slide && (AscDFH.historyitem_SlideAddToSpTree === Data.Type || AscDFH.historyitem_SlideRemoveFromSpTree === Data.Type))
+		( Class instanceof AscFormat.CSld && (AscDFH.historyitem_CSld_AddToSpTree === Data.Type || AscDFH.historyitem_CSld_RemoveFromSpTree === Data.Type))
 	)
 		return true;
 
@@ -1226,7 +1280,6 @@ CHistory.prototype.private_IsContentChange = function(Class, Data)
 CHistory.prototype.private_IsAddContentChange = function(Class, Data)
 {
 	var bPresentation = !(typeof CPresentation === "undefined");
-	var bSlide = !(typeof Slide === "undefined");
 	return ( ( Class instanceof CDocument        && AscDFH.historyitem_Document_AddItem        === Data.Type ) ||
 		( ((Class instanceof CDocumentContent || Class instanceof AscFormat.CDrawingDocContent)) && AscDFH.historyitem_DocumentContent_AddItem === Data.Type ) ||
 		( Class instanceof CTable           && AscDFH.historyitem_Table_AddRow            === Data.Type ) ||
@@ -1235,7 +1288,7 @@ CHistory.prototype.private_IsAddContentChange = function(Class, Data)
 		( Class instanceof ParaHyperlink    && AscDFH.historyitem_Hyperlink_AddItem       === Data.Type ) ||
 		( Class instanceof ParaRun          && AscDFH.historyitem_ParaRun_AddItem         === Data.Type ) ||
 		( bPresentation && Class instanceof CPresentation && (AscDFH.historyitem_Presentation_AddSlide === Data.Type )) ||
-		( bSlide && Class instanceof Slide && (AscDFH.historyitem_SlideAddToSpTree === Data.Type))
+		( Class instanceof AscFormat.CSld && AscDFH.historyitem_CSld_AddToSpTree === Data.Type)
 	) ? true : false;
 };
 CHistory.prototype.private_GetItemsCountInContentChange = function(Class, Data)
@@ -1303,26 +1356,43 @@ CHistory.prototype.SetRecalculateIndex = function(nIndex)
 };
 CHistory.prototype.SaveRedoPoints = function()
 {
-	var arrData = [];
-	this.StoredData.push(arrData);
-	for (var nIndex = this.Index + 1, nCount = this.Points.length; nIndex < nCount; ++nIndex)
+	if (this.Index >= this.Points.length - 1)
 	{
-		arrData.push(this.Points[nIndex]);
+		this.StoredData.push(null);
+	}
+	else
+	{
+		let data = [];
+		for (let pointIndex = this.Index + 1, pointCount = this.Points.length; pointIndex < pointCount; ++pointIndex)
+		{
+			data.push(this.Points[pointIndex]);
+		}
+		this.StoredData.push(data);
 	}
 };
-CHistory.prototype.PopRedoPoints = function()
+CHistory.prototype.RestoreRedoPoints = function()
 {
 	if (this.StoredData.length <= 0)
 		return;
 
-	var arrPoints = this.StoredData[this.StoredData.length - 1];
-	this.Points.length = this.Index + 1;
-	for (var nIndex = 0, nCount = arrPoints.length; nIndex < nCount; ++nIndex)
+	let redoPoints = this.StoredData[this.StoredData.length - 1];
+	if (redoPoints)
 	{
-		this.Points[this.Index + nIndex + 1] = arrPoints[nIndex];
+		this.Points.length = this.Index + 1;
+		for (let pointIndex = 0, pointCount = redoPoints.length; pointIndex < pointCount; ++pointIndex)
+		{
+			this.Points.push(redoPoints[pointIndex]);
+		}
 	}
-
-	this.StoredData.length = this.StoredData.length - 1;
+	
+	--this.StoredData.length;
+};
+CHistory.prototype.DiscardRedoPoints = function()
+{
+	if (this.StoredData.length <= 0)
+		return;
+	
+	--this.StoredData.length;
 };
 CHistory.prototype.RemoveLastPoint = function()
 {
@@ -1531,12 +1601,25 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			}
 			else
 			{
-				var oChange = oPoint.Items[nItemsCount - 1].Data;
-				if (!oChange || !oChange.IsContentChange())
-					return false;
-				
-				let nChangeItemsCount = oChange.GetItemsCount();
-				return (nChangeItemsCount > 0 && AscDFH.historyitem_ParaRun_AddItem === oChange.GetType() && oChange.GetItem(nChangeItemsCount - 1) === oLastElement);
+				for (let changeIndex = nItemsCount - 1; changeIndex >= 0; changeIndex--) {
+					const change = oPoint.Items[changeIndex].Data;
+					if (!change || !change.IsContentChange()) {
+						continue;
+					}
+
+					const changeType = change.GetType();
+					if (changeType !== AscDFH.historyitem_ParaRun_AddItem) {
+						return false;
+					}
+
+					const changeItemsCount = change.GetItemsCount();
+					if (changeItemsCount <= 0) {
+						return false;
+					}
+
+					const isSameLastElement = change.GetItem(changeItemsCount - 1) === oLastElement;
+					return isSameLastElement;
+				}
 			}
 		}
 
@@ -1864,6 +1947,9 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		
 		this.Points.length = startIndex + 1;
 		this.Index = startIndex;
+
+		if (this.Is_LastPointEmpty())
+			this.RemoveLastPoint();
 	};
 	CHistory.prototype.getGroupChanges = function()
 	{

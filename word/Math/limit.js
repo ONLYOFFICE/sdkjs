@@ -313,6 +313,7 @@ CLimit.prototype.Apply_MenuProps = function(Props)
 		{
 			AscCommon.History.Add(new CChangesMathLimitType(this, this.Pr.type, Type));
 			this.raw_SetType(Type);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };

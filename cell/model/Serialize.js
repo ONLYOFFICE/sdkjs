@@ -268,7 +268,8 @@
     var c_oSerNumFmtTypes =
     {
         FormatCode: 0,
-        NumFmtId: 1
+        NumFmtId: 1,
+        FormatCode16: 2
     };
     /** @enum */
     var c_oSerSharedStringTypes =
@@ -2051,6 +2052,16 @@
             }
             return this.oSizes[8];//A4
         };
+        this.getIdByWHAndStored = function(widthMm, heightMm, storedId)
+        {
+            if(null != storedId)
+            {
+                var stored = this.getSizeById(storedId);
+                if(stored.w_mm == widthMm && stored.h_mm == heightMm)
+                    return storedId;
+            }
+            return this.getSizeByWH(widthMm, heightMm).id;
+        };
     };
 
     function OpenColor() {
@@ -2800,7 +2811,7 @@
 			}
 			if (null != queryTableRefresh.fieldIdWrapped) {
 				this.bs.WriteItem(c_oSer_QueryTableRefresh.FieldIdWrapped, function () {
-					oThis.memory.WriteBool(queryTableRefresh.feldIdWrapped);
+					oThis.memory.WriteBool(queryTableRefresh.fieldIdWrapped);
 				});
 			}
 			if (null != queryTableRefresh.headersInLastRefresh) {
@@ -3334,11 +3345,18 @@
         };
         this.WriteNum = function(id, format)
         {
+            var gannen = AscCommon.getGannenFormatCodes && AscCommon.getGannenFormatCodes(format);
             if(null != format)
             {
                 this.memory.WriteByte(c_oSerNumFmtTypes.FormatCode);
                 this.memory.WriteByte(c_oSerPropLenType.Variable);
-                this.memory.WriteString2(format);
+                this.memory.WriteString2(gannen ? gannen.fallback : format);
+            }
+            if(gannen)
+            {
+                this.memory.WriteByte(c_oSerNumFmtTypes.FormatCode16);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(gannen.formatCode16);
             }
             if(null != id)
             {
@@ -3663,12 +3681,16 @@
                 this.memory.WriteLong(customElement.size);
             }
             var dxfs = this.InitSaveManager.getDxfs();
-            if(null != customElement.dxf && null != dxfs)
+            var dxf = customElement.dxf;
+            //x2t drops a table style element without dxfId when writing xlsx, so a stripe that only sets its size gets an empty dxf
+            if(null == dxf && null != customElement.size && 1 !== customElement.size)
+                dxf = new AscCommonExcel.CellXfs();
+            if(null != dxf && null != dxfs)
             {
                 this.memory.WriteByte(c_oSer_TableStyleElement.DxfId);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
                 this.memory.WriteLong(dxfs.length);
-                dxfs.push(customElement.dxf);
+                dxfs.push(dxf);
             }
         };
         this.WriteTimelineStyles = function (oTimelineStyles) {
@@ -4091,6 +4113,7 @@
 			});
 			if (pivotCache.cacheRecords) {
 				this.bs.WriteItem(c_oSer_PivotTypes.record, function() {
+					// untouched records are written back verbatim; toXml parses only when the pivot was edited
 					pivotCache.cacheRecords.toXml(oThis.memory);
 				});
 			}
@@ -5808,7 +5831,7 @@
                 this.memory.WriteByte(c_oSerWorksheetPropTypes.State);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 if(true == ws.bHidden)
-                    this.memory.WriteByte(EVisibleType.visibleHidden);
+                    this.memory.WriteByte(ws.bVeryHidden ? EVisibleType.visibleVeryHidden : EVisibleType.visibleHidden);
                 else
                     this.memory.WriteByte(EVisibleType.visibleVisible);
             }
@@ -5923,7 +5946,7 @@
 			if (null !== oSheetView.zoomScale && !oThis.isCopyPaste)
 				this.bs.WriteItem(c_oSer_SheetView.ZoomScale, function(){oThis.memory.WriteLong(oSheetView.zoomScale);});
             if (null !== oSheetView.pane && oSheetView.pane.isInit() && !oThis.isCopyPaste)
-                this.bs.WriteItem(c_oSer_SheetView.Pane, function(){oThis.WriteSheetViewPane(oSheetView.pane);});
+                this.bs.WriteItem(c_oSer_SheetView.Pane, function(){oThis.WriteSheetViewPane(oSheetView.pane, oSheetView);});
 			if (null !== ws.selectionRange)
 				this.bs.WriteItem(c_oSer_SheetView.Selection, function(){oThis.WriteSheetViewSelection(ws.selectionRange);});
             if (null !== oSheetView.showZeros && !oThis.isCopyPaste)
@@ -5937,10 +5960,16 @@
             if (null !== oSheetView.rightToLeft && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.RightToLeft, function(){oThis.memory.WriteBool(oSheetView.rightToLeft);});
         };
-        this.WriteSheetViewPane = function (oPane) {
+        this.WriteSheetViewPane = function (oPane, oSheetView) {
             var oThis = this;
 			var col = oPane.topLeftFrozenCell.getCol0();
 			var row = oPane.topLeftFrozenCell.getRow0();
+
+			// xSplit/ySplit = count of frozen cols/rows from the frozen area origin (sheetView.topLeftCell)
+			var originCol = (oSheetView && oSheetView.topLeftCell) ? oSheetView.topLeftCell.c1 : 0;
+			var originRow = (oSheetView && oSheetView.topLeftCell) ? oSheetView.topLeftCell.r1 : 0;
+			var xSplit = col > 0 ? col - originCol : 0;
+			var ySplit = row > 0 ? row - originRow : 0;
 
 			var activePane = null;
 			if (0 < col && 0 < row) {
@@ -5959,9 +5988,9 @@
             this.bs.WriteItem(c_oSer_Pane.TopLeftCell, function(){oThis.memory.WriteString3(oPane.topLeftFrozenCell.getID());});
 
             if (0 < col)
-                this.bs.WriteItem(c_oSer_Pane.XSplit, function(){oThis.memory.WriteDouble2(col);});
+                this.bs.WriteItem(c_oSer_Pane.XSplit, function(){oThis.memory.WriteDouble2(xSplit);});
             if (0 < row)
-                this.bs.WriteItem(c_oSer_Pane.YSplit, function(){oThis.memory.WriteDouble2(row);});
+                this.bs.WriteItem(c_oSer_Pane.YSplit, function(){oThis.memory.WriteDouble2(ySplit);});
         };
 		this.WriteSheetViewSelection = function (selectionRange) {
 			var oThis = this;
@@ -6132,10 +6161,15 @@
             var dHeight = oPageSetup.asc_getHeight();
             if(null != dWidth && null != dHeight)
             {
-                var item = DocumentPageSize.getSizeByWH(dWidth, dHeight);
+                //keep sizes that share the same dimensions (e.g. Letter/LetterSmall) by using the stored
+                //id while it is still consistent with the dimensions, otherwise derive it from them.
+                var nId = DocumentPageSize.getIdByWHAndStored(dWidth, dHeight, oPageSetup.asc_getPaperSize());
+                //the id is written as a byte, so ids that don't fit (e.g. xlPaperUser = 256) fall back to the derived one.
+                if(nId < 0 || nId > 255)
+                    nId = DocumentPageSize.getSizeByWH(dWidth, dHeight).id;
                 this.memory.WriteByte(c_oSer_PageSetup.PaperSize);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteByte(item.id);
+                this.memory.WriteByte(nId);
             }
             if (null != oPageSetup.blackAndWhite) {
                 this.memory.WriteByte(c_oSer_PageSetup.BlackAndWhite);
@@ -6809,10 +6843,13 @@
 		this.WriteSheetDataXLSB = function(ws)
         {
             var oThis = this;
+            var bbox;
             var range;
             if(oThis.isCopyPaste ){
-                range = ws.getRange3(oThis.isCopyPaste.r1, oThis.isCopyPaste.c1, oThis.isCopyPaste.r2, oThis.isCopyPaste.c2);
+                bbox = {c1: oThis.isCopyPaste.c1, r1: oThis.isCopyPaste.r1, c2: oThis.isCopyPaste.c2, r2: oThis.isCopyPaste.r2};
+                range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
             } else {
+                bbox = {c1: 0, r1: 0, c2: gc_nMaxCol0, r2: gc_nMaxRow0};
                 range = ws.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
             }
 
@@ -6825,17 +6862,34 @@
 			this.memory.XlsbStartRecord(AscCommonExcel.XLSB.rt_BEGIN_SHEET_DATA, 0);
 			this.memory.XlsbEndRecord();
 
-            range._foreachRowNoEmpty(function(row, excludedCount) {
-                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
-            }, function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+            // Style-only events are streamed alongside the data walker via
+            // a shared drain (O(events)). Occupied _foreachNoEmpty would be
+            // O(maxRow) for a sparse far style entry.
+            var bExcludeHiddenRows = !!(ws.bExcludeHiddenRows && oThis.isCopyPaste);
+            var styleCell = new AscCommonExcel.Cell(ws);
+            styleCell._isTransient = true;
+            var styleDrain = AscCommonExcel.CellStyleStorage.createStyleOnlyDrain(
+                ws, bbox, {excludeHiddenRows: bExcludeHiddenRows},
+                function (r, col, xfIndex, rowExcl) {
+                    if (cur.rowIndex !== r) {
+                        tempRow.setIndex(r);
+                        oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, rowExcl, oThis.stylesForWrite);
+                    }
+                    var xfsObj = AscCommonExcel.g_StyleCache.getXf(xfIndex);
+                    var nStyleXfsId = oThis.stylesForWrite.add(xfsObj);
+                    styleCell.clearData();
+                    styleCell.setRowCol(r, col);
+                    styleCell.toXLSB(oThis.memory, nStyleXfsId, null, oThis.InitSaveManager.oSharedStrings);
+                });
+
+            range._foreachDataOnly(function(cell, nRow0, nCol0, nRowStart0, nColStart0, excludedCount) {
+                styleDrain.drainBefore(nRow0, nCol0);
                 if (cur.rowIndex != nRow0) {
                     tempRow.setIndex(nRow0);
                     oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, tempRow, excludedCount, oThis.stylesForWrite);
                 }
-                //prepare cell for writing
-                var nXfsId;
                 var cellXfs = cell.xfs;
-                nXfsId = oThis.stylesForWrite.add(cell.xfs);
+                var nXfsId = oThis.stylesForWrite.add(cellXfs);
 
                 // save even an empty style like Excel (needed to remove row/column style)
                 let needWrite = cellXfs || !cell.isNullText()
@@ -6853,7 +6907,12 @@
                     }
 					cell.toXLSB(oThis.memory, nXfsId, formulaToWrite, oThis.InitSaveManager.oSharedStrings);
 				}
+            }, function(row, excludedCount) {
+                styleDrain.drainBefore(row.index, 0);
+                oThis.WriteRowAndFixEmpty(oThis.memory, cur, allRow, row, excludedCount, oThis.stylesForWrite);
             }, (ws.bExcludeHiddenRows && oThis.isCopyPaste));
+
+            styleDrain.drainTail();
 
             this.WriteRowAndFixEmpty(oThis.memory, cur, allRow);
 
@@ -8879,7 +8938,7 @@
         {
             var oThis = this;
             var oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
-                aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null, oTimelineStyles: null};
+                aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: Object.create(null), oCustomSlicerStyles: null, oTimelineStyles: null};
             var res = this.bcr.ReadTable(function (t, l) {
                 return oThis.ReadStylesContent(t, l, oStyleObject);
             });
@@ -9321,13 +9380,17 @@
         this.ReadNumFmt = function(type, length, oNumFmt)
         {
             var res = c_oSerConstants.ReadOk;
-            if ( c_oSerNumFmtTypes.FormatCode == type )
+            if ( c_oSerNumFmtTypes.FormatCode == type && !oNumFmt.f )
             {
                 oNumFmt.f = this.stream.GetString2LE(length);
             }
             else if ( c_oSerNumFmtTypes.NumFmtId == type )
             {
                 oNumFmt.id = this.stream.GetULongLE();
+            }
+            else if ( c_oSerNumFmtTypes.FormatCode16 == type )
+            {
+                oNumFmt.f = this.stream.GetString2LE(length);
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -9511,7 +9574,7 @@
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
                     return oThis.ReadTableCustomStyleElement(t,l, oNewStyleElement);
                 });
-                if(null != oNewStyleElement.Type && null != oNewStyleElement.DxfId)
+                if(null != oNewStyleElement.Type)
                     aElements.push(oNewStyleElement);
             }
             else
@@ -9841,12 +9904,29 @@
 				pivotCache.id = this.stream.GetLong();
 			} else if ( c_oSer_PivotTypes.cache === type ) {
 				let idOld = pivotCache.id;
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), pivotCache);
+				pivotCache.fromXml(new AscCommon.StaxParser(AscCommon.GetStringUtf8(this.stream, length), null, null));
 				pivotCache.id = idOld;
 			} else if ( c_oSer_PivotTypes.record === type ) {
-				var cacheRecords = new Asc.CT_PivotCacheRecords();
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), cacheRecords);
-				pivotCache.cacheRecords = cacheRecords;
+				// store records raw (no parse) so an untouched pivot is written back verbatim on save
+				var recordStream = this.stream;
+				var recordStart = recordStream.cur;
+				if (length >= 0 && recordStart + length <= recordStream.size) {
+					var cacheRecords = new Asc.CT_PivotCacheRecords();
+					var recordSrc = recordStream.data;
+					if (recordSrc.subarray) {
+						// native/browser binary is a Uint8Array: copy the records payload as raw bytes
+						var recordBytes = new Uint8Array(length);
+						recordBytes.set(recordSrc.subarray(recordStart, recordStart + length));
+						recordStream.cur = recordStart + length;
+						cacheRecords.setRawBytes(recordBytes, pivotCache.recordCount);
+					} else {
+						cacheRecords.setRawXml(AscCommon.GetStringUtf8(recordStream, length), pivotCache.recordCount);
+					}
+					pivotCache.cacheRecords = cacheRecords;
+				} else {
+					// corrupt/invalid item length: do not over-read, surface the stream error
+					res = c_oSerConstants.ErrorStream;
+				}
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -9979,9 +10059,9 @@
             } else if (c_oSer_TimelinePivotFilter.UseWholeDay === type) {
                 oTimelinePivotFilter.useWholeDay = this.stream.GetBool();
             } else if (c_oSer_TimelinePivotFilter.Id === type) {
-                oTimelinePivotFilter.id = this.stream.Getlong();
+                oTimelinePivotFilter.id = this.stream.GetLong();
             } else if (c_oSer_TimelinePivotFilter.Fld === type) {
-                oTimelinePivotFilter.fld = this.stream.Getlong();
+                oTimelinePivotFilter.fld = this.stream.GetLong();
             } else if (c_oSer_TimelinePivotFilter.AutoFilter === type) {
                 let oBinary_TableReader = new Binary_TableReader(this.stream, this.InitOpenManager, /*ws*/null);
                 oTimelinePivotFilter.autoFilter = new AscCommonExcel.AutoFilter();
@@ -11040,6 +11120,13 @@
                     return oThis.ReadSheetData(t, l, tmp);
                 });
 
+				// Migrate any legacy SheetMemory xf bits that did not pass
+				// through initCellAfterRead. Must run BEFORE the
+				// formula-array build pass: that pass materializes cells
+				// via loadContent + saveContent, which zeroes the legacy
+				// shadow bits without mirroring them.
+				AscCommonExcel.CellStyleStorage.hydrateAllColumnsFromSheetMemory(tmp.ws);
+
 				if (!bNoBuildDep) {
 					//TODO perhaps this should be done in worksheet after complete reading
 					//***array-formula***
@@ -11250,8 +11337,8 @@
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadLegacyDrawingHF(t, l, oWorksheet.legacyDrawingHF);
 				});
-			// } else if (c_oSerWorksheetsTypes.Picture === type) {
-			//     oWorksheet.picture = this.stream.GetString2LE(length);
+			} else if (c_oSerWorksheetsTypes.Picture === type) {
+				oWorksheet.picture = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetsTypes.DataValidations === type && typeof AscCommonExcel.CDataValidations != "undefined") {
 				oWorksheet.dataValidations = new AscCommonExcel.CDataValidations();
 				res = this.bcr.Read1(length, function(t, l) {
@@ -11606,7 +11693,7 @@
 				data.cacheId = this.stream.GetLong();
 			} else if (c_oSer_PivotTypes.table == type) {
 				data.table = new Asc.CT_pivotTableDefinition(true);
-				new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(this.stream, length), data.table);
+				data.table.fromXml(new AscCommon.StaxParser(AscCommon.GetStringUtf8(this.stream, length), null, null));
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -12000,7 +12087,7 @@
                 switch(this.stream.GetUChar())
                 {
                     case EVisibleType.visibleHidden: oWorksheet.bHidden = true;break;
-                    case EVisibleType.visibleVeryHidden: oWorksheet.bHidden = true;break;
+                    case EVisibleType.visibleVeryHidden: oWorksheet.bHidden = true; oWorksheet.bVeryHidden = true; break;
                     case EVisibleType.visibleVisible: oWorksheet.bHidden = false;break;
                 }
             }
@@ -12161,6 +12248,7 @@
                 var item = DocumentPageSize.getSizeById(bytePaperSize);
                 oPageSetup.asc_setWidth(item.w_mm);
                 oPageSetup.asc_setHeight(item.h_mm);
+                oPageSetup.asc_setPaperSize(bytePaperSize);
             // } else if ( c_oSer_PageSetup.PaperWidth == type ) {
             //     oPageSetup.width = this.stream.GetDoubleLE();
             // } else if ( c_oSer_PageSetup.PaperUnits == type ) {
@@ -12268,7 +12356,7 @@
 					tmp.row.index = tmp.prevRow + 1;
 				}
 				tmp.row.saveContent();
-				tmp.ws.cellsByColRowsCount = Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1);
+				tmp.ws.setCellsByColRowsCount(Math.max(tmp.ws.cellsByColRowsCount, tmp.row.index + 1));
 				tmp.ws.nRowsCount = Math.max(tmp.ws.nRowsCount, tmp.ws.cellsByColRowsCount);
 				tmp.prevRow = tmp.row.index;
 				tmp.prevCol = -1;
@@ -14124,10 +14212,10 @@
     {
         this.DefaultTableStyle = "TableStyleMedium2";
         this.DefaultPivotStyle = "PivotStyleLight16";
-        this.CustomStyles = {};
+        this.CustomStyles = Object.create(null);
         this.DefaultStyles = {};
 		this.DefaultStylesPivot = {};
-        this.AllStyles = {};
+        this.AllStyles = Object.create(null);
     }
     CTableStyles.prototype =
     {
@@ -14487,6 +14575,172 @@
 			if (undefined !== val) {
 				this.dxf = AscCommon.openXml.SaxParserDataTransfer.dxfs[tableStyle.pivot ? val - 0 : val - 1] || null;
 			}
+		}
+	};
+	CTableStyleElement.prototype.clone = function() {
+		var res = new CTableStyleElement();
+		res.size = this.size;
+		res.dxf = this.dxf;
+		return res;
+	};
+	//explicit switch keeps every access dotted, safe under Closure ADVANCED renaming
+	CTableStyle.prototype.getElementByType = function(type) {
+		switch(type)
+		{
+			case ETableStyleType.tablestyletypeBlankRow: return this.blankRow;
+			case ETableStyleType.tablestyletypeFirstColumn: return this.firstColumn;
+			case ETableStyleType.tablestyletypeFirstColumnStripe: return this.firstColumnStripe;
+			case ETableStyleType.tablestyletypeFirstColumnSubheading: return this.firstColumnSubheading;
+			case ETableStyleType.tablestyletypeFirstHeaderCell: return this.firstHeaderCell;
+			case ETableStyleType.tablestyletypeFirstRowStripe: return this.firstRowStripe;
+			case ETableStyleType.tablestyletypeFirstRowSubheading: return this.firstRowSubheading;
+			case ETableStyleType.tablestyletypeFirstSubtotalColumn: return this.firstSubtotalColumn;
+			case ETableStyleType.tablestyletypeFirstSubtotalRow: return this.firstSubtotalRow;
+			case ETableStyleType.tablestyletypeFirstTotalCell: return this.firstTotalCell;
+			case ETableStyleType.tablestyletypeHeaderRow: return this.headerRow;
+			case ETableStyleType.tablestyletypeLastColumn: return this.lastColumn;
+			case ETableStyleType.tablestyletypeLastHeaderCell: return this.lastHeaderCell;
+			case ETableStyleType.tablestyletypeLastTotalCell: return this.lastTotalCell;
+			case ETableStyleType.tablestyletypePageFieldLabels: return this.pageFieldLabels;
+			case ETableStyleType.tablestyletypePageFieldValues: return this.pageFieldValues;
+			case ETableStyleType.tablestyletypeSecondColumnStripe: return this.secondColumnStripe;
+			case ETableStyleType.tablestyletypeSecondColumnSubheading: return this.secondColumnSubheading;
+			case ETableStyleType.tablestyletypeSecondRowStripe: return this.secondRowStripe;
+			case ETableStyleType.tablestyletypeSecondRowSubheading: return this.secondRowSubheading;
+			case ETableStyleType.tablestyletypeSecondSubtotalColumn: return this.secondSubtotalColumn;
+			case ETableStyleType.tablestyletypeSecondSubtotalRow: return this.secondSubtotalRow;
+			case ETableStyleType.tablestyletypeThirdColumnSubheading: return this.thirdColumnSubheading;
+			case ETableStyleType.tablestyletypeThirdRowSubheading: return this.thirdRowSubheading;
+			case ETableStyleType.tablestyletypeThirdSubtotalColumn: return this.thirdSubtotalColumn;
+			case ETableStyleType.tablestyletypeThirdSubtotalRow: return this.thirdSubtotalRow;
+			case ETableStyleType.tablestyletypeTotalRow: return this.totalRow;
+			case ETableStyleType.tablestyletypeWholeTable: return this.wholeTable;
+		}
+		return null;
+	};
+	//explicit switch keeps every access dotted, safe under Closure ADVANCED renaming
+	CTableStyle.prototype.setElementByType = function(type, element) {
+		switch(type)
+		{
+			case ETableStyleType.tablestyletypeBlankRow: this.blankRow = element; break;
+			case ETableStyleType.tablestyletypeFirstColumn: this.firstColumn = element; break;
+			case ETableStyleType.tablestyletypeFirstColumnStripe: this.firstColumnStripe = element; break;
+			case ETableStyleType.tablestyletypeFirstColumnSubheading: this.firstColumnSubheading = element; break;
+			case ETableStyleType.tablestyletypeFirstHeaderCell: this.firstHeaderCell = element; break;
+			case ETableStyleType.tablestyletypeFirstRowStripe: this.firstRowStripe = element; break;
+			case ETableStyleType.tablestyletypeFirstRowSubheading: this.firstRowSubheading = element; break;
+			case ETableStyleType.tablestyletypeFirstSubtotalColumn: this.firstSubtotalColumn = element; break;
+			case ETableStyleType.tablestyletypeFirstSubtotalRow: this.firstSubtotalRow = element; break;
+			case ETableStyleType.tablestyletypeFirstTotalCell: this.firstTotalCell = element; break;
+			case ETableStyleType.tablestyletypeHeaderRow: this.headerRow = element; break;
+			case ETableStyleType.tablestyletypeLastColumn: this.lastColumn = element; break;
+			case ETableStyleType.tablestyletypeLastHeaderCell: this.lastHeaderCell = element; break;
+			case ETableStyleType.tablestyletypeLastTotalCell: this.lastTotalCell = element; break;
+			case ETableStyleType.tablestyletypePageFieldLabels: this.pageFieldLabels = element; break;
+			case ETableStyleType.tablestyletypePageFieldValues: this.pageFieldValues = element; break;
+			case ETableStyleType.tablestyletypeSecondColumnStripe: this.secondColumnStripe = element; break;
+			case ETableStyleType.tablestyletypeSecondColumnSubheading: this.secondColumnSubheading = element; break;
+			case ETableStyleType.tablestyletypeSecondRowStripe: this.secondRowStripe = element; break;
+			case ETableStyleType.tablestyletypeSecondRowSubheading: this.secondRowSubheading = element; break;
+			case ETableStyleType.tablestyletypeSecondSubtotalColumn: this.secondSubtotalColumn = element; break;
+			case ETableStyleType.tablestyletypeSecondSubtotalRow: this.secondSubtotalRow = element; break;
+			case ETableStyleType.tablestyletypeThirdColumnSubheading: this.thirdColumnSubheading = element; break;
+			case ETableStyleType.tablestyletypeThirdRowSubheading: this.thirdRowSubheading = element; break;
+			case ETableStyleType.tablestyletypeThirdSubtotalColumn: this.thirdSubtotalColumn = element; break;
+			case ETableStyleType.tablestyletypeThirdSubtotalRow: this.thirdSubtotalRow = element; break;
+			case ETableStyleType.tablestyletypeTotalRow: this.totalRow = element; break;
+			case ETableStyleType.tablestyletypeWholeTable: this.wholeTable = element; break;
+		}
+	};
+	CTableStyle.prototype.clone = function() {
+		var res = new CTableStyle();
+		res.name = this.name;
+		res.pivot = this.pivot;
+		res.table = this.table;
+		res.displayName = this.displayName;
+		for(var type = ETableStyleType.tablestyletypeBlankRow; type <= ETableStyleType.tablestyletypeWholeTable; ++type)
+		{
+			var element = this.getElementByType(type);
+			if(null != element)
+				res.setElementByType(type, element.clone());
+		}
+		return res;
+	};
+	CTableStyle.prototype.getType = function() {
+		return AscCommonExcel.UndoRedoDataTypes.TableStyle;
+	};
+	CTableStyle.prototype.Write_ToBinary2 = function(w) {
+		if(null != this.name)
+		{
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		}
+		else
+			w.WriteBool(false);
+		if(null != this.displayName)
+		{
+			w.WriteBool(true);
+			w.WriteString2(this.displayName);
+		}
+		else
+			w.WriteBool(false);
+		w.WriteBool(this.pivot);
+		w.WriteBool(this.table);
+
+		var elementTypes = [];
+		var type;
+		for(type = ETableStyleType.tablestyletypeBlankRow; type <= ETableStyleType.tablestyletypeWholeTable; ++type)
+		{
+			if(null != this.getElementByType(type))
+				elementTypes.push(type);
+		}
+		w.WriteLong(elementTypes.length);
+		for(var i = 0; i < elementTypes.length; ++i)
+		{
+			type = elementTypes[i];
+			var element = this.getElementByType(type);
+			w.WriteLong(type);
+			w.WriteLong(element.size);
+			if(null != element.dxf)
+			{
+				w.WriteBool(true);
+				var dxf = element.dxf;
+				var styleWriter = new BinaryStylesTableWriter(w);
+				styleWriter.bs.WriteItem(0, function(){styleWriter.WriteDxf(dxf);});
+			}
+			else
+				w.WriteBool(false);
+		}
+	};
+	CTableStyle.prototype.Read_FromBinary2 = function(r) {
+		if(r.GetBool())
+			this.name = r.GetString2();
+		if(r.GetBool())
+			this.displayName = r.GetString2();
+		this.pivot = r.GetBool();
+		this.table = r.GetBool();
+
+		var count = r.GetLong();
+		for(var i = 0; i < count; ++i)
+		{
+			var type = r.GetLong();
+			var element = new CTableStyleElement();
+			element.size = r.GetLong();
+			if(r.GetBool())
+			{
+				//same dxf read sequence as CConditionalFormattingRule.Read_FromBinary2
+				var api = Asc['editor'];
+				var wb = api ? api.wbModel : null;
+				var bsr = new Binary_StylesTableReader(r, wb);
+				var bcr = new Binary_CommonReader(r);
+				var oDxf = new AscCommonExcel.CellXfs();
+				r.GetUChar();
+				var dxfLength = r.GetULongLE();
+				bcr.Read1(dxfLength, function(t,l){return bsr.ReadDxf(t,l,oDxf);});
+				//intern through the shared style cache, same as the file-open path
+				element.dxf = g_StyleCache.addXf(oDxf);
+			}
+			this.setElementByType(type, element);
 		}
 	};
     function ReadDefTableStyles(wb)
@@ -14970,7 +15224,12 @@
         if(!(this.copyPasteObj && this.copyPasteObj.isCopyPaste && typeof editor != "undefined" && editor)) {
             this.setFormulaOpen(tmp);
         }
-        tmp.cell.saveContent();
+        // Skip SheetMemory init row for pure style-only cells; their xf
+        // lives in cellStylesByCol only.
+        AscCommonExcel.CellStyleStorage.saveContentSkipStyleOnly(tmp.cell);
+        // Re-mirror in case binary Style was read before Ref/RefRowCol
+        // (nRow/nCol negative when the earlier setStyleInternal ran).
+        AscCommonExcel.CellStyleStorage.mirrorCellStyle(tmp.cell);
         if (tmp.cell.nCol >= tmp.ws.nColsCount) {
             tmp.ws.nColsCount = tmp.cell.nCol + 1;
         }
@@ -15401,47 +15660,47 @@
         for(var j = 0, length2 = elems.length; j < length2; ++j)
         {
             var elem = elems[j];
+            var Dxf = null;
             if(null != elem.DxfId)
             {
-                var Dxf = Dxfs[elem.DxfId];
-                if(null != Dxf)
-                {
-                    var oTableStyleElement = new CTableStyleElement();
-                    oTableStyleElement.dxf = Dxf;
-                    if(null != elem.Size)
-                        oTableStyleElement.size = elem.Size;
-                    switch(elem.Type)
-                    {
-                        case ETableStyleType.tablestyletypeBlankRow: style.blankRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstColumn: style.firstColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstColumnStripe: style.firstColumnStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstColumnSubheading: style.firstColumnSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstHeaderCell: style.firstHeaderCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstRowStripe: style.firstRowStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstRowSubheading: style.firstRowSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstSubtotalColumn: style.firstSubtotalColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstSubtotalRow: style.firstSubtotalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeFirstTotalCell: style.firstTotalCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeHeaderRow: style.headerRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeLastColumn: style.lastColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeLastHeaderCell: style.lastHeaderCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeLastTotalCell: style.lastTotalCell = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypePageFieldLabels: style.pageFieldLabels = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypePageFieldValues: style.pageFieldValues = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondColumnStripe: style.secondColumnStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondColumnSubheading: style.secondColumnSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondRowStripe: style.secondRowStripe = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondRowSubheading: style.secondRowSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondSubtotalColumn: style.secondSubtotalColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeSecondSubtotalRow: style.secondSubtotalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdColumnSubheading: style.thirdColumnSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdRowSubheading: style.thirdRowSubheading = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdSubtotalColumn: style.thirdSubtotalColumn = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeThirdSubtotalRow: style.thirdSubtotalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeTotalRow: style.totalRow = oTableStyleElement;break;
-                        case ETableStyleType.tablestyletypeWholeTable: style.wholeTable = oTableStyleElement;break;
-                    }
-                }
+                Dxf = Dxfs[elem.DxfId];
+                if(null == Dxf)
+                    continue;
+            }
+            var oTableStyleElement = new CTableStyleElement();
+            oTableStyleElement.dxf = Dxf;
+            if(null != elem.Size)
+                oTableStyleElement.size = elem.Size;
+            switch(elem.Type)
+            {
+                case ETableStyleType.tablestyletypeBlankRow: style.blankRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstColumn: style.firstColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstColumnStripe: style.firstColumnStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstColumnSubheading: style.firstColumnSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstHeaderCell: style.firstHeaderCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstRowStripe: style.firstRowStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstRowSubheading: style.firstRowSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstSubtotalColumn: style.firstSubtotalColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstSubtotalRow: style.firstSubtotalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeFirstTotalCell: style.firstTotalCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeHeaderRow: style.headerRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeLastColumn: style.lastColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeLastHeaderCell: style.lastHeaderCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeLastTotalCell: style.lastTotalCell = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypePageFieldLabels: style.pageFieldLabels = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypePageFieldValues: style.pageFieldValues = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondColumnStripe: style.secondColumnStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondColumnSubheading: style.secondColumnSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondRowStripe: style.secondRowStripe = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondRowSubheading: style.secondRowSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondSubtotalColumn: style.secondSubtotalColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeSecondSubtotalRow: style.secondSubtotalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdColumnSubheading: style.thirdColumnSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdRowSubheading: style.thirdRowSubheading = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdSubtotalColumn: style.thirdSubtotalColumn = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeThirdSubtotalRow: style.thirdSubtotalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeTotalRow: style.totalRow = oTableStyleElement;break;
+                case ETableStyleType.tablestyletypeWholeTable: style.wholeTable = oTableStyleElement;break;
             }
         }
     };
@@ -15516,7 +15775,8 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules(oWorksheet);
+            //skip formula parsing here - not all sheets are read yet (parsed later in Workbook.init)
+            oConditionalFormatting.initRules(oWorksheet, true);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }
@@ -16320,6 +16580,7 @@
 
     window['AscCommonExcel'].decodeXmlPath = decodeXmlPath;
     window['AscCommonExcel'].encodeXmlPath = encodeXmlPath;
+    window['AscCommonExcel'].completePathForLocalLinks = completePathForLocalLinks;
 
     window['Asc']['c_oAscESheetViewType'] = window['Asc'].c_oAscESheetViewType = window['AscCommonExcel'].ESheetViewType = ESheetViewType;
     prot = ESheetViewType;

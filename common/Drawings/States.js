@@ -403,11 +403,12 @@ StartAddNewShape.prototype =
                             fill: track.overlayObject.brush,
                             border: track.overlayObject.pen,
                             base: shape.drawingBase ? shape.drawingBase : null,
-							id: shape.getObjectName()
+							id: shape.getObjectName(),
+							formatId: shape.getFormatIdString()
                         };
 
                     if (oAPI.editorId === AscCommon.c_oEditorId.Presentation)
-                        oDoc.FinalizeAction(AscDFH.historydescription_Presentation_AddShape, undefined, macroData);
+                        oDoc.FinalizeAction(undefined, undefined, macroData, AscDFH.historydescription_Presentation_AddShape);
                     else
                         oDoc.FinalizeAction(AscDFH.historydescription_Spreadsheet_AddShape, macroData);
                 }

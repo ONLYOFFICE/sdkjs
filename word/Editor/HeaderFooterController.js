@@ -308,6 +308,10 @@ CHdrFtrController.prototype.IsMovingTableBorder = function()
 {
 	return this.HdrFtr.IsMovingTableBorder();
 };
+CHdrFtrController.prototype.CancelTableBorderMove = function()
+{
+	this.HdrFtr.CancelTableBorderMove();
+};
 CHdrFtrController.prototype.CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {
 	return this.HdrFtr.CheckPosInSelection(X, Y, PageAbs, NearPos);

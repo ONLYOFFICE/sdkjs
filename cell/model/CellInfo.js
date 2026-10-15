@@ -210,6 +210,7 @@
 		this.dataValidation = null;
 		this.selectedColsCount = null;
 		this.isLockedHeaderFooter = false;
+		this.hideShowInfo = null;
 
 		//user protection range info
 		this.isUserProtected = null;
@@ -287,8 +288,79 @@
 	asc_CCellInfo.prototype.asc_getLockedHeaderFooter = function () {
 		return this.isLockedHeaderFooter;
 	};
+	asc_CCellInfo.prototype.asc_getHideShowInfo = function () {
+		return this.hideShowInfo;
+	};
 	asc_CCellInfo.prototype.asc_getUserProtected = function () {
 		return this.isUserProtected;
+	};
+
+	//solid block of hidden rows/columns offered to show, start/end - 0 based indexes
+	/** @constructor */
+	function asc_CHideShowRange(start, end, isRow) {
+		this.start = start;
+		this.end = end;
+		this.isRow = !!isRow;
+	}
+
+	asc_CHideShowRange.prototype.asc_getStart = function () {
+		return this.start;
+	};
+	asc_CHideShowRange.prototype.asc_getEnd = function () {
+		return this.end;
+	};
+	asc_CHideShowRange.prototype.asc_getCount = function () {
+		return this.end - this.start + 1;
+	};
+	//caption of the menu item: "A - C" for columns, "1 - 3" for rows
+	asc_CHideShowRange.prototype.asc_getName = function () {
+		var t = this;
+		var getTitle = function (index) {
+			return t.isRow ? (index + 1) + "" : AscCommon.g_oCellAddressUtils.colnumToColstr(index + 1);
+		};
+		return this.start === this.end ? getTitle(this.start) : getTitle(this.start) + " - " + getTitle(this.end);
+	};
+
+	//hide/show items of the context menu for the current selection
+	/** @constructor */
+	function asc_CHideShowInfo() {
+		//the items are applied to rows when true, to columns otherwise
+		this.isRow = false;
+		//the whole worksheet is selected
+		this.isAll = false;
+		this.isMultiselect = false;
+		this.count = 0;
+		//the selection contains hidden rows/columns, not filled for several separate ranges
+		this.hasHiddenInside = false;
+		this.isAllHidden = false;
+		//adjacent hidden blocks which are not covered by the selection
+		this.hiddenBefore = null;
+		this.hiddenAfter = null;
+	}
+
+	asc_CHideShowInfo.prototype.asc_getIsRow = function () {
+		return this.isRow;
+	};
+	asc_CHideShowInfo.prototype.asc_getIsAll = function () {
+		return this.isAll;
+	};
+	asc_CHideShowInfo.prototype.asc_getIsMultiselect = function () {
+		return this.isMultiselect;
+	};
+	asc_CHideShowInfo.prototype.asc_getCount = function () {
+		return this.count;
+	};
+	asc_CHideShowInfo.prototype.asc_getHasHiddenInside = function () {
+		return this.hasHiddenInside;
+	};
+	asc_CHideShowInfo.prototype.asc_getIsAllHidden = function () {
+		return this.isAllHidden;
+	};
+	asc_CHideShowInfo.prototype.asc_getHiddenBefore = function () {
+		return this.hiddenBefore;
+	};
+	asc_CHideShowInfo.prototype.asc_getHiddenAfter = function () {
+		return this.hiddenAfter;
 	};
 
 	/** @constructor */
@@ -418,7 +490,27 @@
 	prot["asc_getDataValidation"] = prot.asc_getDataValidation;
 	prot["asc_getSelectedColsCount"] = prot.asc_getSelectedColsCount;
 	prot["asc_getLockedHeaderFooter"] = prot.asc_getLockedHeaderFooter;
+	prot["asc_getHideShowInfo"] = prot.asc_getHideShowInfo;
 	prot["asc_getUserProtected"] = prot.asc_getUserProtected;
+
+
+	window["AscCommonExcel"].asc_CHideShowRange = asc_CHideShowRange;
+	prot = asc_CHideShowRange.prototype;
+	prot["asc_getStart"] = prot.asc_getStart;
+	prot["asc_getEnd"] = prot.asc_getEnd;
+	prot["asc_getCount"] = prot.asc_getCount;
+	prot["asc_getName"] = prot.asc_getName;
+
+	window["AscCommonExcel"].asc_CHideShowInfo = asc_CHideShowInfo;
+	prot = asc_CHideShowInfo.prototype;
+	prot["asc_getIsRow"] = prot.asc_getIsRow;
+	prot["asc_getIsAll"] = prot.asc_getIsAll;
+	prot["asc_getIsMultiselect"] = prot.asc_getIsMultiselect;
+	prot["asc_getCount"] = prot.asc_getCount;
+	prot["asc_getHasHiddenInside"] = prot.asc_getHasHiddenInside;
+	prot["asc_getIsAllHidden"] = prot.asc_getIsAllHidden;
+	prot["asc_getHiddenBefore"] = prot.asc_getHiddenBefore;
+	prot["asc_getHiddenAfter"] = prot.asc_getHiddenAfter;
 
 
 	window["Asc"].asc_CDefName = window["Asc"]["asc_CDefName"] = asc_CDefName;

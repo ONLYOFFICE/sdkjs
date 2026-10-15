@@ -466,6 +466,9 @@
 	};
 	WriterToJSON.prototype.SerTxStyles = function(oTxStyles)
 	{
+		if (!oTxStyles)
+			return undefined;
+
 		return {
 			"bodyStyle":  this.SerLstStyle(oTxStyles.bodyStyle),
 			"otherStyle": this.SerLstStyle(oTxStyles.otherStyle),
@@ -1066,7 +1069,7 @@
 			"tmplLst":         this.SerTmplLst(oBldP.tmplLst),
 			"advAuto":         oBldP.advAuto,
         	"animBg":          oBldP.animBg,
-        	"autoUpdateAnimB": oBldP.autoUpdateAnimB,
+        	"autoUpdateAnimBg": oBldP.autoUpdateAnimBg,
         	"bldLvl":          oBldP.bldLvl,
         	"build":           sBuildType,
 			"grpId":           oBldP.grpId,
@@ -1925,7 +1928,7 @@
 
 	ReaderFromJSON.prototype.MasterSlideFromJSON = function(oParsedMaster, oPres)
 	{
-		var oMasterSlide = new AscCommonSlide.MasterSlide(undefined, null);
+		var oMasterSlide = new AscCommonSlide.MasterSlide();
 
 		var oTheme  = oParsedMaster["theme"] ? this.ThemeFromJSON(oParsedMaster["theme"]) : null;
 		var oClrMap = oParsedMaster["clrMapOvr"] ? this.ColorMapOvrFromJSON(oParsedMaster["clrMapOvr"]) : null;
@@ -1934,11 +1937,7 @@
 		oClrMap && oMasterSlide.setClMapOverride(oClrMap);
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedMaster["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oMasterSlide.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oMasterSlide.changeBackground(oCSld.Bg);
-		oCSld.name && oMasterSlide.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedMaster["cSld"], oMasterSlide.cSld);
 
 		// hf
 		oParsedMaster["hf"] && oMasterSlide.setHF(this.HFFromJSON(oParsedMaster["hf"]));
@@ -2248,11 +2247,7 @@
 		oClrMap && oLayout.setClMapOverride(oClrMap);
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedLayout["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oLayout.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oLayout.changeBackground(oCSld.Bg);
-		oCSld.name && oLayout.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedLayout["cSld"], oLayout.cSld);
 
 		// hf
 		oParsedLayout["hf"] && oLayout.setHF(this.HFFromJSON(oParsedLayout["hf"]));
@@ -2332,11 +2327,7 @@
 		oParsedSlide["clrMapOvr"] && oSlide.setClMapOverride(this.ColorMapOvrFromJSON(oParsedSlide["clrMapOvr"]));
 
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedSlide["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oSlide.shapeAdd(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oSlide.changeBackground(oCSld.Bg);
-		oCSld.name && oSlide.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedSlide["cSld"], oSlide.cSld);
 
 		// comments
 		for (var nComment = 0; nComment < oParsedSlide["comments"].length; nComment++)
@@ -2459,10 +2450,10 @@
 			m_sOOTime:   oParsedComment["dt"]
 		});
 
-		var oCommentData = new AscCommon.CCommentData();
+		var oCommentData = new AscCommon.CSlideCommentData();
 		oCommentData.Read_FromAscCommentData(oAscCommentData);
 
-		var oComment = new AscCommon.CComment(oParent, oCommentData);
+		var oComment = new AscCommon.CSlideComment(oParent, oCommentData);
 		oComment.setPosition(oParsedComment["pos"]["x"], oParsedComment["pos"]["y"]);
 
 		return oComment;
@@ -2473,11 +2464,7 @@
 
 		oParsedNotes["clrMapOvr"] && oNotes.setClMapOverride(this.ColorMapOvrFromJSON(oParsedNotes["clrMapOvr"]));
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedNotes["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oNotes.addToSpTreeToPos(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oNotes.changeBackground(oCSld.Bg);
-		oCSld.name && oNotes.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedNotes["cSld"], oNotes.cSld);
 
 		oParsedNotes["showMasterPhAnim"] != undefined && oNotes.setShowMasterPhAnim(oParsedNotes["showMasterPhAnim"]);
 		oParsedNotes["showMasterSp"] != undefined && oNotes.setShowMasterSp(oParsedNotes["showMasterSp"]);
@@ -2495,11 +2482,7 @@
 			oNotesMaster.setClrMap(this.ColorMapOvrFromJSON(oParsedNotesMaster["clrMap"]));
 	
 		// cSld
-		var oCSld = this.CSldFromJSON(oParsedNotesMaster["cSld"]);
-		for (var nShape = 0; nShape < oCSld.spTree.length; nShape++)
-			oNotesMaster.addToSpTreeToPos(nShape, oCSld.spTree[nShape]);
-		oCSld.Bg && oNotesMaster.changeBackground(oCSld.Bg);
-		oCSld.name && oNotesMaster.setCSldName(oCSld.name);
+		this.CSldFromJSON(oParsedNotesMaster["cSld"], oNotesMaster.cSld);
 
 		oParsedNotesMaster["hf"] && oNotesMaster.setHF(this.HFFromJSON(oParsedNotesMaster["hf"]));
 		oParsedNotesMaster["notesStyle"] && oNotesMaster.setNotesStyle(this.LstStyleFromJSON(oParsedNotesMaster["notesStyle"]));
@@ -2618,7 +2601,7 @@
 		oParsedBldP["tmplLst"] != undefined && oBldP.setTmplLst(this.TmplLstFromJSON(oParsedBldP["tmplLst"]));
 		oParsedBldP["advAuto"] != undefined && oBldP.setAdvAuto(oParsedBldP["advAuto"]);
 		oParsedBldP["animBg"] != undefined && oBldP.setAnimBg(oParsedBldP["animBg"]);
-		oParsedBldP["autoUpdateAnimB"] != undefined && oBldP.setAutoUpdateAnimBg(oParsedBldP["autoUpdateAnimB"]);
+		oParsedBldP["autoUpdateAnimBg"] != undefined && oBldP.setAutoUpdateAnimBg(oParsedBldP["autoUpdateAnimBg"]);
 		oParsedBldP["bldLvl"] != undefined && oBldP.setBldLvl(oParsedBldP["bldLvl"]);
 		nBuildType != undefined && oBldP.setBuild(nBuildType);
 		oParsedBldP["grpId"] != undefined && oBldP.setGrpId(oParsedBldP["grpId"]);
@@ -3764,15 +3747,18 @@
 
 		return oHF;
 	};
-	ReaderFromJSON.prototype.CSldFromJSON = function(oParsedCSld)
+	ReaderFromJSON.prototype.CSldFromJSON = function(oParsedCSld, oCSld)
 	{
-		var oCSld = new AscFormat.CSld();
+		oCSld = oCSld || new AscFormat.CSld();
 
-		for (var nShape = 0; nShape < oParsedCSld["spTree"].length; nShape++)
-			oCSld.spTree.push(this.GraphicObjFromJSON(oParsedCSld["spTree"][nShape]));
-			
-		oCSld.Bg   = oParsedCSld["bg"] ? this.BgFromJSON(oParsedCSld["bg"]) : oCSld.Bg;
-		oCSld.name = oParsedCSld.name;
+		for (var nShape = 0; nShape < oParsedCSld["spTree"].length; nShape++) {
+			var sp = this.GraphicObjFromJSON(oParsedCSld["spTree"][nShape]);
+			oCSld.addToSpTree(oCSld.spTree.length, sp);
+			if (oCSld.parent) sp.setParent2(oCSld.parent);
+		}
+
+		if (oParsedCSld["bg"]) oCSld.setBg(this.BgFromJSON(oParsedCSld["bg"]));
+		if (oParsedCSld.name) oCSld.setName(oParsedCSld.name);
 
 		return oCSld;
 	};

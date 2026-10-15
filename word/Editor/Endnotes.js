@@ -2684,6 +2684,13 @@ CEndnotesController.prototype.IsMovingTableBorder = function()
 
 	return this.CurEndnote.IsMovingTableBorder();
 };
+CEndnotesController.prototype.CancelTableBorderMove = function()
+{
+	if (true !== this.private_IsOneEndnoteSelected())
+		return;
+
+	this.CurEndnote.CancelTableBorderMove();
+};
 CEndnotesController.prototype.CheckPosInSelection = function(X, Y, PageAbs, NearPos)
 {
 	var oResult = this.private_GetEndnoteByXY(X, Y, PageAbs);

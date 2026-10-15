@@ -82,6 +82,17 @@
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
 
+	/**
+	 * The current editing restrictions, a combination of the flags:
+	 * <b>0x00</b> - no editing restrictions,
+	 * <b>0x01</b> - allows editing form fields,
+	 * <b>0x02</b> - allows editing comments and regions delimited by range permissions,
+	 * <b>0x04</b> - the document is signed and cannot be changed,
+	 * <b>0x80</b> - does not allow editing.
+	 * @typedef {number} EditorRestrictions
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/EditorRestrictions.js
+	 */
+
     /**
      * Plugin event ("onDocumentContentReady", "onTargetPositionChanged", onClick", "onInputHelperClear", "onInputHelperInput", etc.).
      * @typedef {string} EventType
@@ -206,6 +217,20 @@
 	 */
     Api.prototype["pluginMethod_GetVersion"] = function() { return this.GetVersion(); };
 
+	/**
+	 * Returns the restrictions the editor currently applies to the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE", "CSE", "CPE", "PDFE"]
+	 * @alias GetRestrictions
+	 * @returns {EditorRestrictions} - The current restrictions.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetRestrictions.js
+	 */
+	Api.prototype["pluginMethod_GetRestrictions"] = function()
+	{
+		return this.restrictions;
+	};
+
     /**
      * Adds an OLE object to the current document position.
      * @memberof Api
@@ -319,18 +344,27 @@
 	 * @memberof Api
 	 * @alias PasteHtml
 	 * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
+	 * @param {Object} [options] - Additional paste options.
+	 * @param {boolean} [options.MergeLast=false] - Defines if the last pasted paragraph is merged into the paragraph
+	 * it is pasted into instead of being inserted as a paragraph of its own. Use it to replace a part of a paragraph
+	 * without breaking it in two. Word document editor only.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PasteHtml.js
 	 */
-	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
+	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText, options) {
 		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		return this._pluginMethod_PasteHtml(htmlText, function(){
 			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
-		});
+		}, options);
 	};
-	Api.prototype._pluginMethod_PasteHtml = function(htmlText, callback) {
+	Api.prototype._pluginMethod_PasteHtml = function(htmlText, callback, options) {
+		// the native engine: used only by the slide SetParagraphHtml / SetParagraphRangeHtml
+		if (window["NATIVE_EDITOR_ENJINE"] && this.editorId === AscCommon.c_oEditorId.Presentation)
+			return this._pluginMethod_PasteHtmlNative(htmlText, callback);
+
+		let pasteFrame = document.getElementById("pmpastehtmlframe");
 		if (!AscCommon.g_clipboardBase
 			|| !this.canEdit()
-			|| document.getElementById("pmpastehtml"))
+			|| (pasteFrame && pasteFrame.contentWindow.document.getElementById("pmpastehtml")))
 		{
 			if (callback)
 				callback();
@@ -338,7 +372,29 @@
 			return null;
 		}
 		
-		let _elem = document.createElement("div");
+		if (!pasteFrame) {
+			pasteFrame = document.createElement("iframe");
+			pasteFrame.id = "pmpastehtmlframe";
+			pasteFrame.setAttribute("sandbox", "allow-same-origin");
+			pasteFrame.setAttribute("tabindex", "-1");
+			pasteFrame.setAttribute("aria-hidden", "true");
+			pasteFrame.style.cssText = "position:absolute;left:0;top:-100%;width:100%;height:100%;border:0;z-index:-1000;";
+			document.body.appendChild(pasteFrame);
+		}
+		
+		let styles = "";
+		let styleElems = document.getElementsByTagName("style");
+		for (let i = 0; i < styleElems.length; ++i)
+			styles += styleElems[i].outerHTML;
+		
+		let pasteDoc = pasteFrame.contentWindow.document;
+		pasteDoc.open();
+		pasteDoc.write("<!DOCTYPE html><html><head><meta charset=\"utf-8\">" + styles + "</head><body></body></html>");
+		pasteDoc.close();
+		for (let i = 0; i < document.body.attributes.length; ++i)
+			pasteDoc.body.setAttribute(document.body.attributes[i].name, document.body.attributes[i].value);
+		
+		let _elem = pasteDoc.createElement("div");
 		_elem.id = "pmpastehtml";
 		_elem.style.color = "rgb(0,0,0)";
 		
@@ -372,19 +428,29 @@
 		this.executeGroupActionsStart();
 
 		_elem.innerHTML = htmlText;
-		document.body.appendChild(_elem);
+		pasteDoc.body.appendChild(_elem);
 		this.incrementCounterLongAction();
 		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
 		AscCommon.g_clipboardBase.bSaveFormat = false;
 		let _t = this;
+
+		let logicDocument = this.getLogicDocument();
+		let isMergeLast   = !!(options && options["MergeLast"]) && logicDocument && logicDocument.IsDocumentEditor();
+		let oldMergeLast  = isMergeLast ? logicDocument.MergeLastOnInsertContent : false;
+		if (isMergeLast)
+			logicDocument.MergeLastOnInsertContent = true;
+
 		_t.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
 			function()
 			{
+				if (isMergeLast)
+					logicDocument.MergeLastOnInsertContent = oldMergeLast;
+
 				_t.decrementCounterLongAction();
 				
 				let fCallback = function()
 				{
-					document.body.removeChild(_elem);
+					pasteDoc.body.removeChild(_elem);
 					_elem = null;
 					
 					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
@@ -413,6 +479,44 @@
 				}
 			}
 		);
+	};
+
+	Api.prototype._pluginMethod_PasteHtmlNative = function(htmlText, callback) {
+		if (!this.canEdit())
+		{
+			if (callback)
+				callback();
+
+			return null;
+		}
+
+		let style  = "color:rgb(0,0,0);";
+		let textPr = this.get_TextProps();
+		if (textPr && textPr.TextPr) {
+			if (undefined !== textPr.TextPr.FontSize)
+				style += "font-size:" + textPr.TextPr.FontSize + "pt;";
+
+			style += "font-weight:" + ((true === textPr.TextPr.Bold) ? "bold" : "normal") + ";";
+			style += "font-style:" + ((true === textPr.TextPr.Italic) ? "italic" : "normal") + ";";
+
+			let _color = textPr.TextPr.Color;
+			if (_color)
+				style += "color:rgb(" + _color.r + "," + _color.g + "," + _color.b + ");";
+		}
+
+		let result = null;
+		this.executeGroupActionsStart();
+		this.asc_PasteHtmlAsText('<div style="' + style + '">' + htmlText + '</div>', function() {
+			if (callback)
+				result = callback();
+		}, undefined, true);
+
+		// the paste helper has no api here, so it does not end the paste
+		AscCommon.g_specialPasteHelper.pasteStart = false;
+		AscFonts.IsCheckSymbols = false;
+
+		this.executeGroupActionsEnd();
+		return result;
 	};
 
     /**
@@ -488,20 +592,12 @@
 
     /**
      * Specifies the start action for long operations.
-	 *
-	 * :::note
-	 * GroupActions are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
-	 * :::
      * @memberof Api
      * @alias StartAction
-     * @param {"Information" | "Block" | "GroupActions"} type - The action type:
+     * @param {"Information" | "Block"} type - The action type:
      * <b>"Information"</b> - a non-blocking informational action,
-     * <b>"Block"</b> - a blocking interaction action,
-     * <b>"GroupActions"</b> - groups multiple editor operations into a single undoable step.
-     * @param {string | Object} [description] - For <b>"Information"</b> and <b>"Block"</b> types: a string description displayed during the action.
-     * For <b>"GroupActions"</b> type: an optional object with the following properties:
-     * @param {boolean} [description.lockScroll] - If <em>true</em>, the editor scroll position will be locked during the group operation.
-     * @param {boolean} [description.keepSelection] - If <em>true</em>, the cursor position and selection will be preserved after the group operation ends.
+     * <b>"Block"</b> - a blocking interaction action.
+     * @param {string} [description] - A string description displayed during the action.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/StartAction.js
 	 */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
@@ -519,21 +615,13 @@
 
     /**
      * Specifies the end action for long operations.
-	 *
-	 * :::note
-	 * GroupActions are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices?from=api).
-	 * :::
      * @memberof Api
      * @alias EndAction
-     * @param {"Information" | "Block" | "GroupActions"} type - The action type:
+     * @param {"Information" | "Block"} type - The action type:
      * <b>"Information"</b> - ends a non-blocking informational action,
-     * <b>"Block"</b> - ends a blocking interaction action,
-     * <b>"GroupActions"</b> - ends the grouped operations started with <em>StartAction("GroupActions")</em>.
-     * @param {string | Object} [description] - For <b>"Information"</b> and <b>"Block"</b> types: a string description displayed during the action.
-     * For <b>"GroupActions"</b> type: an optional object with the following properties:
-     * @param {boolean} [description.scrollToTarget=true] - If <em>false</em>, the editor will not scroll to the target after the group operation ends.
-     * @param {boolean} [description.cancel=false] - If <em>true</em>, the group operation is cancelled and rolled back instead of committed.
-     * @param {string} [status] - For <b>"Information"</b> and <b>"Block"</b> types: the error status code. If no error occurs, then an empty string is passed.
+     * <b>"Block"</b> - ends a blocking interaction action.
+     * @param {string} [description] - A string description displayed during the action.
+     * @param {string} [status] - The error status code. If no error occurs, then an empty string is passed.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/EndAction.js
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
@@ -550,18 +638,18 @@
 		
         this.sync_EndAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
 
-        if (window["AscDesktopEditor"] && status != null && status != "")
+        if (AscCommon.CryptoProvider && status != null && status != "")
         {
             // error!!!
-            if (!window["AscDesktopEditor"]["IsLocalFile"]())
+            if (!AscCommon.CryptoProvider.isLocalFile())
             {
                 this.sendEvent("asc_onError", "Encryption error: " + status + ". The file was not compiled.", c_oAscError.Level.Critical);
-                window["AscDesktopEditor"]["CryptoMode"] = 0;
+                AscCommon.CryptoProvider.setCryptoMode(0);
             }
             else
             {
                 this.sendEvent("asc_onError", "Encryption error: " + status + ". End-to-end encryption mode is disabled.", c_oAscError.Level.NoCritical);
-                window["AscDesktopEditor"]["CryptoMode"] = 0;
+                AscCommon.CryptoProvider.setCryptoMode(0);
 
                 if (undefined !== window.LastUserSavedIndex)
                 {
@@ -577,7 +665,7 @@
             window.LastUserSavedIndex = undefined;
             setTimeout(function() {
 
-                window["AscDesktopEditor"]["buildCryptedEnd"](false);
+                AscCommon.CryptoProvider.buildCryptedEnd(false);
 
             }, 500);
 
@@ -625,14 +713,14 @@
                 if ("no_build" === obj["error"])
 				{
 					// problems - but ones where we just don't build the file...
-					window["AscDesktopEditor"]["buildCryptedEnd"](true);
+					AscCommon.CryptoProvider.buildCryptedEnd(true);
 					return;
 				}
 
                 var _ret = _editor.getFileAsFromChanges();
                 AscCommon.EncryptionWorker.isPasswordCryptoPresent = true;
                 _editor.currentDocumentInfoNext = obj["docinfo"];
-                window["AscDesktopEditor"]["buildCryptedStart"](_ret.data, _ret.header, obj["password"], obj["docinfo"] ? obj["docinfo"] : "");
+                AscCommon.CryptoProvider.buildCryptedStart(_ret.data, _ret.header, obj["password"], obj["docinfo"] ? obj["docinfo"] : "");
                 break;
             }
             case "getPasswordByFile":
@@ -648,11 +736,11 @@
 
                     if (window.isNativeOpenPassword)
                     {
-                        window["AscDesktopEditor"]["NativeViewerOpen"](obj["password"]);
+                        AscCommon.CryptoProvider.nativeViewerOpen(obj["password"]);
                     }
                     else
                     {
-                        window["AscDesktopEditor"]["SetAdvancedOptions"](_param);
+                        AscCommon.CryptoProvider.setAdvancedOptions(_param);
                     }
                 }
                 else
@@ -1440,6 +1528,20 @@
 	AscCommon.getLocalStorageItem = getLocalStorageItem;
 	AscCommon.setLocalStorageItem = setLocalStorageItem;
 
+	const nonRemovablePlugins = Object.create(null);
+	nonRemovablePlugins["asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}"] = true;
+
+	function getRemovedPlugins()
+	{
+		let removed = getLocalStorageItem("asc_plugins_removed");
+		if (removed)
+		{
+			for (let guid in nonRemovablePlugins)
+				delete removed[guid];
+		}
+		return removed;
+	}
+
 	function installPlugin(config, loadFuncName)
 	{
 		if (!config)
@@ -1483,7 +1585,7 @@
 		currentInstalledPlugins[config["guid"]] = config;
 		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
 
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 		if (currentRemovedPlugins && currentRemovedPlugins[config["guid"]])
 		{
 			delete currentRemovedPlugins[config["guid"]];
@@ -1562,6 +1664,7 @@
 			services = JSON.parse(window.localStorage.getItem("asc_plugins_background_stopped"));
 			if (!services)
 				services = [];
+			services = services.filter(function(guid) { return !nonRemovablePlugins[guid]; });
 		}
 		catch (e)
 		{
@@ -1614,7 +1717,7 @@
 		let isInstalledPresent = window.g_asc_plugins.loadExtensionPlugins(arrayPlugins, undefined, true);
 
 		let isRemovedPresent = false;
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 
 		if (currentRemovedPlugins)
 		{
@@ -1665,7 +1768,7 @@
 			}
 		}
 
-		localStorageItems = getLocalStorageItem("asc_plugins_removed");
+		localStorageItems = getRemovedPlugins();
 		if (localStorageItems)
 		{
 			for (let item in localStorageItems)
@@ -1794,7 +1897,7 @@
 			return returnArray;
 
 		// need to also send removed plugins. since a removed plugin may not be in the store. then there's no way to install it back
-		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		let currentRemovedPlugins = getRemovedPlugins();
 
 		if (currentRemovedPlugins)
 		{
@@ -1851,7 +1954,7 @@
 		
 		if (removedPlugin)
 		{
-			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+			let currentRemovedPlugins = getRemovedPlugins();
 			if (!currentRemovedPlugins)
 				currentRemovedPlugins = {};
 			currentRemovedPlugins[removedPlugin.guid] = removedPlugin.serialize();
@@ -1942,6 +2045,24 @@
 		} else {
 			this.sendEvent("asc_onPluginHideButton", id);
 		}
+	};
+
+	/**
+	 * Enables or disables the modal plugin footer button by index.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @param {number} index - The button index (0-based) in the buttons array from config.json.
+	 * @param {boolean} isDisabled - Specifies whether to disable (true) or enable (false) the button.
+	 *
+	 * @alias SetButtonDisabled
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetButtonDisabled.js
+	 */
+	Api.prototype['pluginMethod_SetButtonDisabled'] = function (index, isDisabled) {
+		const eventName = isDisabled ? 'asc_onPluginSetButtonDisabled' : 'asc_onPluginSetButtonEnabled';
+		this.sendEvent(eventName, index);
 	};
 
 	Api.prototype["pluginMethod_GetKeychainStorageInfo"] = function(keys)
@@ -2214,6 +2335,130 @@
 	{
 		correctToolbarItems(this, items);
 		this.sendEvent("onPluginUpdateToolbarMenu", [items]);
+	};
+
+	/**
+	 * @typedef {Object} WindowHeaderMenuItem
+	 * The window header menu item.
+	 * @property {string} id - The item ID.
+	 * @property {"button"} type - The item type.
+	 * @property {string} [text] - The item text.
+	 * @property {string} [hint] - The item hint.
+	 * @property {"left" | "right"} [align] - The item alignment in the window header.
+	 * @property {string} [icons] - The item icons (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {boolean} [enableToggle] - Specifies if an item toggle is enabled or not.
+	 * @property {boolean} [split] - Specifies if the button is split (button + dropdown arrow) or not.
+	 * @property {boolean} [isTitle] - Specifies if the item replaces the window title or not.
+	 * @property {boolean} [removed] - Specifies if the item must be removed from the header.
+	 * @property {ContextMenuItem[]} [items] - An array containing the dropdown menu items for the current header item.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/WindowHeaderMenuItem.js
+	 */
+
+	/**
+	 * @typedef {Object} WindowHeaderMainItem
+	 * The main window header item.
+	 * @property {string} guid - The plugin guid.
+	 * @property {string} [windowID] - The plugin child window ID. When omitted, the items are placed on the plugin's main frame header.
+	 * @property {WindowHeaderMenuItem[]} items - An array containing the window header items.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/WindowHeaderMainItem.js
+	 */
+
+	function correctWindowHeaderItems(api, items)
+	{
+		let baseUrl = api.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["frames"][0]["items"])
+			correctItemsWithData(items["frames"][0]["items"], baseUrl);
+	}
+
+	/**
+	 * Adds buttons to the plugin window header.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias AddWindowHeaderItem
+	 * @param {WindowHeaderMainItem} items - The window header items for the plugin.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddWindowHeaderItem.js
+	 */
+	Api.prototype["pluginMethod_AddWindowHeaderItem"] = function(items)
+	{
+		correctWindowHeaderItems(this, items);
+		this.sendEvent("onPluginWindowHeaderMenu", [items]);
+	};
+
+	/**
+	 * Updates buttons in the plugin window header.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias UpdateWindowHeaderItem
+	 * @param {WindowHeaderMainItem} items - The window header items for the plugin.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateWindowHeaderItem.js
+	 */
+	Api.prototype["pluginMethod_UpdateWindowHeaderItem"] = function(items)
+	{
+		correctWindowHeaderItems(this, items);
+		this.sendEvent("onPluginUpdateWindowHeaderMenu", [items]);
+	};
+	
+	/**
+	 * @typedef {Object} FloatActionButton
+	 * The floating action button displayed over the editor area.
+	 * @property {string} id - The button ID.
+	 * @property {string} [text] - The button text.
+	 * @property {string} [hint] - The button hint.
+	 * @property {string} [data] - The button data (this data will be sent to the click event callback).
+	 * @property {string} [icons] - The button icons, 28x28 px (see the plugins {@link /docs/plugin-and-macros/structure/configuration/ config} documentation).
+	 * @property {boolean} [enableToggle] - Specifies if a button toggle is enabled or not.
+	 * @property {boolean} [disabled] - Specifies if the current button is disabled or not.
+	 * @property {boolean} [visible] - Specifies if the current button is visible or not.
+	 * @property {boolean} [removed] - Specifies if the button must be removed from the editor area.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/FloatActionButton.js
+	 */
+
+	/**
+	 * @typedef {Object} FloatActionButtonsMainItem
+	 * The main floating action button item.
+	 * @property {string} guid - The plugin guid.
+	 * @property {FloatActionButton[]} items - An array containing the floating action buttons for the plugin.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/FloatActionButtonsMainItem.js
+	 */
+
+	function correctFloatActionButtons(api, items)
+	{
+		let baseUrl = api.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"])
+			correctItemsWithData(items["items"], baseUrl);
+	}
+
+	/**
+	 * Adds floating action buttons over the editor area.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias AddFloatActionButtons
+	 * @param {FloatActionButtonsMainItem} items - The floating action buttons for the plugin.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddFloatActionButtons.js
+	 */
+	Api.prototype["pluginMethod_AddFloatActionButtons"] = function(items)
+	{
+		correctFloatActionButtons(this, items);
+		this.sendEvent("onPluginFloatActionButtons", [items]);
+	};
+
+	/**
+	 * Updates the floating action buttons over the editor area.
+	 * @undocumented
+	 * @memberof Api
+	 * @alias UpdateFloatActionButtons
+	 * @param {FloatActionButtonsMainItem} items - The floating action buttons for the plugin.
+	 * @since 10.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateFloatActionButtons.js
+	 */
+	Api.prototype["pluginMethod_UpdateFloatActionButtons"] = function(items)
+	{
+		correctFloatActionButtons(this, items);
+		this.sendEvent("onPluginUpdateFloatActionButtons", [items]);
 	};
 
 	/**

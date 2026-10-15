@@ -70,6 +70,89 @@
         Redact:         25
     };
 
+	function GetAnnotTypeStr(innerType) {
+		switch (innerType) {
+			case ANNOTATIONS_TYPES.Text: {
+				return "Text";
+			}
+			case ANNOTATIONS_TYPES.Link: {
+				return "Link";
+			}
+			case ANNOTATIONS_TYPES.FreeText: {
+				return "FreeText";
+			}
+			case ANNOTATIONS_TYPES.Line: {
+				return "Line";
+			}
+			case ANNOTATIONS_TYPES.Square: {
+				return "Square";
+			}
+			case ANNOTATIONS_TYPES.Circle: {
+				return "Circle";
+			}
+			case ANNOTATIONS_TYPES.Polygon: {
+				return "Polygon";
+			}
+			case ANNOTATIONS_TYPES.PolyLine: {
+				return "PolyLine";
+			}
+			case ANNOTATIONS_TYPES.Highlight: {
+				return "Highlight";
+			}
+			case ANNOTATIONS_TYPES.Underline: {
+				return "Underline";
+			}
+			case ANNOTATIONS_TYPES.Squiggly: {
+				return "Squiggly";
+			}
+			case ANNOTATIONS_TYPES.Strikeout: {
+				return "Strikeout";
+			}
+			case ANNOTATIONS_TYPES.Stamp: {
+				return "Stamp";
+			}
+			case ANNOTATIONS_TYPES.Caret: {
+				return "Caret";
+			}
+			case ANNOTATIONS_TYPES.Ink: {
+				return "Ink";
+			}
+			case ANNOTATIONS_TYPES.Popup: {
+				return "Popup";
+			}
+			case ANNOTATIONS_TYPES.FileAttachment: {
+				return "FileAttachment";
+			}
+			case ANNOTATIONS_TYPES.Sound: {
+				return "Sound";
+			}
+			case ANNOTATIONS_TYPES.Movie: {
+				return "Movie";
+			}
+			case ANNOTATIONS_TYPES.Widget: {
+				return "Widget";
+			}
+			case ANNOTATIONS_TYPES.Screen: {
+				return "Screen";
+			}
+			case ANNOTATIONS_TYPES.PrinterMark: {
+				return "PrinterMark";
+			}
+			case ANNOTATIONS_TYPES.TrapNet: {
+				return "TrapNet";
+			}
+			case ANNOTATIONS_TYPES.Watermark: {
+				return "Watermark";
+			}
+			case ANNOTATIONS_TYPES.Type3D: {
+				return "Type3D";
+			}
+			case ANNOTATIONS_TYPES.Redact: {
+				return "Redact";
+			}
+		}
+	}
+
     const BORDER_EFFECT_STYLES = {
         none:   0,
         cloud:  1
@@ -139,7 +222,8 @@
         widgetInfo: 3,
         movePage:   4,
         mergePages: 5,
-        saveModeNew:6 // save as a new file
+        saveModeNew:6, // save as a new file
+		redactInfo:	7
     }
 
     const FormatType = {
@@ -149,8 +233,7 @@
         DATE:       2,
         TIME:       3,
         SPECIAL:    4,
-        REGULAR:    5,
-        CUSTOM:     6
+        CUSTOM:    	6
     }
 
     FormatType["NONE"]          = FormatType.NONE;
@@ -159,7 +242,6 @@
     FormatType["DATE"]          = FormatType.DATE;
     FormatType["TIME"]          = FormatType.TIME;
     FormatType["SPECIAL"]       = FormatType.SPECIAL;
-    FormatType["REGULAR"]       = FormatType.REGULAR;
     FormatType["CUSTOM"]        = FormatType.CUSTOM;
 
     const SpecialFormatType = {
@@ -207,29 +289,19 @@
     NegativeStyle["PARENS_BLACK"] = NegativeStyle.PARENS_BLACK;
     NegativeStyle["PARENS_RED"] = NegativeStyle.PARENS_RED;
 
-    const CalculateType = {
-        SUM:        0,
-        PRODUCT:    1,
-        AVERAGE:    2,
-        MIN:        3,
-        MAX:        4
+    const CalculateOperation = {
+        SUM:	"SUM",
+        PRD:	"PRD",
+        AVG:	"AVG",
+        MIN:	"MIN",
+        MAX:	"MAX"
     }
 
-    CalculateType["SUM"]        = CalculateType.SUM;
-    CalculateType["PRODUCT"]    = CalculateType.PRODUCT;
-    CalculateType["AVERAGE"]    = CalculateType.AVERAGE;
-    CalculateType["MIN"]        = CalculateType.MIN;
-    CalculateType["MAX"]        = CalculateType.MAX;
-
-    const ValidateType = {
-        NONE:   -1,
-        NUMBER: 0,
-        CUSTOM: 1
-    }
-
-    ValidateType["NONE"]      = ValidateType.NONE;
-    ValidateType["NUMBER"]    = ValidateType.NUMBER;
-    ValidateType["CUSTOM"]    = ValidateType.CUSTOM;
+    CalculateOperation["SUM"]	= CalculateOperation.SUM;
+    CalculateOperation["PRD"]	= CalculateOperation.PRD;
+    CalculateOperation["AVG"]	= CalculateOperation.AVG;
+    CalculateOperation["MIN"]	= CalculateOperation.MIN;
+    CalculateOperation["MAX"]	= CalculateOperation.MAX;
 
     Object.freeze(FIELD_TYPES);
 
@@ -337,8 +409,9 @@
     DIGITS_TYPES["hindi"]   = DIGITS_TYPES.hindi;
     
     const USER_PERMISSIONS = {
-		print:	3,
-        edit:   4
+        print:	    3,
+        edit:       4,
+        fillForms:  9
     };
 	
 	USER_PERMISSIONS["edit"]  = USER_PERMISSIONS.edit;
@@ -438,6 +511,30 @@
     LINE_END_TYPE["rClosedArrow"]   = LINE_END_TYPE.rClosedArrow;
     LINE_END_TYPE["slash"]          = LINE_END_TYPE.slash;
 
+	const ACTION_NAMED_TYPES = {
+        NextPage:   "NextPage",
+        PrevPage:   "PrevPage",
+        FirstPage:  "FirstPage",
+        LastPage:   "LastPage"
+    }
+
+	ACTION_NAMED_TYPES["NextPage"]		= ACTION_NAMED_TYPES.NextPage;
+	ACTION_NAMED_TYPES["PrevPage"]		= ACTION_NAMED_TYPES.PrevPage;
+	ACTION_NAMED_TYPES["FirstPage"]		= ACTION_NAMED_TYPES.FirstPage;
+	ACTION_NAMED_TYPES["LastPage"]		= ACTION_NAMED_TYPES.LastPage;
+
+	const ALIGN_TYPE = {
+        left:   0,
+        center: 1,
+        right:  2,
+        justify:3
+    }
+
+	ALIGN_TYPE["left"]		= ALIGN_TYPE.left;
+	ALIGN_TYPE["center"]	= ALIGN_TYPE.center;
+	ALIGN_TYPE["right"]		= ALIGN_TYPE.right;
+	ALIGN_TYPE["justify"]	= ALIGN_TYPE.justify;
+
     asc["FIELD_TYPES"]                  = asc.FIELD_TYPES                = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES       = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]                = asc.REF_TO_REASON              = REF_TO_REASON;
@@ -446,8 +543,7 @@
     asc["SeparatorStyle"]               = asc.SeparatorStyle             = SeparatorStyle;
     asc["TimeFormatType"]               = asc.TimeFormatType             = TimeFormatType;
     asc["NegativeStyle"]                = asc.NegativeStyle              = NegativeStyle;
-    asc["CalculateType"]                = asc.CalculateType              = CalculateType;
-    asc["ValidateType"]                 = asc.ValidateType               = ValidateType;
+    asc["CalculateOperation"]           = asc.CalculateOperation         = CalculateOperation;
     asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES            = CHECKBOX_STYLES;
     asc["BORDER_TYPES"]                 = asc.BORDER_TYPES               = BORDER_TYPES;
     asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES = ANNOT_COMPLEX_BORDER_TYPES;
@@ -458,8 +554,12 @@
     asc["DIGITS_TYPES"]                 = asc.DIGITS_TYPES               = DIGITS_TYPES;
     asc["USER_PERMISSIONS"]             = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
     asc["GOTO_TYPES"]                   = asc.GOTO_TYPES                 = GOTO_TYPES;
-    asc["PRINT_CONTENT_TYPES"]         = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
+    asc["PRINT_CONTENT_TYPES"]          = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
     asc["TEXT_ICONS_TYPES"]             = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
     asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
+    asc["ACTION_NAMED_TYPES"]           = asc.ACTION_NAMED_TYPES         = ACTION_NAMED_TYPES;
+    asc["GetAnnotTypeStr"]              = asc.GetAnnotTypeStr            = GetAnnotTypeStr;
+	asc["ALIGN_TYPE"]					= asc.ALIGN_TYPE				 = ALIGN_TYPE;
+
     asc.CommandType                     = CommandType;
 })();

@@ -210,6 +210,9 @@
 		if (oRun.IsMathRun() && this.IsMoveDrawing())
 			return false;
 
+		if (this.IsMoveDrawing() && this.private_GetPlainTextContentControl(oParaAnchorPos))
+			return false;
+
 		return (oRun.IsMathRun() ? this.CanConvertToMath() : true);
 	};
 	CSelectedContent.prototype.Insert = function(oAnchorPos, isSelect)
@@ -238,6 +241,8 @@
 		this.Select        = !!isSelect;
 		this.PasteHelper   = oRun ? oRun.GetParagraph() : null;
 
+		let plainTextContentControl = this.private_GetPlainTextContentControl(oParaAnchorPos);
+
 		let isLocalTrack = false;
 		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
 		{
@@ -260,6 +265,10 @@
 		else if (oRun.GetParentForm())
 		{
 			this.private_InsertToForm();
+		}
+		else if (plainTextContentControl)
+		{
+			this.private_InsertPlainTextToCC(plainTextContentControl, "\n");
 		}
 		else if (this.private_IsInlineInsert())
 		{
@@ -298,15 +307,7 @@
 	};
 	CSelectedContent.prototype.ReplaceContent = function(oDocContent, isSelect)
 	{
-		if (this.Elements.length <= 0)
-			return;
-
-		oDocContent.ClearContent(false);
-		for (let nPos = 0, nCount = this.Elements.length; nPos < nCount; ++nPos)
-		{
-			let oElement = this.Elements[nPos].Element;
-			oDocContent.AddToContent(nPos, oElement);
-		}
+		this.ReplaceElements(oDocContent);
 
 		if (true === isSelect)
 		{
@@ -319,6 +320,18 @@
 		}
 
 		oDocContent.SetThisElementCurrent();
+	};
+	CSelectedContent.prototype.ReplaceElements = function(oDocContent)
+	{
+		if (this.Elements.length <= 0)
+			return;
+
+		oDocContent.ClearContent(false);
+		for (let nPos = 0, nCount = this.Elements.length; nPos < nCount; ++nPos)
+		{
+			let oElement = this.Elements[nPos].Element;
+			oDocContent.AddToContent(nPos, oElement);
+		}
 	};
 	CSelectedContent.prototype.GetPasteHelperElement = function()
 	{
@@ -809,6 +822,16 @@
 		if (this.ForceInline)
 			this.ConvertToInline();
 	};
+	CSelectedContent.prototype.private_GetPlainTextContentControl = function(paraAnchorPos)
+	{
+		for (let index = paraAnchorPos.Classes.length - 1; index >= 0; --index)
+		{
+			let element = paraAnchorPos.Classes[index];
+			if (element instanceof AscWord.CInlineLevelSdt && element.IsContentControlText())
+				return element;
+		}
+		return null;
+	};
 	CSelectedContent.prototype.private_AdjustSizeForInlineDrawing = function()
 	{
 		if (this.MoveDrawing)
@@ -859,9 +882,16 @@
 			editor.sendEvent("asc_onAddSignature", sLastSignatureId);
 		}
 	};
+	/**
+	 * @returns {boolean}
+	 */
+	CSelectedContent.prototype.private_IsMergeLastOnInsert = function()
+	{
+		return !!(this.LogicDocument && this.LogicDocument.MergeLastOnInsertContent);
+	};
 	CSelectedContent.prototype.private_IsInlineInsert = function()
 	{
-		return (1 === this.Elements.length && !this.Elements[0].SelectedAll && this.Elements[0].Element.IsParagraph() && (!this.Elements[0].Element.IsEmpty() || this.ForceInline));
+		return (1 === this.Elements.length && (!this.Elements[0].SelectedAll || this.private_IsMergeLastOnInsert()) && this.Elements[0].Element.IsParagraph() && (!this.Elements[0].Element.IsEmpty() || this.ForceInline));
 	};
 	CSelectedContent.prototype.private_IsOverwriteTableCells = function()
 	{
@@ -948,12 +978,7 @@
 	};
 	CSelectedContent.prototype.private_InsertToForm = function()
 	{
-		let oParaAnchorPos = this.ParaAnchorPos;
-
-		let oRun  = this.Run;
-		let oForm = oRun.GetParentForm();
-
-		let nInLastClassPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 1];
+		let oForm = this.Run.GetParentForm();
 
 		if (oForm.IsComplexForm())
 		{
@@ -967,7 +992,15 @@
 		let newLineSep = "";
 		if (oForm.IsMultiLineForm() || (oForm.IsTextForm() && !oForm.IsFixedForm()))
 			newLineSep = "\n";
-		
+
+		this.private_InsertPlainTextToCC(oForm, newLineSep);
+	};
+	CSelectedContent.prototype.private_InsertPlainTextToCC = function(contentControl, newLineSep)
+	{
+		let oParaAnchorPos  = this.ParaAnchorPos;
+		let oRun            = this.Run;
+		let nInLastClassPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 1];
+
 		let sInsertedText = this.GetText({
 			ParaSeparator : newLineSep,
 			TableCellSeparator : newLineSep,
@@ -986,8 +1019,7 @@
 		if (!sInsertedText || !sInsertedText.length)
 			return;
 		
-		var isPlaceHolder = oRun.GetParentForm().IsPlaceHolder();
-		if (isPlaceHolder && oRun.GetParent() instanceof CInlineLevelSdt)
+		if (contentControl.IsPlaceHolder() && oRun.GetParent() instanceof CInlineLevelSdt)
 		{
 			var oInlineLeveLSdt = oRun.GetParent();
 			oInlineLeveLSdt.ReplacePlaceHolderWithContent();
@@ -1179,7 +1211,7 @@
 		if (oParagraphE
 			&& this.Elements.length > 1
 			&& this.Elements[nEndPos].Element.IsParagraph()
-			&& !this.Elements[nEndPos].SelectedAll)
+			&& (!this.Elements[nEndPos].SelectedAll || this.private_IsMergeLastOnInsert()))
 		{
 			oParagraphE.ConcatBefore(this.Elements[nEndPos].Element, this.Select ? -1 : 0);
 			nEndPos--;

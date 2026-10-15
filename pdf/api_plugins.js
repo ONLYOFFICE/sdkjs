@@ -70,6 +70,26 @@
 	 */
 
 	/**
+	 * Comment object.
+	 * @typedef {Object} comment
+	 * @property {string} Id - The comment ID.
+	 * @property {CommentData} Data - An object which contains the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
+	 */
+
+	/**
+	 * The comment data.
+	 * @typedef {Object} CommentData
+	 * @property {string} AnnotType - The annotation comment type.
+	 * @property {string} UserName - The comment author.
+	 * @property {string} Text - The comment text.
+	 * @property {string} Time - The time when the comment was posted (in milliseconds).
+	 * @property {string} UserId - The user ID of the comment author.
+	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
+	 */
+
+	/**
 	 * The PDF API lists the methods and events a plugin can use when working with a PDF file in
 	 * ONLYOFFICE Docs. To work with the PDF content directly, such as pages and annotations, run
 	 * Office API code in <code>callCommand</code>. See
@@ -104,7 +124,8 @@
 	 * @param {boolean} [oParams.annotations=false] - Specifies whether the annotations will be rendered.
 	 * @param {boolean} [oParams.fields=false] - Specifies whether the fields will be rendered.
 	 * @param {boolean} [oParams.drawings=false] - Specifies whether the drawings will be rendered.
-	 * @returns {canvas}
+	 * @param {boolean} [oParams.withInfo=false] - Return an object with the image plus the page size instead of a bare data URL.
+	 * @returns {string | {image: string, width: number, height: number, widthMM: number, heightMM: number}}
 	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/GetPageImage.js
 	 */
 	Api.prototype["pluginMethod_GetPageImage"] = function(nPage, oParams) {
@@ -114,7 +135,10 @@
 
 		let oViewer		= this.DocumentRenderer;
 		let oFile		= oViewer.file;
-		let nPt2Px		= AscCommonWord.g_dKoef_pt_to_mm * AscCommonWord.g_dKoef_mm_to_pix;
+		let nPt2Px		= AscCommonWord.g_dKoef_pt_to_mm * AscCommon.g_dKoef_mm_to_pix;
+
+		let nWidthMM	= oFile.pages[nPage].W * AscCommonWord.g_dKoef_pt_to_mm;
+		let nHeightMM	= oFile.pages[nPage].H * AscCommonWord.g_dKoef_pt_to_mm;
 
 		let nWidthPx	= oFile.pages[nPage].W * nPt2Px;
 		let nHeightPx	= oFile.pages[nPage].H * nPt2Px;
@@ -166,7 +190,19 @@
 			oViewer._drawFieldsOnCtx(nPage, ctx, false, true);
 		}
 
-		return ctx.canvas.toDataURL("image/png");
+		let sDataUrl = ctx.canvas.toDataURL("image/png");
+
+		if (oParams['withInfo']) {
+			return {
+				"image"    : sDataUrl,
+				"width"    : nWidthPx,
+				"height"   : nHeightPx,
+				"widthMM"  : nWidthMM,
+				"heightMM" : nHeightMM
+			};
+		}
+
+		return sDataUrl;
 	};
 
     /**
@@ -223,6 +259,9 @@
 		let aAnnots = oDoc.annots;
 		for (let i = 0; i < aAnnots.length; i++) {
 			let annot = aAnnots[i];
+			if (annot.IsLink() || (annot.IsRedact() && annot.GetRedactId())) {
+				continue;
+			}
 
 			let oAscCommData = annot.GetAscCommentData();
 			let oCommData = oAscCommData ? new AscCommon.CCommentData() : undefined;

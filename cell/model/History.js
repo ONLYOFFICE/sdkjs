@@ -66,6 +66,10 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_RichValueStructures = 22;
 	window['AscCH'].historyitem_Workbook_RichValueTypesInfo = 23;
 	window['AscCH'].historyitem_Workbook_RichValueData = 24;
+	window['AscCH'].historyitem_Workbook_SpecialPaste = 25;
+	window['AscCH'].historyitem_Workbook_TableStyle = 26;
+	window['AscCH'].historyitem_Workbook_DefaultTableStyle = 27;
+	window['AscCH'].historyitem_Workbook_DefaultPivotStyle = 28;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -138,6 +142,7 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Worksheet_TimelineDelete = 65;
 
+	window['AscCH'].historyitem_Worksheet_SetActiveCell = 66;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
@@ -194,6 +199,12 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_SetHidden = 29;
 	window['AscCH'].historyitem_Cell_SetLocked = 30;
 	window['AscCH'].historyitem_Cell_ReadingOrder = 31;
+	// Direct xf change on a style-only cell; undo applies to
+	// ws.cellStylesByCol without creating a SheetMemory init row.
+	window['AscCH'].historyitem_Cell_SetStyleOnly = 32;
+	// Range-form companion of SetStyleOnly: one record per CRangeAttrArray
+	// run (bbox + uniform oldXfs/newXfs); splits to per-cell on OT conflict.
+	window['AscCH'].historyitem_Cell_SetStyleOnlyRange = 33;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;
@@ -311,6 +322,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Layout_FirstPageNumber = 13;
 	window['AscCH'].historyitem_Layout_HorizontalCentered = 14;
 	window['AscCH'].historyitem_Layout_VerticalCentered = 15;
+	window['AscCH'].historyitem_Layout_Header = 16;
+	window['AscCH'].historyitem_Layout_Footer = 17;
+	window['AscCH'].historyitem_Layout_PaperSize = 18;
 
 	
 	window['AscCH'].historyitem_ArrayFromula_AddFormula = 1;
@@ -536,6 +550,8 @@ CHistory.prototype.Can_Redo = function()
 /** @returns {boolean} */
 CHistory.prototype.Undo = function(Options)
 {
+	this.CheckUnionLastPoints();
+
   // Check if Undo can be performed
   if (true !== this.Can_Undo()) {
     return false;
@@ -789,7 +805,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		//changeWorksheetUpdate before cleanCellCache to call _calcHeightRows
 		for (i in oRedoObjectParam.oChangeWorksheetUpdate)
 			this.workbook.handlers.trigger("changeWorksheetUpdate",
-				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true});
+				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true, isUpdateDefaultWidth: !!oRedoObjectParam.oUpdateDefaultWidthSheets[i]});
 
 		this.updateDrawingsByRegions(Point.UpdateRigions, oRedoObjectParam);
 
@@ -896,8 +912,13 @@ CHistory.prototype._addRedoObjectParam = function (oRedoObjectParam, Point) {
 		AscCH.historyitem_Worksheet_SetDisplayHeadings === Point.Type)) {
 		oRedoObjectParam.oOnUpdateSheetViewSettings[Point.SheetId] = Point.SheetId;
 	}
-	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type))
+	else if (AscCommonExcel.g_oUndoRedoWorksheet === Point.Class && (AscCH.historyitem_Worksheet_RowProp === Point.Type || AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowHide === Point.Type || AscCH.historyitem_Worksheet_AddCols === Point.Type || AscCH.historyitem_Worksheet_RemoveCols === Point.Type)) {
 		oRedoObjectParam.oChangeWorksheetUpdate[Point.SheetId] = Point.SheetId;
+		if ((AscCH.historyitem_Worksheet_ColProp === Point.Type || AscCH.historyitem_Worksheet_RowProp === Point.Type) &&
+			Point.Data && Point.Data.index === AscCommonExcel.g_nAllColIndex) {
+			oRedoObjectParam.oUpdateDefaultWidthSheets[Point.SheetId] = true;
+		}
+	}
 	else if (AscCommonExcel.g_oUndoRedoWorkbook === Point.Class && (AscCH.historyitem_Workbook_SheetAdd === Point.Type || AscCH.historyitem_Workbook_SheetRemove === Point.Type)) {
 		oRedoObjectParam.bUpdateWorksheetByModel = true;
 		oRedoObjectParam.bOnSheetsChanged = true;
@@ -1034,59 +1055,83 @@ CHistory.prototype.Set_Additional_ExtendDocumentToPos = function()
 
 CHistory.prototype.CheckUnionLastPoints = function()
 {
-	// Don't merge history points if save occurred at the previous point
-	if ( this.Points.length < 2)
+	if (this.Points.length < 2 || this.Index !== this.Points.length - 1)
 		return;
 
-	var Point1 = this.Points[this.Points.length - 2];
-	var Point2 = this.Points[this.Points.length - 1];
+	// Don't merge history points if save occurred at the previous point
+	if (null !== this.SavedIndex && this.SavedIndex >= this.Points.length - 2)
+		return;
+
+	let point1 = this.Points[this.Points.length - 2];
+	let point2 = this.Points[this.Points.length - 1];
+
+	if (AscDFH.historydescription_Document_CompositeInputReplace === point2.Description)
+	{
+		if (AscDFH.historydescription_Document_CompositeInput === point1.Description
+			|| AscDFH.historydescription_Document_CompositeInputReplace === point1.Description)
+			this.private_UnionLastPoints(point1, point2);
+
+		return;
+	}
+
+	if (AscDFH.historydescription_Spreadsheet_ParagraphAdd !== point1.Description
+		|| AscDFH.historydescription_Spreadsheet_ParagraphAdd !== point2.Description)
+		return;
 
 	// Don't merge words with more than 63 elements
-	if ( Point1.Items.length > 63 )
+	if (point1.Items.length > 63)
 		return;
 
-	var PrevItem = null;
-	var Class = null;
-	for ( var Index = 0; Index < Point1.Items.length; Index++ )
+	if (this.private_CanUnionLastPoints(point1, point2))
+		this.private_UnionLastPoints(point1, point2);
+};
+
+CHistory.prototype.private_CanUnionLastPoints = function(point1, point2)
+{
+	let points = [point1, point2];
+	let unionClass = null;
+	let prevChange = null;
+	for (let pointIndex = 0; pointIndex < points.length; ++pointIndex)
 	{
-		var Item = Point1.Items[Index];
+		let items = points[pointIndex].Items;
+		for (let index = 0; index < items.length; ++index)
+		{
+			let item = items[index];
+			if (AscCH.historyitem_Unknown === item.Type)
+				continue;
 
-		if ( null === Class )
-			Class = Item.Class;
-		else if ( Class != Item.Class || "undefined" === typeof(Class.Check_HistoryUninon) || false === Class.Check_HistoryUninon(PrevItem.Data, Item.Data) )
-			return;
+			let change = item.Data || item.Class;
+			let changeClass = change && change.GetClass ? change.GetClass() : null;
+			if (!changeClass || !changeClass.Check_HistoryUninon)
+				return false;
 
-		PrevItem = Item;
+			if (null === unionClass)
+				unionClass = changeClass;
+			else if (unionClass !== changeClass || !unionClass.Check_HistoryUninon(prevChange, change))
+				return false;
+
+			prevChange = change;
+		}
 	}
 
-	for ( var Index = 0; Index < Point2.Items.length; Index++ )
+	return null !== prevChange;
+};
+
+CHistory.prototype.private_UnionLastPoints = function(point1, point2)
+{
+	point1.Items = point1.Items.concat(point2.Items);
+	for (let sheetId in point2.UpdateRigions)
 	{
-		var Item = Point2.Items[Index];
-
-		if ( Class != Item.Class || "undefined" === typeof(Class.Check_HistoryUninon) || false === Class.Check_HistoryUninon(PrevItem.Data, Item.Data) )
-			return;
-
-		PrevItem = Item;
+		let range = point2.UpdateRigions[sheetId];
+		if (point1.UpdateRigions[sheetId])
+			point1.UpdateRigions[sheetId].union2(range);
+		else
+			point1.UpdateRigions[sheetId] = range.clone();
 	}
+	point1.Time = point2.Time;
 
-	var NewPoint =
-	{
-		State : Point1.State,
-		Items : Point1.Items.concat(Point2.Items),
-		Time  : Point1.Time,
-		Additional : {}
-	};
-
-	if ( this.SavedIndex >= this.Points.length - 2 && null !== this.SavedIndex )
-		this.Set_SavedIndex(this.Points.length - 3);
-
-	this.Points.splice( this.Points.length - 2, 2, NewPoint );
-	if ( this.Index >= this.Points.length )
-	{
-		var DiffIndex = -this.Index + (this.Points.length - 1);
-		this.Index    += DiffIndex;
-		this.RecIndex += Math.max( -1, this.RecIndex + DiffIndex);
-	}
+	this.Points.length = this.Points.length - 1;
+	this.Index = this.Points.length - 1;
 };
 
 CHistory.prototype.Add_RecalcTableGrid = function()
@@ -1101,6 +1146,8 @@ CHistory.prototype.Create_NewPoint = function(nDescription)
 
 	if (null !== this.SavedIndex && this.Index < this.SavedIndex)
 		this.Set_SavedIndex(this.Index);
+
+	this.CheckUnionLastPoints();
 
 	var Items = [];
 	var UpdateRigions = {};
@@ -1314,6 +1361,24 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 		item.Binary.Pos = Binary_Pos;
 		item.Binary.Len = Binary_Len;
 	};
+	CHistory.prototype.RefreshBinaryDataItem = function(item)
+	{
+		this.Refresh_SpreadsheetChanges(item);
+	};
+	CHistory.prototype.RewriteImageUrlsInLastPoint = function(mapUrl)
+	{
+		if (this.Index < 0 || !this.Points[this.Index])
+			return;
+		let items = this.Points[this.Index].Items;
+		for (let i = 0; i < items.length; ++i) {
+			let item   = items[i];
+			let change = item.Data || item.Class;
+			if (!change || !change.ReplaceImageUrl || !change.ReplaceImageUrl(mapUrl))
+				continue;
+			this.RefreshBinaryDataItem(item);
+			change.Redo();
+		}
+	};
 CHistory.prototype.CanAddChanges = function()
 {
 	return (0 === this.TurnOffHistory && this.Index >= 0);
@@ -1423,6 +1488,7 @@ CHistory.prototype.EndTransaction = function(checkLockLastAction)
 			var wsView = api && api.wb && api.wb.getWorksheet();
 			if (wsView) {
 				wsView.updateTopLeftCell();
+				wsView.model.updateActiveCell();
 			}
 			t.workbook && t.workbook.handlers.trigger("EndTransactionCheckSize");
 		}
@@ -1754,6 +1820,9 @@ CHistory.prototype.GetSerializeArray = function()
 
 		this.Points.length = startIndex + 1;
 		this.Index = startIndex;
+		
+		if (this.Is_LastPointEmpty())
+			this.RemoveLastPoint();
 	};
 	CHistory.prototype.updateDrawingsByRegions = function(oUpdateRegions, oRedoObjectParam) {
 		const aRanges = [];
@@ -1767,6 +1836,17 @@ CHistory.prototype.GetSerializeArray = function()
 			}
 		}
 		this.workbook.handleDrawingsOnWorkbookChange(aRanges);
+	};
+
+	AscCommon.CContentChangesElement.prototype.Refresh_BinaryData = function()
+	{
+		if (!this.m_pData || !this.m_pData.Data || !this.m_pData.Item)
+			return;
+
+		this.m_pData.Data.UseArray = true;
+		this.m_pData.Data.PosArray = this.m_aPositions;
+
+		AscCommon.History.Refresh_SpreadsheetChanges(this.m_pData.Item);
 	};
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

@@ -224,7 +224,7 @@
 			else if (!(window["NATIVE_EDITOR_ENJINE"] || oThis.drawingBin.bin === null))
 			{
 				oThis.drawingBin.bin = null;
-				AscCommon.loadFileContent('../../../../sdkjs/common/SmartArts/SmartArtDrawing/SmartArtDrawings.bin', function (httpRequest)
+				AscCommon.loadFileContent(AscCommon.RELATIVE_SDKJS_PATH + 'common/SmartArts/SmartArtDrawing/SmartArtDrawings.bin', function (httpRequest)
 				{
 					if (httpRequest && httpRequest.response)
 					{
@@ -272,7 +272,7 @@
 			{
 				oThis.dataBin[nSmartArtType] = null;
 				const sFileName = c_oAscSmartArtTypesToNameBinRelationShip[nSmartArtType];
-				AscCommon.loadFileContent('../../../../sdkjs/common/SmartArts/SmartArtData/' + sFileName + '.bin', function (httpRequest)
+				AscCommon.loadFileContent(AscCommon.RELATIVE_SDKJS_PATH + 'common/SmartArts/SmartArtData/' + sFileName + '.bin', function (httpRequest)
 				{
 					if (httpRequest && httpRequest.response)
 					{

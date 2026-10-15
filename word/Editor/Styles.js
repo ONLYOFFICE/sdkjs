@@ -8371,22 +8371,22 @@ CStyles.prototype =
 			&& (styletype_Paragraph === Type || styletype_Table === Type))
 		{
 			let oNumbering = oLogicDocument.GetNumbering();
-			let sNumId     = Style.ParaPr.NumPr.NumId;
-			if (0 !== sNumId && "0" !== sNumId)
+			let numId      = Style.ParaPr.NumPr.NumId;
+			if (0 !== numId && "0" !== numId)
 			{
-				if (undefined === sNumId && Pr.ParaPr.NumPr)
-					sNumId = Pr.ParaPr.NumPr.NumId;
+				if (undefined === numId && Pr.ParaPr.NumPr)
+					numId = Pr.ParaPr.NumPr.NumId;
 
-				let oNum = oNumbering.GetNum(sNumId);
+				let oNum = oNumbering.GetNum(numId);
 				if (oNum)
 				{
-					var nLvl = oNum.GetLvlByStyle(StyleId);
-					if (-1 !== nLvl)
-						Pr.ParaPr.Merge(oNumbering.GetParaPr(sNumId, nLvl));
-					else if (undefined !== Style.ParaPr.NumPr.Lvl)
-						Pr.ParaPr.Merge(oNumbering.GetParaPr(sNumId, Style.ParaPr.NumPr.Lvl));
-					else
-						Pr.ParaPr.NumPr = undefined;
+					let lvl = Style.ParaPr.NumPr.Lvl;
+					if (undefined === lvl && Pr.ParaPr.NumPr)
+						lvl = Pr.ParaPr.NumPr.Lvl;
+					if (undefined === lvl)
+						lvl = 0;
+					
+					Pr.ParaPr.Merge(oNumbering.GetParaPr(numId, lvl));
 				}
 			}
 			else
@@ -8406,7 +8406,6 @@ CStyles.prototype =
 			{
 				Pr.ParaPr.Merge(Style.ParaPr);
 				Pr.TextPr.Merge(Style.TextPr);
-
 				break;
 			}
 			case styletype_Numbering:
@@ -10513,7 +10512,7 @@ CDocumentBorder.prototype =
         if ( undefined === this.Color )
             Border.Color = undefined;
         else
-            Border.Color.Set(this.Color.r, this.Color.g, this.Color.b);
+            Border.Color.Set(this.Color.r, this.Color.g, this.Color.b, this.Color.Auto);
 
         if(undefined === this.Unifill)
             Border.Unifill = undefined;
@@ -10706,7 +10705,11 @@ CDocumentBorder.prototype =
 };
 CDocumentBorder.prototype.IsNone = function()
 {
-	return (this.Value === border_None);
+	return (this.Value === AscWord.BorderType.none);
+};
+CDocumentBorder.prototype.IsNoBorder = function()
+{
+	return (AscWord.BorderType.none === this.Value || AscWord.BorderType.nil === this.Value);
 };
 CDocumentBorder.prototype.SetNone = function()
 {
@@ -10781,6 +10784,18 @@ CDocumentBorder.prototype.IsEqual = function(oBorder)
 		&& IsEqualStyleObjects(this.Unifill, oBorder.Unifill)
 		&& this.Space === oBorder.Space
 		&& this.Size === oBorder.Size);
+};
+/**
+ * Difference from IsEqual is that nil/none/undefined are considered the same borders
+ * @param {?CDocumentBorder} border
+ * @returns {boolean}
+ */
+CDocumentBorder.prototype.IsEqualWeak = function(border)
+{
+	if (this.IsNoBorder() && (!border || border.IsNoBorder()))
+		return true;
+	
+	return this.IsEqual(border);
 };
 CDocumentBorder.prototype.WriteToBinary = function(oWriter)
 {
@@ -12767,10 +12782,12 @@ CRFonts.prototype.IsEqualSlot = function(rFonts, fontSlot)
 	
 	return this.IsEqual(rFonts);
 };
-CRFonts.prototype.private_IsEqual = function(oFont1, oFont2)
+CRFonts.prototype.private_IsEqual = function(font1, font2)
 {
-	return ((undefined === oFont1 && undefined === oFont2)
-		|| (undefined !== oFont1 && undefined !== oFont2 && oFont1.Name === oFont2.Name));
+	if (undefined === font1 || null === font1 || undefined === font2 || null === font2)
+		return font1 === font2;
+
+	return font1.Name === font2.Name;
 };
 CRFonts.prototype.Is_Equal = function(oRFonts)
 {

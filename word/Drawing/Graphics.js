@@ -363,9 +363,13 @@
 	CGraphics.prototype.SetBaseTransform = function(m)
 	{
 		this.ResetBaseTransform();
-		this.m_oBaseTransform = new AscCommon.CMatrix();
-		this.m_oBaseTransform.CopyFrom(m);
-		this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_APPEND);
+		if (m) {
+			this.m_oBaseTransform = new AscCommon.CMatrix();
+			this.m_oBaseTransform.CopyFrom(m);
+			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_APPEND);
+		} else {
+			this.m_oBaseTransform = null;
+		}
 	};
 	CGraphics.prototype.ResetBaseTransform = function()
 	{
@@ -1380,7 +1384,7 @@
 		}
 	};
 
-	CGraphics.prototype.tg = function(text,x,y,codepoints)
+	CGraphics.prototype.tg = function(text, x, y, codepoints, advX, advY)
 	{
 		if (this.m_bIsBreak)
 			return;
@@ -1440,8 +1444,8 @@
 
 		var _font_manager = this.IsUseFonts2 ? this.m_oFontManager2 : this.m_oFontManager;
 
-		var nX = (_font_manager.m_oGlyphString.m_fX >> 0) + (pGlyph.fX + pGlyph.oBitmap.nX) >> 0;
-		var nY = (_font_manager.m_oGlyphString.m_fY >> 0) + (pGlyph.fY - pGlyph.oBitmap.nY) >> 0;
+		var nX = (_font_manager.m_oGlyphString.m_fX + pGlyph.fX + pGlyph.oBitmap.nX + 0.5) >> 0;
+		var nY = (_font_manager.m_oGlyphString.m_fY + pGlyph.fY - pGlyph.oBitmap.nY + 0.5) >> 0;
 
 		pGlyph.oBitmap.oGlyphData.checkColor(this.m_oBrush.Color1.R,this.m_oBrush.Color1.G,this.m_oBrush.Color1.B,nW,nH);
 
@@ -2215,7 +2219,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Top:
 			{
 				// top
 				var _top = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2227,7 +2231,7 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				var _center = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2247,7 +2251,7 @@
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Bottom:
 			{
 				// bottom
 				var _bottom = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2305,7 +2309,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Top:
 			{
 				// top
 				var _top = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2325,14 +2329,14 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				// TODO:
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Bottom:
 			{
 				// bottom
 				// TODO:
@@ -2377,7 +2381,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Left:
 			{
 				// left
 				var _left = (this.m_oFullTransform.TransformPointX(x,y) >> 0) + 0.5;
@@ -2389,7 +2393,7 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				var _center = (this.m_oFullTransform.TransformPointX(x,y) >> 0) + 0.5;
@@ -2409,7 +2413,7 @@
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Right:
 			{
 				// right
 				var _right = (this.m_oFullTransform.TransformPointX(x,y) >> 0) + 0.5;
@@ -2517,7 +2521,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Top:
 			{
 				// top
 				var _top = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2529,7 +2533,7 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				var _center = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2549,7 +2553,7 @@
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Bottom:
 			{
 				// bottom
 				var _bottom = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2918,7 +2922,11 @@
 				}
 			}
 
-			var _pen_w = (pen_w * this.m_oCoordTransform.sx + 0.5) >> 0;
+			var _pen_w = pen_w * this.m_oCoordTransform.sx;
+			if (this.m_oBaseTransform) {
+				_pen_w *= this.m_oBaseTransform.sx;
+			}
+			_pen_w = (_pen_w + 0.5) >> 0;
 			if (0 >= _pen_w)
 				_pen_w = 1;
 
@@ -2969,7 +2977,11 @@
 			}
 		}
 
-		var _pen_w = (pen_w * this.m_oCoordTransform.sx + 0.5) >> 0;
+		var _pen_w = pen_w * this.m_oCoordTransform.sx;
+		if (this.m_oBaseTransform) {
+			_pen_w *= this.m_oBaseTransform.sx;
+		}
+		_pen_w = (_pen_w + 0.5) >> 0;
 		if (0 >= _pen_w)
 			_pen_w = 1;
 

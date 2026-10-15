@@ -219,22 +219,7 @@ var c_oAscGroupBy = {
 	Quarters: 6,
 	Years: 7
 };
-var c_oAscCalendarType = {
-	Gregorian: 0,
-	GregorianUs: 1,
-	GregorianMeFrench: 2,
-	GregorianArabic: 3,
-	Hijri: 4,
-	Hebrew: 5,
-	Taiwan: 6,
-	Japan: 7,
-	Thai: 8,
-	Korea: 9,
-	Saka: 10,
-	GregorianXlitEnglish: 11,
-	GregorianXlitFrench: 12,
-	None: 13
-};
+var c_oAscCalendarType = window['Asc'].c_oAscCalendarType;
 var c_oAscIconSetType = {
 	ThreeArrows: 0,
 	ThreeArrowsGray: 1,
@@ -427,6 +412,60 @@ XmlReaderWrapper.prototype.onStartNode = function (elem, attr, uq) {
 	}
 	return newContext;
 };
+function readPivotAttrMapStax(reader) {
+	var attrs = null;
+	return function() {
+		if (null !== attrs) {
+			return attrs;
+		}
+		var hasAttrs = false;
+		attrs = {};
+		while (reader.MoveToNextAttribute()) {
+			hasAttrs = true;
+			attrs[reader.GetName()] = reader.GetValue();
+		}
+		return hasAttrs ? attrs : false;
+	};
+}
+function readPivotNodeStax(reader, context, isRoot) {
+	var elem = reader.GetName();
+	var attr = readPivotAttrMapStax(reader);
+	var newContext = context;
+	if (context.onStartNode) {
+		newContext = context.onStartNode.call(context, elem, attr, EasySAXParser.entityDecode, false, null);
+	}
+	if (reader.isInAttr) {
+		reader.SkipAttributes();
+	}
+	var isEmpty = reader.IsEmptyNode();
+	if (!newContext) {
+		if (!isEmpty) {
+			reader.ReadTillEnd();
+		}
+		return;
+	}
+	if (!isEmpty) {
+		// a container exposing fromXmlChildren consumes its own value subtree natively (e.g. CT_SharedItems),
+		// bypassing per-child onStartNode dispatch; its attributes were already read by the parent onStartNode above
+		if (newContext !== context && newContext.fromXmlChildren) {
+			newContext.fromXmlChildren(reader);
+		} else {
+			var depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				readPivotNodeStax(reader, newContext, false);
+			}
+		}
+	}
+	if (!isRoot && context.onEndNode) {
+		context.onEndNode.call(context, isEmpty ? context : newContext, elem, EasySAXParser.entityDecode, isEmpty, null);
+	}
+}
+function readPivotXmlStax(xml, context) {
+	var reader = new AscCommon.StaxParser(xml, null, null);
+	if (reader.ReadNextNode()) {
+		readPivotNodeStax(reader, context, true);
+	}
+}
 function ReadNumXml(vals, uq, elem) {
 	var val;
 	var formatId = null;
@@ -1473,7 +1512,7 @@ function CT_PivotCacheDefinition() {
 	this.createdVersion = 0;
 	this.refreshedVersion = 0;
 	this.minRefreshableVersion = 0;
-	// this.recordCount = null;
+	this.recordCount = null;
 	this.upgradeOnRefresh = false;
 	this.hasTupleCache = false;
 	this.supportSubquery = false;
@@ -1540,7 +1579,7 @@ CT_PivotCacheDefinition.prototype.Read_FromBinary2 = function(r) {
 	var t = this;
 	var len = r.GetLong();
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(r, len), t);
+		readPivotXmlStax(AscCommon.GetStringUtf8(r, len), t);
 	});
 	//todo remove EnterFrame and new FT_Stream2
 	let _stream = new AscCommon.FT_Stream2(r.data, r.size);
@@ -1552,8 +1591,14 @@ CT_PivotCacheDefinition.prototype.Read_FromBinary2 = function(r) {
 	this.initPostOpenZip(oStyleObject.oNumFmts);
 	if (r.GetBool()) {
 		this.cacheRecords = new CT_PivotCacheRecords();
-		this.cacheRecords.Read_FromBinary2(r);
+		this.cacheRecords.Read_FromBinary2(r, this.recordCount);
 	}
+};
+CT_PivotCacheDefinition.prototype.fromXml = function(reader) {
+	if (!reader.GetName() && !reader.ReadNextNode()) {
+		return;
+	}
+	readPivotNodeStax(reader, this, true);
 };
 CT_PivotCacheDefinition.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
@@ -1610,6 +1655,10 @@ CT_PivotCacheDefinition.prototype.readAttributes = function(attr, uq) {
 		val = vals["minRefreshableVersion"];
 		if (undefined !== val) {
 			this.minRefreshableVersion = val - 0;
+		}
+		val = vals["recordCount"];
+		if (undefined !== val) {
+			this.recordCount = val - 0;
 		}
 		val = vals["upgradeOnRefresh"];
 		if (undefined !== val) {
@@ -2207,50 +2256,166 @@ function CT_PivotCacheRecords() {
 	this.startCount = 0;
 	this._cols = [];
 	this._curColIndex = 0;
+	// raw pass-through state: keep records unparsed on open and write them back unchanged on save
+	this._rawXml = null;
+	this._rawBytes = null;
+	this._rawRowCount = null;
+	this._dirty = false;
+	this._parsed = false;
+	// raw records-level extLst captured verbatim during parse, re-emitted by the generated toXml path
+	this._rawExtLst = null;
 }
-CT_PivotCacheRecords.prototype.readAttributes = function(attr, uq) {
-	if (attr()) {
-		var vals = attr();
-		var val;
-		val = vals["count"];
-		if (undefined !== val) {
-			this.startCount = val - 0;
-		}
-	}
+CT_PivotCacheRecords.prototype.setRawXml = function(xml, rowCount) {
+	this._rawXml = xml;
+	this._rawBytes = null;
+	this._parsed = false;
+	this._dirty = false;
+	this._cols = [];
+	this._curColIndex = 0;
+	this._rawExtLst = null;
+	this._rawRowCount = Number.isFinite(rowCount) ? rowCount : this._extractRootCount(this._rawXml);
 };
-CT_PivotCacheRecords.prototype.onStartNode = function(elem, attr, uq) {
-	var newContext = this;
-	if ("pivotCacheRecords" === elem) {
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	} else if ("r" === elem) {
-		this._curColIndex = 0;
-	} else {
-		var newContextCandidate = this._getCol(this._curColIndex).onStartNode(elem, attr, uq);
-		if (newContextCandidate) {
-			newContext = newContextCandidate;
-		} else if ("extLst" === elem) {
-			newContext = new CT_ExtensionList();
-			if (newContext.readAttributes) {
-				newContext.readAttributes(attr, uq);
-			}
-			this.extLst = newContext;
-		} else {
-			newContext = null;
-		}
-	}
-	return newContext;
+CT_PivotCacheRecords.prototype.setRawBytes = function(bytes, rowCount) {
+	this._rawBytes = bytes;
+	this._rawXml = null;
+	this._parsed = false;
+	this._dirty = false;
+	this._cols = [];
+	this._curColIndex = 0;
+	this._rawExtLst = null;
+	this._rawRowCount = Number.isFinite(rowCount) ? rowCount : this._readRowCountFromRawBytes();
 };
-CT_PivotCacheRecords.prototype.onEndNode = function(prevContext, elem) {
-	if ("r" === elem) {
+CT_PivotCacheRecords.prototype._hasRaw = function() {
+	return null !== this._rawXml || null !== this._rawBytes;
+};
+CT_PivotCacheRecords.prototype._clearRaw = function() {
+	this._rawXml = null;
+	this._rawBytes = null;
+	this._rawRowCount = null;
+};
+CT_PivotCacheRecords.prototype._markDirty = function() {
+	this._dirty = true;
+	// raw no longer represents the records once mutated; drop it to free memory and prevent stale writes
+	this._clearRaw();
+};
+// extracts the count attribute from the records root start tag only
+CT_PivotCacheRecords.prototype._extractRootCount = function(head) {
+	if (!head) {
+		return null;
+	}
+	var start = head.indexOf("<pivotCacheRecords");
+	if (start < 0) {
+		return null;
+	}
+	var end = head.indexOf(">", start);
+	if (end < 0) {
+		return null;
+	}
+	var tag = head.substring(start, end);
+	var m = /\scount\s*=\s*"([0-9]+)"/.exec(tag) || /\scount\s*=\s*'([0-9]+)'/.exec(tag);
+	return m ? (m[1] - 0) : null;
+};
+// reads the row count by decoding only a bounded prefix of the raw bytes, not the whole payload
+CT_PivotCacheRecords.prototype._readRowCountFromRawBytes = function() {
+	var bytes = this._rawBytes;
+	if (!bytes || !bytes.length) {
+		return null;
+	}
+	var prefixLen = Math.min(bytes.length, 4096);
+	return this._extractRootCount(AscCommon.UTF8ArrayToString(bytes, 0, prefixLen));
+};
+// parses raw content once via the StaxParser reader; never marks dirty and keeps raw for pass-through
+CT_PivotCacheRecords.prototype._ensureParsed = function() {
+	if (this._parsed || !this._hasRaw()) {
 		return;
 	}
-	if (this._getCol(this._curColIndex).onEndNode(prevContext, elem)) {
-		this._curColIndex++;
+	var t = this;
+	var xml = this._rawXml;
+	if (null === xml && null !== this._rawBytes) {
+		xml = AscCommon.UTF8ArrayToString(this._rawBytes, 0, this._rawBytes.length);
+	}
+	this._cols = [];
+	this._curColIndex = 0;
+	this.extLst = null;
+	this._rawExtLst = null;
+	AscCommonExcel.executeInR1C1Mode(false, function () {
+		t._parseStax(xml);
+	});
+	this._parsed = true;
+};
+// public parsed-model accessor (parse on demand) for serialization/value consumers
+CT_PivotCacheRecords.prototype.getParsedCols = function() {
+	this._ensureParsed();
+	return this._cols;
+};
+CT_PivotCacheRecords.prototype._getParsedCol = function(index) {
+	this._ensureParsed();
+	return this._cols[index];
+};
+// Stax fast-path used by _ensureParsed; mirrors the SaxParserBase grammar (root @count, <r> rows, value elements).
+CT_PivotCacheRecords.prototype._parseStax = function(xml) {
+	var reader = new AscCommon.StaxParser(xml, null, null);
+	this.fromXml(reader);
+};
+CT_PivotCacheRecords.prototype.readAttr = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		if ("count" === reader.GetNameNoNS()) {
+			this.startCount = reader.GetValue() - 0;
+		}
 	}
 };
+CT_PivotCacheRecords.prototype.fromXml = function(reader) {
+	if (!reader.ReadNextNode()) {
+		return;
+	}
+	if ("pivotCacheRecords" !== reader.GetNameNoNS()) {
+		if (!reader.ReadNextNode()) {
+			return;
+		}
+	}
+	if ("pivotCacheRecords" !== reader.GetNameNoNS()) {
+		return;
+	}
+	this.readAttr(reader);
+	var depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth)) {
+		var name = reader.GetNameNoNS();
+		if ("r" === name) {
+			this._curColIndex = 0;
+			var rDepth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(rDepth)) {
+				var vname = reader.GetNameNoNS();
+				// unknown elements inside a row are ignored (no column created), known value elements advance the column
+				if ("x" === vname || "s" === vname || "n" === vname || "b" === vname ||
+					"d" === vname || "e" === vname || "m" === vname) {
+					this._getCol(this._curColIndex).fromXmlValue(reader, vname);
+					this._curColIndex++;
+				}
+			}
+		} else if ("extLst" === name) {
+			this._rawExtLst = captureRawStaxSubtree(reader);
+		}
+	}
+};
+// CT_PivotCacheRecords has no SAX onStartNode/onEndNode: records are read only through the StaxParser fromXml path
+// above (Serialize.js/api.js store the payload raw; _ensureParsed parses it with StaxParser). sharedItems/groupItems
+// also read values natively via CT_SharedItems.fromXmlChildren. The value-type onStartNode/readAttributes are retained
+// (not dead): the readPivotNodeStax shim still drives them for OLAP <entries> (CT_PCDSDTCEntries) and the <x> index
+// references in discretePr/pivotAreaReference/field items - structures with no native fromXml.
 CT_PivotCacheRecords.prototype.toXml = function(writer) {
+	// untouched records: write the stored raw payload verbatim (bytes preferred, xml fallback)
+	if (!this._dirty) {
+		if (null !== this._rawBytes && writer.WriteBuffer) {
+			writer.WriteBuffer(this._rawBytes, 0, this._rawBytes.length);
+			return;
+		}
+		if (null !== this._rawXml) {
+			writer.WriteXmlString(this._rawXml);
+			return;
+		}
+	}
+	// generated path: ensure values exist (covers a writer without WriteBuffer for raw bytes)
+	this._ensureParsed();
 	writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
 	writer.WriteXmlNodeStart("pivotCacheRecords");
 	writer.WriteXmlString(
@@ -2270,19 +2435,26 @@ CT_PivotCacheRecords.prototype.toXml = function(writer) {
 		}
 		writer.WriteXmlNodeEnd("r");
 	}
-	if (null !== this.extLst) {
+	if (null !== this._rawExtLst) {
+		writer.WriteXmlString(this._rawExtLst);
+	} else if (null !== this.extLst) {
 		this.extLst.toXml(writer, "extLst");
 	}
 	writer.WriteXmlNodeEnd("pivotCacheRecords");
 };
 CT_PivotCacheRecords.prototype.getColsCount = function() {
-	return this._cols && this._cols.length || 0;
+	var cols = this.getParsedCols();
+	return cols && cols.length || 0;
 };
 CT_PivotCacheRecords.prototype.getRowsCount = function() {
-	return this._cols && this._cols[0] && this._cols[0].getSize() || 0;
+	if (!this._dirty && !this._parsed && this._hasRaw() && null !== this._rawRowCount) {
+		return this._rawRowCount;
+	}
+	var cols = this.getParsedCols();
+	return cols && cols[0] && cols[0].getSize() || 0;
 };
 CT_PivotCacheRecords.prototype.get = function(row, col) {
-	var col = this._cols[col];
+	var col = this._getParsedCol(col);
 	if (col) {
 		return col.get(row);
 	}
@@ -2777,6 +2949,7 @@ CT_PivotCacheRecords.prototype._addRowsForCalculated = function(options) {
  * @return {{dataRow: PivotDataElem, error?: c_oAscError.ID}}
  */
 CT_PivotCacheRecords.prototype.getDataMap = function(options) {
+	this._ensureParsed();
 	const t = this;
 	const indexes = options.rowIndexes.concat(options.colIndexes);
 	const filters = this._splitLabelFilters(indexes, options.filterMaps.labelFilters, options.cacheFieldsWithData);
@@ -3051,9 +3224,10 @@ CT_PivotCacheRecords.prototype.getDataMapValueFilters = function(pivotFilter, da
 	return false;
 };
 CT_PivotCacheRecords.prototype.convertToSharedItems = function(index, si) {
-	var col = this._cols[index];
+	var col = this._getParsedCol(index);
 	if (col) {
 		col.convertToSharedItems(si);
+		this._markDirty();
 	}
 };
 CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFields) {
@@ -3066,7 +3240,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 	var headings = location.headings;
 	if (!headings) {
 		headings = [];
-		ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c2)._foreachNoEmpty(function(cell) {
+		ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c2)._foreachDataOnly(function(cell) {
 			if (!cell.isNullTextString()) {
 				headings.push(cell.getValue());
 			}
@@ -3089,6 +3263,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		cacheField.sharedItems = new CT_SharedItems();
 		cacheFields.cacheField.push(cacheField);
 	}
+	this._markDirty();
 	this._cols = [];
 	var lastRowMax = 0, firstRow = location.headings ? bbox.r1 : bbox.r1 + 1;
 	for (i = 0; i < cacheFields.cacheField.length; ++i) {
@@ -3105,7 +3280,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		let stringCaseMap = new Map();
 		var lastRow, lastRowWithText;
 		lastRow = lastRowWithText = firstRow - 1;
-		ws.getRange3(lastRow + 1, bbox.c1 + i, bbox.r2, bbox.c1 + i)._foreachNoEmptyByCol(function(cell) {
+		ws.getRange3(lastRow + 1, bbox.c1 + i, bbox.r2, bbox.c1 + i)._foreachDataOnlyByCol(function(cell) {
 			if (undefined === cacheFieldNum) {
 				cacheFieldNum = cell.xfs && cell.xfs.num || null;
 			}
@@ -3224,12 +3399,9 @@ CT_PivotCacheRecords.prototype.Write_ToBinary2 = function(w) {
 		toXmlWithLength(w, t);
 	});
 };
-CT_PivotCacheRecords.prototype.Read_FromBinary2 = function(r) {
-	var t = this;
+CT_PivotCacheRecords.prototype.Read_FromBinary2 = function(r, recordCount) {
 	var len = r.GetLong();
-	AscCommonExcel.executeInR1C1Mode(false, function () {
-		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(r, len), t);
-	});
+	this.setRawXml(AscCommon.GetStringUtf8(r, len), recordCount);
 };
 CT_PivotCacheRecords.prototype.updateCacheData = function() {
 	this.cacheRecords.updateCacheData();
@@ -3242,7 +3414,7 @@ CT_PivotCacheRecords.prototype.updateCacheData = function() {
  */
 CT_PivotCacheRecords.prototype.getRowMapByItemMap = function(itemMap, cacheFields) {
 	let result = [];
-	result.length = this._cols[0].size;
+	result.length = this.getParsedCols()[0].size;
 	result.fill(true);
 	let t = this;
 	cacheFields.forEach(function(field, index) {
@@ -3265,16 +3437,16 @@ CT_PivotCacheRecords.prototype.getRowMapByItemMap = function(itemMap, cacheField
  * @return {FillPivotDetailsLengths}
  */
 CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheFields) {
+	let cols = this.getParsedCols();
 	let rowsAddedByMap = 0;
-	let t = this;
-	for (let i = 0; i < this._cols.length; i += 1) {
+	for (let i = 0; i < cols.length; i += 1) {
 		let cellValue = new AscCommonExcel.CCellValue();
 		let cell = ws.getRange4(1, i);
 		cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, cellValue));
 	}
 	rowMap.forEach(function(value, key) {
 		if (value) {
-			t._cols.forEach(function(col, index) {
+			cols.forEach(function(col, index) {
 				let rowElem = col.get(key);
 				let cellValue = null;
 				if (rowElem.type === Asc.c_oAscPivotRecType.Index) {
@@ -3293,7 +3465,7 @@ CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheF
 	});
 	return {
 		rowLength: rowsAddedByMap === 0 ? 1 : rowsAddedByMap,
-		colLength: this._cols.length - 1,
+		colLength: cols.length - 1,
 	};
 };
 /**
@@ -3627,7 +3799,7 @@ CT_pivotTableDefinition.prototype.Read_FromBinary2 = function (r) {
 	this.worksheet = api_sheet.wbModel.getWorksheetById(r.GetString2());
 	var len = r.GetLong();
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(r, len), t);
+		readPivotXmlStax(AscCommon.GetStringUtf8(r, len), t);
 	});
 	//todo remove EnterFrame and new FT_Stream2
 	let _stream = new AscCommon.FT_Stream2(r.data, r.size);
@@ -3641,6 +3813,12 @@ CT_pivotTableDefinition.prototype.Read_FromBinary2 = function (r) {
 		this.cacheDefinition = new CT_PivotCacheDefinition();
 		this.cacheDefinition.Read_FromBinary2(r);
 	}
+};
+CT_pivotTableDefinition.prototype.fromXml = function(reader) {
+	if (!reader.GetName() && !reader.ReadNextNode()) {
+		return;
+	}
+	readPivotNodeStax(reader, this, true);
 };
 CT_pivotTableDefinition.prototype.readAttributes = function(attr, uq) {
 	if (attr()) {
@@ -5781,7 +5959,7 @@ CT_pivotTableDefinition.prototype.prepareDataRange = function(ws, range) {
 };
 CT_pivotTableDefinition.prototype._prepareDataRange = function(ws, row, c1, c2) {
 	var res = {minCol: c2, maxCol: c1, countCol: 0};
-	ws.getRange3(row, c1, row, c2)._foreachNoEmptyByCol(function(cell) {
+	ws.getRange3(row, c1, row, c2)._foreachDataOnlyByCol(function(cell) {
 		if (!cell.isNullTextString()) {
 			res.minCol = Math.min(res.minCol, cell.nCol);
 			res.maxCol = Math.max(res.maxCol, cell.nCol);
@@ -6770,7 +6948,8 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicers = function(pivot
 		}
 	}
 	wb.deleteSlicersByPivotTableAndFields(sheetId, pivotName, cacheFieldsToDelete);
-	this.replaceSlicersPivotCacheDefinition(this.cacheDefinition, pivotCacheDefinition);
+	// do not notify slicer views here: their items are resynced later in _updateCacheDataUpdateSlicersPost
+	this.setSlicersPivotCacheDefinition(this.cacheDefinition, pivotCacheDefinition);
 };
 CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicersPost = function() {
 	var wb = this.worksheet.workbook;
@@ -6779,15 +6958,15 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdateSlicersPost = function()
 	this.syncSlicersWithPivot({});
 	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
 };
-CT_pivotTableDefinition.prototype.replaceSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
-	var wb = this.worksheet.workbook;
-	var sheetId = this.worksheet.getId();
-	var pivotName = this.name;
+CT_pivotTableDefinition.prototype.setSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
 	var slicerCaches = this.worksheet.workbook.getSlicerCachesByPivotCacheId(oldCacheDefinition.getPivotCacheId());
 	slicerCaches.forEach(function(slicerCache) {
 		slicerCache.setPivotCacheDefinition(newCacheDefinition);
 	});
-	wb.slicersUpdateAfterChangePivotTable(sheetId, pivotName);
+};
+CT_pivotTableDefinition.prototype.replaceSlicersPivotCacheDefinition = function(oldCacheDefinition, newCacheDefinition) {
+	this.setSlicersPivotCacheDefinition(oldCacheDefinition, newCacheDefinition);
+	this.worksheet.workbook.slicersUpdateAfterChangePivotTable(this.worksheet.getId(), this.name);
 };
 CT_pivotTableDefinition.prototype.asc_create = function(ws, name, cacheDefinition, bbox) {
 	this.worksheet = ws;
@@ -7278,9 +7457,9 @@ CT_pivotTableDefinition.prototype.filterPivotItems = function(index, autoFilterO
 		var pageFieldItem = null;
 		if (!pivotField.multipleItemSelectionAllowed) {
 			var visible = [];
-			autoFilterObject.values.forEach(function(value, index) {
+			autoFilterObject.values.forEach(function(value) {
 				if (value.visible) {
-					visible.push(index);
+					visible.push(pivotField.getItemIndexByValue(value.val));
 				}
 			});
 			if (1 === visible.length) {
@@ -7905,15 +8084,71 @@ CT_pivotTableDefinition.prototype.getGroupRangePr = function (fld) {
 CT_pivotTableDefinition.prototype.createGroupRangePr = function (fld) {
 	return this.cacheDefinition.createGroupRangePr(fld);
 };
-CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmation, onRepeat, opt_rangePr, opt_dateTypes) {
+// the type a field is grouped by from its cells in the report, or null when it is not a row or column field of dates or numbers
+CT_pivotTableDefinition.prototype.getGroupFieldType = function (fld) {
+	var base = this.getGroupBase(fld);
+	var axis = this.asc_getPivotFields()[base].axis;
+	if (c_oAscAxis.AxisRow !== axis && c_oAscAxis.AxisCol !== axis) {
+		return null;
+	}
+	var rangePrRes = this.getGroupRangePr(base);
+	var groupType = rangePrRes ? rangePrRes.rangePr.getFieldGroupType() : this.getFieldGroupType(fld);
+	return c_oAscGroupType.Date === groupType || c_oAscGroupType.Number === groupType ? groupType : null;
+};
+// the grouping from the first to the last value of the field, or from the given serial numbers, with the given size; null when its groups could not be placed
+CT_pivotTableDefinition.prototype.createGroupRangePrByBounds = function (fld, opt_start, opt_end, opt_interval) {
+	var rangePr = this.createGroupRangePr(this.getGroupBase(fld)).rangePr;
+	var isDate = c_oAscGroupType.Date === rangePr.getFieldGroupType();
+	if (null != opt_interval) {
+		rangePr.groupInterval = opt_interval;
+	}
+	if (null != opt_start) {
+		rangePr.autoStart = false;
+		if (isDate) {
+			rangePr.startDate = Asc.cDate.prototype.getDateFromExcelWithTime2(opt_start);
+		} else {
+			rangePr.startNum = opt_start;
+		}
+	}
+	if (null != opt_end) {
+		rangePr.autoEnd = false;
+		if (isDate) {
+			rangePr.endDate = Asc.cDate.prototype.getDateFromExcelWithTime2(opt_end);
+		} else {
+			rangePr.endNum = opt_end;
+		}
+	}
+	var start = isDate ? rangePr.startDate.getExcelDateWithTime2() : rangePr.startNum;
+	var end = isDate ? rangePr.endDate.getExcelDateWithTime2() : rangePr.endNum;
+	if (!(start <= end)) {
+		return null;
+	}
+	// an end equal to the start moves one step further, so the groups are counted after that
+	rangePr.correctEndValue();
+	// more groups of numbers than rows of a sheet cannot be placed, and a size lost in the precision of the start never ends them
+	if (!isDate && (!(rangePr.startNum + rangePr.groupInterval > rangePr.startNum) || (rangePr.endNum - rangePr.startNum) / rangePr.groupInterval > AscCommon.gc_nMaxRow0)) {
+		return null;
+	}
+	return rangePr;
+};
+// returns true when the grouping is done by the time it returns; a macro passes opt_isForMacros and no onRepeat
+CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmation, onRepeat, opt_rangePr, opt_dateTypes, opt_isForMacros) {
 	var newRangePrRes;
 	var sheetId = this.worksheet.getId();
 	var pivotTable = this;
 	var fieldGroupType = pivotTable.getFieldGroupType(layout.fld);
 	var baseFld = pivotTable.getGroupBase(layout.fld);
 	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
+	// a field grouped together with a longer period lists its groups as text, so its grouping gives the type
+	if (rangePrRes) {
+		fieldGroupType = rangePrRes.rangePr.getFieldGroupType();
+	}
 	if (opt_rangePr && opt_rangePr.getFieldGroupType() === fieldGroupType) {
-		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
+		// a co-editor's answer to the lock would come after the macro returns, and a failed change is undone with the whole history point of the macro
+		if (opt_isForMacros && (api.collaborativeEditing.getCollaborativeEditing() || !pivotTable.canPlaceGroupRangePr(baseFld, opt_rangePr, opt_dateTypes))) {
+			return false;
+		}
+		return api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
@@ -7935,7 +8170,9 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 				pivotTable._updateCacheDataUpdateSlicersPost();
 			});
 			return changeRes;
-		}, onRepeat, true);
+		}, onRepeat, !opt_isForMacros);
+	} else if (opt_isForMacros) {
+		return false;
 	} else if (rangePrRes) {
 		rangePrRes.rangePr = rangePrRes.rangePr.clone();
 		newRangePrRes = pivotTable.createGroupRangePr(baseFld);
@@ -7970,6 +8207,38 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 	} else {
 		api.sendEvent('asc_onError', c_oAscError.ID.PivotGroup, c_oAscError.Level.NoCritical);
 	}
+};
+// whether the report grouped so has its data and fits where it is, worked out on a copy of the pivot table
+CT_pivotTableDefinition.prototype.canPlaceGroupRangePr = function (fld, rangePr, dateTypes) {
+	if (!this.checkPivotUnderlyingData()) {
+		return false;
+	}
+	var ws = this.GetWS();
+	var copy = this.cloneForHistory(true, false);
+	copy.cacheDefinition.cacheRecords = this.cacheDefinition.cacheRecords;
+	copy.setWS(ws);
+	// the slicers of the workbook stay with the pivot table, not with the copy that is thrown away
+	copy._updateCacheDataUpdateSlicers = function () {};
+	AscFormat.ExecuteNoHistory(function () {
+		copy.ungroupRangePr(fld);
+		copy.groupRangePr(fld, rangePr.clone(), dateTypes && dateTypes.slice());
+		copy.updateAfterEdit();
+	});
+	var ranges = copy.getReportRanges();
+	if (c_oAscError.ID.No !== ws.checkPivotReportLocationForError(ranges, this)) {
+		return false;
+	}
+	// the cells of the current report are cleared before it is drawn anew
+	var oldRanges = this.getReportRanges();
+	return ranges.every(function (range) {
+		var isFree = 0 === ws.mergeManager.get(range).inner.length;
+		ws.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmptyByCol(function (cell, row, col) {
+			if (!cell.isNullTextString() && !oldRanges.some(function (oldRange) { return oldRange.contains(col, row); })) {
+				isFree = false;
+			}
+		});
+		return isFree;
+	});
 };
 CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirmation, onRepeat) {
 	var sheetId = this.worksheet.getId();
@@ -8379,7 +8648,8 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 			const pivotField = pivotFields[i];
 			const cacheField = cacheFields[i];
 			const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-			const findValue = value.replace(new RegExp(' ' + subtotalCaption, 'g'), '');
+			//the caption is a translated string: escape it, a locale with regex metacharacters must not break the pattern
+			const findValue = value.replace(new RegExp(' ' + AscCommon.escapeRegExp(subtotalCaption), 'g'), '');
 			const item = pivotField.findFieldItemByTextValue(cacheField, findValue);
 			if (item !== null) {
 				const cell = this.getCellByGetPivotDataParams({
@@ -8396,7 +8666,7 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 		return new AscCommonExcel.cError(AscCommonExcel.cErrorType.not_available);
 	} else {
 		const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-		const findValue = value.replace(new RegExp(subtotalCaption + ' ', 'g'), '');
+		const findValue = value.replace(new RegExp(AscCommon.escapeRegExp(subtotalCaption) + ' ', 'g'), '');
 		const cell = this.getCellByGetPivotDataParams({
 			dataFieldName: findValue,
 			optParams: []
@@ -9013,7 +9283,8 @@ CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(arrayFieldI
 	let prefix;
 	for (let i = 1; ; i += 1) {
 		prefix = translatedInfoString + String(i);
-		const re = new RegExp('^' + prefix + '(-|$)');
+		//the prefix carries a translated string, so escape it before it becomes a pattern
+		const re = new RegExp('^' + AscCommon.escapeRegExp(prefix) + '(-|$)');
 		if (reIndexOf(re, sheetNames) === -1) {
 			break;
 		}
@@ -9064,6 +9335,9 @@ CT_pivotTableDefinition.prototype.showDetailsHeaderByCell = function(api, row, c
 };
 
 CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
+	if (!this.checkPivotUnderlyingData()) {
+		return false;
+	}
 	let indexes = this.getItemsIndexesByActiveCell(row, col);
 	if (indexes === null) {
 		return false;
@@ -12691,7 +12965,7 @@ CT_CalculatedItems.prototype.Read_FromBinary2 = function(reader) {
 	var tmp = new XmlReaderWrapper("calculatedItems", this);
 	var len = reader.GetLong();
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+		readPivotXmlStax(AscCommon.GetStringUtf8(reader, len), tmp);
 	});
 };
 function CT_CalculatedMembers() {
@@ -12847,6 +13121,55 @@ CT_ExtensionList.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+// Native Stax readers for pivot cache record values, used by the records hot path and CT_SharedItems.fromXmlChildren.
+// Every conversion mirrors the matching readAttributes exactly (same entityDecode, same numeric coercion).
+// Correctness is gated by the fixed-expectation suite PivotStaxReadersTests in sdkjs-tests.
+// captures the raw xml of the element the reader is positioned at, including its subtree (start tag .. end tag).
+function captureRawStaxSubtree(reader) {
+	var start = reader.xml.lastIndexOf("<", reader.index);
+	reader.ReadTillEnd();
+	return reader.xml.substring(start, reader.index);
+}
+function readPivotBaseAttrStax(obj, name, reader) {
+	if ("u" === name) { obj.u = AscCommon.getBoolFromXml(reader.GetValue()); return true; }
+	if ("f" === name) { obj.f = AscCommon.getBoolFromXml(reader.GetValue()); return true; }
+	if ("c" === name) { obj.c = AscCommon.unleakString(EasySAXParser.entityDecode(reader.GetValue())); return true; }
+	if ("cp" === name) { obj.cp = reader.GetValue() - 0; return true; }
+	return false;
+}
+function readPivotExtAttrStax(obj, name, reader) {
+	if ("in" === name) { obj.in = reader.GetValue() - 0; return true; }
+	if ("bc" === name) { obj.bc = reader.GetValue() - 0; return true; }
+	if ("fc" === name) { obj.fc = reader.GetValue() - 0; return true; }
+	if ("i" === name) { obj.i = AscCommon.getBoolFromXml(reader.GetValue()); return true; }
+	if ("un" === name) { obj.un = AscCommon.getBoolFromXml(reader.GetValue()); return true; }
+	if ("st" === name) { obj.st = AscCommon.getBoolFromXml(reader.GetValue()); return true; }
+	if ("b" === name) { obj.b = AscCommon.getBoolFromXml(reader.GetValue()); return true; }
+	return false;
+}
+// reads the optional <x> shared-item children of a value element, and (when allowTpls) its <tpls> OLAP tuples
+function readPivotValueXChildrenStax(obj, reader, allowTpls) {
+	if (reader.IsEmptyNode()) {
+		return;
+	}
+	var depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth)) {
+		var name = reader.GetNameNoNS();
+		if ("x" === name) {
+			var x = new CT_X();
+			while (reader.MoveToNextAttribute()) {
+				if ("v" === reader.GetNameNoNS()) {
+					x.v = reader.GetValue() - 0;
+				}
+			}
+			obj.x.push(x);
+		} else if (allowTpls && "tpls" === name) {
+			var tpls = new CT_Tuples();
+			tpls.fromXml(reader);
+			obj.tpls.push(tpls);
+		}
+	}
+}
 function CT_Boolean() {
 //Attributes
 	this.v = null;
@@ -12937,6 +13260,17 @@ CT_Boolean.prototype.clean = function() {
 	this.c = null;
 	this.cp = null;
 	this.x = [];
+};
+CT_Boolean.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		var name = reader.GetNameNoNS();
+		if ("v" === name) {
+			this.v = AscCommon.getBoolFromXml(reader.GetValue());
+		} else {
+			readPivotBaseAttrStax(this, name, reader);
+		}
+	}
+	readPivotValueXChildrenStax(this, reader);
 };
 function CT_DateTime() {
 //Attributes
@@ -13032,6 +13366,20 @@ CT_DateTime.prototype.clean = function() {
 	this.c = null;
 	this.cp = null;
 	this.x = [];
+};
+CT_DateTime.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		var name = reader.GetNameNoNS();
+		if ("v" === name) {
+			var date = Asc.cDate.prototype.fromISO8601(reader.GetValue());
+			if (date) {
+				this.v = date.getExcelDateWithTime2();
+			}
+		} else {
+			readPivotBaseAttrStax(this, name, reader);
+		}
+	}
+	readPivotValueXChildrenStax(this, reader);
 };
 function CT_Error() {
 //Attributes
@@ -13201,6 +13549,17 @@ CT_Error.prototype.clean = function() {
 	this.tpls = [];
 	this.x = [];
 };
+CT_Error.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		var name = reader.GetNameNoNS();
+		if ("v" === name) {
+			this.v = AscCommonExcel.cError.prototype.getErrorTypeFromString(EasySAXParser.entityDecode(reader.GetValue()));
+		} else if (!readPivotBaseAttrStax(this, name, reader)) {
+			readPivotExtAttrStax(this, name, reader);
+		}
+	}
+	readPivotValueXChildrenStax(this, reader, true);
+};
 function CT_Missing() {
 //Attributes
 	this.u = null;
@@ -13360,6 +13719,15 @@ CT_Missing.prototype.clean = function() {
 	this.b = false;
 	this.tpls = [];
 	this.x = [];
+};
+CT_Missing.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		var name = reader.GetNameNoNS();
+		if (!readPivotBaseAttrStax(this, name, reader)) {
+			readPivotExtAttrStax(this, name, reader);
+		}
+	}
+	readPivotValueXChildrenStax(this, reader, true);
 };
 function CT_Number() {
 //Attributes
@@ -13530,6 +13898,17 @@ CT_Number.prototype.clean = function() {
 	this.b = false;
 	this.tpls = [];
 	this.x = [];
+};
+CT_Number.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		var name = reader.GetNameNoNS();
+		if ("v" === name) {
+			this.v = reader.GetValue() - 0;
+		} else if (!readPivotBaseAttrStax(this, name, reader)) {
+			readPivotExtAttrStax(this, name, reader);
+		}
+	}
+	readPivotValueXChildrenStax(this, reader, true);
 };
 
 /**
@@ -13703,6 +14082,17 @@ CT_StringPivot.prototype.clean = function() {
 	this.tpls = [];
 	this.x = [];
 };
+CT_StringPivot.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		var name = reader.GetNameNoNS();
+		if ("v" === name) {
+			this.v = AscCommon.unleakString(EasySAXParser.entityDecode(reader.GetValue()));
+		} else if (!readPivotBaseAttrStax(this, name, reader)) {
+			readPivotExtAttrStax(this, name, reader);
+		}
+	}
+	readPivotValueXChildrenStax(this, reader, true);
+};
 function CT_Index() {
 //Attributes
 	this.v = null;
@@ -13740,6 +14130,13 @@ CT_Index.prototype.clean = function() {
 };
 CT_Index.prototype.getV = function() {
 	return this.v;
+};
+CT_Index.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		if ("v" === reader.GetNameNoNS()) {
+			this.v = reader.GetValue() - 0;
+		}
+	}
 };
 function CT_Location() {
 //Attributes
@@ -15172,7 +15569,7 @@ CT_CacheField.prototype.Read_FromBinary2 = function(reader) {
 	var tmp = new XmlReaderWrapper("cacheField", this);
 	var len = reader.GetLong();
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+		readPivotXmlStax(AscCommon.GetStringUtf8(reader, len), tmp);
 	});
 };
 CT_CacheField.prototype.getType = function () {
@@ -15308,7 +15705,8 @@ CT_CacheField.prototype.createGroupRangePr = function () {
 	var rangePr = new CT_RangePr(true);
 	rangePr.autoStart = true;
 	rangePr.autoEnd = true;
-	var groupType = this.getFieldGroupType();
+	// a field grouped together with a longer period lists its groups as text, so its grouping gives the type
+	var groupType = this.fieldGroup && this.fieldGroup.rangePr ? this.fieldGroup.rangePr.getFieldGroupType() : this.getFieldGroupType();
 	var sharedItems = this.getSharedItems();
 	//todo default
 	rangePr.groupInterval = 1;
@@ -16318,6 +16716,24 @@ CT_Tuples.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_Tuples.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		if ("c" === reader.GetNameNoNS()) {
+			this.c = reader.GetValue() - 0;
+		}
+	}
+	if (reader.IsEmptyNode()) {
+		return;
+	}
+	var depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth)) {
+		if ("tpl" === reader.GetNameNoNS()) {
+			var tpl = new CT_Tuple();
+			tpl.fromXml(reader);
+			this.tpl.push(tpl);
+		}
+	}
+};
 
 /**
  * @constructor
@@ -16923,7 +17339,7 @@ CT_PivotField.prototype.Read_FromBinary2 = function(reader) {
 	var tmp = new XmlReaderWrapper("pivotField", this);
 	var len = reader.GetLong();
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+		readPivotXmlStax(AscCommon.GetStringUtf8(reader, len), tmp);
 	});
 };
 /**
@@ -17104,6 +17520,7 @@ CT_PivotField.prototype.isAllVisible = function() {
 CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, num) {
 	const res = {values: [], isTimeFormat: false};
 	var items = this.getItems();
+	let hasDateValues = false;
 	if (items) {
 		for (var i = 0; i < items.length; ++i) {
 			var item = items[i];
@@ -17133,6 +17550,7 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 						elem.asc_setMinute(date.getUTCMinutes());
 						elem.asc_setSecond(date.getUTCSeconds());
 						elem.asc_setDateTimeGrouping(Asc.EDateTimeGroup.datetimegroupYear);
+						hasDateValues = true;
 					} else {
 						isDateTimeFormat = false;
 					}
@@ -17142,6 +17560,13 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 				res.values.push(elem);
 			}
 		}
+	}
+	if (hasDateValues) {
+		//the date filter UI needs values sorted by date; non-date values keep pivot order
+		res.values.sort(function (a, b) {
+			var dateCmp = AscCommonExcel.compareDateFilterValues(a, b);
+			return undefined !== dateCmp ? dateCmp : 0;
+		});
 	}
 	return res;
 };
@@ -17359,8 +17784,16 @@ CT_PivotField.prototype.getFilterMap = function() {
 CT_PivotField.prototype.applyFilterObject = function(values) {
 	var items = this.getItems();
 	if (items) {
-		for (var i = 0; i < values.length && i < items.length; ++i) {
-			items[i].h = !values[i].visible;
+		//values may be reordered (sorted dates), so map back by value (item.x)
+		var indexByX = {};
+		this.getValuebleIndexes().forEach(function(idx) {
+			indexByX[items[idx].x] = idx;
+		});
+		for (var i = 0; i < values.length; ++i) {
+			var idx = indexByX[values[i].val];
+			if (undefined !== idx) {
+				items[idx].h = !values[i].visible;
+			}
 		}
 	}
 };
@@ -18883,7 +19316,7 @@ CT_PivotFilter.prototype.Read_FromBinary2 = function(reader) {
 	var tmp = new XmlReaderWrapper("pivotFilter", this);
 	var len = reader.GetLong();
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(reader, len), tmp);
+		readPivotXmlStax(AscCommon.GetStringUtf8(reader, len), tmp);
 	});
 };
 CT_PivotFilter.prototype.isLabelFilter = function() {
@@ -19176,18 +19609,14 @@ CT_SharedItems.prototype.readAttributes = function(attr, uq) {
 		}
 	}
 };
-CT_SharedItems.prototype.onStartNode = function(elem, attr, uq) {
-	var newContext = this;
-	var newContextCandidate = this.Items.onStartNode(elem, attr, uq);
-	if (newContextCandidate) {
-		newContext = newContextCandidate;
-	} else {
-		newContext = null;
+// Native Stax read of the value items (b/d/e/m/n/s/x), shared with the records hot path via PivotRecords.fromXmlValue.
+// Container attributes (containsSemiMixedTypes etc.) were already read by the parent onStartNode via readAttributes.
+// Invoked by the readPivotNodeStax shim through the fromXmlChildren hook; replaces the old onStartNode/onEndNode pair.
+CT_SharedItems.prototype.fromXmlChildren = function(reader) {
+	var depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth)) {
+		this.Items.fromXmlValue(reader, reader.GetNameNoNS());
 	}
-	return newContext;
-};
-CT_SharedItems.prototype.onEndNode = function(prevContext, elem) {
-	this.Items.onEndNode(prevContext, elem);
 };
 CT_SharedItems.prototype.toXml = function(writer, name) {
 	writer.WriteXmlNodeStart(name);
@@ -20066,6 +20495,18 @@ CT_Tuple.prototype.toXml = function(writer, name) {
 		writer.WriteXmlAttributeNumber("item", this.item);
 	}
 	writer.WriteXmlAttributesEnd(true);
+};
+CT_Tuple.prototype.fromXml = function(reader) {
+	while (reader.MoveToNextAttribute()) {
+		var name = reader.GetNameNoNS();
+		if ("fld" === name) {
+			this.fld = reader.GetValue() - 0;
+		} else if ("hier" === name) {
+			this.hier = reader.GetValue() - 0;
+		} else if ("item" === name) {
+			this.item = reader.GetValue() - 0;
+		}
+	}
 };
 function CT_Items() {
 //Attributes
@@ -21750,56 +22191,13 @@ function PivotRecords() {
 	this.output = new PivotRecordValue();
 }
 
-PivotRecords.prototype.onStartNode = function(elem, attr, uq) {
-	var newContext = null;
+// Reads one value element (b/d/e/m/n/s/x) natively via Stax, finalizing it into the records in a single call.
+// Sole value reader for PivotRecords: used by both CT_PivotCacheRecords.fromXml and CT_SharedItems.fromXmlChildren.
+// Returns true when a value was added (the records reader uses this to advance the column).
+PivotRecords.prototype.fromXmlValue = function(reader, elem) {
 	if ("b" === elem) {
 		this._curBoolean.clean();
-		newContext = this._curBoolean;
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	} else if ("d" === elem) {
-		this._curDateTime.clean();
-		newContext = this._curDateTime;
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	} else if ("e" === elem) {
-		this._curError.clean();
-		newContext = this._curError;
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	} else if ("m" === elem) {
-		this._curMissing.clean();
-		newContext = this._curMissing;
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	} else if ("n" === elem) {
-		this._curNumber.clean();
-		newContext = this._curNumber;
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	} else if ("s" === elem) {
-		this._curString.clean();
-		newContext = this._curString;
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	} else if ("x" === elem) {
-		this._curIndex.clean();
-		newContext = this._curIndex;
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-	}
-	return newContext;
-};
-PivotRecords.prototype.onEndNode = function(prevContext, elem) {
-	var res = true;
-	if ("b" === elem) {
+		this._curBoolean.fromXml(reader);
 		if (this._curBoolean.isSimpleValue()) {
 			this.addBool(this._curBoolean.v);
 		} else {
@@ -21807,6 +22205,8 @@ PivotRecords.prototype.onEndNode = function(prevContext, elem) {
 			this._curBoolean = new CT_Boolean();
 		}
 	} else if ("d" === elem) {
+		this._curDateTime.clean();
+		this._curDateTime.fromXml(reader);
 		if (this._curDateTime.isSimpleValue()) {
 			this.addDate(this._curDateTime.v);
 		} else {
@@ -21814,6 +22214,8 @@ PivotRecords.prototype.onEndNode = function(prevContext, elem) {
 			this._curDateTime = new CT_DateTime();
 		}
 	} else if ("e" === elem) {
+		this._curError.clean();
+		this._curError.fromXml(reader);
 		if (this._curError.isSimpleValue()) {
 			this.addError(this._curError.v);
 		} else {
@@ -21821,6 +22223,8 @@ PivotRecords.prototype.onEndNode = function(prevContext, elem) {
 			this._curError = new CT_Error();
 		}
 	} else if ("m" === elem) {
+		this._curMissing.clean();
+		this._curMissing.fromXml(reader);
 		if (this._curMissing.isSimpleValue()) {
 			this.addMissing(1);
 		} else {
@@ -21828,6 +22232,8 @@ PivotRecords.prototype.onEndNode = function(prevContext, elem) {
 			this._curMissing = new CT_Missing();
 		}
 	} else if ("n" === elem) {
+		this._curNumber.clean();
+		this._curNumber.fromXml(reader);
 		if (this._curNumber.isSimpleValue()) {
 			this.addNumber(this._curNumber.v);
 		} else {
@@ -21835,6 +22241,8 @@ PivotRecords.prototype.onEndNode = function(prevContext, elem) {
 			this._curNumber = new CT_Number();
 		}
 	} else if ("s" === elem) {
+		this._curString.clean();
+		this._curString.fromXml(reader);
 		if (this._curString.isSimpleValue()) {
 			this.addString(this._curString.v);
 		} else {
@@ -21842,11 +22250,13 @@ PivotRecords.prototype.onEndNode = function(prevContext, elem) {
 			this._curString = new CT_StringPivot();
 		}
 	} else if ("x" === elem) {
+		this._curIndex.clean();
+		this._curIndex.fromXml(reader);
 		this.addIndex(this._curIndex.v);
 	} else {
-		res = false;
+		return false;
 	}
-	return res;
+	return true;
 };
 PivotRecords.prototype.toXml = function(writer, opt_index) {
 	if (undefined !== opt_index) {
@@ -22606,23 +23016,6 @@ prot['Days'] = prot.Days;
 prot['Months'] = prot.Months;
 prot['Quarters'] = prot.Quarters;
 prot['Years'] = prot.Years;
-
-window['Asc']['c_oAscCalendarType'] = window['Asc'].c_oAscCalendarType = c_oAscCalendarType;
-prot = c_oAscCalendarType;
-prot['Gregorian'] = prot.Gregorian;
-prot['GregorianUs'] = prot.GregorianUs;
-prot['GregorianMeFrench'] = prot.GregorianMeFrench;
-prot['GregorianArabic'] = prot.GregorianArabic;
-prot['Hijri'] = prot.Hijri;
-prot['Hebrew'] = prot.Hebrew;
-prot['Taiwan'] = prot.Taiwan;
-prot['Japan'] = prot.Japan;
-prot['Thai'] = prot.Thai;
-prot['Korea'] = prot.Korea;
-prot['Saka'] = prot.Saka;
-prot['GregorianXlitEnglish'] = prot.GregorianXlitEnglish;
-prot['GregorianXlitFrench'] = prot.GregorianXlitFrench;
-prot['None'] = prot.None;
 
 window['Asc']['c_oAscIconSetType'] = window['Asc'].c_oAscIconSetType = c_oAscIconSetType;
 prot = c_oAscIconSetType;

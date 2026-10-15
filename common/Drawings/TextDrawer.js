@@ -48,6 +48,7 @@
 
 	var PATH_DIV_EPSILON = 0.1;
 	var UNDERLINE_DIV_EPSILON = 3;
+	const FOLLOW_PATH_LINE_POS = 0.65;
 
 
 	function ParaDrawingStruct(nPageIndex, pDrawing) {
@@ -140,8 +141,11 @@
 	CDocContentStructure.prototype.checkByWarpStruct = function (oWarpStruct, dWidth, dHeight, oTheme, oColorMap, oShape, dOneLineWidth, XLimit, dContentHeight, dKoeff) {
 		var i, j, t, aByPaths, aWarpedObjects = [];
 		var bOddPaths = oWarpStruct.pathLst.length / 2 - ((oWarpStruct.pathLst.length / 2) >> 0) > 0;
-		var nDivCount = bOddPaths ? oWarpStruct.pathLst.length : oWarpStruct.pathLst.length >> 1, oNextPointOnPolygon,
-			oObjectToDrawNext, oMatrix = new AscCommon.CMatrix();
+		if (bOddPaths) {
+			this.checkByFollowPathWarp(oWarpStruct, XLimit, dWidth, dHeight, oShape.bWordShape);
+			return;
+		}
+		var nDivCount = oWarpStruct.pathLst.length >> 1;
 		aByPaths = oWarpStruct.getArrayPolygonsByPaths(PATH_DIV_EPSILON);
 		var nLastIndex = 0, dTmp, oBoundsChecker, oTemp, nIndex, aWarpedObjects2 = [];
 		oBoundsChecker = new AscFormat.CSlideBoundsChecker();
@@ -174,28 +178,102 @@
 			if (oBoundsChecker.Bounds.max_x < dMaxX) {
 				oBoundsChecker.Bounds.max_x = dMaxX;
 			}
-			if (!bOddPaths) {
-				ObjectsToDrawBetweenTwoPolygons(aWarpedObjects, oBoundsChecker.Bounds, new PolygonWrapper(aByPaths[i << 1]), new PolygonWrapper(aByPaths[(i << 1) + 1]));
-			}
-			else {
-				oNextPointOnPolygon = null;
-				oObjectToDrawNext = null;
-				var oPolygon = new PolygonWrapper(aByPaths[i]);
-				for (t = 0; t < aWarpedObjects.length; ++t) {
-					var oWarpedObject = aWarpedObjects[t];
-					var bArcDown = "textArchDown" !== oWarpStruct.preset && i < 1;
-					if (!AscFormat.isRealNumber(oWarpedObject.x) || !AscFormat.isRealNumber(oWarpedObject.y)) {
-						oWarpedObject.geometry.checkByPolygon(oPolygon, bArcDown, XLimit * dKoeff, dContentHeight, dKoeff, nDivCount > 1 ? oBoundsChecker.Bounds : null);
-					}
-					else {
-						oNextPointOnPolygon = this.checkTransformByOddPath(oMatrix, oWarpedObject, aWarpedObjects[t + 1], oNextPointOnPolygon, dContentHeight, dKoeff, bArcDown, oPolygon, XLimit);
-						oWarpedObject.geometry.transform(oMatrix, dKoeff);
-					}
-				}
-			}
+			ObjectsToDrawBetweenTwoPolygons(aWarpedObjects, oBoundsChecker.Bounds, new PolygonWrapper(aByPaths[i << 1]), new PolygonWrapper(aByPaths[(i << 1) + 1]));
 			nLastIndex = nIndex;
 		}
 		this.checkUnionPaths(aWarpedObjects2);
+	};
+	CDocContentStructure.prototype.checkByFollowPathWarp = function (warpGeometry, xLimit, width, height, isWordShape) {
+		const polygons = warpGeometry.getArrayPolygonsByPaths(PATH_DIV_EPSILON);
+		const pathCount = polygons.length;
+		const lines = this.m_aByLines;
+		const lineInfos = new Map();
+		CollectFollowPathLines(this, lineInfos);
+
+		const groups = [];
+		let scale = 1;
+		let inkExtent = 0;
+		let startIndex = 0;
+		for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
+			const endIndex = startIndex + Math.ceil((lines.length - startIndex) / (pathCount - pathIndex));
+			const group = {polygon: polygons[pathIndex], path: new PolygonWrapper(polygons[pathIndex]), infos: [], ink: 0, height: 0};
+			for (let lineIndex = startIndex; lineIndex < endIndex; ++lineIndex) {
+				for (let structIndex = 0; structIndex < lines[lineIndex].length; ++structIndex) {
+					const line = lines[lineIndex][structIndex];
+					const info = lineInfos.get(line);
+					if (!info) {
+						continue;
+					}
+					group.infos.push(info);
+					if (info.width * scale > group.path.dLen) {
+						scale = group.path.dLen / info.width;
+					}
+					if (isWordShape) {
+						group.ink += GetLineInkHeight(line);
+						group.height += info.bottom - info.top;
+					}
+				}
+			}
+			inkExtent = Math.max(inkExtent, group.ink);
+			groups.push(group);
+			startIndex = endIndex;
+		}
+		if (isWordShape) {
+			const radius = Math.max(width, height) / 2;
+			const factor = radius / (radius + inkExtent);
+			for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
+				const group = groups[pathIndex];
+				group.polygon = GetScaledPolygon(group.polygon, factor, width / 2, height / 2);
+				group.path = new PolygonWrapper(group.polygon);
+			}
+			scale *= factor;
+		}
+
+		for (let pathIndex = 0; pathIndex < pathCount; ++pathIndex) {
+			const group = groups[pathIndex];
+			if (!group.infos.length) {
+				continue;
+			}
+			const inkRatio = group.height > 0 ? group.ink / group.height : 1;
+			const first = group.infos[0];
+			const last = group.infos[group.infos.length - 1];
+			let anchorY = last.pathY;
+			if (pathIndex > 0 && pathIndex < pathCount - 1) {
+				anchorY = (first.top + last.bottom) / 2;
+				if (first === last) {
+					anchorY = first.pathY;
+				}
+			}
+			else if (pathCount > 1 ? pathIndex === pathCount - 1 : warpGeometry.preset === "textArchDown") {
+				anchorY = first.pathY;
+			}
+			for (let infoIndex = 0; infoIndex < group.infos.length; ++infoIndex) {
+				const info = group.infos[infoIndex];
+				const offset = scale * inkRatio * (info.pathY - anchorY);
+				const path = Math.abs(offset) > EPSILON_TEXT_AUTOFIT ? new PolygonWrapper(GetOffsetPolygon(group.polygon, offset)) : group.path;
+				const lineWarp = new CFollowPathLineWarp(path, scale, info.align * (path.dLen - scale * xLimit), info.pathY);
+				const objects = [];
+				info.line.GetAllWarped(objects);
+				for (let objectIndex = 0; objectIndex < objects.length; ++objectIndex) {
+					const object = objects[objectIndex];
+					if (AscFormat.isRealNumber(object.x) && AscFormat.isRealNumber(object.y)) {
+						const advance = object.TextElement ? object.TextElement.GetWidth() : 0;
+						object.geometry.transform(lineWarp.getGlyphTransform(object.x + advance / 2), 1);
+					}
+					else {
+						object.geometry.transform(lineWarp, 1);
+					}
+				}
+			}
+		}
+
+		const warpedObjects = [];
+		for (let lineIndex = 0; lineIndex < lines.length; ++lineIndex) {
+			for (let structIndex = 0; structIndex < lines[lineIndex].length; ++structIndex) {
+				lines[lineIndex][structIndex].GetAllWarped(warpedObjects);
+			}
+		}
+		this.checkUnionPaths(warpedObjects);
 	};
 	CDocContentStructure.prototype.checkContentReduct = function (oWarpStruct, dWidth, dHeight, oTheme, oColorMap, oShape, dOneLineWidth, XLimit, dContentHeight, dKoeff) {
 		var i, j, t, aByPaths, aWarpedObjects = [];
@@ -1483,6 +1561,7 @@
 	var DRAW_COMMAND_NO_CREATE_GEOM = 0x07;
 	var DRAW_COMMAND_TABLE_ROW = 0x08;
 	var DRAW_COMMAND_SHAPE = 0x09;
+	var DRAW_COMMAND_LINE_RANGE = 0x0A;
 
 	function GetConstDescription(nConst) {
 		switch (nConst) {
@@ -2225,7 +2304,7 @@
 
 		if (AscCommon.g_oTextMeasurer.m_oManager) AscCommon.g_oTextMeasurer.m_oManager.LoadStringPathCode(code, false, x, y, this);
 	};
-	CTextDrawer.prototype.tg = function (gid, x, y) {
+	CTextDrawer.prototype.tg = function (gid, x, y, advX, advY) {
 		g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
 		g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
 	};
@@ -2337,7 +2416,7 @@
 				oCopyTextPr.TextOutline = new AscFormat.CLn();
 				oCopyTextPr.TextOutline.w = 36000.0 * penW >> 0;
 				var oUnifill = oCopyTextPr.TextFill ? oCopyTextPr.TextFill : oCopyTextPr.Unifill;
-				if ((!oUnifill || !oUnifill.fill || !oUnifill.fill.type === Asc.c_oAscFill._SOLID || !oUnifill.fill.color) && oCopyTextPr.Color) {
+				if ((!oUnifill || !oUnifill.fill || oUnifill.fill.type !== Asc.c_oAscFill.FILL_TYPE_SOLID || !oUnifill.fill.color) && oCopyTextPr.Color) {
 					oUnifill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(oCopyTextPr.Color.r, oCopyTextPr.Color.g, oCopyTextPr.Color.b))
 				}
 				if (oUnifill) {
@@ -2512,15 +2591,35 @@
 		}
 	};
 
-	CTextDrawer.prototype.drawCommentArea = function (x, y, w, h) {
-		this.m_oCurComment = null;
+	CTextDrawer.prototype.drawCommentArea = function (x, y, w, h, Element) {
+		this.m_oCurComment = Element || null;
 		this.rect(x, y, w, h);
 		this.df();
 		this.m_oCurComment = null;
 	};
 	CTextDrawer.prototype.drawCommentMark = function(x, y, h, isStart)
 	{
-		this.drawVerLine(0, x, y, y + h, 2, false);
+		let penW = 0.4;
+		let oTextPr = this.GetTextPr();
+		let oCopyTextPr = null;
+		if (oTextPr) {
+			oCopyTextPr = oTextPr.Copy();
+			if (!oCopyTextPr.TextOutline) {
+				oCopyTextPr.TextOutline = new AscFormat.CLn();
+			}
+			oCopyTextPr.TextOutline.w = (36000.0 * penW) >> 0;
+			if (!oCopyTextPr.TextOutline.Fill) {
+				oCopyTextPr.TextOutline.Fill = this.CreateUnfilFromRGB(this.m_oPen.Color.R, this.m_oPen.Color.G, this.m_oPen.Color.B);
+			}
+			this.SetTextPr(oCopyTextPr, this.m_oTheme);
+		}
+		this._s();
+		this._m(x, y);
+		this._l(x, y + h);
+		this.ds();
+		if (oCopyTextPr) {
+			this.SetTextPr(oTextPr, this.m_oTheme);
+		}
 	};
 
 	CTextDrawer.prototype.rect = function (x, y, w, h) {
@@ -2744,6 +2843,126 @@
 		};
 	};
 
+	function CollectFollowPathLines(structure, lineInfos) {
+		const content = structure.m_aContent;
+		if (structure.m_nType !== DRAW_COMMAND_PARAGRAPH) {
+			for (let index = 0; index < content.length; ++index) {
+				const type = content[index].m_nType;
+				if (type === DRAW_COMMAND_PARAGRAPH || type === DRAW_COMMAND_CONTENT || type === DRAW_COMMAND_TABLE) {
+					CollectFollowPathLines(content[index], lineInfos);
+				}
+			}
+			return;
+		}
+		const paragraph = structure.m_oParagraph;
+		const spacing = paragraph.Get_CompiledPr2(false).ParaPr.Spacing;
+		const before = paragraph.GetPrevDocumentElement() ? 0 : spacing.Before;
+		const after = paragraph.GetNextDocumentElement() ? 0 : spacing.After;
+		for (let lineIndex = 0; lineIndex < content.length; ++lineIndex) {
+			const paraLine = paragraph.Lines[lineIndex];
+			const range = paraLine.Ranges[0];
+			const pageY = paragraph.Pages[paragraph.getPageByLine(lineIndex)].Y;
+			const top = pageY + paraLine.Top - (lineIndex === 0 ? before : 0);
+			const bottom = pageY + paraLine.Bottom + (lineIndex === content.length - 1 ? after : 0);
+			const freeWidth = range.XEnd - range.X - range.W;
+			lineInfos.set(content[lineIndex], {
+				line: content[lineIndex],
+				top: top,
+				bottom: bottom,
+				pathY: top + FOLLOW_PATH_LINE_POS * (bottom - top),
+				width: range.W,
+				align: freeWidth > EPSILON_TEXT_AUTOFIT ? Math.min(Math.max((range.XVisible - range.X) / freeWidth, 0), 1) : 0
+			});
+		}
+	}
+
+	function GetLineInkHeight(line) {
+		const boundsChecker = new AscFormat.CSlideBoundsChecker();
+		boundsChecker.init(100, 100, 100, 100);
+		line.CheckBoundsWarped(boundsChecker);
+		return Math.max(boundsChecker.Bounds.max_y - boundsChecker.Bounds.min_y, 0);
+	}
+
+	function GetScaledPolygon(polygon, factor, centerX, centerY) {
+		const result = [];
+		for (let index = 0; index < polygon.length; ++index) {
+			result.push({x: centerX + factor * (polygon[index].x - centerX), y: centerY + factor * (polygon[index].y - centerY)});
+		}
+		return result;
+	}
+
+	function GetOffsetPolygon(polygon, offset) {
+		const result = [];
+		const count = polygon.length;
+		for (let index = 0; index < count; ++index) {
+			let prev = index, next = index, dx = 0, dy = 0;
+			while ((prev > 0 || next < count - 1) && Math.abs(dx) < EPSILON_TEXT_AUTOFIT && Math.abs(dy) < EPSILON_TEXT_AUTOFIT) {
+				prev = Math.max(prev - 1, 0);
+				next = Math.min(next + 1, count - 1);
+				dx = polygon[next].x - polygon[prev].x;
+				dy = polygon[next].y - polygon[prev].y;
+			}
+			const norm = Math.sqrt(dx * dx + dy * dy);
+			if (norm > 0) {
+				result.push({x: polygon[index].x - dy * offset / norm, y: polygon[index].y + dx * offset / norm});
+			}
+			else {
+				result.push({x: polygon[index].x, y: polygon[index].y});
+			}
+		}
+		return result;
+	}
+
+	function CFollowPathLineWarp(path, scale, shift, pathY) {
+		this.path = path;
+		this.scale = scale;
+		this.shift = shift;
+		this.pathY = pathY;
+		this.lastX = null;
+		this.lastY = null;
+		this.resultX = 0;
+		this.resultY = 0;
+	}
+
+	CFollowPathLineWarp.prototype.getFrame = function (x) {
+		const position = this.scale * x + this.shift;
+		const point = this.path.getPointOnPolygon(this.path.dLen > 0 ? position / this.path.dLen : 0, true);
+		const dx = point.oP2.x - point.oP1.x;
+		const dy = point.oP2.y - point.oP1.y;
+		const norm = Math.sqrt(dx * dx + dy * dy);
+		return {x: point.x, y: point.y, cos: dx / norm, sin: dy / norm};
+	};
+	CFollowPathLineWarp.prototype.getGlyphTransform = function (midX) {
+		const frame = this.getFrame(midX);
+		const matrix = new AscCommon.CMatrix();
+		matrix.sx = frame.cos * this.scale;
+		matrix.shy = frame.sin * this.scale;
+		matrix.shx = -frame.sin * this.scale;
+		matrix.sy = frame.cos * this.scale;
+		matrix.tx = frame.x - matrix.sx * midX - matrix.shx * this.pathY;
+		matrix.ty = frame.y - matrix.shy * midX - matrix.sy * this.pathY;
+		return matrix;
+	};
+	CFollowPathLineWarp.prototype.checkPoint = function (x, y) {
+		if (x === this.lastX && y === this.lastY) {
+			return;
+		}
+		const frame = this.getFrame(x);
+		const offset = this.scale * (y - this.pathY);
+		this.resultX = frame.x - frame.sin * offset;
+		this.resultY = frame.y + frame.cos * offset;
+		this.lastX = x;
+		this.lastY = y;
+	};
+	CFollowPathLineWarp.prototype.TransformPointX = function (x, y) {
+		this.checkPoint(x, y);
+		return this.resultX;
+	};
+	CFollowPathLineWarp.prototype.TransformPointY = function (x, y) {
+		this.checkPoint(x, y);
+		return this.resultY;
+	};
+
 
 	function ObjectsToDrawBetweenTwoPolygons(aObjectsToDraw, oBoundsController, oPolygonWrapper1, oPolygonWrapper2) {
 		var i;
@@ -2783,6 +3002,283 @@
 		return max_width + 2;
 	}
 
+	function svgColorComponent(value) {
+		value = value < 0 ? 0 : (value > 255 ? 255 : (value | 0));
+		const hex = value.toString(16);
+		return hex.length === 1 ? "0" + hex : hex;
+	}
+
+	function svgColorToHex(r, g, b) {
+		return "#" + svgColorComponent(r) + svgColorComponent(g) + svgColorComponent(b);
+	}
+
+	function svgCoord(value) {
+		return Math.round(value * 1000) / 1000;
+	}
+
+	function svgToBase64DataUrl(svg) {
+		const bytes = encodeURIComponent(svg).replace(/%([0-9A-F]{2})/g, function (match, hex) {
+			return String.fromCharCode(parseInt(hex, 16));
+		});
+		return "data:image/svg+xml;base64," + window.btoa(bytes);
+	}
+
+	function CSvgDrawer(widthMM, heightMM) {
+		AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.TextDrawer, true);
+
+		this.Width = widthMM;
+		this.Height = heightMM;
+
+		this.m_oTransform = new AscCommon.CMatrix();
+
+		this.m_oFont = {Name: "", FontSize: -1, Style: -1};
+		this.LastFontOriginInfo = {Name: "", Replace: null};
+
+		this.m_oTextPr = null;
+		this.m_oTheme = null;
+		this.m_oGrFonts = new AscCommon.CGrRFonts();
+		this.m_oFontSlotFont = new AscCommon.CFontSetup();
+
+		this.m_bIsTextDrawer = true;
+
+		this._paths = [];
+		this._pathData = "";
+		this._curFill = "#000000";
+		this._curStroke = "#000000";
+	}
+
+	CSvgDrawer.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
+	CSvgDrawer.prototype.constructor = CSvgDrawer;
+
+	CSvgDrawer.prototype._tx = function (x, y) {
+		return this.m_oTransform.TransformPointX(x, y);
+	};
+	CSvgDrawer.prototype._ty = function (x, y) {
+		return this.m_oTransform.TransformPointY(x, y);
+	};
+
+	CSvgDrawer.prototype._s = function () {
+		this._pathData = "";
+	};
+	CSvgDrawer.prototype._e = function () {
+	};
+	CSvgDrawer.prototype._z = function () {
+		if (this._pathData.length > 0) this._pathData += "Z";
+	};
+	CSvgDrawer.prototype._m = function (x, y) {
+		this._pathData += "M" + svgCoord(this._tx(x, y)) + " " + svgCoord(this._ty(x, y)) + " ";
+	};
+	CSvgDrawer.prototype._l = function (x, y) {
+		this._pathData += "L" + svgCoord(this._tx(x, y)) + " " + svgCoord(this._ty(x, y)) + " ";
+	};
+	CSvgDrawer.prototype._c = function (x1, y1, x2, y2, x3, y3) {
+		this._pathData += "C" + svgCoord(this._tx(x1, y1)) + " " + svgCoord(this._ty(x1, y1)) + " "
+			+ svgCoord(this._tx(x2, y2)) + " " + svgCoord(this._ty(x2, y2)) + " "
+			+ svgCoord(this._tx(x3, y3)) + " " + svgCoord(this._ty(x3, y3)) + " ";
+	};
+	CSvgDrawer.prototype._c2 = function (x1, y1, x2, y2) {
+		this._pathData += "Q" + svgCoord(this._tx(x1, y1)) + " " + svgCoord(this._ty(x1, y1)) + " "
+			+ svgCoord(this._tx(x2, y2)) + " " + svgCoord(this._ty(x2, y2)) + " ";
+	};
+	CSvgDrawer.prototype.df = function () {
+		if (this._pathData.length > 0) {
+			this._paths.push('<path d="' + this._pathData + '" fill="' + this._curFill + '"/>');
+		}
+	};
+	CSvgDrawer.prototype.ds = function () {
+		if (this._pathData.length > 0) {
+			this._paths.push('<path d="' + this._pathData + '" fill="none" stroke="' + this._curStroke + '"/>');
+		}
+	};
+	CSvgDrawer.prototype.drawpath = function (type) {
+	};
+
+	CSvgDrawer.prototype.b_color1 = function (r, g, b, a) {
+		this._curFill = svgColorToHex(r, g, b);
+	};
+	CSvgDrawer.prototype.b_color2 = function (r, g, b, a) {
+	};
+	CSvgDrawer.prototype.set_fillColor = function (r, g, b) {
+		this._curFill = svgColorToHex(r, g, b);
+	};
+	CSvgDrawer.prototype.p_color = function (r, g, b, a) {
+		this._curStroke = svgColorToHex(r, g, b);
+	};
+	CSvgDrawer.prototype.p_width = function (w) {
+	};
+	CSvgDrawer.prototype.put_brushTexture = function (src, mode) {
+	};
+
+	CSvgDrawer.prototype.transform = function (sx, shy, shx, sy, tx, ty) {
+		this.m_oTransform.sx = sx;
+		this.m_oTransform.shx = shx;
+		this.m_oTransform.shy = shy;
+		this.m_oTransform.sy = sy;
+		this.m_oTransform.tx = tx;
+		this.m_oTransform.ty = ty;
+	};
+	CSvgDrawer.prototype.transform3 = function (m) {
+		this.transform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+	};
+	CSvgDrawer.prototype.reset = function () {
+		this.transform(1, 0, 0, 1, 0, 0);
+	};
+	CSvgDrawer.prototype.GetTransform = function () {
+		return this.m_oTransform;
+	};
+
+	CSvgDrawer.prototype.SetFont = function (font) {
+		if (null == font) return;
+		let style = 0;
+		if (font.Italic == true) style += 2;
+		if (font.Bold == true) style += 1;
+		const fontinfo = g_fontApplication.GetFontInfo(font.FontFamily.Name, style, this.LastFontOriginInfo);
+		style = fontinfo.GetBaseStyle(style);
+		this.m_oFont.Name = fontinfo.Name;
+		this.m_oFont.FontSize = font.FontSize;
+		this.m_oFont.Style = style;
+	};
+	CSvgDrawer.prototype.SetFontInternal = function (name, size, style) {
+		const fontinfo = g_fontApplication.GetFontInfo(name, style);
+		this.m_oFont.Name = fontinfo.Name;
+		this.m_oFont.FontSize = size;
+		this.m_oFont.Style = style;
+	};
+	CSvgDrawer.prototype.SetFontSlot = function (slot, fontSizeKoef) {
+		const rfonts = this.m_oGrFonts;
+		const lastFont = this.m_oFontSlotFont;
+		switch (slot) {
+			case fontslot_CS: {
+				lastFont.Name = rfonts.CS.Name;
+				lastFont.Size = this.m_oTextPr.FontSizeCS;
+				lastFont.Bold = this.m_oTextPr.BoldCS;
+				lastFont.Italic = this.m_oTextPr.ItalicCS;
+				break;
+			}
+			case fontslot_ASCII:
+			case fontslot_EastAsia:
+			case fontslot_HAnsi:
+			default: {
+				lastFont.Name = (slot === fontslot_ASCII ? rfonts.Ascii.Name : (slot === fontslot_EastAsia ? rfonts.EastAsia.Name : rfonts.HAnsi.Name));
+				lastFont.Size = this.m_oTextPr.FontSize;
+				lastFont.Bold = this.m_oTextPr.Bold;
+				lastFont.Italic = this.m_oTextPr.Italic;
+				break;
+			}
+		}
+		if (undefined !== fontSizeKoef) lastFont.Size *= fontSizeKoef;
+		let style = 0;
+		if (lastFont.Italic == true) style += 2;
+		if (lastFont.Bold == true) style += 1;
+		const fontinfo = g_fontApplication.GetFontInfo(lastFont.Name, style, this.LastFontOriginInfo);
+		this.m_oFont.Name = fontinfo.Name;
+		this.m_oFont.FontSize = lastFont.Size;
+		this.m_oFont.Style = style;
+	};
+	CSvgDrawer.prototype.GetFont = function () {
+		return this.m_oFont;
+	};
+
+	CSvgDrawer.prototype.FillText = function (x, y, text) {
+		this.FillTextCode(x, y, text.charCodeAt(0));
+	};
+	CSvgDrawer.prototype.FillText2 = function (x, y, text) {
+		this.FillText(x, y, text);
+	};
+	CSvgDrawer.prototype.FillTextCode = function (x, y, code) {
+		g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
+		if (null != this.LastFontOriginInfo.Replace) {
+			code = g_fontApplication.GetReplaceGlyph(code, this.LastFontOriginInfo.Replace);
+		}
+		if (g_oTextMeasurer.m_oManager) g_oTextMeasurer.m_oManager.LoadStringPathCode(code, false, x, y, this);
+	};
+	CSvgDrawer.prototype.tg = function (gid, x, y, advX, advY) {
+		g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
+		g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
+	};
+
+	CSvgDrawer.prototype.SetTextPr = function (textPr, theme) {
+		if (theme && textPr && textPr.ReplaceThemeFonts) textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+		this.m_oTextPr = textPr;
+		this.m_oTheme = theme;
+		if (theme && textPr && textPr.RFonts) this.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, textPr.RFonts);
+		else if (textPr && textPr.RFonts) this.m_oGrFonts = textPr.RFonts;
+		if (textPr && textPr.Color) this._curFill = svgColorToHex(textPr.Color.r, textPr.Color.g, textPr.Color.b);
+	};
+	CSvgDrawer.prototype.GetTextPr = function () {
+		return this.m_oTextPr;
+	};
+
+	CSvgDrawer.prototype.GetLineWidth = function () {
+		return 0;
+	};
+	CSvgDrawer.prototype.GetPen = function () {
+		return 0;
+	};
+	CSvgDrawer.prototype.GetBrush = function () {
+		return 0;
+	};
+	CSvgDrawer.prototype.isSupportTextOutline = function () {
+		return false;
+	};
+
+	CSvgDrawer.prototype.save = function () {
+	};
+	CSvgDrawer.prototype.restore = function () {
+	};
+	CSvgDrawer.prototype.clip = function () {
+	};
+	CSvgDrawer.prototype.SetIntegerGrid = function (value) {
+	};
+	CSvgDrawer.prototype.put_GlobalAlpha = function (enable, alpha) {
+	};
+	CSvgDrawer.prototype.Start_Command = function () {
+	};
+	CSvgDrawer.prototype.End_Command = function () {
+	};
+	CSvgDrawer.prototype.CheckAddNewPath = function () {
+	};
+	CSvgDrawer.prototype.CheckSpaceDraw = function () {
+	};
+	CSvgDrawer.prototype.addTextElementId = function () {
+	};
+	CSvgDrawer.prototype.SetShd = function () {
+	};
+	CSvgDrawer.prototype.SetBorder = function () {
+	};
+	CSvgDrawer.prototype.drawHorLine = function () {
+	};
+	CSvgDrawer.prototype.drawHorLine2 = function () {
+	};
+	CSvgDrawer.prototype.drawVerLine = function () {
+	};
+	CSvgDrawer.prototype.drawHorLineExt = function () {
+	};
+	CSvgDrawer.prototype.rect = function () {
+	};
+	CSvgDrawer.prototype.TableRect = function () {
+	};
+	CSvgDrawer.prototype.AddSmartRect = function () {
+	};
+	CSvgDrawer.prototype.StartClipPath = function () {
+	};
+	CSvgDrawer.prototype.EndClipPath = function () {
+	};
+	CSvgDrawer.prototype.SetObjectToDraw = function () {
+	};
+	CSvgDrawer.prototype.SetAdditionalProps = function () {
+	};
+
+	CSvgDrawer.prototype.getSvgString = function () {
+		const w = svgCoord(this.Width);
+		const h = svgCoord(this.Height);
+		return '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + 'mm" height="' + h + 'mm" viewBox="0 0 ' + w + ' ' + h + '">' + this._paths.join("") + '</svg>';
+	};
+	CSvgDrawer.prototype.getSvgDataUrl = function () {
+		return svgToBase64DataUrl(this.getSvgString());
+	};
+	CSvgDrawer.toDataUrl = svgToBase64DataUrl;
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].PATH_DIV_EPSILON = PATH_DIV_EPSILON;
@@ -2796,8 +3292,10 @@
 	window['AscFormat'].DRAW_COMMAND_NO_CREATE_GEOM = DRAW_COMMAND_NO_CREATE_GEOM;
 	window['AscFormat'].DRAW_COMMAND_TABLE_ROW = DRAW_COMMAND_TABLE_ROW;
 	window['AscFormat'].DRAW_COMMAND_SHAPE = DRAW_COMMAND_SHAPE;
+	window['AscFormat'].DRAW_COMMAND_LINE_RANGE = DRAW_COMMAND_LINE_RANGE;
 	window['AscFormat'].CreatePenFromParams = CreatePenFromParams;
 	window['AscFormat'].CTextDrawer = CTextDrawer;
+	window['AscFormat'].CSvgDrawer = CSvgDrawer;
 	window['AscFormat'].PolygonWrapper = PolygonWrapper;
 	window['AscFormat'].GetRectContentWidth = GetRectContentWidth;
 	window['AscFormat'].CIdGenerator = CIdGenerator;

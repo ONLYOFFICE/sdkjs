@@ -5004,7 +5004,7 @@
 			if (!oPageCount)
 				return [];
 
-			return ToComplexField(oPageCount);
+			return PageCountToComplexField(oPageCount);
 		}
 		function SerCompFieldContent(aContent)
 		{
@@ -5047,45 +5047,31 @@
 				}
 				else if (oItem.Type == para_Text)
 				{
-					aResult.push(String.fromCharCode(oItem.Value));
+					aResult.push(oItem.ToString());
 				}
 			}
 
 			return aResult;
 		}
-		function ToComplexField(oElement)
+		function PageCountToComplexField(pageCount) 
 		{
-			var arrComplexFieldRuns = [];
-			var oFldCharBegin = {
-				"type":        "fldChar",
+			return [{
+				"type": "fldChar",
 				"fldCharType": "begin"
-			}
-			var oFldCharSep   = {
-				"type":        "fldChar",
-				"fldCharType": "separate"
-			}
-			var oFldCharEnd   = {
-				"type":        "fldChar",
-				"fldCharType": "end"
-			}
-			var oInstrText    = {
-				"type": "instrText"
-			}
-
-			var sResultOfField = "";
-			arrComplexFieldRuns.push(oFldCharBegin);
-			switch (oElement.Type)
+			},
 			{
-				case para_PageCount:
-					oInstrText.instr = "PAGE";
-					sResultOfField      = oElement.String;
-			}
-			arrComplexFieldRuns.push(oInstrText);
-			arrComplexFieldRuns.push(oFldCharSep);
-			arrComplexFieldRuns.push(sResultOfField);
-			arrComplexFieldRuns.push(oFldCharEnd);
-
-			return arrComplexFieldRuns;
+				"type": "instrText",
+				"instr": "NUMPAGES"
+			},
+			{
+				"type": "fldChar",
+				"fldCharType": "separate"
+			},
+			pageCount.ToString(),
+			{
+				"type": "fldChar",
+				"fldCharType": "end"
+			}];
 		}
 		function SerParaNewLine(oParaNewLine)
 		{
@@ -5140,7 +5126,7 @@
 				}
 				case para_Text:
 				{
-					sTempRunText += String.fromCharCode(Item.Value);
+					sTempRunText += Item.ToString();
 					break;
 				}
 				case para_Math_BreakOperator:
@@ -11780,14 +11766,14 @@
 			}
 			oGradFill.path.path = nPathShadeType;
 
-			if (oGradFill.path.fillToRect)
+			if (oParsedGradFill["path"]["fillToRect"])
 			{
-				oGradFill.rect      = new AscFormat.CSrcRect();
+				oGradFill.path.rect      = new AscFormat.CSrcRect();
 
-				oGradFill.rect.b = oParsedGradFill["path"]["fillToRect"]["b"];
-				oGradFill.rect.l = oParsedGradFill["path"]["fillToRect"]["l"];
-				oGradFill.rect.r = oParsedGradFill["path"]["fillToRect"]["r"];
-				oGradFill.rect.t = oParsedGradFill["path"]["fillToRect"]["t"];
+				oGradFill.path.rect.b = oParsedGradFill["path"]["fillToRect"]["b"];
+				oGradFill.path.rect.l = oParsedGradFill["path"]["fillToRect"]["l"];
+				oGradFill.path.rect.r = oParsedGradFill["path"]["fillToRect"]["r"];
+				oGradFill.path.rect.t = oParsedGradFill["path"]["fillToRect"]["t"];
 			}
 		}
 

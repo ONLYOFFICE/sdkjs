@@ -71,35 +71,12 @@ function (window, undefined) {
 	var _func = AscCommonExcel._func;
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
-	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFILTER, cFORMULATEXT,
+	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cANCHORARRAY, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFILTER, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cSORT, cSORTBY, cRTD, cTRANSPOSE, cTAKE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
-	cFormulaFunctionGroup['NotRealised'].push(cRTD);
-
-	function searchRegExp(str, flags) {
-		var vFS = str
-			.replace(/(\\)/g, "\\")
-			.replace(/(\^)/g, "\\^")
-			.replace(/(\()/g, "\\(")
-			.replace(/(\))/g, "\\)")
-			.replace(/(\+)/g, "\\+")
-			.replace(/(\[)/g, "\\[")
-			.replace(/(\])/g, "\\]")
-			.replace(/(\{)/g, "\\{")
-			.replace(/(\})/g, "\\}")
-			.replace(/(\$)/g, "\\$")
-			.replace(/(~)?\*/g, function ($0, $1) {
-				return $1 ? $0 : '(.*)';
-			})
-			.replace(/(~)?\?/g, function ($0, $1) {
-				return $1 ? $0 : '.{1}';
-			})
-			.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
-
-		return new RegExp(vFS + "$", flags ? flags : "i");
-	}
+	cFormulaFunctionGroup['NotRealised'].push(cRTD, cANCHORARRAY);
 
 	// TODO rework search: achieve the same result as in MS
 	function XBinarySearch (target, array, match_mode, isReverse) {
@@ -248,7 +225,7 @@ function (window, undefined) {
 
 			let res = 0;
 			if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-				res = AscCommonExcel.stringCompare(itemA.value, itemB.value) * sortOrder;
+				res = AscCommon.stringCompare(itemA.value, itemB.value) * sortOrder;
 			} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
 				res = (itemA.value - itemB.value) * sortOrder;
 			} else if (cElementType.string === itemA.type) {
@@ -303,6 +280,24 @@ function (window, undefined) {
 		});
 		
 		return indexedArray;
+	}
+
+	//like getMatrix() but includes a lazy CONSTANT tail: getMatrix() iterates the physical head only, so reshape/
+	//dedup/stack functions (UNIQUE/TRANSPOSE/VSTACK/HSTACK/TOROW/TOCOL) would drop the tail. For a lazy-tail cArray
+	//build the full LOGICAL 2D matrix via getElementRowCol (tail-aware, no flag); every other arg falls back to getMatrix().
+	function getMatrixLogical(arg) {
+		if (arg && arg.type === cElementType.array && arg.hasLazyTail && arg.hasLazyTail()) {
+			let dim = arg.getDimensions(), m = [];
+			for (let r = 0; r < dim.row; r++) {
+				m[r] = [];
+				for (let c = 0; c < dim.col; c++) {
+					m[r].push(arg.getElementRowCol(r, c));
+				}
+			}
+			return m;
+		}
+		//guard like cBaseType.toArray: a scalar/cell without getMatrix falls back to toArray (never crash)
+		return arg.getMatrix ? arg.getMatrix() : arg.toArray();
 	}
 
 	// these functions are made and used specifically for SORT & SORTBY functions
@@ -381,7 +376,7 @@ function (window, undefined) {
 					itemB = _b.item ? _b.item : _b;
 
 				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-					res = AscCommonExcel.stringCompare(itemA.value, itemB.value) * _sortOrder;
+					res = AscCommon.stringCompare(itemA.value, itemB.value) * _sortOrder;
 				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
 					res = (itemA.value - itemB.value) * _sortOrder;
 				} else if (cElementType.string === itemA.type) {
@@ -641,6 +636,11 @@ function (window, undefined) {
 		const args = arguments;
 		let arg0 = arg[0];
 
+		const asElementValue = function (_elem) {
+			return (cElementType.cell === _elem.type || cElementType.cell3D === _elem.type) ?
+				_elem.getValue() : _elem;
+		};
+
 		const chooseArgument = function (_arg0) {
 			if (cElementType.cellsRange === _arg0.type || cElementType.cellsRange3D === _arg0.type) {
 				_arg0 = _arg0.cross(args[1]);
@@ -667,26 +667,51 @@ function (window, undefined) {
 			// TODO refactor
 			// go through the array and return result for each element
 			let resArr = new cArray();
-			let tempArraySize, maxArraySize = arg0.getDimensions();
-			let arg0Rows = maxArraySize.row, arg0Cols = maxArraySize.col;
+			//sizes are LOGICAL: a full-column index (or a fully generator-backed chosen argument) has a
+			//physical head shorter than the array it stands for, and reading the physical one both truncates
+			//the result and makes the out-of-range guards below fire on cells that are in range.
+			let logicalSize = arg0.getDimensions();
+			let lazyIndex = cElementType.array === arg0.type && arg0.hasLazyTail && arg0.hasLazyTail();
+			let indexTailFn = lazyIndex ? arg0.getMissedValueFn() : null;
+			let headRows = lazyIndex ? arg0.rowCount : 0;
+			let headCols = lazyIndex && arg0.countElementInRow.length ? arg0.countElementInRow[0] : 0;
+			let tempArraySize, maxArraySize = {row: logicalSize.row, col: logicalSize.col};
+			let arg0Rows = lazyIndex ? headRows : logicalSize.row;
+			let arg0Cols = lazyIndex ? headCols : logicalSize.col;
 
-			// get max array size by first loop
-			arg0.foreach2(function (elem) {
+			const growByChosen = function (elem) {
+				if (!elem) {
+					return;
+				}
 				let chosenArgument = chooseArgument(elem);
 				if (chosenArgument && chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D || chosenArgument.type === cElementType.array) {
 					tempArraySize = chosenArgument.getDimensions();
 					maxArraySize.row = tempArraySize.row > maxArraySize.row ? tempArraySize.row : maxArraySize.row;
 					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
 				}
-			});
+			};
+
+
+			if (lazyIndex) {
+				for (let sizeRow = 0; sizeRow < arg0Rows; sizeRow++) {
+					for (let sizeCol = 0; sizeCol < arg0Cols; sizeCol++) {
+						growByChosen(arg0.getValue2(sizeRow, sizeCol));
+					}
+				}
+				if (!indexTailFn) {
+					growByChosen(arg0.getMissedValue());
+				}
+			} else {
+				arg0.foreach2(growByChosen);
+			}
 
 			for (let r = 0; r < arg0Rows; r++) {
 				for (let c = 0; c < arg0Cols; c++) {
 					let elem = arg0.getValue2(r, c);
 					let chosenArgument = chooseArgument(elem);
 					let argDimensions = chosenArgument.getDimensions();
-					let singleRow = arg0Rows === 1;
-					let singleCol = arg0Cols === 1;
+					let singleRow = logicalSize.row === 1;
+					let singleCol = logicalSize.col === 1;
 					let tempArr = [];
 
 					if (singleRow || singleCol) {
@@ -717,6 +742,7 @@ function (window, undefined) {
 							if (elemFromChosenArgument === undefined) {
 								elemFromChosenArgument = new cEmpty();
 							}
+							elemFromChosenArgument = asElementValue(elemFromChosenArgument);
 
 							singleRow ? tempArr.push([elemFromChosenArgument]) : tempArr.push(elemFromChosenArgument);
 						}
@@ -743,6 +769,7 @@ function (window, undefined) {
 						if (elemFromChosenArgument === undefined) {
 							elemFromChosenArgument = new cEmpty();
 						}
+						elemFromChosenArgument = asElementValue(elemFromChosenArgument);
 
 						if (!resArr.array[r]) {
 							resArr.addRow();
@@ -752,11 +779,41 @@ function (window, undefined) {
 				}
 			}
 
-			if (resArr.getRowCount() < maxArraySize.row) {
+			if (lazyIndex) {
+				//the index array keeps going past its stored part, so the result does too: compose the tail
+				//from the index tail instead of materializing it. a chosen argument that is itself an array
+				//is read per (row,col); a plain value repeats.
+				const pickFromChosen = function (chosen, r, c) {
+					if (chosen.type !== cElementType.array && chosen.type !== cElementType.cellsRange &&
+						chosen.type !== cElementType.cellsRange3D) {
+						return asElementValue(chosen);
+					}
+					let d = chosen.getDimensions();
+					let pr = 1 === d.row ? 0 : r, pc = 1 === d.col ? 0 : c;
+					let e = chosen.getElementRowCol ? chosen.getElementRowCol(pr, pc) : chosen.getValueByRowCol(pr, pc);
+					return undefined === e ? new cEmpty() : asElementValue(e);
+				};
+				resArr.setRealArraySize(maxArraySize.row, maxArraySize.col);
+				if (indexTailFn) {
+					resArr.setMissedValueFn(function (r, c) {
+						return pickFromChosen(chooseArgument(indexTailFn(r, c)), r, c);
+					});
+				} else {
+					let chosenTail = chooseArgument(arg0.getMissedValue());
+					if (chosenTail.type === cElementType.array || chosenTail.type === cElementType.cellsRange ||
+						chosenTail.type === cElementType.cellsRange3D) {
+						resArr.setMissedValueFn(function (r, c) {
+							return pickFromChosen(chosenTail, r, c);
+						});
+					} else {
+						resArr.setMissedValue(asElementValue(chosenTail));
+					}
+				}
+			} else if (resArr.getRowCount(true) < maxArraySize.row) {
 				// fill the rest of array with #N/A error
-				for (let i = resArr.getRowCount(); i < maxArraySize.row; i++) {
+				for (let i = resArr.getRowCount(true); i < maxArraySize.row; i++) {
 					resArr.addRow();
-					for (let j = 0; j < resArr.getCountElementInRow(); j++) {
+					for (let j = 0; j < resArr.getCountElementInRow(true); j++) {
 						resArr.addElement(new cError(cErrorType.not_available));
 					}
 				}
@@ -776,22 +833,31 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
+		// split on type, not hasLazyTail: arrays read via getRowLogical/getColLogical (tail-safe); ranges keep matrix
+		let isArr = arg1.type === cElementType.array;
 		let matrix;
-		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-			matrix = arg1.getMatrix();
-		} else if (arg1.type === cElementType.cellsRange3D) {
-			if (arg1.isSingleSheet()) {
-				matrix = arg1.getMatrix()[0];
+		if (!isArr) {
+			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				matrix = arg1.getMatrix();
+			} else if (arg1.type === cElementType.cellsRange3D) {
+				if (arg1.isSingleSheet()) {
+					matrix = arg1.getMatrix()[0];
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (arg1.type === cElementType.error) {
+				return arg1;
+			} else if (arg1.type === cElementType.empty) {
+				return new cError(cErrorType.wrong_value_type);
 			} else {
-				return new cError(cErrorType.bad_reference);
+				matrix = [[arg1]];
 			}
-		} else if (arg1.type === cElementType.error) {
-			return arg1;
-		} else if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
-		} else {
-			matrix = [[arg1]];
 		}
+
+		// logical size: realSize for a lazy array, bbox for a range, physical dims otherwise (one call, no branch).
+		let dimension = arg1.getDimensions();
+		let error;
+		let indices = [];   // collected 0-based row (byCol=false) or column (byCol=true) indices, in request order
 
 		let pushData = function (_argInside) {
 			_argInside = _argInside.tocNumber();
@@ -807,37 +873,25 @@ function (window, undefined) {
 				error = new cError(cErrorType.wrong_value_type);
 				return false;
 			}
-
-			if (!res) {
-				res = new cArray();
-			}
-
-			if (byCol) {
-				res.pushCol(matrix, reverse ? dimension.col - (_argInside - 1) - 1 : _argInside - 1);
-			} else {
-				res.pushRow(matrix, reverse ? dimension.row - (_argInside - 1) - 1 : _argInside - 1);
-			}
-
+			let size = byCol ? dimension.col : dimension.row;
+			indices.push(reverse ? size - _argInside : _argInside - 1);
 			return true;
 		};
 
-		let dimension = arg1.getDimensions();
-		let res;
-		let error;
 		for (let i = 1; i < arg.length; i++) {
 			let _arg = arg[i];
 
 			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type || cElementType.array === _arg.type) {
-				let argDimensions = _arg.getDimensions();
+				let argDimensions = _arg.getDimensions();   // logical size so a lazy index list keeps its length
 				if (argDimensions.col === 1 || argDimensions.row === 1) {
-					let byCol = argDimensions.row > 1;
+					let byColInner = argDimensions.row > 1;
 					for (let j = 0; j < Math.max(argDimensions.col, argDimensions.row); j++) {
 						if (cElementType.array === _arg.type) {
-							if (!pushData(_arg.getElementRowCol(!byCol ? 0 : j, !byCol ? j : 0))) {
+							if (!pushData(_arg.getElementRowCol(!byColInner ? 0 : j, !byColInner ? j : 0))) {
 								return error;
 							}
 						} else {
-							if (!pushData(_arg.getValue2(!byCol ? 0 : j, !byCol ? j : 0))) {
+							if (!pushData(_arg.getValue2(!byColInner ? 0 : j, !byColInner ? j : 0))) {
 								return error;
 							}
 						}
@@ -854,7 +908,44 @@ function (window, undefined) {
 			}
 		}
 
-		return res ? res : new cError(cErrorType.wrong_value_type);
+		if (!indices.length) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		let res = new cArray();
+		if (isArr) {
+			// array source: pick each row/col via the tail-aware logical slice, assemble with existing addRow/addElement
+			if (byCol) {
+				// build column-by-column (getColLogical + addElementInRow) so only one logical column is held at a time
+				for (let k = 0; k < indices.length; k++) {
+					let colArr = arg1.getColLogical(indices[k]);
+					for (let r = 0; r < colArr.length; r++) {
+						if (k === 0) {
+							res.addRow();
+						}
+						res.addElementInRow(colArr[r], r);
+					}
+				}
+			} else {
+				for (let k = 0; k < indices.length; k++) {
+					let rowArr = arg1.getRowLogical(indices[k]);
+					res.addRow();
+					for (let c = 0; c < dimension.col; c++) {
+						res.addElement(rowArr[c]);
+					}
+				}
+			}
+		} else {
+			// live range/scalar (never lazy): push the picked row/col straight from the materialized matrix.
+			for (let k = 0; k < indices.length; k++) {
+				if (byCol) {
+					res.pushCol(matrix, indices[k]);
+				} else {
+					res.pushRow(matrix, indices[k]);
+				}
+			}
+		}
+		return res;
 	}
 
 	/**
@@ -926,18 +1017,18 @@ function (window, undefined) {
 		} else {
 			var arg0 = arg[0];
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 				res = bbox ? new cNumber(bbox.c1 + 1) : null;
 			} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 
 				if (bbox && bbox.c2 > bbox.c1) {
 					res = new cArray();
-					for (var i = bbox.c1; i <= bbox.c2; i++) {
-						res.addElement(new cNumber(i + 1))
-					}
+					res.setRealArraySize(1, bbox.c2 - bbox.c1 + 1);
+					var colBase = bbox.c1 + 1;
+					res.setMissedValueFn(function (row, col) {
+						return new cNumber(colBase + col);
+					});
 				} else {
 					res = bbox ? new cNumber(bbox.c1 + 1) : null;
 				}
@@ -965,11 +1056,17 @@ function (window, undefined) {
 	cCOLUMNS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		if (cElementType.array === arg0.type) {
 			return new cNumber(arg0.getCountElementInRow());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type) {
+			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().c1 - range.getBBox0().c2) + 1) :
 			new cError(cErrorType.wrong_value_type));
@@ -1114,7 +1211,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j, true);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
@@ -1179,10 +1276,10 @@ function (window, undefined) {
 		}
 
 		if (rangeMode) {
-			const initialArrayDimensions = arg0.getDimensions(true),
+			const initialArrayDimensions = arg0.getDimensions(),
 				initRows = initialArrayDimensions.row,
 				initColumns = initialArrayDimensions.col,
-				lookingArrayDimensions = arg1.getDimensions(true);
+				lookingArrayDimensions = arg1.getDimensions();
 
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
@@ -1393,47 +1490,12 @@ function (window, undefined) {
 	cHLOOKUP.prototype.name = 'HLOOKUP';
 	cHLOOKUP.prototype.argumentsMin = 3;
 	cHLOOKUP.prototype.argumentsMax = 4;
-	cHLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	cHLOOKUP.prototype.arrayIndexes = {1: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.enabledToSingle = {"1": true};
+	cHLOOKUP.prototype.resultShapeArgs = [0, 3];
 	cHLOOKUP.prototype.Calculate = function (arg) {
-		let retArr = new cArray();
-		let error = false;
-		if (arg[0].type === cElementType.array) {
-			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
-				arg[2] = arg[2].getValue2(0,0);
-			}
-			let dimension = arg[0].getDimensions();
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oHLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
-				}
-			}
-
-			return retArr;
-		}
-
-		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions();
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					if (!error) {
-						let res = g_oHLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
-						if (res.type === cElementType.error) {
-							error = true
-						}
-						retArr.addElement(res);
-					} else {
-						break
-					}
-				}
-			}
-			return error ? new cError(cErrorType.bad_reference) : retArr;
-		}
-
-		return g_oHLOOKUPCache.calculate(arg, arguments[1]);
+		return g_oHLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
 
 	/**
@@ -1524,7 +1586,7 @@ function (window, undefined) {
 			return arg0;
 		}
 
-		let argError;
+ 		let argError;
 		if (argError = this._checkErrorArg([arg0, arg1, arg2, arg3])) {
 			return argError;
 		}
@@ -1564,9 +1626,14 @@ function (window, undefined) {
 		}
 
 		const generateArray = function (_from, row, col) {
+			//reads _from.array/_from.rowCount raw, so a generator-backed arg must be materialized first
+			_from.ensureMaterialized && _from.ensureMaterialized();
 			let ret = null;
-			let _colCount = _from.getCountElementInRow();
-			let _rowCount = _from.rowCount;
+			//size and read a lazy source by its LOGICAL grid - its head may be both shorter and narrower
+			let _lazy = !!(_from.hasLazyTail && _from.hasLazyTail());
+			let _logical = _lazy ? _from.getDimensions() : null;
+			let _colCount = _lazy ? _logical.col : _from.getCountElementInRow(true);
+			let _rowCount = _lazy ? _logical.row : _from.rowCount;
 			let i;
 			row = row !== undefined ? Math.ceil(row) : row;
 			col = col !== undefined ? Math.ceil(col) : col;
@@ -1582,7 +1649,7 @@ function (window, undefined) {
 				}
 				ret = new cArray();
 				for (i = 0; i < _colCount; i++) {
-					ret.addElement(_from.array[row - 1][i])
+					ret.addElement(_lazy ? _from.getElementRowCol(row - 1, i) : _from.array[row - 1][i])
 				}
 			} else if (undefined !== col) {
 				if (_colCount < col) {
@@ -1596,15 +1663,24 @@ function (window, undefined) {
 				}
 
 				ret = new cArray();
-				for (i = 0; i < _rowCount; i++) {
+				let _physRows = _from.rowCount;
+				for (i = 0; i < _physRows; i++) {
 					ret.addRow();
-					ret.addElement(_from.array[i][col - 1])
+					ret.addElement(_lazy ? _from.getElementRowCol(i, col - 1) : _from.array[i][col - 1])
+				}
+				if (_lazy) {
+					//preserve a constant lazy tail: the extracted column's tail is the source's tail value at
+					//this column (O(1); a generator tail was already materialized by ensureMaterialized above).
+					ret.setRealArraySize(_rowCount, 1);
+					ret.setMissedValue(_from.getMissedElement(_physRows, col - 1));
 				}
 			}
 			return ret;
 		};
 
 		AscCommonExcel.executeInR1C1Mode(false, function () {
+			//getDimensions(): use the LOGICAL size (realSize) of a lazy head+tail array (e.g. A:A/B:B),
+			//not its physical head - otherwise INDEX rejects valid indices into the tail as #REF!.
 			let dimension = arg0.getDimensions();
 			let isSingleRowCol = (dimension.row > 1 && dimension.col > 1) ? false : true;
 			let isByColumn = (dimension.row > 1) ? true : false;
@@ -1677,8 +1753,14 @@ function (window, undefined) {
 					}
 				}
 			} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+				// a reference, as over a range: text reached through it counts as read from a cell
 				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
-					res = arg0.getValue();
+					res = arg0;
+				}
+			} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+				cElementType.bool === arg0.type) {
+				if ((0 === arg1 || 1 === arg1) && (0 === arg2 || 1 === arg2)) {
+					res = arg0;
 				}
 			} else {
 				res = new cError(cErrorType.wrong_value_type);
@@ -1814,7 +1896,7 @@ function (window, undefined) {
 			arg[0] = arg[0].isOneElement() ? arg[0].getFirstElement() : arg[0].cross(arguments[1]);
 		} else if (arg[0].type === cElementType.array) {
 			let retArr = new cArray();
-			let dimension = arg[0].getDimensions();
+			let dimension = arg[0].getDimensions(true);
 
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
@@ -1993,19 +2075,18 @@ function (window, undefined) {
 		} else {
 			var arg0 = arg[0];
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 				res = bbox ? new cNumber(bbox.r1 + 1) : null;
 			} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				bbox = arg0.getRange();
-				bbox = bbox && bbox.bbox;
+				bbox = arg0.getBBox0();
 
 				if (bbox && bbox.r2 > bbox.r1) {
 					res = new cArray();
-					for (var i = bbox.r1; i <= bbox.r2; i++) {
-						res.addRow();
-						res.addElement(new cNumber(i + 1))
-					}
+					res.setRealArraySize(bbox.r2 - bbox.r1 + 1, 1);
+					var rowBase = bbox.r1 + 1;
+					res.setMissedValueFn(function (row) {
+						return new cNumber(rowBase + row);
+					});
 				} else {
 					res = bbox ? new cNumber(bbox.r1 + 1) : null;
 				}
@@ -2034,11 +2115,19 @@ function (window, undefined) {
 	cROWS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
 		if (cElementType.array === arg0.type) {
+			//getRealSize=true: honor the logical size of clamped/realSize arrays (e.g. ROW over a full column);
+			//falls back to the physical row count when realSize is not set
 			return new cNumber(arg0.getRowCount());
 		} else if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type ||
 			cElementType.cell3D === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			range = arg0.getRange();
+		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
+			cElementType.bool === arg0.type) {
+			return new cNumber(1);
 		}
 		return (range ? new cNumber(Math.abs(range.getBBox0().r1 - range.getBBox0().r2) + 1) :
 			new cError(cErrorType.wrong_value_type));
@@ -2076,7 +2165,7 @@ function (window, undefined) {
 	cSORT.prototype.Calculate = function (arg) {
 
 		function arrayHelper (byColArray) {
-			let dimensions = byColArray.getDimensions(),
+			let dimensions = byColArray.getDimensions(true),
 				resArr = new cArray(),
 				errVal = new cError(cErrorType.wrong_value_type),
 				byColVal, isFirstValRecieved = false, isSecondValRecieved = false;
@@ -2115,7 +2204,7 @@ function (window, undefined) {
 		}
 
 		function isValidArray (array, maxRowCol) {
-			let dimensions = array.getDimensions();
+			let dimensions = array.getDimensions(true);
 			for (let i = 0; i < dimensions.row; i++) {
 				for (let j = 0; j < dimensions.col; j++) {
 					let elem = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
@@ -2196,7 +2285,7 @@ function (window, undefined) {
 			array = arg0;
 		}
 
-		maxRows = array.getDimensions().row;
+		maxRows = array.getDimensions().row;   // logical size: a sort_index into a lazy full column must not #VALUE
 		maxCols = array.getDimensions().col;
 
 		// arg1(sort_index) check
@@ -2324,7 +2413,7 @@ function (window, undefined) {
 				by_array1 = i === 1 ? by_array : by_array1;
 				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
 					// if single element in array, fill array with it element
-					let resDimensoins = sortOrder.getDimensions();
+					let resDimensoins = sortOrder.getDimensions(true);
 					if (resRow < resDimensoins.row) {
 						resRow = resDimensoins.row;
 					}
@@ -2334,9 +2423,9 @@ function (window, undefined) {
 				} else {
 					// create array with single element and fill it
 					let resArr = new cArray();
-					for (let i = 0; i < by_array1.getDimensions().row; i++) {
+					for (let i = 0; i < by_array1.getDimensions(true).row; i++) {
 						resArr.addRow();
-						for (let k = 0; k < by_array1.getDimensions().col; k++) {
+						for (let k = 0; k < by_array1.getDimensions(true).col; k++) {
 							resArr.addElement(sortOrder);
 						}
 					}
@@ -2436,7 +2525,7 @@ function (window, undefined) {
 		} else {
 			array = args[0];
 		}
-		arrayDimensions = array.getDimensions();
+		arrayDimensions = array.getDimensions();   // logical size: two lazy full columns must match by realSize
 		maxRows = arrayDimensions.row;
 		maxCols = arrayDimensions.col;
 
@@ -2577,55 +2666,56 @@ function (window, undefined) {
 	cTRANSPOSE.prototype.argumentsType = [argType.any];
 	cTRANSPOSE.prototype.Calculate = function (arg) {
 
-		function TransposeMatrix(A) {
+		function TransposeMatrix(arg) {
 
-			var tMatrix = [], res = new cArray();
+			let res = new cArray();
+			let isArray = arg.type === cElementType.array;
+			let rcSize = arg.getDimensions(true);
+			let realArraySize;
 
-			for (var i = 0; i < A.length; i++) {
-				for (var j = 0; j < A[i].length; j++) {
-					if (!tMatrix[j]) {
-						tMatrix[j] = [];
-					}
-					tMatrix[j][i] = A[i][j];
+			if (isArray && arg.hasLazyTail()) {
+				realArraySize = arg.getRealArraySize();
+				// since this is TRANSPOSE func we use rows as columns and columns as rows
+				if (realArraySize) {
+					res.setRealArraySize(realArraySize.col, realArraySize.row);
+					res.setMissedValue(arg.getMissedValue());
 				}
 			}
 
-			res.fillFromArray(tMatrix);
+			for (let col = 0; col < rcSize.col; col++) {
+				if (!res.array[col]) {
+					res.addRow();
+				}
+
+				for (let row = 0; row < rcSize.row; row++) {
+					let elem = arg.getValueByRowCol ? arg.getValueByRowCol(row, col, true) : arg.getElementRowCol(row, col, false);
+
+					if (!elem) {
+						elem = new cEmpty();
+					}
+
+					res.addElement(elem);
+				}
+			}
 
 			return res;
 		}
 
-		var arg0 = arg[0];
-		if (cElementType.cellsRange === arg0.type) {
-			//TODO perhaps when used as array formula, the converted range should be passed as array directly to Calculate function input
-			if(!this.bArrayFormula) {
-				arg0 = arg0.cross(arguments[1]);
-				return arg0;
-			} else {
-				arg0 = arg0.getMatrix();
-			}
-		} else if(cElementType.cellsRange3D === arg0.type) {
-			//TODO perhaps when used as array formula, the converted range should be passed as array directly to function input
-			arg0 = arg0.getMatrix()[0];
-		} else if(cElementType.array === arg0.type) {
-			arg0 = arg0.getMatrix();
+		let arg0 = arg[0];
+		let resArr = new cArray();
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
+			return TransposeMatrix(arg0);
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-			return arg0.getValue();
+			resArr.addElement(arg0.getValue());
+			return resArr;
 		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
 			cElementType.bool === arg0.type || cElementType.error === arg0.type) {
-			return arg0;
-		} else {
-			return new cError(cErrorType.not_available);
-		}
+			resArr.addElement(arg0);
+			return resArr;
+		} 
 
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-		if(0 === arg0.length){
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		return TransposeMatrix(arg0);
+		return new cError(cErrorType.not_available);
 	};
 
 	function takeDrop(arg, argument1, isDrop) {
@@ -2635,28 +2725,31 @@ function (window, undefined) {
 		}
 
 		let arg1 = arg[0];
-		let matrix;
+		let array;
 		if (arg1.type === cElementType.array) {
-			// array.getMatrix() doesn't make an independent copy and leaves a link to the original array
-			matrix = arg1.getMatrixCopy();
-		} else if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {		
-			matrix = arg1.getMatrix();
-		} else if (arg1.type === cElementType.cellsRange3D) {
-			if (arg1.isSingleSheet()) {
-				matrix = arg1.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.bad_reference);
-			}
-		} else if (arg1.type === cElementType.error) {
-			return arg1;
-		} else if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
+			// use the array directly: it may be a lazy head+tail array (e.g. A:A/B:B). crop below is
+			// realSize-aware and non-mutating, so neither a copy nor materialization of the tail is needed.
+			array = arg1;
 		} else {
-			matrix = [[arg1]];
+			let matrix;
+			if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				matrix = arg1.getMatrix();
+			} else if (arg1.type === cElementType.cellsRange3D) {
+				if (arg1.isSingleSheet()) {
+					matrix = arg1.getMatrix()[0];
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (arg1.type === cElementType.error) {
+				return arg1;
+			} else if (arg1.type === cElementType.empty) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				matrix = [[arg1]];
+			}
+			array = new cArray();
+			array.fillFromArray(matrix);
 		}
-
-		let array = new cArray();
-		array.fillFromArray(matrix);
 
 		let arg2 = arg[1];
 		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
@@ -2909,7 +3002,7 @@ function (window, undefined) {
 		} else if(cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.getMatrix()[0];
 		} else if(cElementType.array === arg0.type) {
-			arg0 = arg0.getMatrix();
+			arg0 = getMatrixLogical(arg0);
 		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			return arg0.getValue();
 		} else if (cElementType.number === arg0.type || cElementType.string === arg0.type ||
@@ -3090,7 +3183,7 @@ function (window, undefined) {
 	TypedCache.prototype.updateDataBerofe = function (range, rowColAxisData, bHor, startIndex) {
 		rowColAxisData.start = startIndex;
 		const unshiftArrays = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
 			if (!unshiftArrays[value.type]) {
@@ -3104,7 +3197,7 @@ function (window, undefined) {
 
 	TypedCache.prototype.updateDataAfter = function (range, rowColAxisData, bHor, endIndex) {
 		const t = this;
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
 			if (index > rowColAxisData.end) {
@@ -3144,42 +3237,40 @@ function (window, undefined) {
 	 */
 	TypedMapCache.prototype.unshiftValues = function (data, valuesToUnshift) {
 		for (let i in valuesToUnshift) {
+			if (!data[i]) {
+				data[i] = new Map();
+			}
+			const map = data[i];
 			const unshiftMap = valuesToUnshift[i];
 			unshiftMap.forEach(function (value, key) {
-				const map = data[i];
 				const prevArr = map.get(key);
-				map.set(key, value.concat(prevArr));
+				map.set(key, prevArr ? value.concat(prevArr) : value);
 			});
 		}
 	};
 
 	/**
+	 * Extends the cached part of the row/column upward. All indices of the added part are collected first
+	 * (in ascending order) and then put in front of the cached ones, so every index list stays sorted -
+	 * _indexedBinarySearch and _findLastSame rely on it.
 	 * @param range
 	 * @param data
 	 */
 	TypedMapCache.prototype.updateDataBerofe = function (range, rowColAxisData, bHor, startIndex) {
 		rowColAxisData.start = startIndex;
 		const unshiftMaps = {};
-		range._foreachNoEmpty(function (cell, r, c) {
+		range._foreachDataOnly(function (cell, r, c) {
 			const value = checkTypeCell(cell, true);
 			const index = bHor ? c : r;
-			if (!rowColAxisData.data[value.type]) {
-				rowColAxisData.data[value.type] = new Map();
+			if (!unshiftMaps[value.type]) {
+				unshiftMaps[value.type] = new Map();
 			}
-			const map = rowColAxisData.data[value.type];
-			if (!map.has(value.value)) {
-				map.set(value.value, [index]);
-			} else {
-				if (!unshiftMaps[value.type]) {
-					unshiftMaps[value.type] = new Map();
-				}
-				const unshiftMap = unshiftMaps[value.type];
-				if (!unshiftMap.has(value.value)) {
-					unshiftMap.set(value.value, []);
-				}
-				const arr = unshiftMap.get(value.value);
-				arr.push(index);
+			const unshiftMap = unshiftMaps[value.type];
+			if (!unshiftMap.has(value.value)) {
+				unshiftMap.set(value.value, []);
 			}
+			const arr = unshiftMap.get(value.value);
+			arr.push(index);
 		});
 		this.unshiftValues(rowColAxisData.data, unshiftMaps);
 	};
@@ -3252,9 +3343,93 @@ function (window, undefined) {
 		this.sortedCache = new TypedMapCache();
 	}
 
-	VHLOOKUPCache.prototype.calculate = function (arg, argument1) {
+	// The whole H/VLOOKUP call. Excel lifts lookup_value and range_lookup together, the result being their
+	// broadcast; index_num is lifted only when both are scalars, otherwise its first element answers everywhere.
+	// Lifted alone, index_num lets a failure answer for the whole call (measured).
+	VHLOOKUPCache.prototype.calculateCall = function (arg, argument1, opt_argInfo) {
+		let key = arg[0], index = arg[2], rangeLookup = arg[3];
+		if (opt_argInfo) {
+			let keyLifted = opt_argInfo[0].mode || (opt_argInfo[3] && opt_argInfo[3].mode);
+			let indexInfo = opt_argInfo[2];
+			if (indexInfo.mode && keyLifted) {
+				arg[2] = indexInfo.arg.getValue2(0, 0);
+			}
+			return this.calculate(arg, argument1, null, !!indexInfo.mode, indexInfo.mode && !keyLifted ? opt_argInfo : null);
+		}
+
+		let keyDims = cElementType.array === key.type ? key.getDimensions(true) : null;
+		let rangeLookupDims = rangeLookup && cElementType.array === rangeLookup.type ? rangeLookup.getDimensions(true) : null;
+		let indexAlone = !keyDims && !rangeLookupDims;
+		if (indexAlone && cElementType.array !== index.type) {
+			return this.calculate(arg, argument1);
+		}
+		let indexIsElement = indexAlone, dims;
+		if (indexAlone) {
+			dims = index.getDimensions(true);
+		} else {
+			dims = {row: Math.max(keyDims ? keyDims.row : 1, rangeLookupDims ? rangeLookupDims.row : 1),
+				col: Math.max(keyDims ? keyDims.col : 1, rangeLookupDims ? rangeLookupDims.col : 1)};
+			if (cElementType.array === index.type) {
+				index = index.getValue2(0, 0);
+				indexIsElement = true;
+			} else if (cElementType.cellsRange === index.type || cElementType.cellsRange3D === index.type) {
+				index = index.getValueByRowCol(0, 0, true);
+				indexIsElement = true;
+			}
+		}
+		let res = new cArray(), ctx = {};
+		let collapsesCall = indexAlone ? res : null;
+		let callArgs = [key, arg[1], index, rangeLookup];
+		for (let r = 0; r < dims.row; r++) {
+			res.addRow();
+			for (let c = 0; c < dims.col; c++) {
+				if (indexAlone) {
+					callArgs[2] = index.getValue2(r, c);
+				}
+				// a single row or column stretches, and past the end of the shorter array stands #N/A
+				if (keyDims) {
+					let kr = 1 === keyDims.row ? 0 : r, kc = 1 === keyDims.col ? 0 : c;
+					callArgs[0] = kr < keyDims.row && kc < keyDims.col ? key.getValue2(kr, kc) :
+						new cError(cErrorType.not_available);
+				}
+				if (rangeLookupDims) {
+					let lr = 1 === rangeLookupDims.row ? 0 : r, lc = 1 === rangeLookupDims.col ? 0 : c;
+					callArgs[3] = lr < rangeLookupDims.row && lc < rangeLookupDims.col ? rangeLookup.getValue2(lr, lc) :
+						new cError(cErrorType.not_available);
+				}
+				let elem = this.calculate(callArgs, argument1, ctx, indexIsElement, collapsesCall);
+				if (collapsesCall && elem.collapsesCall === collapsesCall) {
+					return elem;
+				}
+				res.addElement(elem);
+			}
+		}
+		return res;
+	};
+
+	VHLOOKUPCache.prototype.calculate = function (arg, argument1, opt_ctx, opt_indexIsElement, opt_collapsesCall) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		let arg3 = arg[3] ? arg[3].tocBool().value : true;
+		// Fast paths for the dominant 4th-arg types avoid allocating a cBool per element:
+		// cBool.tocBool() returns `this` (same .value read), cNumber.tocBool() is new cBool(value !== 0)
+		// whose .value is exactly (value !== 0). Other types keep the original tocBool() path.
+		let _a3 = arg[3], arg3, rangeLookupError = null;
+		if (!_a3) {
+			arg3 = true;
+		} else if (cElementType.bool === _a3.type) {
+			arg3 = _a3.value;
+		} else if (cElementType.number === _a3.type) {
+			arg3 = 0 !== _a3.value;
+		} else {
+			let _a3Val = (cElementType.cell === _a3.type || cElementType.cell3D === _a3.type ? _a3.getValue() : _a3).tocBool();
+			// only a logical, a number or the text TRUE / FALSE converts: any other text is refused (measured)
+			if (cElementType.error === _a3Val.type) {
+				rangeLookupError = _a3Val;
+			} else if (cElementType.bool !== _a3Val.type) {
+				rangeLookupError = new cError(cErrorType.wrong_value_type);
+			} else {
+				arg3 = _a3Val.value;
+			}
+		}
 		let opt_xlookup = arg[4] !== undefined;
 		let opt_arg4, opt_arg5;
 		if (opt_xlookup) {
@@ -3263,7 +3438,37 @@ function (window, undefined) {
 		}
 		let t = this, number, r, c, res = -1, count;
 
-		if (!opt_xlookup) {
+		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
+			arg0 = arg0.getValue();
+		}
+		let arg0Val;
+		if (cElementType.array === arg0.type) {
+			arg0Val = arg0.getElementRowCol(0, 0);
+		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			arg0Val = arg0.cross(argument1);
+		} else {
+			arg0Val = arg0;
+		}
+		let answer = cElementType.error === arg0Val.type ? arg0Val : null;
+		// a number, a logical or a numeric text is no table either, but it answers after index_num and range_lookup (measured)
+		let notTable = false;
+		if (!answer && !opt_xlookup) {
+			if (cElementType.string === arg0Val.type && arg0Val.getValue().length > 255) {
+				answer = new cError(cErrorType.wrong_value_type);
+			} else if (cElementType.error === arg1.type) {
+				answer = arg1;
+			} else if (cElementType.string === arg1.type) {
+				if ("" !== arg1.getValue() && cElementType.number === arg1.tocNumber().type) {
+					notTable = true;
+				} else {
+					answer = new cError(cErrorType.wrong_value_type);
+				}
+			} else if (cElementType.number === arg1.type || cElementType.bool === arg1.type) {
+				notTable = true;
+			}
+		}
+		if (!answer && !opt_xlookup) {
+			let arg2Type = arg2.type;
 			if (cElementType.cell3D === arg2.type || cElementType.cell === arg2.type) {
 				arg2 = arg2.getValue();
 			} else if (cElementType.array === arg2.type) {
@@ -3272,43 +3477,38 @@ function (window, undefined) {
 				arg2 = arg2.cross(argument1);
 			}
 
+			let indexNum = arg2.tocNumber();
 			if (cElementType.error === arg2.type) {
-				return arg2;
-			}
-
-			number = arg2.getValue() - 1;
-
-			if (isNaN(number)) {
-				return new cError(cErrorType.bad_reference);
-			}
-			if (number < 0) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
-			arg0 = arg0.getValue();
-		}
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-
-		let arg0Val;
-		if (cElementType.array === arg0.type) {
-			arg0Val = arg0.getElementRowCol(0, 0);
-		} else {
-			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-				arg0Val = arg0.cross(argument1);
+				// an error element of an array is an unusable index
+				if (!opt_indexIsElement) {
+					return arg2;
+				}
+				number = NaN;
+			} else if (cElementType.number !== indexNum.type) {
+				// typed text is refused, text read from a reference or an array is unusable like an index past the table
+				if (cElementType.string === arg2Type && !opt_indexIsElement) {
+					answer = new cError(cErrorType.wrong_value_type);
+				}
+				number = NaN;
 			} else {
-				arg0Val = arg0;
+				let indexVal = indexNum.getValue();
+				// truncated toward zero, unless within 2^-22 of an integer - an absolute distance (measured)
+				number = (Math.abs(indexVal - Math.round(indexVal)) < 2.384185791015625e-7 ?
+					Math.round(indexVal) : Math.trunc(indexVal)) - 1;
+			}
+			if (!answer) {
+				answer = rangeLookupError || (notTable ? new cError(cErrorType.not_available) : null);
 			}
 		}
-
-
-		if (cElementType.error === arg0Val.type) {
-			return arg0Val;
+		if (answer) {
+			// a call answering as a whole gets an error of its own, never another call's
+			if (opt_collapsesCall) {
+				answer = new cError(answer.errorType);
+				answer.collapsesCall = opt_collapsesCall;
+			}
+			return answer;
 		}
+
 		if (cElementType.empty === arg0Val.type) {
 			if (!opt_xlookup) {
 				arg0Val = arg0Val.tocNumber();
@@ -3319,48 +3519,54 @@ function (window, undefined) {
 		if (cElementType.array === arg1.type && !opt_xlookup) {
 			let arrayToSearch;
 			if (this.bHor) {
-				arrayToSearch = arg1.getRow(0);
+				arrayToSearch = arg1.getRowLogical(0);
 			} else {
-				arrayToSearch = arg1.getCol(0);
+				arrayToSearch = arg1.getColLogical(0);
 			}
 
 			if (arrayToSearch) {
+				let isText = cElementType.string === arg0ValType;
+				let searchValue = isText ? arg0Val.getValue().toLowerCase() : arg0Val.getValue();
 				if (arg3) {
-					// approximate(binary) search
-					res = _func.lookupBinarySearch(arg0Val, arrayToSearch, false);
-				} else {
-					let searchValue = arg0Val.getValue();
-					if (arg0Val.type === cElementType.string) {
-						searchValue = searchValue.toLowerCase();
+					// approximate: the same search as over a range, over the text lowercased the same way
+					let typed = [], elems = isText ? [] : arrayToSearch;
+					for (let i = 0; i < arrayToSearch.length; i++) {
+						let elem = arrayToSearch[i];
+						if (elem.type === arg0ValType) {
+							typed.push(i);
+						}
+						if (isText) {
+							elems.push(elem.type === arg0ValType ? new cString(elem.getValue().toLowerCase()) : elem);
+						}
 					}
-					// exact (simple) search
+					if (typed.length) {
+						res = this._defaultBinarySearch(isText ? new cString(searchValue) : arg0Val, 0, elems.length - 1,
+							null, null, typed, elems);
+					}
+				} else {
+					// a text key with * ? or ~ is a wildcard pattern
+					let isMask = isText && /[*?~]/.test(searchValue);
 					for (let i = 0; i < arrayToSearch.length; i++) {
 						let elem = arrayToSearch[i];
 						if (elem.type !== arg0ValType) {
 							continue;
 						}
-						let elemValue = elem.getValue();
-	
-						if (elem.type === cElementType.string) {
-							elemValue = elemValue.toLowerCase();
-						}
-	
-						if (elemValue === searchValue) {
+						let elemValue = isText ? elem.getValue().toLowerCase() : elem.getValue();
+						if (isMask ? AscCommonExcel.searchRegExp2(elemValue, searchValue) : elemValue === searchValue) {
 							res = i;
 							break
 						}
 					}
 				}
-
 			}
 
-			if (-1 === res) {
-				return new cError(cErrorType.not_available);
-			}
-
-			count = this.bHor ? arg1.getRowCount() : arg1.getCountElementInRow();
-			if (number > count - 1) {
-				return new cError(cErrorType.bad_reference);
+			let _ldim = arg1.getDimensions();
+			count = this.bHor ? _ldim.row : _ldim.col;
+			if (-1 === res || isNaN(number) || number < 0 || number > count - 1) {
+				let err = new cError(-1 === res ? cErrorType.not_available :
+					number < 0 ? cErrorType.wrong_value_type : cErrorType.bad_reference);
+				err.collapsesCall = opt_collapsesCall;
+				return err;
 			}
 
 			r = this.bHor ? number : res;
@@ -3368,15 +3574,39 @@ function (window, undefined) {
 			return arg1.getElementRowCol(r, c);
 		}
 
-		let range;
-		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
+		// range/bb/ws depend only on arg1 (the lookup table), which is identical for every element
+		// of an array VLOOKUP/HLOOKUP. When the caller loops over an array it may pass a shared
+		// opt_ctx object; we resolve these invariants once into it and reuse them on later
+		// iterations, avoiding a Range rebuild (arg1.getRange()/getBBox0()/getWS()) per element.
+		// The ctx lives only for the duration of that loop, so it can never outlive a reference
+		// adjustment - no staleness risk.
+		let range, bb, ws;
+		if (opt_ctx && opt_ctx.resolved) {
+			range = opt_ctx.range;
+			bb = opt_ctx.bb;
+			ws = opt_ctx.ws;
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			range = arg1.getRange();
+			if (range) {
+				bb = range.getBBox0();
+				ws = arg1.getWS();
+				if (opt_ctx) {
+					opt_ctx.resolved = true;
+					opt_ctx.range = range;
+					opt_ctx.bb = bb;
+					opt_ctx.ws = ws;
+				}
+			}
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
 			let _cacheElem = {elements: []};
-			arg1.foreach(function (elem, r, c) {
+			//forEachLogical so a lazy tail is searched too (foreach saw only the physical head)
+			arg1.forEachLogical(function (elem, r, c) {
 				if (elem && elem.type === cElementType.string) {
-					elem.value = elem.value.toLowerCase();
+					//rebind the LOCAL param to a lowercased copy for the case-insensitive compare; do NOT
+					//mutate elem - forEachLogical yields the head elements and the SHARED constant-tail
+					//object in place, so `elem.value = ...` would scribble on the caller's source array.
+					elem = new cString(elem.value.toLowerCase());
 				}
 				_cacheElem.elements.push({v: elem, i: (t.bHor ? c : r)});
 			});
@@ -3388,32 +3618,44 @@ function (window, undefined) {
 			return new cError(cErrorType.bad_reference);
 		}
 
-		let bb = range.getBBox0();
 		count = this.bHor ? (bb.r2 - bb.r1) : (bb.c2 - bb.c1);
-		if (number > count) {
-			return new cError(cErrorType.bad_reference);
-		}
-		let ws = arg1.getWS();
-		r = this.bHor ? bb.r1 : bb.r2;
-		c = this.bHor ? bb.c2 : bb.c1;
-		let oSearchRange = ws.getRange3(bb.r1, bb.c1, r, c);
-
-
-		res = this._get(oSearchRange, arg0Val, arg3, opt_arg4, opt_arg5);
+		res = this._get(arg0Val, arg3, opt_arg4, opt_arg5, ws,
+			this.bHor ? bb.r1 : bb.c1, this.bHor ? bb.c1 : bb.r1, this.bHor ? bb.c2 : bb.r2);
 		if (opt_xlookup) {
 			return res;
 		}
 
-		if (-1 === res) {
-			return new cError(cErrorType.not_available);
+		if (-1 === res || isNaN(number) || number < 0 || number > count) {
+			let err = new cError(-1 === res ? cErrorType.not_available :
+				number < 0 ? cErrorType.wrong_value_type : cErrorType.bad_reference);
+			err.collapsesCall = opt_collapsesCall;
+			return err;
 		}
 
 		r = this.bHor ? bb.r1 + number : res;
 		c = this.bHor ? res : bb.c1 + number;
+		// On the array-formula path (opt_ctx present) reuse one loop-scoped callback instead of
+		// allocating a closure per element. _getCellNoEmpty invokes fAction exactly once,
+		// synchronously, on both of its paths and never stores it, so the result slot is always
+		// written before the immediate read. The scalar (no-ctx) path is unchanged.
 		let resVal;
-		arg1.getWS()._getCellNoEmpty(r, c, function (cell) {
-			resVal = checkTypeCell(cell);
-		});
+		if (opt_ctx) {
+			let cb = opt_ctx.cellCb;
+			if (!cb) {
+				cb = opt_ctx.cellCb = function (cell) {
+					opt_ctx.cellCbRes = checkTypeCell(cell);
+				};
+			}
+			// pre-reset only: if fAction were ever skipped, resVal.type below fails loudly instead of
+			// silently reusing the previous element's value. No post-reset - ctx dies with the loop.
+			opt_ctx.cellCbRes = undefined;
+			ws._getCellNoEmpty(r, c, cb);
+			resVal = opt_ctx.cellCbRes;
+		} else {
+			ws._getCellNoEmpty(r, c, function (cell) {
+				resVal = checkTypeCell(cell);
+			});
+		}
 		if (cElementType.empty === resVal.type) {
 			resVal = new cNumber(0);
 		}
@@ -3421,44 +3663,11 @@ function (window, undefined) {
 		return resVal;
 	};
 
-	VHLOOKUPCache.prototype._get = function (range, valueForSearching, arg3Value, opt_arg4, opt_arg5) {
-		var res, _this = this, wsId = range.getWorksheet().getId();
-		var opt_xlookup = opt_arg4 !== undefined;
-
-		var sRangeName;
-		AscCommonExcel.executeInR1C1Mode(false, function () {
-			sRangeName = wsId + g_cCharDelimiter + range.getName();
-		});
-		const ws = range.getWorksheet();
-		var cacheElem = this.cacheId[sRangeName];
-		if (!cacheElem) {
-			cacheElem = {results: {}};
-		}
-		var sInputKey;
-		if (!opt_xlookup) {
-			sInputKey =
-				valueForSearching.getValue() + g_cCharDelimiter + arg3Value + g_cCharDelimiter + valueForSearching.type;
-		} else {
-			sInputKey = valueForSearching.getValue() + g_cCharDelimiter + opt_arg4 + g_cCharDelimiter + opt_arg5 +
-				g_cCharDelimiter + valueForSearching.type;
-		}
-		res = cacheElem.results[sInputKey];
-		const rowCol = this.bHor ? range.bbox.r1 : range.bbox.c1
-		if (!res) {
-			const startIndex = this.bHor ? range.bbox.c1 : range.bbox.r1;
-			const endIndex = this.bHor ? range.bbox.c2 : range.bbox.r2;
-			cacheElem.results[sInputKey] =
-				res = this._calculate(valueForSearching,
-					arg3Value,
-					opt_arg4,
-					opt_arg5,
-					null,
-					ws,
-					rowCol,
-					startIndex,
-					endIndex);
-		}
-		return res;
+	// TODO hook for a future selective results-cache of the expensive lookup modes only
+	// (approximate / wildcard / XLOOKUP binary), added after those modes are measured.
+	// Exact match stays direct; array-backed XLOOKUP bypasses this seam.
+	VHLOOKUPCache.prototype._get = function (valueForSearching, lookup, opt_arg4, opt_arg5, ws, rowCol, startIndex, endIndex) {
+		return this._calculate(valueForSearching, lookup, opt_arg4, opt_arg5, null, ws, rowCol, startIndex, endIndex);
 	};
 	VHLOOKUPCache.prototype._compareValues = function (val1, val2, op, opt_arg4) {
 		if (opt_arg4 === 2 && val2.type === cElementType.string) {
@@ -3509,6 +3718,9 @@ function (window, undefined) {
 			const cell = ws.getCell3(t.bHor ? rowCol : index, t.bHor ? index : rowCol);
 			return checkTypeCell(cell, true);
 		}
+		// updateNearest only does work for match modes 1/-1 (exact-or-next); calling it in other
+		// modes (exact, wildcard) was a guaranteed no-op per scanned cell.
+		const trackNearest = opt_arg4 === 1 || opt_arg4 === -1;
 		const updateNearest = function(value, valueIndex) {
 			if (opt_arg4 === 1 && t._compareTypes(value, valueForSearching) >= 0 && t._compareValues(value, valueForSearching, ">")) {
 				if (nearestValue === null) {
@@ -3538,7 +3750,7 @@ function (window, undefined) {
 					resultIndex = opt_array ? opt_array[i].i : i;
 					break;
 				}
-				if (opt_arg4 !== undefined) {
+				if (trackNearest) {
 					updateNearest(val, i);
 				}
 			}
@@ -3549,7 +3761,7 @@ function (window, undefined) {
 					resultIndex = opt_array ? opt_array[i].i : i;
 					break;
 				}
-				if (opt_arg4 !== undefined) {
+				if (trackNearest) {
 					updateNearest(val, i);
 				}
 			}
@@ -3660,11 +3872,9 @@ function (window, undefined) {
 		return foundCurrent;
 	};
 	/**
-	 * Finds the last occurrence of the same value in a sorted typed array.
-	 * This function is crucial for Excel's VLOOKUP/HLOOKUP approximate match behavior,
-	 * which requires returning the position of the LAST duplicate value when exact matches exist.
-	 * 
-	 * Uses binary search via sortedCache Map to efficiently locate the rightmost occurrence of a value
+	 * Finds the end of the run of values equal to an exact hit of the approximate VLOOKUP/HLOOKUP search.
+	 *
+	 * Uses binary search via sortedCache Map to efficiently locate the end of the run
 	 * within the specified range boundaries.
 	 * 
 	 * @private
@@ -3713,26 +3923,39 @@ function (window, undefined) {
 			return currentIndex;
 		}
 		
-		// Binary search in sameValueIndices for last index in range [currentIndex, maxIndex]
+		// Excel stops at the end of the run of equal values next to the hit, not at a later equal value (measured):
+		// find the hit in sameValueIndices, then the last index that still continues the run without a gap
 		lo = 0;
 		hi = sameValueIndices.length - 1;
-		let result = currentIndex;
-		
+		let first = -1;
 		while (lo <= hi) {
 			const mid = Math.floor((lo + hi) / 2);
-			const midValue = sameValueIndices[mid];
-			
-			if (midValue > maxIndex) {
-				hi = mid - 1;
-			} else if (midValue < currentIndex) {
+			if (sameValueIndices[mid] < currentIndex) {
 				lo = mid + 1;
 			} else {
-				result = midValue;
-				lo = mid + 1;
+				if (sameValueIndices[mid] === currentIndex) {
+					first = mid;
+				}
+				hi = mid - 1;
 			}
 		}
-		
-		return result;
+		if (-1 === first) {
+			return currentIndex;
+		}
+		let last = first;
+		lo = first + 1;
+		hi = sameValueIndices.length - 1;
+		while (lo <= hi) {
+			const mid = Math.floor((lo + hi) / 2);
+			if (sameValueIndices[mid] - mid === currentIndex - first && sameValueIndices[mid] <= maxIndex) {
+				last = mid;
+				lo = mid + 1;
+			} else {
+				hi = mid - 1;
+			}
+		}
+
+		return sameValueIndices[last];
 	};
 	/**
 	 * Performs a binary search to find the position of a value in a sorted range or array.
@@ -3740,7 +3963,7 @@ function (window, undefined) {
 	 * in VLOOKUP and HLOOKUP functions when the range_lookup parameter is TRUE.
 	 * 
 	 * The function searches for the largest value that is less than or equal to the lookup value.
-	 * If an exact match is found, it returns the position of the last occurrence of that value.
+	 * If an exact match is found, it returns the end of the run of equal values next to it.
 	 * The search is optimized using typed arrays for better performance with large datasets.
 	 * 
 	 * @private
@@ -3752,11 +3975,14 @@ function (window, undefined) {
 	 * @param {Uint32Array} typed - Pre-sorted typed array containing indices of cells with matching data types
 	 * @return {number} The index of the found element (0-based), or -1 if no suitable match is found. For approximate matches, returns the index of the largest value that is less than or equal to the search value.
 	 */
-	VHLOOKUPCache.prototype._defaultBinarySearch = function (valueForSearching, startIndex, endIndex, ws, rowCol, typed) {
+	VHLOOKUPCache.prototype._defaultBinarySearch = function (valueForSearching, startIndex, endIndex, ws, rowCol, typed, opt_array) {
 		let i = startIndex;
 		let j = endIndex;
 		const t = this;
 		const getValue = function (index) {
+			if (opt_array) {
+				return opt_array[index];
+			}
 			const cell = ws.getCell3(t.bHor ? rowCol : index, t.bHor ? index : rowCol);
 			return checkTypeCell(cell, true);
 		}
@@ -3788,13 +4014,20 @@ function (window, undefined) {
 				// remember it as potential result
 				resultIndex = k;
 				
-				// KEY FEATURE: if exact match is found,
-				// search for the LAST occurrence of this value in the range
+				// an exact hit answers with the end of its run of equal values
 				if (this._compareValues(val, valueForSearching, "=")) {
+					if (opt_array) {
+						while (k < endIndex && opt_array[k + 1].type === val.type &&
+							this._compareValues(opt_array[k + 1], valueForSearching, "=")) {
+							k++;
+						}
+						resultIndex = k;
+						break;
+					}
 					// Find position in typed array
 					let currentIndexInTyped = this._findIndexInTyped(k, typed);
 					if (currentIndexInTyped !== -1) {
-						// Search for last occurrence of the same value
+						// Search for the end of the run of the same value
 						resultIndex = this._findLastSame(currentIndexInTyped, typed, endIndex, ws, rowCol, valueForSearching);
 					}
 					break;
@@ -3914,6 +4147,19 @@ function (window, undefined) {
 		} else {
 			if (opt_array) {
 				res = this._simpleSearch(valueForSearching, false, ws, startIndex, endIndex, rowCol,opt_arg4, opt_array);
+			} else if (cElementType.string === valueForSearching.type && /[*?~]/.test(valueForSearching.value)) {
+				const typed = this.typedCache.getData(ws, rowCol, cElementType.string, startIndex, endIndex, this.bHor);
+				// the cache can hold the positions of the whole axis: only those inside this table count
+				for (let i = 0; typed && i < typed.length && typed[i] <= endIndex; i++) {
+					if (typed[i] < startIndex) {
+						continue;
+					}
+					const cell = ws.getCell3(t.bHor ? rowCol : typed[i], t.bHor ? typed[i] : rowCol);
+					if (AscCommonExcel.searchRegExp2(checkTypeCell(cell, true).getValue(), valueForSearching.value)) {
+						res = typed[i];
+						break;
+					}
+				}
 			} else {
 				const sorted = this.sortedCache.getData(ws, rowCol, valueForSearching.type, startIndex, endIndex, this.bHor);
 				if (sorted) {
@@ -3949,6 +4195,22 @@ function (window, undefined) {
 	MatchCache.prototype = Object.create(VHLOOKUPCache.prototype);
 	MatchCache.prototype.constructor = MatchCache;
 	MatchCache.prototype.calculate = function (arg, _arg1) {
+		function normalizeMatchType (isX, val) {
+			if (isX) {
+				return val;
+			}
+
+			if (val === 0) {
+				return val;
+			} else if (val > 1) {
+				return 1;
+			} else if (val < 1) {
+				return -1;
+			} else {
+				return val;
+			}
+		}
+
 		let arg0 = arg[0], arg1 = arg[1], arg2, arg3;
 		let isXMatch = arg[4];
 
@@ -3963,9 +4225,15 @@ function (window, undefined) {
 			}
 			// default values for XMatch
 			arg2 = arg[2] ? arg[2] : new cNumber(0);
-			arg3 = arg[3] ? arg[3] : new cNumber(1);
+
+			arg3 = arg[3];
+			if (!arg[3] || arg[3].type === cElementType.empty) {
+				arg3 = new cNumber(1);
+			}
+
 		} else {
-			if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+			if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type &&
+				cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type) {
 				return new cError(cErrorType.not_available);
 			}	
 			// default values for Match
@@ -4010,9 +4278,16 @@ function (window, undefined) {
 		if (cElementType.error === a2Value.type) {
 			return a2Value;
 		}
+
 		a2Value = Math.floor(a2Value.toNumber());
-		
-		if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value || 2 === a2Value)) {
+		a2Value = normalizeMatchType(isXMatch, a2Value);
+
+		// -1 - Exact match or next smallest item
+		// 0 - Exact match (default)
+		// 1 - Exact match or next largest item
+		// 2 - A wildcard match where *, ?, and ~ have  special meaning.
+		// 3 - Regex match based on regex pattern, case sensitive.
+		if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value || 2 === a2Value || 3 === a2Value)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		
@@ -4054,19 +4329,16 @@ function (window, undefined) {
 		}  
 		
 		if (cElementType.array === arg1.type) {
-			arg1 = arg1.getMatrix();
-
-			let i, a1RowCount = arg1.length, a1ColumnCount = arg1[0].length, arr;
+			//LOGICAL dims + tail-aware row/col slice so a lazy tail is searched too (getMatrix saw only the physical head)
+			let dim = arg1.getDimensions();
+			let a1RowCount = dim.row, a1ColumnCount = dim.col, arr;
 
 			if (a1RowCount > 1 && a1ColumnCount > 1) {
 				return new cError(cErrorType.not_available);
 			} else if (a1RowCount === 1 && a1ColumnCount >= 1) {
-				arr = arg1[0];
+				arr = arg1.getRowLogical(0);
 			} else {
-				arr = [];
-				for (i = 0; i < a1RowCount; i++) {
-					arr[i] = arg1[i][0];
-				}
+				arr = arg1.getColLogical(0);
 			}
 			return isXMatch ? this._xMatchCalculate(arr, arg0, a2Value, a3Value, true) : this._calculate(arr, arg0, a2Value);
 		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
@@ -4100,7 +4372,7 @@ function (window, undefined) {
 		if (!cacheElem) {
 			cacheElem = {elements: [], results: {}};
 
-			range._foreachNoEmpty(function (cell, r, c) {
+			range._foreachDataOnly(function (cell, r, c) {
 				cacheElem.elements.push({v: checkTypeCell(cell), i: (bHor ? c - range.bbox.c1 : r -  range.bbox.r1)});
 			});
 			this.cacheId[sRangeName] = cacheElem;
@@ -4256,7 +4528,7 @@ function (window, undefined) {
 				moreEqualArr.sort(function(a, b) {
 					if (cElementType.number === a0Type) {
 						if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-							return AscCommonExcel.stringCompare(a.v.getValue(), b.v.getValue());
+							return AscCommon.stringCompare(a.v.getValue(), b.v.getValue());
 						} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {
 							return a.v.getValue() - b.v.getValue();
 						} else if (cElementType.error === a.v.type || cElementType.error === b.v.type) {
@@ -4266,7 +4538,7 @@ function (window, undefined) {
 						}
 					} else if (cElementType.string === a0Type) {
 						if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-							return AscCommonExcel.stringCompare(a.v.getValue(), b.v.getValue());
+							return AscCommon.stringCompare(a.v.getValue(), b.v.getValue());
 						} else if (cElementType.string === a.v.type || cElementType.string === b.v.type) {
 							return 1;
 						} else if (cElementType.bool === a.v.type && cElementType.bool === b.v.type) {
@@ -4361,7 +4633,7 @@ function (window, undefined) {
 							return b.v.getValue() - a.v.getValue();
 						} else if (cElementType.string === a0Type) {
 							if (cElementType.string === a.v.type && cElementType.string === b.v.type) {
-								return AscCommonExcel.stringCompare(a.v.getValue(), b.v.getValue());
+								return AscCommon.stringCompare(a.v.getValue(), b.v.getValue());
 							} else if (cElementType.string === a.v.type || cElementType.string === b.v.type) {
 								return 1;
 							} else if (cElementType.number === a.v.type && cElementType.number === b.v.type) {
@@ -4437,14 +4709,14 @@ function (window, undefined) {
 		}
 
 		function arrFinder(arr) {
-			if (arr.getRowCount() > arr.getCountElementInRow()) {
+			if (arr.getRowCount(true) > arr.getCountElementInRow(true)) {
 				// searching in the first column
-				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
+				resC = arr.getCountElementInRow(true) > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
 				resR = _func.lookupBinarySearch(arg0, arrCol, false);
 			} else {
 				// searching in the first row
-				resR = arr.getRowCount() > 1 ? 1 : 0;
+				resR = arr.getRowCount(true) > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
 				resC = _func.lookupBinarySearch(arg0, arrRow, false);
 			}
@@ -4453,13 +4725,18 @@ function (window, undefined) {
 		function findIndexInArray(lookingValue, arr) {
 			let resIndex = -1;
 
-			if (arr.getRowCount() >= arr.getCountElementInRow()) {
+			//a constant lazy tail: size by the LOGICAL dims via getDimensions(); getCol/getRow walk only the physical head
+			let lazy = arr.hasLazyTail && arr.hasLazyTail();
+			let rows = lazy ? arr.getDimensions().row : arr.getRowCount(true);
+			let cols = lazy ? arr.getDimensions().col : arr.getCountElementInRow(true);
+
+			if (rows >= cols) {
 				// searching in the first column and return elem with same position (index) from last column
-				let arrCol = arr.getCol(0);
+				let arrCol = lazy ? arr.getColLogical(0) : arr.getCol(0);
 				resIndex = _func.lookupBinarySearch(lookingValue, arrCol, false);
 			} else {
 				// searching in the first row and return elem with same position (index) from last row
-				let arrRow = arr.getRow(0);
+				let arrRow = lazy ? arr.getRowLogical(0) : arr.getRow(0);
 				resIndex = _func.lookupBinarySearch(lookingValue, arrRow, false);
 			}
 
@@ -4531,7 +4808,7 @@ function (window, undefined) {
 			}
 
 			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type || cElementType.array === arg2.type) {
-				if (cElementType.array === arg2.type && (arg2.getRowCount() > 1 && arg2.getCountElementInRow() > 1)) {
+				if (cElementType.array === arg2.type && (arg2.getRowCount(true) > 1 && arg2.getCountElementInRow(true) > 1)) {
 					return new cError(cErrorType.not_available);
 				}
 
@@ -4555,10 +4832,12 @@ function (window, undefined) {
 		
 		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {		/* arg1 & arg2 is arrays */
 			let lookingIndex = -1;
-			let arg1Rows = arg1.getRowCount(),
-				arg2Rows = arg2.getRowCount(),
-				arg1Cols = arg1.getCountElementInRow(),
-				arg2Cols = arg2.getCountElementInRow();
+			//constant lazy tail: use LOGICAL dimensions and tail-aware element access (else head only)
+			let arg1Lazy = arg1.hasLazyTail && arg1.hasLazyTail(), arg2Lazy = arg2.hasLazyTail && arg2.hasLazyTail();
+			let arg1Rows = arg1Lazy ? arg1.getDimensions().row : arg1.getRowCount(true),
+				arg2Rows = arg2Lazy ? arg2.getDimensions().row : arg2.getRowCount(true),
+				arg1Cols = arg1Lazy ? arg1.getDimensions().col : arg1.getCountElementInRow(true),
+				arg2Cols = arg2Lazy ? arg2.getDimensions().col : arg2.getCountElementInRow(true);
 
 			/* check two dimensional array but only in vector form */
 			if (!arrayMode && (((arg1Rows < arg2Rows) && arg2Cols > 1) || (arg1Rows > 1 && arg1Cols > 1 && arg2Rows > 1 && arg2Cols > 1))) {
@@ -4581,12 +4860,12 @@ function (window, undefined) {
 			}
 
 			if (arg2Rows === 1) {
-				if (lookingIndex >= arg2.getCountElementInRow()) {
+				if (lookingIndex >= arg2Cols) {
 					return new cError(cErrorType.not_available)
 				}
 				return arg2.getElementRowCol(0, lookingIndex);
 			} else if (arg2Cols === 1) {
-				if (lookingIndex >= arg2.rowCount) {
+				if (lookingIndex >= arg2Rows) {
 					return new cError(cErrorType.not_available)
 				}
 				return arg2.getElementRowCol(lookingIndex, 0);
@@ -4612,7 +4891,9 @@ function (window, undefined) {
 			}
 
 			let byRow, byCol;
-			let dimension = arg2.getDimensions ? arg2.getDimensions() : null;
+			//constant lazy tail: logical dimensions + tail-aware element access
+			let arg2Lazy = arg2.hasLazyTail && arg2.hasLazyTail();
+			let dimension = arg2.getDimensions ? (arg2Lazy ? arg2.getDimensions() : arg2.getDimensions()) : null;
 			if (dimension) {
 				if (dimension.row >= dimension.col) {
 					byCol = true
@@ -4654,13 +4935,11 @@ function (window, undefined) {
 			let bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
 			let index;
 			if(index === undefined) {
-				let ws = arg1.getWS(),
-					r = bVertical ? bbox.r2 : bbox.r1,
-					c = bVertical ? bbox.c1 : bbox.c2;
-				let oSearchRange = ws.getRange3(bbox.r1, bbox.c1, r, c);
+				let ws = arg1.getWS();
 				t.bHor = bVertical ? false : true;
 
-				index = this._get(/* searchRange */oSearchRange, arg0, true);
+				index = this._get(arg0, true, undefined, undefined, ws,
+					t.bHor ? bbox.r1 : bbox.c1, t.bHor ? bbox.c1 : bbox.r1, t.bHor ? bbox.c2 : bbox.r2);
 
 				if (index === undefined || index < 0) {
 					return new cError(cErrorType.not_available);
@@ -4722,50 +5001,15 @@ function (window, undefined) {
 	cVLOOKUP.prototype.name = 'VLOOKUP';
 	cVLOOKUP.prototype.argumentsMin = 3;
 	cVLOOKUP.prototype.argumentsMax = 4;
-	cVLOOKUP.prototype.arrayIndexes = {/*0: 1,*/ 1: 1, /*2: 1*/};
+	cVLOOKUP.prototype.arrayIndexes = {1: 1};
 	cVLOOKUP.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cVLOOKUP.prototype.enabledToSingle = {"1": true};
+	//lookup_value and range_lookup shape the result together, index_num only when both are scalars (measured)
+	cVLOOKUP.prototype.resultShapeArgs = [0, 3];
 	cVLOOKUP.prototype.Calculate = function (arg) {
-		let retArr = new cArray();
-		let error = false;
-
-		if (arg[0].type === cElementType.array) {
-			if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
-				arg[2] = arg[2].getValue2(0,0);
-			}
-			let dimension = arg[0].getDimensions();
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oVLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
-				}
-			}
-
-			return retArr;
-		}
-
-		if (arg[2] && (arg[2].type === cElementType.array)) {
-			let dimension = arg[2].getDimensions();
-			for (let r = 0; r < dimension.row; r++) {
-				retArr.addRow();
-				for (let c = 0; c < dimension.col; c++) {
-					if (!error) {
-						let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
-						if (res.type === cElementType.error) {
-							error = true;
-						}
-						retArr.addElement(res);
-					} else {
-						break;
-					}
-				}
-			}
-			return error ? new cError(cErrorType.bad_reference) : retArr
-		}
-
-		return g_oVLOOKUPCache.calculate(arg, arguments[1]);
+		return g_oVLOOKUPCache.calculateCall(arg, arguments[1], arguments[7]);
 	};
 
 	/**
@@ -4869,7 +5113,7 @@ function (window, undefined) {
 			}
 		}
 
-		//array arg1 must contain 1 row or 1 column
+		//array arg1 must contain 1 row or 1 column; getDimensions() = LOGICAL size so a lazy tail is counted
 		let dimensions1 = arg1.getDimensions();
 		let dimensions2 = arg2.getDimensions();
 		let bVertical = null;
@@ -4974,7 +5218,7 @@ function (window, undefined) {
 		for (let i = 0; i < arg.length; i++) {
 			let matrix;
 			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.array || arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
-				matrix = arg[i].getMatrix();
+				matrix = getMatrixLogical(arg[i]);
 			} else if (arg[i].type === cElementType.cellsRange3D) {
 				if (arg[i].isSingleSheet()) {
 					matrix = arg[i].getMatrix()[0];
@@ -5033,7 +5277,7 @@ function (window, undefined) {
 		for (let i = 0; i < arg.length; i++) {
 			let matrix;
 			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.array || arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
-				matrix = arg[i].getMatrix();
+				matrix = getMatrixLogical(arg[i]);
 			} else if (arg[i].type === cElementType.cellsRange3D) {
 				if (arg[i].isSingleSheet()) {
 					matrix = arg[i].getMatrix()[0];
@@ -5096,13 +5340,18 @@ function (window, undefined) {
 		if (arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.toArray()[0];
 		} else {
-			arg1 = arg1.toArray();
+			//reject an oversized arg on its LOGICAL size (O(1)) instead of building the matrix just to count it
+			let logicalSize = arg1.type === cElementType.array && arg1.getDimensions();
+			if (logicalSize && logicalSize.row * logicalSize.col > 1048578) {
+				return new cError(cErrorType.not_numeric);
+			}
+			arg1 = getMatrixLogical(arg1);
 		}
 
 		//Excel returns a #NUM when array is too large.
 		let elemCount = arg1.length * arg1[0].length;
 		if (elemCount > 1048578) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.not_numeric);
 		}
 
 		//0    Keep all values (default)
@@ -5221,27 +5470,37 @@ function (window, undefined) {
 	};
 
 	function wrapRowsCols(arg, argument1, toCol) {
-		let argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		let res = new cArray(), valueError = new cError(cErrorType.wrong_value_type), numError = new cError(cErrorType.not_numeric);
+
+		// toCol = true - cWRAPCOLS call
+		// toCol = false - cWRAPROWS call
+		let argError = cBaseFunction.prototype._checkErrorArg.call(this, [arg[0], arg[1]]);
 		if (argError) {
-			return argError;
+			res.addElement(argError);
+			return res;
 		}
 
 		let arg1 = arg[0];
 		if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
+			res.addElement(valueError);
+			return res;
 		}
-		let arg0Dimensions = arg1.getDimensions();
-		if (arg0Dimensions.col > 1 && arg0Dimensions.row > 1) {
-			return new cError(cErrorType.wrong_value_type);
+		// logical size (realSize for a lazy array, physical otherwise); iteration below uses forEachLogical
+		let arg1Dimensions = arg1.getDimensions();
+		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
+			res.addElement(valueError);
+			return res;
 		}
-
+		let isSingleColumn = arg1Dimensions.col === 1 ? true : false;
 		let arg2 = arg[1];
+
 		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
 			arg2 = arg2.getValueByRowCol(0,0);
 		} else if (cElementType.array === arg2.type) {
 			arg2 = arg2.getElementRowCol(0, 0);
 		} else if (arg2.type === cElementType.empty) {
-			return new cError(cErrorType.not_numeric);
+			res.addElement(numError);
+			return res;
 		}
 		if (!arg2) {
 			arg2 = new cEmpty();
@@ -5249,12 +5508,14 @@ function (window, undefined) {
 
 		arg2 = arg2.tocNumber();
 		if (arg2.type === cElementType.error) {
-			return arg2;
+			res.addElement(arg2);
+			return res;
 		}
-		arg2 = arg2.toNumber();
 
+		arg2 = Math.floor(arg2.toNumber());
 		if (arg2 < 1) {
-			return new cError(cErrorType.not_numeric);
+			res.addElement(numError);
+			return res;
 		}
 
 		let arg3 = arg[2] ? arg[2] : new cError(cErrorType.not_available);
@@ -5264,14 +5525,20 @@ function (window, undefined) {
 			arg3 = arg3.getElementRowCol(0, 0);
 		}
 
-		let res = new cArray();
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) {
+			
+			if ((isSingleColumn && arg1Dimensions.row <= arg2) || (!isSingleColumn && arg1Dimensions.col <= arg2)) {
+				if (arg1.type !== cElementType.array) {
+					// convert area to array and the return it
+					arg1 = arg1.getFullArray();
+				}
+				return arg1;
+			}
+
 			let rowCounter = 0, colCounter = 0;
-			arg1.foreach2(function (val) {
+
+			let processVal = function (val) {
 				if (toCol) {
-					/*if (res.array.l && res.array[res.array.length - 1].length === arg2) {
-						res.addRow();
-					}*/
 					if (rowCounter === arg2) {
 						colCounter++;
 						rowCounter = 0;
@@ -5287,7 +5554,10 @@ function (window, undefined) {
 					}
 					res.addElement(val);
 				}
-			});
+			};
+
+			// single logical iteration: forEachLogical serves a lazy tail and walks a range/non-lazy array, no branch
+			arg1.forEachLogical(processVal);
 			if (toCol) {
 				res.recalculate();
 			}
@@ -5295,6 +5565,11 @@ function (window, undefined) {
 		} else {
 			if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.empty) {
+				res.addElement(valueError);
+				return res;
 			}
 			res.addElement(arg1);
 		}
@@ -5365,6 +5640,86 @@ function (window, undefined) {
 	cXMATCH.prototype.Calculate = function (arg) {
 		arg[4] = true;
 		return g_oMatchCache.calculate(arg, arguments[1]);
+	};
+
+	/**
+	 * ANCHORARRAY — internal XLFN used to store the spilled-range operator `#`.
+	 * In UI formula `A1#` is shown; in XLSX it's stored as `_xlfn.ANCHORARRAY(A1)`.
+	 * Hidden from the function wizard via cFormulaFunctionGroup['NotRealised'].
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cANCHORARRAY() {
+	}
+
+	cANCHORARRAY.prototype = Object.create(cBaseFunction.prototype);
+	cANCHORARRAY.prototype.constructor = cANCHORARRAY;
+	cANCHORARRAY.prototype.name = 'ANCHORARRAY';
+	cANCHORARRAY.prototype.argumentsMin = 1;
+	cANCHORARRAY.prototype.argumentsMax = 1;
+	cANCHORARRAY.prototype.argumentsType = [argType.reference];
+	cANCHORARRAY.prototype.arrayIndexes = {0: 1};
+	cANCHORARRAY.prototype.enabledToSingle = {"0": true};
+	cANCHORARRAY.prototype.isXLFN = true;
+	cANCHORARRAY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cANCHORARRAY.prototype.Calculate = function (arg) {
+		var arg0 = arg[0];
+		var callerWs = arguments[3];
+		var anchorWs = null, anchorCol = -1, anchorRow = -1;
+		var is3D = false;
+
+		if (arg0.type === cElementType.name || arg0.type === cElementType.name3D) {
+			arg0 = arg0.toRef ? arg0.toRef(arguments[1]) : arg0.Calculate();
+			if (!arg0 || arg0.type === cElementType.error) {
+				return arg0 && arg0.type === cElementType.error ? arg0 : new cError(cErrorType.bad_reference);
+			}
+		}
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cellsRange) {
+			var bbox = arg0.getBBox0();
+			if (!bbox) {
+				return new cError(cErrorType.bad_reference);
+			}
+			anchorWs = arg0.getWS();
+			anchorCol = bbox.c1;
+			anchorRow = bbox.r1;
+		} else if (arg0.type === cElementType.cell3D || arg0.type === cElementType.cellsRange3D) {
+			var range3d = arg0.getRange ? arg0.getRange() : null;
+			var bbox3d = range3d && range3d.getBBox0 ? range3d.getBBox0() : (arg0.getBBox0 && arg0.getBBox0());
+			if (!bbox3d) {
+				return new cError(cErrorType.bad_reference);
+			}
+			anchorWs = arg0.getWS();
+			anchorCol = bbox3d.c1;
+			anchorRow = bbox3d.r1;
+			is3D = true;
+		} else if (arg0.type === cElementType.error) {
+			return arg0;
+		} else {
+			return new cError(cErrorType.bad_reference);
+		}
+
+		if (!anchorWs || !anchorWs.dynamicArrayManager) {
+			return new cError(cErrorType.bad_reference);
+		}
+
+		var spillRef = anchorWs.dynamicArrayManager.getDynamicArrayFirstCell(anchorCol, anchorRow);
+		if (!spillRef) {
+			return new cError(cErrorType.bad_reference);
+		}
+
+		// propagate #SPILL! from a blocked anchor formula
+		var anchorCell = null;
+		anchorWs.getCell3(spillRef.r1, spillRef.c1)._foreachDataOnly(function (c) { anchorCell = c; });
+		if (anchorCell && anchorCell.formulaParsed && anchorCell.formulaParsed.aca && anchorCell.formulaParsed.ca) {
+			return new cError(cErrorType.cannot_be_spilled);
+		}
+
+		var rangeName = anchorWs.getRange3(spillRef.r1, spillRef.c1, spillRef.r2, spillRef.c2).getName();
+		if (is3D || (callerWs && callerWs !== anchorWs)) {
+			return new cArea3D(rangeName, anchorWs, anchorWs);
+		}
+		return new cArea(rangeName, anchorWs);
 	};
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);

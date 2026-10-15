@@ -71,9 +71,6 @@
     AscFormat.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
 
     CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
-            return;
-
         // when alignment is center or right, then after
         // paragraph width becomes larger than form size, alignment becomes left, until text is smaller than form size again
         this.CheckAlignInternal();
@@ -94,9 +91,6 @@
         oGraphicsWord.RemoveLastClip();
 
         this.DrawBorders(oGraphicsPDF);
-
-        this.DrawLocks(oGraphicsPDF);
-        this.DrawEdit(oGraphicsWord);
     };
     CListBoxField.prototype._isCenterAlign = function() {
 		return false;
@@ -191,7 +185,7 @@
 	 */
     CListBoxField.prototype.SyncValue = function() {
         this.private_SetOptionsToContent(this.GetOptions().slice());
-        this.SetCurIdxs(this.GetParentCurIdxs());
+        this.SetCurIdxs(this.GetLogicCurIdxs());
         this.SetNeedRecalc(true);
     };
     CListBoxField.prototype.DrainLogicFrom = function(oFieldToInherit, bClearFrom) {
@@ -199,14 +193,16 @@
 
         this.SetMultipleSelection(oFieldToInherit.IsMultipleSelection());
         this.SetCommitOnSelChange(oFieldToInherit.IsCommitOnSelChange());
-        this.SetOptions(oFieldToInherit.GetOptions());
-        this.SetParentCurIdxs(oFieldToInherit.GetParentCurIdxs());
+
+        this.private_SetOptionsToContent([]);
+        this.SetOptions(oFieldToInherit.GetOptions().slice());
+        this.SetLogicCurIdxs(oFieldToInherit.GetLogicCurIdxs());
 
         if (bClearFrom !== false) {
             oFieldToInherit.SetMultipleSelection(false);
             oFieldToInherit.SetCommitOnSelChange(false);
             oFieldToInherit.SetOptions([]);
-            oFieldToInherit.SetParentCurIdxs([]);
+            oFieldToInherit.SetLogicCurIdxs([]);
         }
     };
     /**
@@ -215,20 +211,18 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CListBoxField.prototype.Commit = function() {
-        let oDoc    = this.GetDocument();
-        let aFields = oDoc.GetAllWidgets(this.GetFullName());
+		if (this.IsLogicalRoot() && !this.IsWidget()) {
+			this.GetKid(0).Commit();
+			return;
+		}
+		
+        let aFields = this.GetAllWidgets();
         
         let aCurIdxs = this.GetCurIdxs();
-        let aApiIdxs = this.GetParentCurIdxs();
+        let aApiIdxs = this.GetLogicCurIdxs();
 
         this.ScrollVerticalEnd(true);
-        let isChanged = false;
-        for (let i = 0; i < aCurIdxs.length; i++) {
-            if (!aApiIdxs || aCurIdxs[i] === undefined || aApiIdxs[i] === undefined || aCurIdxs[i] !== aApiIdxs[i]) {
-                isChanged = true;
-                break;
-            }
-        }
+        let isChanged = !aApiIdxs || false == AscCommon.isEqualSortedArrays(aCurIdxs, aApiIdxs);
         if (!isChanged) {
             return;
         }
@@ -251,8 +245,8 @@
         
         this._bAutoShiftContentView = true;
         
-        this.SetParentValue(this.GetValue());
-        this.SetParentCurIdxs(aCurIdxs);
+        this.SetLogicValue(this.GetValue());
+        this.SetLogicCurIdxs(aCurIdxs);
     };
     CListBoxField.prototype.UpdateTopIndex = function() {
         let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
@@ -470,6 +464,7 @@
         let aInnerColor = this.GetTextColor();
         let oRGB = this.GetRGBColor(aInnerColor);
         let oDocColor = new AscCommonWord.CDocumentColor(oRGB.r, oRGB.g, oRGB.b, false);
+		let _t = this;
 
         if (typeof option === "string" && option !== "") {
             formattedOption = option;
@@ -499,7 +494,7 @@
                     AscCommon.History.StartNoHistoryMode();
 
                     AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
-                    let oPara = new AscWord.Paragraph(this.content, false);
+                    let oPara = new AscWord.Paragraph(_t.content, false);
                     let oRun = new AscWord.ParaRun(oPara, false);
                     field.content.Internal_Content_Add(nPos, oPara);
                     oPara.Add(oRun);
@@ -548,6 +543,10 @@
         let aOptions = this.GetOptions();
         if (this.IsWidget()) {
             if (Array.isArray(value)) {
+				if (!this.IsMultipleSelection()) {
+					return false;
+				}
+				
                 for (let i = 0; i < value.length; i++) {
                     let sVal = value[i];
                     let isFound = false;
@@ -593,30 +592,20 @@
                 }
             }
 
-			let oShd = private_GetShd('nil');
-            this.content.Content.forEach(function(para) {
-				para.Pr.Shd = oShd;
-				para.RecalcCompiledPr(true);
-            });
-
-            for (let i = 0; i < aIndexes.length; i++) {
-                if (this.IsMultipleSelection()) {
-                    this.SelectOption(aIndexes[i], false);
-                }
-                else
-                    this.SelectOption(aIndexes[i], true);
-            }
+			this.SetCurIdxs(aIndexes);
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress) {
-                this.SetParentValue(value);
-                this.SetParentCurIdxs(aIndexes);
+                this.SetLogicValue(value);
+                this.SetLogicCurIdxs(aIndexes);
             }
                 
         }
         else {
-            this.SetParentValue(value);
-            this.SetParentCurIdxs(aIndexes);
+            this.SetLogicValue(value);
+            this.SetLogicCurIdxs(aIndexes);
         }
+
+		return true;
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
     
@@ -699,7 +688,7 @@
             }
         }
 
-        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         // call cursor positioning after onFocus. If already in focus, then immediately.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
@@ -707,10 +696,10 @@
             callbackAfterFocus.bind(this, x, y, e)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseDown, AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         }
     };
     CListBoxField.prototype.MoveSelectDown = function() {
@@ -1135,8 +1124,13 @@
         return aIndexes;
     };
     CListBoxField.prototype.SetCurIdxs = function(aIdxs) {
+        let aOptions = this.GetOptions();
+        if (aOptions.length == 0) {
+            return;
+        }
+
         if (this.IsWidget()) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetLogicCurIdxs(), aIdxs));
 
             AscCommon.History.StartNoHistoryMode();
             // first remove selection from current ones
@@ -1154,10 +1148,10 @@
             
             AscCommon.History.EndNoHistoryMode();
             if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
-                this.SetParentCurIdxs(aIdxs);
+                this.SetLogicCurIdxs(aIdxs);
         }
         else {
-            this.SetParentCurIdxs(aIdxs);
+            this.SetLogicCurIdxs(aIdxs);
         }
 
         this.SetNeedCommit(false);
@@ -1218,7 +1212,7 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let value = this.GetParentValue(memory.isCopyPaste);
+        let value = this.GetLogicValue(memory.isCopyPaste);
         if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(value);
@@ -1245,15 +1239,14 @@
         }
 
         // I array (selected list values)
-        let curIdxs;
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetParentCurIdxs(memory.isCopyPaste);
-        }
-        if (curIdxs) {
-            memory.fieldDataFlags |= (1 << 14);
-            memory.WriteLong(curIdxs.length);
-            for (let i = 0; i < curIdxs.length; i++) {
-                memory.WriteLong(curIdxs[i]);
+        if (memory.isCopyPaste || this.IsLogicalRoot()) {
+            let curIdxs = this.GetLogicCurIdxs(false);
+            if (curIdxs && curIdxs.length !== 0) {
+                memory.fieldDataFlags |= (1 << 14);
+                memory.WriteLong(curIdxs.length);
+                for (let i = 0; i < curIdxs.length; i++) {
+                    memory.WriteLong(curIdxs[i]);
+                }
             }
         }
         

@@ -52,6 +52,7 @@ function (window, undefined) {
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
 	var cElementType = AscCommonExcel.cElementType;
+	var _func = AscCommonExcel._func;
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	cFormulaFunctionGroup['Logical'] = cFormulaFunctionGroup['Logical'] || [];
@@ -73,10 +74,10 @@ function (window, undefined) {
 	cAND.prototype.argumentsType = [[argType.logical]];
 	cAND.prototype.enabledToSingle = {"*": true};
 	cAND.prototype.Calculate = function (arg) {
-		var argResult = null;
-		for (var i = 0; i < arg.length; i++) {
-			if (arg[i] instanceof cArea || arg[i] instanceof cArea3D) {
-				var argArr = arg[i].getValue();
+		let argResult = null;
+		for (let i = 0; i < arg.length; i++) {
+			if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D) {
+				let argArr = arg[i].getValue();
 				for (var j = 0; j < argArr.length; j++) {
 					if (argArr[j] instanceof cError) {
 						return argArr[j];
@@ -95,28 +96,27 @@ function (window, undefined) {
 				if (arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
 					arg[i] = arg[i].getValue();
 				}
-				if (arg[i] instanceof cString) {
-					return new cError(cErrorType.wrong_value_type);
-				} else if (arg[i] instanceof cError) {
+				if (arg[i].type === cElementType.string) {
+					// skip string check
+					continue
+				} else if (arg[i].type === cElementType.error) {
 					return arg[i];
-				} else if (arg[i] instanceof cArray) {
-					arg[i].foreach(function (elem) {
-						if (elem instanceof cError) {
-							argResult = elem;
-							return true;
-						} else if (elem instanceof cString || elem instanceof cEmpty) {
-							return false;
-						} else {
-							if (argResult === null) {
-								argResult = elem.tocBool();
-							} else {
-								argResult = new cBool(argResult.value && elem.tocBool().value);
-							}
-							if (argResult.value === false) {
-								return true;
-							}
+				} else if (arg[i].type === cElementType.array) {
+					//reduceLogical folds the head + the constant tail; AND is idempotent so the tail value is
+					//AND-ed once (count ignored) - a FALSE tail (e.g. A:A>0 over empties) correctly yields FALSE.
+					argResult = arg[i].reduceLogical(function (acc, elem, n) {
+						if (acc && acc.type === cElementType.error) {
+							return acc;
 						}
-					});
+						if (elem && elem.type === cElementType.error) {
+							return elem;
+						}
+						if (elem.type === cElementType.string || elem.type === cElementType.empty) {
+							return acc;
+						}
+						let b = elem.tocBool().value;
+						return (acc === null) ? new cBool(b) : new cBool(acc.value && b);
+					}, argResult);
 				} else {
 					if (argResult === null) {
 						argResult = arg[i].tocBool();
@@ -170,13 +170,8 @@ function (window, undefined) {
 	cIF.prototype.arrayIndexes = {1: 1, 2: 1};
 	cIF.prototype.getArrayIndex = function (index, type, args) {
 		let res = false;
-
-		//TODO need recheck
-		if (args && args[0].type === cElementType.array) {
-			return false;
-		}
-
-		if (type === cElementType.array) {
+		if (args && args[0] && (cElementType.array === args[0].type ||
+			cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type)) {
 			return false;
 		}
 		if (this.arrayIndexes) {
@@ -184,29 +179,44 @@ function (window, undefined) {
 		}
 		return res;
 	};
-	cIF.prototype.enabledToSingle = {"1": true, "2": true};
+	cIF.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
+	//only the branch the condition selects is ever read, so the other one may vary from cell to cell without
+	//affecting the answer. an unusable condition (error/non-boolean text) reads neither branch.
+	cIF.prototype.getUnusedTailArgs = function (tailArgs) {
+		let cond = this.getTailArgValue(tailArgs, 0);
+		if (!cond || cElementType.array === cond.type) {
+			return null;
+		}
+		cond = cond.tocBool();
+		if (cElementType.error === cond.type || cElementType.string === cond.type) {
+			return [1, 2];
+		}
+		if (cElementType.bool !== cond.type) {
+			return null;
+		}
+		return cond.value ? [2] : [1];
+	};
 	cIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-
-		if (arg0 instanceof cArray) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-		if (arg1 instanceof cArray) {
-			arg1 = arg1.getElement(0);
-		}
-		if (arg2 instanceof cArray) {
-			arg2 = arg2.getElement(0);
-		}
+		// if (arg1 instanceof cArray) {
+		// 	arg1 = arg1.getElement(0);
+		// }
+		// if (arg2 instanceof cArray) {
+		// 	arg2 = arg2.getElement(0);
+		// }
 
 		arg0 = arg0.tocBool();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cString) {
+		} else if (arg0.type === cElementType.string) {
 			return new cError(cErrorType.wrong_value_type);
 		} else if (arg0.value) {
-			return arg1 ? arg1 instanceof cEmpty ? new cNumber(0) : arg1 : new cBool(true);
+			return arg1 ? arg1.type === cElementType.empty ? new cNumber(0) : arg1 : new cBool(true);
 		} else {
-			return arg2 ? arg2 instanceof cEmpty ? new cNumber(0) : arg2 : new cBool(false);
+			return arg2 ? arg2.type === cElementType.empty ? new cNumber(0) : arg2 : new cBool(false);
 		}
 	};
 
@@ -225,23 +235,31 @@ function (window, undefined) {
 	cIFERROR.prototype.argumentsMax = 2;
 	cIFERROR.prototype.argumentsType = [argType.any, argType.any];
 	cIFERROR.prototype.enabledToSingle = {"1": true};
+	cIFERROR.prototype.getUnusedTailArgs = function (tailArgs) {
+		let value = this.getTailArgValue(tailArgs, 0);
+		if (!value) {
+			return null;
+		}
+		return cElementType.error === value.type ? null : [1];
+	};
 	cIFERROR.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArray) {
+		let arg0 = arg[0], res = arg[0];
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-		if (arg0 instanceof AscCommonExcel.cRef || arg0 instanceof AscCommonExcel.cRef3D) {
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
+			res = arg0;
 		}
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
+			res = arg0;
 		}
 
-		if (arg0 instanceof cError) {
-			return arg[1] instanceof cArray ? arg[1].getElement(0) : arg[1];
-		} else {
-			return arg[0];
+		if (arg0.type === cElementType.error) {
+			return arg[1].type === cElementType.array ? arg[1].getElement(0) : arg[1];
 		}
+		return res;
 	};
 
 	/**
@@ -260,22 +278,33 @@ function (window, undefined) {
 	cIFNA.prototype.isXLFN = true;
 	cIFNA.prototype.argumentsType = [argType.any, argType.any];
 	cIFNA.prototype.enabledToSingle = {"1": true};
+	cIFNA.prototype.getUnusedTailArgs = function (tailArgs) {
+		let value = this.getTailArgValue(tailArgs, 0);
+		if (!value) {
+			return null;
+		}
+		let isNA = cElementType.error === value.type && cErrorType.not_available === value.errorType;
+		return isNA ? null : [1];
+	};
 	cIFNA.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArray) {
+
+		let arg0 = arg[0], res = arg[0];
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-		if (arg0 instanceof AscCommonExcel.cRef || arg0 instanceof AscCommonExcel.cRef3D) {
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getValue();
+			res = arg0;
 		}
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
+			res = arg0;
 		}
 
-		if (arg0 instanceof cError && cErrorType.not_available === arg0.errorType) {
-			return arg[1] instanceof cArray ? arg[1].getElement(0) : arg[1];
+		if (arg0.type === cElementType.error && cErrorType.not_available === arg0.errorType) {
+			return arg[1].type === cElementType.array ? arg[1].getElement(0) : arg[1];
 		} else {
-			return arg[0];
+			return res;
 		}
 	};
 
@@ -294,13 +323,41 @@ function (window, undefined) {
 	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
 	cIFS.prototype.enabledToSingle = {"odd": true};
+	cIFS.prototype.getUnusedTailArgs = function (tailArgs) {
+		let count = tailArgs ? tailArgs.length : 0, read = {};
+		for (let i = 0; i < count; i += 2) {
+			//only the condition is looked at; the value slot next to it is marked read without being read
+			let cond = this.getTailArgValue(tailArgs, i);
+			if (!cond) {
+				return null;
+			}
+			read[i] = true;
+			if (cElementType.error === cond.type || cElementType.string === cond.type) {
+				break;
+			}
+			if (cElementType.number !== cond.type && cElementType.bool !== cond.type) {
+				continue;
+			}
+			if (i + 1 >= count) {
+				break;
+			}
+			if (cond.tocBool().value) {
+				read[i + 1] = true;
+				break;
+			}
+		}
+		return this.collectUnusedTailArgs(read, count);
+	};
 	cIFS.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
+		var oArguments = this._prepareArguments(arg, arguments[1], true, null, false, null, this.enabledToSingle);
 		var argClone = oArguments.args;
 
 		var res = null;
 		for (var i = 0; i < arg.length; i++) {
 			var argN = argClone[i];
+			if (cElementType.cell === argN.type || cElementType.cell3D === argN.type) {
+				argN = argN.getValue();
+			}
 			if (cElementType.error === argN.type) {
 				res = argN;
 				break;
@@ -348,23 +405,26 @@ function (window, undefined) {
 	cNOT.prototype.argumentsMax = 1;
 	cNOT.prototype.argumentsType = [argType.logical];
 	cNOT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArray) {
+
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 
-		if (arg0 instanceof cString) {
-			var res = arg0.tocBool();
-			if (res instanceof cString) {
+		if (arg0.type === cElementType.string) {
+			let res = arg0.tocBool();
+			if (res.type === cElementType.string) {
 				return new cError(cErrorType.wrong_value_type);
 			} else {
 				return new cBool(!res.value);
 			}
-		} else if (arg0 instanceof cError) {
+		} else if (arg0.type === cElementType.error) {
 			return arg0;
 		} else {
 			return new cBool(!arg0.tocBool().value);
@@ -387,62 +447,91 @@ function (window, undefined) {
 	cOR.prototype.argumentsType = [[argType.logical]];
 	cOR.prototype.enabledToSingle = {"*": true};
 	cOR.prototype.Calculate = function (arg) {
-		var argResult = null;
-		for (var i = 0; i < arg.length; i++) {
-			if (arg[i] instanceof cArea || arg[i] instanceof cArea3D) {
-				var argArr = arg[i].getValue();
-				for (var j = 0; j < argArr.length; j++) {
-					if (argArr[j] instanceof cError) {
-						return argArr[j];
-					} else if (argArr[j] instanceof cString || argArr[j] instanceof cEmpty) {
-						if (argResult === null) {
-							argResult = argArr[j].tocBool();
-						} else {
-							argResult = new cBool(argResult.value || argArr[j].tocBool().value);
+		let argResult = null;
+		for (let i = 0; i < arg.length; i++) {
+			let argI;
+			if (arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
+				argI = arg[i].getValue();
+			}
+
+			if (arg[i].type === cElementType.error) {
+				return arg[i];
+			}
+
+			if (arg[i].type === cElementType.array) {
+				//reduceLogical folds head + constant tail; OR is idempotent so the tail value is OR-ed once
+				//(count ignored) - a TRUE tail (e.g. A:A>=0 over empties) correctly makes OR true.
+				argResult = arg[i].reduceLogical(function (acc, elemVal, n) {
+					if (acc && acc.type === cElementType.error) {
+						return acc;
+					}
+					if (acc && acc.value === true) {
+						return acc;
+					}
+					if (elemVal.type === cElementType.error) {
+						return elemVal;
+					}
+					let argToBool = elemVal.tocBool();
+					if (argToBool.type === cElementType.bool || argToBool.type === cElementType.error) {
+						return argToBool;
+					}
+					return acc;   // string -> skip
+				}, argResult);
+				if (argResult && argResult.type === cElementType.error) {
+					return argResult;
+				}
+			} else if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D) {
+				let dimensions = arg[i].getDimensions();
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elemVal = arg[i].getValueByRowCol ? arg[i].getValueByRowCol(row,col,true) : arg[i].getElementRowCol(row,col);
+
+						if (elemVal.type === cElementType.error) {
+							return elemVal;
 						}
-						if (argResult.value === true) {
+
+						let argToBool = elemVal.tocBool();
+						if (argToBool.type === cElementType.string) {
+							continue;
+						} if (argToBool.type === cElementType.bool) {
+							argResult = argToBool;
+						} else if (argToBool.type === cElementType.error) {
+							return argToBool;
+						}
+
+						if (argResult && argResult.value === true) {
 							return new cBool(true);
 						}
 					}
 				}
+
+			} else if (arg[i].type === cElementType.string) {
+				let stringToBool = arg[i].tocBool();
+				if (stringToBool.type === cElementType.bool) {
+					argResult = stringToBool;
+				}
 			} else {
-				if (arg[i] instanceof cString) {
-					return new cError(cErrorType.wrong_value_type);
-				} else if (arg[i] instanceof cError) {
-					return arg[i];
-				} else if (arg[i] instanceof cArray) {
-					arg[i].foreach(function (elem) {
-						if (elem instanceof cError) {
-							argResult = elem;
-							return true;
-						} else if (elem instanceof cString || elem instanceof cEmpty) {
-							return false;
-						} else {
-							if (argResult === null) {
-								argResult = elem.tocBool();
-							} else {
-								argResult = new cBool(argResult.value || elem.tocBool().value);
-							}
-						}
-					})
+				if (argResult === null) {
+					argResult = arg[i].tocBool();
 				} else {
-					if (argResult == null) {
-						argResult = arg[i].tocBool();
-					} else {
-						argResult = new cBool(argResult.value || arg[i].tocBool().value);
-					}
-					if (argResult.value === true) {
-						return new cBool(true);
-					}
+					argResult = new cBool(argResult.value || arg[i].tocBool().value);
 				}
 			}
+
+			if (argResult && argResult.value === true) {
+				return new cBool(true);
+			}
 		}
-		if (argResult == null) {
+		if (argResult === null) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		return argResult;
 	};
 
+	function asComparable(_arg) {
+		return cElementType.empty === _arg.type ? new cNumber(0) : _arg;
+	}
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -459,37 +548,71 @@ function (window, undefined) {
 	cSWITCH.prototype.isXLFN = true;
 	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
 	cSWITCH.prototype.enabledToSingle = {"evenFrom2": true};
-	cSWITCH.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
+	cSWITCH.prototype.getUnusedTailArgs = function (tailArgs) {
+		let count = tailArgs ? tailArgs.length : 0, read = {};
+		let expression = this.getTailArgValue(tailArgs, 0);
+		if (!expression) {
+			return null;
 		}
+		read[0] = true;
+		if (cElementType.error !== expression.type) {
+			expression = asComparable(expression);
+			for (let i = 1; i < count; i++) {
+				if (i === count - 1) {
+					read[i] = true;
+					break;
+				}
+				//only the key is looked at; the result slot next to it is marked read without being read
+				let caseValue = this.getTailArgValue(tailArgs, i);
+				if (!caseValue) {
+					return null;
+				}
+				read[i] = true;
+				if (cElementType.error === caseValue.type) {
+					break;
+				}
+				caseValue = asComparable(caseValue);
+				if (true === _func[expression.type][caseValue.type](expression, caseValue, "=").value) {
+					read[i + 1] = true;
+					break;
+				}
+				i++;
+			}
+		}
+		return this.collectUnusedTailArgs(read, count);
+	};
+	cSWITCH.prototype.Calculate = function (arg) {
+		let oArguments = this._prepareArguments(arg, arguments[1], true, null, false, null, this.enabledToSingle);
+		let argClone = oArguments.args;
 
-		var arg0 = argClone[0].getValue();
+		let arg0 = argClone[0];
 		if (cElementType.cell === argClone[0].type || cElementType.cell3D === argClone[0].type) {
 			arg0 = arg0.getValue()
 		}
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		arg0 = asComparable(arg0);
 
-
-		var res = null;
-		for (var i = 1; i < argClone.length; i++) {
-			var argN = argClone[i].getValue();
-			if (cElementType.cell === argClone[i].type || cElementType.cell3D === argClone[i].type) {
-				argN = argN.getValue();
-			}
-			if (arg0 === argN) {
-				if (!argClone[i + 1]) {
-					return new cError(cErrorType.not_available);
-				} else {
-					res = argClone[i + 1];
-					break;
-				}
-			}
+		let res = null;
+		for (let i = 1; i < argClone.length; i++) {
 			if (i === argClone.length - 1) {
 				res = argClone[i];
+				break;
+			}
+
+			let argN = argClone[i];
+			if (cElementType.cell === argN.type || cElementType.cell3D === argN.type) {
+				argN = argN.getValue();
+			}
+			if (cElementType.error === argN.type) {
+				return argN;
+			}
+			argN = asComparable(argN);
+
+			if (true === _func[arg0.type][argN.type](arg0, argN, "=").value) {
+				res = argClone[i + 1];
+				break;
 			}
 			i++;
 		}
@@ -535,89 +658,188 @@ function (window, undefined) {
 	cXOR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cXOR.prototype.argumentsType = [[argType.logical]];
 	cXOR.prototype.enabledToSingle = {"*": true};
+	// cXOR.prototype.Calculate = function (arg) {
+	// 	let argResult = null;
+	// 	let nTrueValues = 0;
+	// 	for (let i = 0; i < arg.length; i++) {
+	// 		if (arg[i] instanceof cArea || arg[i] instanceof cArea3D) {
+	// 			let allCellsEmpty = true;
+	// 			let argArr = arg[i].getValue();
+	// 			for (let j = 0; j < argArr.length; j++) {
+	// 				let emptyArg = argArr[j] instanceof cEmpty;
+	// 				if (argArr[j] instanceof cError) {
+	// 					return argArr[j];
+	// 				} else if (argArr[j] instanceof cString || emptyArg || argArr[j] instanceof cBool) {
+	// 					argResult = new cBool(true);
+	// 					nTrueValues++;
+	// 				} else if (argArr.length === 1 && argArr[j] instanceof cNumber) {
+	// 					if (argResult == null) {
+	// 						argResult = argArr[j].tocBool();
+	// 					} else {
+	// 						argResult = new cBool(argArr[j].tocBool().value);
+	// 					}
+
+	// 					if (argResult.value === true) {
+	// 						nTrueValues++;
+	// 					}
+	// 				}
+	// 				if (!emptyArg) {
+	// 					allCellsEmpty = false;
+	// 				}
+	// 			}
+	// 			//if the range is empty - return an error
+	// 			//if the range contains at least one non-empty cell (without an error) - the result is false
+	// 			if (argResult === null && !allCellsEmpty) {
+	// 				argResult = new cBool(false);
+	// 			} else if (allCellsEmpty) {
+	// 				argResult = null;
+	// 			}
+	// 		} else {
+	// 			if (arg[i] instanceof cString) {
+	// 				return new cError(cErrorType.wrong_value_type);
+	// 			} else if (arg[i] instanceof cError) {
+	// 				return arg[i];
+	// 			} else if (arg[i] instanceof cArray) {
+	// 				arg[i].foreach(function (elem) {
+	// 					if (elem instanceof cError) {
+	// 						argResult = elem;
+	// 						return true;
+	// 					} else if (elem instanceof cString || elem instanceof cEmpty) {
+	// 						return false;
+	// 					} else {
+	// 						if (argResult === null) {
+	// 							argResult = elem.tocBool();
+	// 						} else {
+	// 							argResult = new cBool(elem.tocBool().value);
+	// 						}
+	// 					}
+
+	// 					if (argResult.value === true) {
+	// 						nTrueValues++;
+	// 					}
+	// 				})
+	// 			} else {
+	// 				if (argResult === null) {
+	// 					argResult = arg[i].tocBool();
+	// 				} else {
+	// 					argResult = new cBool(arg[i].tocBool().value);
+	// 				}
+
+	// 				if (argResult.value === true) {
+	// 					nTrueValues++;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	if (argResult === null) {
+	// 		return new cError(cErrorType.wrong_value_type);
+	// 	} else {
+	// 		if (nTrueValues % 2) {
+	// 			argResult = new cBool(true);
+	// 		} else {
+	// 			argResult = new cBool(false);
+	// 		}
+	// 	}
+
+	// 	return argResult;
+	// };
 	cXOR.prototype.Calculate = function (arg) {
-		var argResult = null;
-		var nTrueValues = 0;
-		for (var i = 0; i < arg.length; i++) {
-			if (arg[i] instanceof cArea || arg[i] instanceof cArea3D) {
-				var allCellsEmpty = true;
-				var argArr = arg[i].getValue();
-				for (var j = 0; j < argArr.length; j++) {
-					var emptyArg = argArr[j] instanceof cEmpty;
-					if (argArr[j] instanceof cError) {
-						return argArr[j];
-					} else if (argArr[j] instanceof cString || emptyArg || argArr[j] instanceof cBool) {
-						argResult = new cBool(true);
-						nTrueValues++;
-					} else if (argArr.length === 1 && argArr[j] instanceof cNumber) {
-						if (argResult == null) {
-							argResult = argArr[j].tocBool();
-						} else {
-							argResult = new cBool(argArr[j].tocBool().value);
+		let argResult = null;
+		let nTrueValues = 0;
+		for (let i = 0; i < arg.length; i++) {
+			if (arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
+				arg[i] = arg[i].getValue();
+			}
+ 
+			if (arg[i].type === cElementType.error) {
+				return arg[i];
+			}
+ 
+			if (arg[i].type === cElementType.array) {
+				//reduceLogical folds head + constant tail; XOR is NOT idempotent - a TRUE tail contributes its
+				//full count to the parity (nTrueValues += n), so a tail of TRUE (e.g. A:A>=0) is counted right.
+				let hasNonEmpty = false;
+				let err = arg[i].reduceLogical(function (acc, elemVal, n) {
+					if (acc) {
+						return acc;
+					}
+					if (elemVal.type === cElementType.error) {
+						return elemVal;
+					}
+					if (elemVal.type === cElementType.empty) {
+						return acc;
+					}
+					let argToBool = elemVal.tocBool();
+					if (argToBool.type === cElementType.error) {
+						return argToBool;
+					} else if (argToBool.type === cElementType.bool) {
+						hasNonEmpty = true;
+						argResult = argToBool;
+						if (argToBool.value === true) {
+							nTrueValues += n;
+						}
+					}
+					return acc;   // string -> skip
+				}, null);
+				if (err) {
+					return err;
+				}
+				if (argResult === null && hasNonEmpty) {
+					argResult = new cBool(false);
+				}
+			} else if (arg[i].type === cElementType.cellsRange || arg[i].type === cElementType.cellsRange3D) {
+				let dimensions = arg[i].getDimensions();
+				let hasNonEmpty = false;
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elemVal = arg[i].getValueByRowCol ? arg[i].getValueByRowCol(row, col, true) : arg[i].getElementRowCol(row, col);
+
+						if (elemVal.type === cElementType.error) {
+							return elemVal;
 						}
 
-						if (argResult.value === true) {
-							nTrueValues++;
+						if (elemVal.type === cElementType.empty) {
+							continue;
 						}
-					}
-					if (!emptyArg) {
-						allCellsEmpty = false;
-					}
-				}
-				//if the range is empty - return an error
-				//if the range contains at least one non-empty cell (without an error) - the result is false
-				if (argResult == null && !allCellsEmpty) {
-					argResult = new cBool(false);
-				} else if (allCellsEmpty) {
-					argResult = null;
-				}
-			} else {
-				if (arg[i] instanceof cString) {
-					return new cError(cErrorType.wrong_value_type);
-				} else if (arg[i] instanceof cError) {
-					return arg[i];
-				} else if (arg[i] instanceof cArray) {
-					arg[i].foreach(function (elem) {
-						if (elem instanceof cError) {
-							argResult = elem;
-							return true;
-						} else if (elem instanceof cString || elem instanceof cEmpty) {
-							return false;
-						} else {
-							if (argResult === null) {
-								argResult = elem.tocBool();
-							} else {
-								argResult = new cBool(elem.tocBool().value);
+
+						let argToBool = elemVal.tocBool();
+						if (argToBool.type === cElementType.string) {
+							continue;
+						} else if (argToBool.type === cElementType.error) {
+							return argToBool;
+						} else if (argToBool.type === cElementType.bool) {
+							hasNonEmpty = true;
+							argResult = argToBool;
+							if (argResult.value === true) {
+								nTrueValues++;
 							}
 						}
-
-						if (argResult.value === true) {
-							nTrueValues++;
-						}
-					})
-				} else {
-					if (argResult == null) {
-						argResult = arg[i].tocBool();
-					} else {
-						argResult = new cBool(arg[i].tocBool().value);
 					}
+				}
 
+				// if the range contains at least one non-empty cell (without an error) - mark result as valid
+				if (argResult === null && hasNonEmpty) {
+					argResult = new cBool(false);
+				}
+			} else {
+				let argToBool = arg[i].tocBool();
+				if (argToBool.type === cElementType.error) {
+					return argToBool;
+				} else if (argToBool.type === cElementType.bool) {
+					argResult = argToBool;
 					if (argResult.value === true) {
 						nTrueValues++;
 					}
 				}
 			}
 		}
-		if (argResult == null) {
+ 
+		if (argResult === null) {
 			return new cError(cErrorType.wrong_value_type);
-		} else {
-			if (nTrueValues % 2) {
-				argResult = new cBool(true);
-			} else {
-				argResult = new cBool(false);
-			}
 		}
-
-		return argResult;
+ 
+		return new cBool(nTrueValues % 2 !== 0);
 	};
+
 })(window);

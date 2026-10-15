@@ -287,6 +287,10 @@ function MoveShapeImageTrack(originalObject)
             if(this.originalObject.selectStartPage !== this.pageIndex)
                 this.originalObject.selectStartPage = this.pageIndex;
         }
+        if(this.originalObject.group)
+        {
+            this.originalObject.getMainGroup().normalize();
+        }
         var scale_coefficients, ch_off_x, ch_off_y;
         if(this.originalObject.isCrop)
         {
@@ -392,11 +396,11 @@ function MoveShapeImageTrack(originalObject)
                 if (Asc.editor.getEditorId() === AscCommon.c_oEditorId.Spreadsheet) {
                     let drawingBase = this.originalObject.drawingBase;
                     if (drawingBase) {
-                        Asc.editor.addMacroStepData("SetDrawingPos", {from: drawingBase.from, to: drawingBase.to});
+                        Asc.editor.addMacroStepData("SetDrawingPos", {from: drawingBase.from, to: drawingBase.to, id: this.originalObject.getObjectName()});
                     }
                 }
                 if (Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation)
-                    Asc.editor.addMacroStepData("SetDrawingPos", {x: this.x, y: this.y});
+                    Asc.editor.addMacroStepData("SetDrawingPos", {x: this.x, y: this.y, id: this.originalObject.getObjectName()});
             }
 
             if (this.originalObject.txXfrm) {

@@ -44,6 +44,17 @@ function (window, undefined) {
 	var g_oTableId = AscCommon.g_oTableId;
 	var History = AscCommon.History;
 
+	const AUTHOR_TAG_COLORS = [
+		{pen: {R: 164, G: 160, B: 0}, background: {R: 255, G: 255, B: 215}},
+		{pen: {R: 0, G: 131, B: 128}, background: {R: 215, G: 255, B: 255}},
+		{pen: {R: 128, G: 0, B: 128}, background: {R: 255, G: 215, B: 255}},
+		{pen: {R: 255, G: 0, B: 0}, background: {R: 255, G: 215, B: 215}},
+		{pen: {R: 0, G: 128, B: 0}, background: {R: 215, G: 255, B: 215}},
+		{pen: {R: 0, G: 0, B: 255}, background: {R: 215, G: 215, B: 255}},
+		{pen: {R: 200, G: 81, B: 0}, background: {R: 255, G: 231, B: 215}},
+		{pen: {R: 128, G: 128, B: 128}, background: {R: 235, G: 235, B: 235}}
+	];
+
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Position] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Change] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo] = AscDFH.CChangesDrawingsLong;
@@ -67,367 +78,16 @@ function (window, undefined) {
 		oClass.m_oTypeInfo = value;
 	};
 
-	function ParaComment(Start, Id) {
-		this.Id = AscCommon.g_oIdCounter.Get_NewId();
-
-		this.Paragraph = null;
-
-		this.Start = Start;
-		this.CommentId = Id;
-
-		this.Type = para_Comment;
-
-		this.StartLine = 0;
-		this.StartRange = 0;
-
-		this.Lines = [];
-		this.LinesLength = 0;
-	}
-
-	ParaComment.prototype.Get_Id = function () {
-		return this.Id;
-	};
-
-	ParaComment.prototype.SetCommentId = function (NewCommentId) {
-	};
-
-	ParaComment.prototype.Is_Empty = function () {
-		return true;
-	};
-
-	ParaComment.prototype.Is_CheckingNearestPos = function () {
-		return false;
-	};
-
-	ParaComment.prototype.Get_CompiledTextPr = function () {
-		return null;
-	};
-
-	ParaComment.prototype.Clear_TextPr = function () {
-
-	};
-
-	ParaComment.prototype.Remove = function () {
-		return false;
-	};
-
-	ParaComment.prototype.Get_DrawingObjectRun = function (Id) {
-		return null;
-	};
-
-	ParaComment.prototype.GetRunByElement = function (oRunElement) {
-		return null;
-	};
-
-	ParaComment.prototype.Get_DrawingObjectContentPos = function (Id, ContentPos, Depth) {
-		return false;
-	};
-
-	ParaComment.prototype.Get_Layout = function (DrawingLayout, UseContentPos, ContentPos, Depth) {
-	};
-
-	ParaComment.prototype.GetNextRunElements = function (RunElements, UseContentPos, Depth) {
-	};
-
-	ParaComment.prototype.GetPrevRunElements = function (RunElements, UseContentPos, Depth) {
-	};
-
-	ParaComment.prototype.CollectDocumentStatistics = function (ParaStats) {
-	};
-
-	ParaComment.prototype.Create_FontMap = function (Map) {
-	};
-
-	ParaComment.prototype.Get_AllFontNames = function (AllFonts) {
-	};
-
-	ParaComment.prototype.GetSelectedText = function (bAll, bClearText) {
-		return "";
-	};
-
-	ParaComment.prototype.GetSelectDirection = function () {
-		return 1;
-	};
-
-	ParaComment.prototype.Clear_TextFormatting = function (DefHyper) {
-	};
-
-	ParaComment.prototype.CanAddDropCap = function () {
-		return null;
-	};
-
-	ParaComment.prototype.CheckSelectionForDropCap = function (isUsePos, oEndPos, nDepth) {
-		return true;
-	};
-
-	ParaComment.prototype.Get_TextForDropCap = function (DropCapText, UseContentPos, ContentPos, Depth) {
-	};
-
-	ParaComment.prototype.Get_StartTabsCount = function (TabsCounter) {
-		return true;
-	};
-
-	ParaComment.prototype.Remove_StartTabs = function (TabsCounter) {
-		return true;
-	};
-
-	ParaComment.prototype.Copy = function (Selected) {
-		return new ParaComment(this.Start, this.CommentId);
-	};
-
-	ParaComment.prototype.CopyContent = function (Selected) {
-		return [];
-	};
-
-	ParaComment.prototype.Split = function () {
-		return new ParaRun();
-	};
-
-	ParaComment.prototype.Apply_TextPr = function () {
-	};
-
-	ParaComment.prototype.CheckRevisionsChanges = function (Checker, ContentPos, Depth) {
-	};
-
-	ParaComment.prototype.Get_ParaPosByContentPos = function (ContentPos, Depth) {
-		return new CParaPos(this.StartRange, this.StartLine, 0, 0);
-	};
-//-----------------------------------------------------------------------------------
-// Recalculation functions
-//-----------------------------------------------------------------------------------
-
-	ParaComment.prototype.Recalculate_Reset = function (StartRange, StartLine) {
-		this.StartLine = StartLine;
-		this.StartRange = StartRange;
-	};
-
-	ParaComment.prototype.Recalculate_Range = function (PRS, ParaPr) {
-	};
-
-	ParaComment.prototype.Recalculate_Set_RangeEndPos = function (PRS, PRP, Depth) {
-	};
-
-	ParaComment.prototype.Recalculate_LineMetrics = function (PRS, ParaPr, _CurLine, _CurRange) {
-	};
-
-	ParaComment.prototype.Recalculate_Range_Width = function (PRSC, _CurLine, _CurRange) {
-	};
-
-	ParaComment.prototype.Recalculate_Range_Spaces = function (PRSA, CurLine, CurRange, CurPage) {
-	};
-
-	ParaComment.prototype.Recalculate_PageEndInfo = function (PRSI, _CurLine, _CurRange) {
-	};
-
-	ParaComment.prototype.RecalculateEndInfo = function (PRSI) {
-
-	};
-
-	ParaComment.prototype.SaveRecalculateObject = function (Copy) {
-	};
-
-	ParaComment.prototype.LoadRecalculateObject = function (RecalcObj, Parent) {
-	};
-
-	ParaComment.prototype.PrepareRecalculateObject = function () {
-	};
-
-	ParaComment.prototype.IsEmptyRange = function (_CurLine, _CurRange) {
-		return true;
-	};
-
-	ParaComment.prototype.Check_Range_OnlyMath = function (Checker, CurRange, CurLine) {
-	};
-
-	ParaComment.prototype.Check_MathPara = function (Checker) {
-	};
-
-	ParaComment.prototype.Check_PageBreak = function () {
-		return false;
-	};
-
-	ParaComment.prototype.CheckSplitPageOnPageBreak = function (oPBChecker) {
-		return false;
-	};
-
-	ParaComment.prototype.RecalculateMinMaxContentWidth = function () {
-
-	};
-
-	ParaComment.prototype.Get_Range_VisibleWidth = function (RangeW, _CurLine, _CurRange) {
-	};
-
-	ParaComment.prototype.Shift_Range = function (Dx, Dy, _CurLine, _CurRange, _CurPage) {
-	};
-//-----------------------------------------------------------------------------------
-// Drawing functions
-//-----------------------------------------------------------------------------------
-	ParaComment.prototype.Draw_HighLights = function (PDSH) {
-	};
-
-	ParaComment.prototype.Draw_Elements = function (PDSE) {
-	};
-
-	ParaComment.prototype.Draw_Lines = function (PDSL) {
-	};
-//-----------------------------------------------------------------------------------
-// Functions for working with cursor
-//-----------------------------------------------------------------------------------
-	ParaComment.prototype.IsCursorPlaceable = function () {
-		return false;
-	};
-
-	ParaComment.prototype.Cursor_Is_Start = function () {
-		return true;
-	};
-
-	ParaComment.prototype.Cursor_Is_NeededCorrectPos = function () {
-		return true;
-	};
-
-	ParaComment.prototype.Cursor_Is_End = function () {
-		return true;
-	};
-
-	ParaComment.prototype.MoveCursorToStartPos = function () {
-	};
-
-	ParaComment.prototype.MoveCursorToEndPos = function (SelectFromEnd) {
-	};
-
-	ParaComment.prototype.getParagraphContentPosByXY = function (state) {
-		return false;
-	};
-
-	ParaComment.prototype.Get_ParaContentPos = function (bSelection, bStart, ContentPos, bUseCorrection) {
-	};
-
-	ParaComment.prototype.Set_ParaContentPos = function (ContentPos, Depth) {
-	};
-
-	ParaComment.prototype.Get_PosByElement = function (Class, ContentPos, Depth, UseRange, Range, Line) {
-		if (this === Class) return true;
-
-		return false;
-	};
-
-	ParaComment.prototype.Get_ElementByPos = function (ContentPos, Depth) {
-		return this;
-	};
-
-	ParaComment.prototype.Get_ClassesByPos = function (Classes, ContentPos, Depth) {
-		Classes.push(this);
-	};
-
-	ParaComment.prototype.GetPosByDrawing = function (Id, ContentPos, Depth) {
-		return false;
-	};
-
-	ParaComment.prototype.Get_RunElementByPos = function (ContentPos, Depth) {
-		return null;
-	};
-
-	ParaComment.prototype.Get_LastRunInRange = function (_CurLine, _CurRange) {
-		return null;
-	};
-
-	ParaComment.prototype.Get_LeftPos = function (SearchPos, ContentPos, Depth, UseContentPos) {
-	};
-
-	ParaComment.prototype.Get_RightPos = function (SearchPos, ContentPos, Depth, UseContentPos, StepEnd) {
-	};
-
-	ParaComment.prototype.Get_WordStartPos = function (SearchPos, ContentPos, Depth, UseContentPos) {
-	};
-
-	ParaComment.prototype.Get_WordEndPos = function (SearchPos, ContentPos, Depth, UseContentPos, StepEnd) {
-	};
-
-	ParaComment.prototype.Get_EndRangePos = function (_CurLine, _CurRange, SearchPos, Depth) {
-		return false;
-	};
-
-	ParaComment.prototype.Get_StartRangePos = function (_CurLine, _CurRange, SearchPos, Depth) {
-		return false;
-	};
-
-	ParaComment.prototype.Get_StartRangePos2 = function (_CurLine, _CurRange, ContentPos, Depth) {
-	};
-
-	ParaComment.prototype.Get_EndRangePos2 = function (_CurLine, _CurRange, ContentPos, Depth) {
-	};
-
-	ParaComment.prototype.Get_StartPos = function (ContentPos, Depth) {
-	};
-
-	ParaComment.prototype.Get_EndPos = function (BehindEnd, ContentPos, Depth) {
-	};
-//-----------------------------------------------------------------------------------
-// Functions for working with selection
-//-----------------------------------------------------------------------------------
-	ParaComment.prototype.Set_SelectionContentPos = function (StartContentPos, EndContentPos, Depth, StartFlag, EndFlag) {
-	};
-
-	ParaComment.prototype.RemoveSelection = function () {
-	};
-
-	ParaComment.prototype.SelectAll = function (Direction) {
-	};
-
-	ParaComment.prototype.drawSelectionInRange = function (line, range, drawState) {
-	};
-
-	ParaComment.prototype.IsSelectionEmpty = function (CheckEnd) {
-		return true;
-	};
-
-	ParaComment.prototype.Selection_CheckParaEnd = function () {
-		return false;
-	};
-
-	ParaComment.prototype.IsSelectedAll = function (Props) {
-		return true;
-	};
-
-	ParaComment.prototype.SkipAnchorsAtSelectionStart = function (nDirection) {
-		return true;
-	};
-
-	ParaComment.prototype.Selection_CheckParaContentPos = function (ContentPos) {
-		return true;
-	};
-
-
-	ParaComment.prototype.Refresh_RecalcData = function () {
-	};
-
-	ParaComment.prototype.Write_ToBinary2 = function (Writer) {
-	};
-
-	ParaComment.prototype.Read_FromBinary2 = function (Reader) {
-	};
-	ParaComment.prototype.SetParagraph = function (Paragraph) {
-		this.Paragraph = Paragraph;
-	};
-	ParaComment.prototype.GetCurrentParaPos = function () {
-		return new CParaPos(this.StartRange, this.StartLine, 0, 0);
-	};
-	ParaComment.prototype.Get_TextPr = function (ContentPos, Depth) {
-		return new CTextPr();
-	};
-//----------------------------------------------------------------------------------------------------------------------
-// Miscellaneous
-//----------------------------------------------------------------------------------------------------------------------
-	ParaComment.prototype.SetReviewType = function (ReviewType, RemovePrChange) {
-	};
-	ParaComment.prototype.SetReviewTypeWithInfo = function (ReviewType, ReviewInfo) {
-	};
-	ParaComment.prototype.CheckRevisionsChanges = function (Checker, ContentPos, Depth) {
-	};
-	ParaComment.prototype.AcceptRevisionChanges = function (Type, bAll) {
-	};
-	ParaComment.prototype.RejectRevisionChanges = function (Type, bAll) {
-	};
+	AscDFH.changesFactory[AscDFH.historyitem_SlideComment_Position] = AscDFH.changesFactory[AscDFH.historyitem_Comment_Position];
+	AscDFH.changesFactory[AscDFH.historyitem_SlideComment_Change]   = AscDFH.changesFactory[AscDFH.historyitem_Comment_Change];
+	AscDFH.changesFactory[AscDFH.historyitem_SlideComment_TypeInfo] = AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo];
+
+	AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideComment_Position] = AscDFH.drawingsConstructorsMap[AscDFH.historyitem_Comment_Position];
+	AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideComment_Change]   = AscDFH.drawingsConstructorsMap[AscDFH.historyitem_Comment_Change];
+
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideComment_Position] = AscDFH.drawingsChangesMap[AscDFH.historyitem_Comment_Position];
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideComment_Change]   = AscDFH.drawingsChangesMap[AscDFH.historyitem_Comment_Change];
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideComment_TypeInfo] = AscDFH.drawingsChangesMap[AscDFH.historyitem_Comment_TypeInfo];
 
 	function CWriteCommentData() {
 		this.Data = null; // CCommentData
@@ -549,8 +209,15 @@ function (window, undefined) {
 		var arr = this.Name.split(" ");
 		this.Initials = "";
 		for (var i = 0; i < arr.length; i++) {
-			if (arr[i].length > 0) this.Initials += (arr[i].substring(0, 1));
+			if (arr[i].length > 0) this.Initials += String.fromCodePoint(arr[i].codePointAt(0));
 		}
+	};
+	CCommentAuthor.prototype.GetColorIndex = function () {
+		return (this.Id - 1) % AUTHOR_TAG_COLORS.length;
+	};
+	CCommentAuthor.prototype.GetColorTag = function () {
+		const colorIndex = this.GetColorIndex();
+		return AUTHOR_TAG_COLORS[colorIndex];
 	};
 
 
@@ -869,6 +536,7 @@ function (window, undefined) {
 	var comment_type_Common = 1; // Comment to regular text
 	var comment_type_HdrFtr = 2; // Comment to header/footer
 
+	const CCOMMENT_TAG_MARGIN = 0.5;
 	function CComment(Parent, Data) {
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
@@ -902,7 +570,7 @@ function (window, undefined) {
 
 
 	CComment.prototype.getObjectType = function () {
-		return AscDFH.historyitem_type_Comment;
+		return AscDFH.historyitem_type_SlideComment;
 	};
 	CComment.prototype.GetId = function () {
 		return this.Get_Id();
@@ -982,7 +650,7 @@ function (window, undefined) {
 	};
 
 	CComment.prototype.setPosition = function (x, y) {
-		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Comment_Position, new AscFormat.CDrawingBaseCoordsWritable(this.x, this.y), new AscFormat.CDrawingBaseCoordsWritable(x, y)));
+		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideComment_Position, new AscFormat.CDrawingBaseCoordsWritable(this.x, this.y), new AscFormat.CDrawingBaseCoordsWritable(x, y)));
 		this.x = x;
 		this.y = y;
 	};
@@ -990,7 +658,57 @@ function (window, undefined) {
 	CComment.prototype.getPosition = function () {
 		return { x: this.x, y: this.y };
 	};
-
+	CComment.prototype.getTagTextPr = function () {
+		const textPr = new AscCommonWord.CTextPr();
+		textPr.Set_FromObject({
+			FontSize  : 15,
+			FontFamily: {Name: "Arial", Index: -1},
+			Color     : AscWord.BLACK_COLOR
+		});
+		return textPr;
+	};
+	CComment.prototype.drawPrintComments = function (graphics, x, y) {
+		AscFormat.ExecuteNoHistory(function () {
+			const commentsCache = graphics.PrintComments.commentsCache;
+			const commentCache = commentsCache[this.GetId()];
+			if (!commentCache) {
+				return;
+			}
+			const tagTextPr = this.getTagTextPr();
+			const initials = commentCache.label;
+			const colors = AUTHOR_TAG_COLORS[commentCache.colorIndex];
+			const shape = new AscFormat.CShape();
+			shape.setBDeleted(false);
+			shape.createTextBody();
+			const bodyPr = new AscFormat.CBodyPr();
+			bodyPr.setInsets(0, 0, 0, 0);
+			shape.txBody.setBodyPr(bodyPr);
+			shape.brush = AscFormat.CreateSolidFillRGBA(colors.background.R, colors.background.G, colors.background.B, 255);
+			shape.pen = new AscFormat.CLn();
+			shape.pen.setFill(AscFormat.CreateSolidFillRGBA(colors.pen.R, colors.pen.G, colors.pen.B, 255));
+			shape.pen.setW(12700);
+			const content = shape.txBody.content;
+			AscFormat.AddToContentFromString(content, initials);
+			content.ApplyToAll = true;
+			content.AddToParagraph(new AscCommonWord.ParaTextPr(tagTextPr), false);
+			content.ApplyToAll = false;
+			const textWidth = content.RecalculateMinMaxContentWidth().Max;
+			AscCommon.g_oTextMeasurer.SetTextPr(tagTextPr, null);
+			AscCommon.g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+			const textHeight = AscCommon.g_oTextMeasurer.GetHeight();
+			const shapeWidth = textWidth + CCOMMENT_TAG_MARGIN * 2;
+			shape.extX = shapeWidth;
+			shape.extY = textHeight;
+			shape.calcGeometry = AscFormat.CreateGeometry('rect');
+			shape.calcGeometry.Recalculate(shapeWidth, textHeight);
+			shape.recalculateContent();
+			const transform = new AscCommon.CMatrix();
+			transform.Translate(x, y);
+			const textTransform = new AscCommon.CMatrix();
+			textTransform.Translate(x + CCOMMENT_TAG_MARGIN, y);
+			shape.draw(graphics, transform, textTransform);
+		}, this, []);
+	};
 	CComment.prototype.draw = function (graphics) {
 		var Flags = 0;
 		if (this.selected) {
@@ -1002,18 +720,23 @@ function (window, undefined) {
 		var dd = editor.WordControl.m_oDrawingDocument;
 		var w = dd.GetCommentWidth();
 		var h = dd.GetCommentHeight();
-		graphics.DrawPresentationComment(Flags, this.x, this.y, w, h);
 
-		var oLock = this.Lock;
-		if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
-			var bCoMarksDraw = true;
-			var oApi = editor || Asc['editor'];
-			if (oApi) {
-				bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
-			}
-			if (bCoMarksDraw) {
-				graphics.DrawLockObjectRect(oLock.Get_Type(), this.x, this.y, w, h);
-				return true;
+		if (graphics.PrintComments) {
+			this.drawPrintComments(graphics, this.x, this.y);
+		} else {
+			graphics.DrawPresentationComment(Flags, this.x, this.y, w, h);
+
+			var oLock = this.Lock;
+			if (oLock && AscCommon.c_oAscLockTypes.kLockTypeNone !== oLock.Get_Type()) {
+				var bCoMarksDraw = true;
+				var oApi = editor || Asc['editor'];
+				if (oApi) {
+					bCoMarksDraw = (!AscCommon.CollaborativeEditing.Is_Fast() || AscCommon.c_oAscLockTypes.kLockTypeMine !== oLock.Get_Type());
+				}
+				if (bCoMarksDraw) {
+					graphics.DrawLockObjectRect(oLock.Get_Type(), this.x, this.y, w, h);
+					return true;
+				}
 			}
 		}
 	};
@@ -1064,7 +787,7 @@ function (window, undefined) {
 	};
 
 	CComment.prototype.Set_Data = function (Data) {
-		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Comment_Change, this.Data, Data));
+		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideComment_Change, this.Data, Data));
 		this.Data = Data;
 	};
 
@@ -1095,7 +818,7 @@ function (window, undefined) {
 			Type: Type, Data: Data
 		};
 
-		History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_Comment_TypeInfo, this.m_oTypeInfo, New));
+		History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_SlideComment_TypeInfo, this.m_oTypeInfo, New));
 
 		this.m_oTypeInfo = New;
 	};
@@ -1121,7 +844,7 @@ function (window, undefined) {
 	};
 
 	CComment.prototype.Write_ToBinary2 = function (Writer) {
-		Writer.WriteLong(AscDFH.historyitem_type_Comment);
+		Writer.WriteLong(AscDFH.historyitem_type_SlideComment);
 
 		// String   : Id
 		// Variable : Data
@@ -1189,10 +912,9 @@ function (window, undefined) {
 	window['AscCommon'].comment_type_Common = comment_type_Common;
 	window['AscCommon'].comment_type_HdrFtr = comment_type_HdrFtr;
 
-	window['AscCommon'].CCommentData = CCommentData;
-	window['AscCommon'].CComment = CComment;
-	window['AscCommon'].ParaComment = ParaComment;
-	window['AscCommon'].CCommentAuthor = CCommentAuthor;
-	window['AscCommon'].CWriteCommentData = CWriteCommentData;
+	window['AscCommon'].CSlideCommentData = CCommentData;
+	window['AscCommon'].CSlideComment = CComment;
+	window['AscCommon'].CSlideCommentAuthor = CCommentAuthor;
+	window['AscCommon'].CSlideWriteCommentData = CWriteCommentData;
 
 })(window);

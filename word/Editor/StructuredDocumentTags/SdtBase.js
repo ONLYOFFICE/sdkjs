@@ -148,8 +148,7 @@ CSdtBase.prototype.IsContentControlText = function()
 {
 	// Временно отключаем запись этого флага, т.к. мы пока его не обрабатываем в редакторе вообще
 	// и можем создать некорректный файл для других редакторов. См. баг #51589
-	return false;
-	return this.Pr.Text;
+	return this.IsInlineLevel() && !this.IsForm() && !!this.Pr.Text;
 };
 /**
  * Выставляем параметр, что данный контрол специальный для вставки формул
@@ -209,6 +208,9 @@ CSdtBase.prototype.SetContentControlTemporary = function(isTemporary)
 CSdtBase.prototype.IsContentControlTemporary = function()
 {
 	return this.Pr.Temporary;
+};
+CSdtBase.prototype.private_OnChangeFormPrSpellCheck = function()
+{
 };
 /**
  * @param {AscWord.CSdtFormPr} oFormPr
@@ -346,7 +348,7 @@ CSdtBase.prototype.IsFixedForm = function()
 CSdtBase.prototype.IsFormRequired = function()
 {
 	if (this.IsSignatureForm())
-		return true;
+		return (this.Pr.FormPr ? false !== this.Pr.FormPr.GetRequired() : true);
 	
 	return (this.Pr.FormPr ? this.Pr.FormPr.GetRequired() : false);
 };

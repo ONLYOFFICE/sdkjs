@@ -59,7 +59,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
         return false;
     }
     var selected_objects = group ? group.selectedObjects : drawingObjectsController.getSelectedObjects();
-    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsComment()) {
+    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsText()) {
         return false;
     }
     var oCropSelection = drawingObjectsController.selection.cropSelection ? drawingObjectsController.selection.cropSelection : null;
@@ -280,7 +280,11 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                             return null;
                         }
                     }
-                    if(bWord && selected_objects[i].parent && selected_objects[i].parent.Is_Inline())
+                    if(bWord && drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE && null !== selected_objects[i].IsTableBorder(tx, ty, pageIndex))
+                    {
+                        ret = drawingObjectsController.handleTextHit(selected_objects[i], e, tx, ty, group, pageIndex, bWord);
+                    }
+                    else if(bWord && selected_objects[i].parent && selected_objects[i].parent.Is_Inline())
                         ret = handleInlineHitNoText(selected_objects[i], drawingObjectsController, e, tx, ty, pageIndex, true);
                     else
                         ret = drawingObjectsController.handleMoveHit(selected_objects[i], e, tx, ty, group, true, selected_objects[i].selectStartPage, true);
@@ -560,6 +564,18 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         {
             return oCheckResult;
         }
+
+		if (group) {
+			const isSpreadsheet = Asc.editor.getEditorId() === AscCommon.c_oEditorId.Spreadsheet;
+			const groupObjectType = group.getObjectType && group.getObjectType();
+			const isGroupOrSmartArt = groupObjectType === AscDFH.historyitem_type_GroupShape || groupObjectType === AscDFH.historyitem_type_SmartArt;
+			if (isSpreadsheet && isGroupOrSmartArt && !drawing.selected) {
+				oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(group, e, false, x, y, pageIndex);
+				if (oCheckResult) {
+					return oCheckResult;
+				}
+			}
+		}
     }
 
 
@@ -673,6 +689,27 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
         {
             return oCheckResult;
         }
+
+		const editorId = Asc.editor.getEditorId();
+		let bCheckGroupFallback;
+		switch (editorId) {
+			case AscCommon.c_oEditorId.Presentation:
+				bCheckGroupFallback = !drawing.selected;
+				break;
+			case AscCommon.c_oEditorId.Word:
+			case AscCommon.c_oEditorId.Spreadsheet:
+				bCheckGroupFallback = true;
+				break;
+			default:
+				bCheckGroupFallback = false;
+		}
+
+		if (bCheckGroupFallback) {
+			oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, false, x, y, pageIndex);
+			if (oCheckResult) {
+				return oCheckResult;
+			}
+		}
     }
     if(!hit_in_text_rect && (hit_in_inner_area || hit_in_path))
     {
@@ -720,14 +757,6 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
 
 function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
-	let bHit = drawing.hit && drawing.hit(x, y);
-	if (bHit) {
-		const oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, false, x, y, pageIndex);
-		if (oCheckResult) {
-			return oCheckResult;
-		}
-	}
-
     var grouped_objects = drawing.getArrGraphicObjects();
     var ret;
     for(var j = grouped_objects.length - 1; j > -1; --j)
@@ -1877,6 +1906,26 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         //plotArea
         if(bClickFlag){
 
+            var oDataTable = drawing.getDataTable();
+            if(oDataTable && oDataTable.hitInBoundingRect(x, y))
+            {
+                if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                {
+                    drawingObjectsController.checkChartTextSelection();
+                    selector.resetSelection();
+                    selector.selectObject(drawing, pageIndex);
+                    selector.selection.chartSelection = drawing;
+                    drawing.selection.dataTable = oDataTable;
+                    drawingObjectsController.updateSelectionState();
+                    drawingObjectsController.updateOverlay();
+                    return true;
+                }
+                else
+                {
+                    return {objectId: drawing.Get_Id(), cursorType: "default", title: null};
+                }
+            }
+
             var oPlotArea = drawing.chart.plotArea;
             if(oPlotArea.hitInBoundingRect(x, y))
             {
@@ -2152,6 +2201,11 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
                     bHandleDblClick = true;
                     drawingObjects.handleSignatureDblClick(drawing.signatureLine.id, drawing.extX, drawing.extY);
                 }
+				else if (drawing.isHorizontalRule())
+				{
+					bHandleDblClick = true;
+					Asc.editor.sendEvent("asc_onHorRuleDblClick");
+				}
                 else if (2 === e.ClickCount && drawing.parent instanceof AscCommonWord.ParaDrawing && drawing.parent.IsMathEquation())
                 {
                     bHandleDblClick = true;

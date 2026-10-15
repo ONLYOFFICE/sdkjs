@@ -442,7 +442,24 @@ function (window, undefined) {
 	asc_CCommentData.prototype.setSolved = function (isSolved) {
 		this.bSolved = isSolved;
 	};
+	var oPlaceholderUserNamePattern = /^tc=\{[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12}\}$/;
+	function isPlaceholderUserName(sUserName) {
+		return !!sUserName && oPlaceholderUserNamePattern.test(sUserName);
+	}
 	asc_CCommentData.prototype.convertToThreadedComment = function () {
+		//persons/threadedComments may be lost(WPS), then the "tc={guid}" placeholder becomes the author name
+		while (isPlaceholderUserName(this.sUserName)) {
+			var nSeparator = this.sText ? this.sText.indexOf(":\n") : -1;
+			if (-1 === nSeparator) {
+				this.sUserName = "";
+				break;
+			}
+			this.sUserName = this.sText.slice(0, nSeparator);
+			this.sText = this.sText.slice(nSeparator + 2);
+			if (this.sText.endsWith("\n")) {
+				this.sText = this.sText.slice(0, -1);
+			}
+		}
 		var prefix = this.sUserName + ":\n";
 		if (this.sText && this.sText.startsWith(prefix)) {
 			this.sText = this.sText.slice(prefix.length);
@@ -843,7 +860,7 @@ CCellCommentator.prototype.sortComments = function(sortData) {
 	if (null === sortData)
 		return;
 	var comment, places = sortData.places, i = 0, l = places.length, j, row, line;
-	var range = sortData.bbox, oComments = this.getRangeComments(new Asc.Range(range.c1, range.r1, range.c2, range.r2));
+	var range = sortData.bbox, oComments = this.getRangeComments(new Asc.Range(range.c1, range.r1, range.c2, range.r2), true);
 	if (null === oComments)
 		return;
 
@@ -1233,50 +1250,47 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 
 // Extra functions
 
-	CCellCommentator.prototype.getComment = function (col, row, excludeHidden, notCheckCanView) {
-		// Array of root items
-		var comment = null;
-		var _col = col, _row = row, mergedRange = null;
-		var aComments = this.model.aComments;
-		var length = aComments.length;
-
-		if (excludeHidden && this.hiddenComments()) {
-			return comment;
-		}
-
-		if (0 < length) {
-			if (null == _col || null == _row) {
-				var activeCell = this.model.selectionRange.activeCell;
-				_col = activeCell.col;
-				_row = activeCell.row;
-			} else {
-				mergedRange = this.model.getMergedByCell(row, col);
-			}
-
-			for (var i = 0; i < length; i++) {
-				var commentCell = aComments[i];
-				if (!mergedRange) {
-					if (_col === commentCell.nCol && _row === commentCell.nRow) {
-						comment = commentCell;
-					}
-				} else {
-					if (mergedRange.contains(commentCell.nCol, commentCell.nRow)) {
-						comment = commentCell;
-					}
-				}
-				if (comment) {
-					var _isHidden = excludeHidden && this._checkHidden(comment);
-					var _canView = notCheckCanView || (!notCheckCanView && AscCommon.UserInfoParser.canViewComment(comment.sUserName));
-					return (_isHidden || !_canView) ? null : comment;
-				}
+	// Model-only lookup, so a caller that must not create a sheet view can reuse it
+	CCellCommentator.getCommentByCell = function (model, col, row, useMerged) {
+		var mergedRange = useMerged ? model.getMergedByCell(row, col) : null;
+		var aComments = model.aComments;
+		for (var i = 0; i < aComments.length; i++) {
+			var commentCell = aComments[i];
+			var isCell = mergedRange ? mergedRange.contains(commentCell.nCol, commentCell.nRow) :
+				(col === commentCell.nCol && row === commentCell.nRow);
+			if (isCell) {
+				return commentCell;
 			}
 		}
-		return comment;
+		return null;
 	};
 
-	CCellCommentator.prototype.getRangeComments = function (range) {
+	CCellCommentator.prototype.getComment = function (col, row, excludeHidden, notCheckCanView) {
+		if (excludeHidden && this.hiddenComments()) {
+			return null;
+		}
+
+		var _col = col, _row = row, useMerged = true;
+		if (null == _col || null == _row) {
+			var activeCell = this.model.selectionRange.activeCell;
+			_col = activeCell.col;
+			_row = activeCell.row;
+			// the active cell keeps the previous exact match, without expanding to its merged range
+			useMerged = false;
+		}
+
+		var comment = CCellCommentator.getCommentByCell(this.model, _col, _row, useMerged);
+		if (!comment) {
+			return null;
+		}
+		var _isHidden = excludeHidden && this._checkHidden(comment);
+		var _canView = notCheckCanView || AscCommon.UserInfoParser.canViewComment(comment.sUserName);
+		return (_isHidden || !_canView) ? null : comment;
+	};
+
+	CCellCommentator.prototype.getRangeComments = function (range, includeHidden) {
 		var oComments = {};
-		if (this.hiddenComments()) {
+		if (!includeHidden && this.hiddenComments()) {
 			return null;
 		}
 
@@ -1494,7 +1508,9 @@ CCellCommentator.prototype.Undo = function(type, data) {
 
 		case AscCH.historyitem_Comment_Coords:
 			if (data.from) {
-				comment = this.getComment(data.from.nCol, data.from.nRow, false);
+				// the area is recorded after the comment moves, so on undo the comment is still where the area points
+				comment = (data.to && this.getComment(data.to.nCol, data.to.nRow, false)) ||
+					this.getComment(data.from.nCol, data.from.nRow, false);
 				if (comment) {
 					comment.coords = data.from.clone();
 				}

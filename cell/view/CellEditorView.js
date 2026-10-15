@@ -93,6 +93,7 @@ function (window, undefined) {
 	var codeEqually = 0x3D;
 	var codeUnarPlus = 0x2B;
 	var codeUnarMinus = 0x2D;
+	var rx_signedNumber = /^[+\-][\d.,\s]*$/;
 
 
 	/**
@@ -123,9 +124,15 @@ function (window, undefined) {
 		this.cursor = undefined;
 		this.cursorStyle = undefined;
 		this.cursorTID = undefined;
+		this.canvasOffsetLeft = 0;
+		this.canvasOffsetTop = 0;
 		this.cursorPos = 0;
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
+		this.lastCompositeCodes = null;
+		this.compositeUndoBase = null;
+		this.compositeUndoFragments = null;
+		this.compositeUndoPos = -1;
 		this.topLineIndex = 0;
 		this.m_oFont = oFont;
 		this.fmgrGraphics = fmgrGraphics;
@@ -153,6 +160,8 @@ function (window, undefined) {
 		this.skipTLUpdate = true;
 		this.loadFonts = false;
 		this.isOpened = false;
+		this._programmaticInput = false;
+		this._isComposing = false;
 		this.callTopLineMouseup = false;
 		this.m_nEditorState = c_oAscCellEditorState.editEnd; // Editor's status
 
@@ -285,6 +294,18 @@ function (window, undefined) {
 			}, false);
 			t.eventListeners.push(eventInfo);
 
+			// IME composition: don't rebuild the contenteditable DOM while composing
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "compositionstart", function () {
+				t._isComposing = true;
+				return true;
+			}, false);
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "compositionend", function () {
+				return t._onCompositionEnd.apply(t, arguments);
+			}, false);
+			t.eventListeners.push(eventInfo);
+
 			// We do not support drop to the top line
 			eventInfo = new AscCommon.CEventListenerInfo(t.input, "drop", function (e) {
 				e.preventDefault();
@@ -317,6 +338,292 @@ function (window, undefined) {
 		});
 	};
 
+	CellEditor.prototype._isContentEditable = function () {
+		return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') !== null);
+	};
+
+	CellEditor.prototype._getInputValue = function () {
+		if (!this.input) {
+			return '';
+		}
+		if (this._isContentEditable()) {
+			var divs = this.input.children;
+			if (!divs.length) {
+				return this.input.textContent || '';
+			}
+			var lines = [];
+			for (var i = 0; i < divs.length; i++) {
+				lines.push(divs[i].textContent || '');
+			}
+			return lines.join('\n');
+		}
+		return this.input.value || '';
+	};
+
+	CellEditor.prototype._setInputValue = function (text) {
+		if (!this.input) {
+			return;
+		}
+		if (this._isContentEditable()) {
+			var lines = (text || '').split('\n');
+			var html = '';
+			for (var i = 0; i < lines.length; i++) {
+				html += '<div>';
+				html += lines[i]
+					? lines[i].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+					: '<br>';
+				html += '</div>';
+			}
+			this.input.innerHTML = html || '<div><br></div>';
+		} else {
+			this.input.value = text;
+		}
+	};
+
+	CellEditor.prototype._getInputSelectionStart = function () {
+		if (!this.input) {
+			return undefined;
+		}
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount) {
+				return 0;
+			}
+			var range = sel.getRangeAt(0);
+			if (!this.input.contains(range.startContainer)) {
+				return 0;
+			}
+			return this._getContentEditableOffset(range.startContainer, range.startOffset);
+		}
+		return this.input.selectionStart;
+	};
+
+	CellEditor.prototype._getInputSelectionEnd = function () {
+		if (!this.input) {
+			return undefined;
+		}
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount) {
+				return 0;
+			}
+			var range = sel.getRangeAt(0);
+			if (!this.input.contains(range.endContainer)) {
+				return 0;
+			}
+			return this._getContentEditableOffset(range.endContainer, range.endOffset);
+		}
+		return this.input.selectionEnd;
+	};
+
+	CellEditor.prototype._getInputSelectionDirection = function () {
+		if (!this.input) return 'none';
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount || sel.isCollapsed) return 'none';
+			if (sel.anchorNode === sel.focusNode) {
+				return sel.anchorOffset > sel.focusOffset ? 'backward' : 'forward';
+			}
+			var pos = sel.anchorNode.compareDocumentPosition(sel.focusNode);
+			return (pos & Node.DOCUMENT_POSITION_FOLLOWING) ? 'forward' : 'backward';
+		}
+		return this.input['selectionDirection'] || 'none';
+	};
+
+	CellEditor.prototype._setInputSelectionRange = function (start, end) {
+		if (!this.input) return;
+		if (this._isContentEditable()) {
+			try {
+				var startPos = this._getNodeAtOffset(this.input, start);
+				var endPos = this._getNodeAtOffset(this.input, end);
+				if (!startPos || !endPos) return;
+				var range = document.createRange();
+				var sel = window.getSelection();
+				range.setStart(startPos.node, startPos.offset);
+				range.setEnd(endPos.node, endPos.offset);
+				sel.removeAllRanges();
+				sel.addRange(range);
+			} catch (e) {}
+		} else if (this.input.setSelectionRange) {
+			this.input.setSelectionRange(start, end);
+		}
+	};
+
+	CellEditor.prototype._getNodeAtOffset = function (container, charOffset) {
+		return this._getNodeAtOffsetForDivs(container, charOffset);
+	};
+
+	CellEditor.prototype._getTextNodeInSpan = function (child) {
+		if (child.nodeType === 3) {
+			return child;
+		}
+		if (child.firstChild && child.firstChild.nodeType === 3) {
+			return child.firstChild;
+		}
+		return null;
+	};
+
+	CellEditor.prototype._getNodeAtOffsetForDivs = function (container, charOffset) {
+		var divs = container.children;
+		var cumulative = 0;
+		var i, j, div, textNode, lastTextNode;
+		for (i = 0; i < divs.length; i++) {
+			div = divs[i];
+			if (i > 0) {
+				if (cumulative === charOffset) {
+					return this._getLastNodeInDiv(divs[i - 1]);
+				}
+				cumulative++;
+			}
+			lastTextNode = null;
+			for (j = 0; j < div.childNodes.length; j++) {
+				textNode = this._getTextNodeInSpan(div.childNodes[j]);
+				if (textNode) {
+					lastTextNode = textNode;
+					if (cumulative + textNode.length >= charOffset) {
+						return { node: textNode, offset: charOffset - cumulative };
+					}
+					cumulative += textNode.length;
+				}
+			}
+			if (!lastTextNode && cumulative === charOffset) {
+				return { node: div, offset: 0 };
+			}
+		}
+		if (divs.length > 0) {
+			return this._getLastNodeInDiv(divs[divs.length - 1]);
+		}
+		return null;
+	};
+
+	CellEditor.prototype._getLastNodeInDiv = function (div) {
+		var textNode;
+		for (var j = div.childNodes.length - 1; j >= 0; j--) {
+			textNode = this._getTextNodeInSpan(div.childNodes[j]);
+			if (textNode) {
+				return { node: textNode, offset: textNode.length };
+			}
+		}
+		return { node: div, offset: div.childNodes.length };
+	};
+
+	CellEditor.prototype._getContentEditableOffset = function (targetNode, targetOffset) {
+		var divs = this.input.children;
+		var cumulative = 0;
+		var i, j, div, textNode;
+		for (i = 0; i < divs.length; i++) {
+			div = divs[i];
+			if (i > 0) {
+				cumulative++;
+			}
+			if (div === targetNode || div.contains(targetNode)) {
+				if (div === targetNode) {
+					return cumulative;
+				}
+				for (j = 0; j < div.childNodes.length; j++) {
+					textNode = this._getTextNodeInSpan(div.childNodes[j]);
+					if (textNode) {
+						if (textNode === targetNode) {
+							return cumulative + targetOffset;
+						}
+						cumulative += textNode.length;
+					}
+				}
+				return cumulative;
+			}
+			for (j = 0; j < div.childNodes.length; j++) {
+				textNode = this._getTextNodeInSpan(div.childNodes[j]);
+				if (textNode) {
+					cumulative += textNode.length;
+				}
+			}
+		}
+		return cumulative;
+	};
+
+	CellEditor.prototype._colorToCSS = function (color) {
+		if (color && typeof color.getR === 'function') {
+			return 'rgb(' + color.getR() + ',' + color.getG() + ',' + color.getB() + ')';
+		}
+		return '';
+	};
+
+	CellEditor.prototype._buildLineHTML = function (fragments) {
+		if (!fragments || !fragments.length) {
+			return '<div><br></div>';
+		}
+		var i, j, fr, text, color, parts, currentLine;
+		currentLine = [];
+		var lines = [currentLine];
+		for (i = 0; i < fragments.length; i++) {
+			fr = fragments[i];
+			text = fr.getFragmentText ? fr.getFragmentText() : (fr.text || '');
+			color = (fr.isFormulaRange && fr.format && fr.format.c) ? this._colorToCSS(fr.format.c) : '';
+			parts = text.split('\n');
+			for (j = 0; j < parts.length; j++) {
+				if (j > 0) {
+					currentLine = [];
+					lines.push(currentLine);
+				}
+				if (parts[j]) {
+					currentLine.push({ text: parts[j], color: color });
+				}
+			}
+		}
+		var html = '';
+		var l, k, item, escaped;
+		var divOpen = this._ceDivStyle ? '<div style="' + this._ceDivStyle + '">' : '<div>';
+		for (l = 0; l < lines.length; l++) {
+			html += divOpen;
+			if (lines[l].length === 0) {
+				html += '<br>';
+			} else {
+				for (k = 0; k < lines[l].length; k++) {
+					item = lines[l][k];
+					escaped = item.text
+						.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;');
+					if (item.color) {
+						html += '<span style="color:' + item.color + '">' + escaped + '</span>';
+					} else {
+						html += '<span>' + escaped + '</span>';
+					}
+				}
+			}
+			html += '</div>';
+		}
+		return html;
+	};
+
+	CellEditor.prototype._updateContentEditableLayout = function () {
+		if (!this._isContentEditable() || !this.input || !this.input.parentElement) {
+			return;
+		}
+		//TODO exception only for 1 string
+		var parentH = this.input.parentElement.clientHeight;
+		var naturalLH = parseFloat(window.getComputedStyle(this.input).lineHeight);
+		var singleLine = parentH > 0 && naturalLH > 0 && parentH <= naturalLH * 1.5;
+		this._ceDivStyle = singleLine ? 'line-height:' + parentH + 'px' : '';
+		this.input.style.height = singleLine ? parentH + 'px' : '';
+		this.input.style.overflow = singleLine ? 'hidden' : '';
+	};
+
+	CellEditor.prototype._setInputFragments = function (fragments) {
+		if (!this.input) {
+			return;
+		}
+		if (this._isContentEditable()) {
+			this._updateContentEditableLayout();
+
+			this._programmaticInput = true;
+			this.input.innerHTML = this._buildLineHTML(fragments);
+			this._programmaticInput = false;
+		} else {
+			this.input.value = AscCommonExcel.getFragmentsText(fragments);
+		}
+	};
+
 	/**
 	 * @param {Object} options
 	 *   fragments  - text fragments
@@ -331,8 +638,8 @@ function (window, undefined) {
 		if (AscCommon.g_inputContext) {
 			AscCommon.g_inputContext.moveAccurateForce();
 		}
-		
-		var b = this.input.selectionStart;
+
+		var b = this._getInputSelectionStart();
 
 		this.isOpened = true;
 		if (window.addEventListener) {
@@ -362,6 +669,15 @@ function (window, undefined) {
 			this._onMouseUp(options.enterOptions.eventPos);
 		} else {
 			this._moveCursor(kEndOfText);
+		}
+
+		// If the formula bar had focus when open() was called (async lock path where
+		// _topLineGotFocus fired before isOpened was true), ensure the cursor is visible now.
+		if (this.isTopLineActive && this._isContentEditable()) {
+			var tmp = this.skipTLUpdate;
+			this.skipTLUpdate = false;
+			this._updateTopLineCurPos();
+			this.skipTLUpdate = tmp;
 		}
 
 		/*
@@ -634,6 +950,7 @@ function (window, undefined) {
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		this._endCompositeInputOnUndoRedo();
 		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction(this.undoList, this.redoList);
 		api.sendEvent("asc_onUndoRedo");
@@ -644,9 +961,22 @@ function (window, undefined) {
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		this._endCompositeInputOnUndoRedo();
 		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction(this.redoList, this.undoList);
 		api.sendEvent("asc_onUndoRedo");
+	};
+
+	CellEditor.prototype._endCompositeInputOnUndoRedo = function () {
+		if (-1 === this.beginCompositePos) {
+			return;
+		}
+		if (AscCommon.g_inputContext) {
+			AscCommon.g_inputContext.externalEndCompositeInput();
+		}
+		if (-1 !== this.beginCompositePos) {
+			this.End_CompositeInput();
+		}
 	};
 
 	CellEditor.prototype.getZoom = function () {
@@ -685,13 +1015,25 @@ function (window, undefined) {
 		return (this.rangeChars && this.rangeChars.indexOf(char) >= 0) || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
 	};
 
-	CellEditor.prototype.changeCellRange = function (range, moveEndOfText) {
+	CellEditor.prototype.changeCellRange = function (range, moveEndOfText, switchPart) {
 		this.skipTLUpdate = false;
 		this._moveCursor(kPosition, range.cursorePos);
 		this._selectChars(kPositionLength, range.formulaRangeLength);
-		this._addChars(range.getName(), undefined, /*isRange*/true);
+		const newName = range.getName();
+		this._addChars(newName, undefined, /*isRange*/true);
 		if (moveEndOfText) {
 			this._moveCursor(kEndOfText);
+		} else if (switchPart !== undefined) {
+			if (switchPart) {
+				const colonIdx = newName.indexOf(':');
+				const fragStart = switchPart === 1 ? range.cursorePos : range.cursorePos + colonIdx + 1;
+				const fragLen = switchPart === 1 ? colonIdx : newName.length - colonIdx - 1;
+				this._moveCursor(kPosition, fragStart);
+				this._selectChars(kPositionLength, fragLen);
+			} else {
+				this._moveCursor(kPosition, range.cursorePos);
+				this._selectChars(kPositionLength, newName.length);
+			}
 		}
 		this.skipTLUpdate = true;
 	};
@@ -790,9 +1132,24 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype.restoreFocus = function () {
-		if (this.isTopLineActive) {
-			this.input.focus();
+		if (!this.isTopLineActive) {
+			return;
 		}
+		if (!this._isContentEditable() || !this.isOpened) {
+			this.input.focus();
+			return;
+		}
+		var t = this;
+		requestAnimationFrame(function () {
+			if (!t.isTopLineActive || !t.isOpened) {
+				return;
+			}
+			t.input.focus();
+			var tmp = t.skipTLUpdate;
+			t.skipTLUpdate = false;
+			t._updateTopLineCurPos();
+			t.skipTLUpdate = tmp;
+		});
 	};
 
 	CellEditor.prototype.copySelection = function () {
@@ -911,9 +1268,13 @@ function (window, undefined) {
 			AscCommon.align_Left : this.options.flags.textAlign;
 	};
 
-	CellEditor.prototype.replaceText = function (pos, len, newText) {
+	CellEditor.prototype.replaceText = function (pos, len, newText, format) {
 		this._moveCursor(kPosition, pos);
 		this._selectChars(kPosition, pos + len);
+		// set after _moveCursor() (it resets newTextFormat) so _addChars() applies it to the inserted text
+		if (format) {
+			this.newTextFormat = format;
+		}
 		return this._addChars(newText);
 	};
 
@@ -1020,7 +1381,20 @@ function (window, undefined) {
 				}
 				if ((cElementType.cell === oper.type || cElementType.cellsRange === oper.type || cElementType.cell3D === oper.type) && oper.externalLink == null) {
 					wsName = oper.getWS().getName();
-					bboxOper = oper.getBBox0();
+					// For `A1#` (spilled-range operator): show the full spill range on the sheet
+					// instead of just the anchor cell, mirroring Excel behaviour.
+					if (r.isHashRef && AscCommonExcel.bIsSupportDynamicArrays) {
+						var _anchorWs = oper.getWS();
+						var _anchorBbox = oper.getBBox0();
+						if (_anchorWs && _anchorBbox && _anchorWs.dynamicArrayManager) {
+							var _spillRef = _anchorWs.dynamicArrayManager.getDynamicArrayFirstCell(_anchorBbox.c1, _anchorBbox.r1);
+							bboxOper = _spillRef || _anchorBbox;
+						} else {
+							bboxOper = _anchorBbox;
+						}
+					} else {
+						bboxOper = oper.getBBox0();
+					}
 				} else if ((cElementType.cellsRange3D === oper.type) && oper.externalLink == null) {
 					if (oper.isSingleSheet()) {
 						wsName = oper.getWS().getName();
@@ -1054,25 +1428,121 @@ function (window, undefined) {
 		this.handlers.trigger("newRanges", 0 !== oSelectionRange.ranges.length ? oSelectionRange : null);
 	};
 
+	CellEditor.prototype._getSwitchPart = function (colonEditorPos) {
+		const hasSelection = this.selectionBegin !== this.selectionEnd;
+		if (hasSelection) {
+			const selMin = Math.min(this.selectionBegin, this.selectionEnd);
+			const selMax = Math.max(this.selectionBegin, this.selectionEnd);
+			if (selMin <= colonEditorPos && selMax >= colonEditorPos + 1) {
+				return null;
+			}
+			return selMax <= colonEditorPos + 1 ? 1 : 2;
+		}
+		return this.cursorPos <= colonEditorPos ? 1 : 2;
+	};
+
 	CellEditor.prototype._findRangeUnderCursor = function () {
 		// Get character string
 		let s = this.textRender.getChars(0, this.textRender.getCharsCount());
 		s = AscCommonExcel.convertUnicodeToSimpleString(s);
 		let arrFR = this.handlers.trigger("getFormulaRanges");
 
-		// Check cached formula ranges first
+		const hasSelection = this.selectionBegin !== this.selectionEnd;
+		const selMin = hasSelection ? Math.min(this.selectionBegin, this.selectionEnd) : this.cursorPos;
+		const selMax = hasSelection ? Math.max(this.selectionBegin, this.selectionEnd) : this.cursorPos;
+		const checkPos = selMin;
+
+		var t = this;
+		function buildCachedResult(a) {
+			let range = a.clone(true);
+			range.isName = a.isName;
+			range.formulaRangeLength = a.formulaRangeLength;
+			range.cursorePos = a.cursorePos;
+			let switchPart = null;
+			if (!a.isName) {
+				const rangeStr = s.substr(a.cursorePos, a.formulaRangeLength);
+				const colonIdx = rangeStr.indexOf(':');
+				if (colonIdx !== -1) {
+					switchPart = t._getSwitchPart(a.cursorePos + colonIdx);
+				}
+			}
+			return {range: range, switchPart: switchPart};
+		}
+
 		if (arrFR) {
 			let ranges = arrFR.ranges;
-			// Check if cursor is over any existing ranges before re-parsing formula
+
+			if (hasSelection) {
+				const overlapping = [];
+				for (let i = 0, l = ranges.length; i < l; ++i) {
+					const a = ranges[i];
+					if (selMin <= a.cursorePos + a.formulaRangeLength && selMax >= a.cursorePos) {
+						overlapping.push(a);
+					}
+				}
+				if (overlapping.length >= 2) {
+					overlapping.sort(function (a, b) { return a.cursorePos - b.cursorePos; });
+					const firstOverlapping = overlapping[0];
+					const lastOverlapping  = overlapping[overlapping.length - 1];
+
+					let depth = 0, depthAtMin = 0, depthChangedWithin = false;
+					for (let i = 1; i < selMax; i++) {
+						if (i === selMin) {
+							depthAtMin = depth;
+						}
+						const ch = s.charAt(i);
+						if (ch === '(') {
+							depth++;
+						} else if (ch === ')') {
+							depth--;
+						}
+						if (i >= selMin && depth !== depthAtMin) {
+							depthChangedWithin = true;
+						}
+					}
+					if (selMin >= selMax) {
+						depthAtMin = depth;
+					}
+					const depthAtMax = depth;
+					const isValidDepth = depthAtMin === depthAtMax && (depthAtMin === 0 || !depthChangedWithin);
+
+					if (isValidDepth && selMin <= firstOverlapping.cursorePos) {
+						const fullyContained = overlapping.filter(function (a) {
+							return a.cursorePos >= selMin && a.cursorePos + a.formulaRangeLength <= selMax;
+						});
+						if (fullyContained.length > 0) {
+							const lastEnd = lastOverlapping.cursorePos + lastOverlapping.formulaRangeLength;
+							let displaySelMin = selMin;
+							while (displaySelMin > 1 && !this.reNotFormula.test(s.charAt(displaySelMin - 1))) {
+								displaySelMin--;
+							}
+							return {
+								range: null,
+								allRanges: fullyContained.map(function (a) { return buildCachedResult(a); }),
+								selMin: displaySelMin,
+								selMax: selMax,
+								lastOverlappingEnd: lastEnd,
+								expandToLast: lastEnd > selMax
+							};
+						}
+					}
+					return {range: null};
+				}
+			}
+
 			// Needed for cases like sumnas2:K2 where sumnas2 is invalid reference
 			for (let i = 0, l = ranges.length; i < l; ++i) {
 				let a = ranges[i];
-				if (this.cursorPos >= a.cursorePos && this.cursorPos <= a.cursorePos + a.formulaRangeLength) {
-					let range = a.clone(true);
-					range.isName = a.isName;
-					range.formulaRangeLength = a.formulaRangeLength;
-					range.cursorePos = a.cursorePos;
-					return {range: range};
+				if (checkPos >= a.cursorePos && checkPos <= a.cursorePos + a.formulaRangeLength) {
+					return buildCachedResult(a);
+				}
+			}
+			if (hasSelection) {
+				for (let i = 0, l = ranges.length; i < l; ++i) {
+					let a = ranges[i];
+					if (selMin <= a.cursorePos + a.formulaRangeLength && selMax >= a.cursorePos) {
+						return buildCachedResult(a);
+					}
 				}
 			}
 		}
@@ -1095,8 +1565,9 @@ function (window, undefined) {
 				r = this._parseResult.refPos[index];
 
 				offset = r.end;
-				_e = r.end; 
-				_sColorPos = _s = r.start;
+				_e = r.end;
+				_sColorPos = r.start;
+				_s = r.start + 1;
 
 				switch (r.oper.type) {
 					case cElementType.cell: {
@@ -1161,13 +1632,20 @@ function (window, undefined) {
 						continue;
 				}
 
-				if (ret && this.cursorPos > _s && this.cursorPos <= _s + refStr.length) {
+				if (ret && checkPos >= _s && checkPos <= _s + refStr.length) {
 					range = this._parseRangeStr(refStr);
 					if (range) {
 						range.isName = isName;
 						range.formulaRangeLength = refStr.length;
 						range.cursorePos = _s;
-						return {range: range, wsName: wsName};
+						let switchPart = null;
+						if (!isName) {
+							const colonIdx = refStr.indexOf(':');
+							if (colonIdx !== -1) {
+								switchPart = this._getSwitchPart(_s + colonIdx);
+							}
+						}
+						return {range: range, wsName: wsName, switchPart: switchPart};
 					}
 				}
 			}
@@ -1250,6 +1728,7 @@ function (window, undefined) {
 					if (first && last) {
 						for (k = first.index; k <= last.index; ++k) {
 							fragments[k].format.setColor(AscCommonExcel.c_oAscFormulaRangeBorderColor[colorIndex % lengthColors]);
+							fragments[k].isFormulaRange = true;
 						}
 					}
 				}
@@ -1282,7 +1761,7 @@ function (window, undefined) {
 			for (var i = 0; i < this.options.fragments.length; i++) {
 				this.options.fragments[i].initText();
 			}
-			this.input.value = AscCommonExcel.getFragmentsText((this.options.fragments));
+			this._setInputFragments(this._getRenderFragments());
 		}
 		this._updateCursorPosition();
 		this._updateCursor();
@@ -1320,7 +1799,7 @@ function (window, undefined) {
 		var fPos, fName, match, fCurrent;
 
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
-			this.input.value = s;
+			this._setInputFragments(this._getRenderFragments());
 		}
 
 		//get a string without double-byte characters and pass it to the regular expression
@@ -1345,6 +1824,18 @@ function (window, undefined) {
 			functionInfo = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[fCurrent] : fCurrent);
 			functionInfo.activeArgPos = this._parseResult.argPos;
 			functionInfo.activeArgsCount = this._parseResult.argPosArr && this._parseResult.argPosArr.length;
+
+			let oCurFunc = fCurrent && AscCommonExcel.cFormulaFunction[fCurrent];
+			if (oCurFunc) {
+				let argHelpList = oCurFunc.prototype.getArgHelpList(functionInfo.activeArgPos - 1);
+				if (argHelpList) {
+					let charBeforeCursor = (this.cursorPos > 0 && this.cursorPos <= s.length) ? s.charAt(this.cursorPos - 1) : '';
+					if (charBeforeCursor && /\s/.test(charBeforeCursor)) {
+						argHelpList = null;
+					}
+				}
+				functionInfo.argHelpList = argHelpList;
+			}
 		}
 		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, functionInfo);
 		if (api && api.isMobileVersion) {
@@ -1593,21 +2084,42 @@ function (window, undefined) {
 			}
 		}
 
-		// Calculate canvas offset inside container
-		let ws = this.handlers.trigger("getActiveWSView");
+		// editor can be partially scrolled out of its area(under the headers, the group bar or the frozen pane).
+		// clip the container by that area(it has overflow: hidden) and shift the canvases inside it
+		let bounds = this.options.getBounds && this.options.getBounds();
+		let canvasLeft = 0;
 		let canvasTop = 0;
-		let cellsTop = ws && AscCommon.AscBrowser.convertToRetinaValue(ws.cellsTop);
-		if (ws && top < cellsTop) {
-			// If editor position is above data area
-			canvasTop = top < 0 ? -(cellsTop + Math.abs(top)) : top - cellsTop;
-			// Fix container at headers level
-			top = cellsTop;
+		let outerWidth = widthStyle;
+		let outerHeight = heightStyle;
+		if (bounds) {
+			let leftBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.left);
+			let topBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.top);
+			let rightBound = AscCommon.AscBrowser.convertToRetinaValue(bounds.right);
+
+			if (top < topBound) {
+				canvasTop = top - topBound;
+				outerHeight += canvasTop;
+				top = topBound;
+			}
+			if (left < leftBound) {
+				canvasLeft = left - leftBound;
+				outerWidth += canvasLeft;
+				left = leftBound;
+			}
+			if (left + outerWidth > rightBound) {
+				outerWidth = rightBound - left;
+			}
+
+			outerWidth = Math.max(outerWidth, 0);
+			outerHeight = Math.max(outerHeight, 0);
 		}
+		this.canvasOffsetLeft = canvasLeft;
+		this.canvasOffsetTop = canvasTop;
 
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
-		this.canvasOuterStyle.width = widthStyle + 'px';
-		this.canvasOuterStyle.height = heightStyle + 'px';
+		this.canvasOuterStyle.width = outerWidth + 'px';
+		this.canvasOuterStyle.height = outerHeight + 'px';
 		if (!this.getMenuEditorMode()) {
 			this.canvasOuterStyle.zIndex = /*this.top < 0 ? -1 :*/ z;
 		}
@@ -1615,6 +2127,7 @@ function (window, undefined) {
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
 		this.canvas.style.top = this.canvasOverlay.style.top = canvasTop + 'px';
+		this.canvas.style.left = this.canvasOverlay.style.left = canvasLeft + 'px';
 	};
 
 	CellEditor.prototype._calculateCanvasSize = function () {
@@ -1823,7 +2336,7 @@ function (window, undefined) {
 
 	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex, opt_not_formulas_update) {
 		// ToDo should forward this function
-		let h = this.canvas.height;
+		let h = asc_round(this._getContentHeight() * this.ky);
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
 		let cur = this.textRender.calcCharOffset(this.cursorPos, lineIndex);
 		let charsCount = this.textRender.getCharsCount();
@@ -1877,11 +2390,9 @@ function (window, undefined) {
 
 		if (!window['IS_NATIVE_EDITOR']) {
 
-			// update cursor position
-			let scrollDiff = parseFloat(this.canvas.style.top);
-
-			this.cursorStyle.left = curLeft + "px";
-			this.cursorStyle.top = curTop + scrollDiff + "px";
+			// take into account the shift of the canvases inside the container
+			this.cursorStyle.left = curLeft + this.canvasOffsetLeft + "px";
+			this.cursorStyle.top = curTop + this.canvasOffsetTop + "px";
 
 			this.cursorStyle.width = (((2 * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio) + "px";
 			this.cursorStyle.height = curHeight + "px";
@@ -1891,8 +2402,11 @@ function (window, undefined) {
 			AscCommon.g_inputContext.moveAccurate(this.left * this.kx + curLeft, this.top * this.ky + curTop);
 		}
 
-		if (cur) {
-			this.input.scrollTop = this.input.clientHeight * cur.lineIndex;
+		if (cur && this._isContentEditable()) {
+			var lineH = this.input.children.length ? this.input.children[0].offsetHeight : 0;
+			if (lineH > 0) {
+				this.input.scrollTop = lineH * cur.lineIndex;
+			}
 		}
 		if (this.isTopLineActive && !this.skipTLUpdate) {
 			this._updateTopLineCurPos();
@@ -2020,9 +2534,7 @@ function (window, undefined) {
 		var isSelected = this.selectionBegin !== this.selectionEnd;
 		var b = isSelected ? this.selectionBegin : this.cursorPos;
 		var e = isSelected ? this.selectionEnd : this.cursorPos;
-		if (this.input.setSelectionRange) {
-			this.input.setSelectionRange(Math.min(b, e), Math.max(b, e));
-		}
+		this._setInputSelectionRange(Math.min(b, e), Math.max(b, e));
 	};
 
 	CellEditor.prototype._topLineGotFocus = function () {
@@ -2031,25 +2543,52 @@ function (window, undefined) {
 		this.setFocus(true);
 		this._updateCursor();
 		this._cleanSelection();
+		if (this.isOpened && !this.getMenuEditorMode()) {
+			this._setInputFragments(this._getRenderFragments());
+			var tmp = this.skipTLUpdate;
+			this.skipTLUpdate = false;
+			this._updateTopLineCurPos();
+			this.skipTLUpdate = tmp;
+		}
+	};
+
+	// The top line is no longer the keyboard target. There is no blur event on the input, so reset the state here
+	CellEditor.prototype._topLineLostFocus = function () {
+		if (!this.isTopLineActive) {
+			return;
+		}
+		this._updateTopLineActive(false);
+		this.input.isFocused = false;
+		this.callTopLineMouseup = false;
+		this._updateCursor();
 	};
 
 	CellEditor.prototype._topLineMouseUp = function () {
 		this.callTopLineMouseup = false;
 		// with this combination ctrl+a, click, ctrl+a, click selectionStart is not updated
 		// therefore we perform processing after the system handler
-		this._delayedUpdateCursorByTopLine();
+		this._delayedUpdateCursorByTopLine(this._isContentEditable());
 	};
-	CellEditor.prototype._delayedUpdateCursorByTopLine = function () {
+	CellEditor.prototype._delayedUpdateCursorByTopLine = function (cleanRange) {
 		var t = this;
-		setTimeout(function () {
-			t._updateCursorByTopLine();
-		});
+		if (this._isContentEditable()) {
+			requestAnimationFrame(function () {
+				t._updateCursorByTopLine();
+				if (cleanRange) {
+					t.cleanSelectRange();
+				}
+			});
+		} else {
+			setTimeout(function () {
+				t._updateCursorByTopLine();
+			});
+		}
 	};
 	CellEditor.prototype._updateCursorByTopLine = function () {
-		var b = this.input.selectionStart;
-		var e = this.input.selectionEnd;
+		var b = this._getInputSelectionStart();
+		var e = this._getInputSelectionEnd();
 		// ToDo replace code to input.selectionDirection after updating closure-compiler to version 20200719
-		if ('backward' === this.input["selectionDirection"]) {
+		if ('backward' === this._getInputSelectionDirection()) {
 			var tmp = b;
 			b = e;
 			e = tmp;
@@ -2072,7 +2611,7 @@ function (window, undefined) {
 	CellEditor.prototype._syncEditors = function () {
 		var t = this;
 		var s1 = AscCommonExcel.getFragmentsCharCodes(t.options.fragments);
-		var s2 = AscCommon.convertUTF16toUnicode(t.input.value);
+		var s2 = AscCommon.convertUTF16toUnicode(t._getInputValue());
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
@@ -2216,9 +2755,19 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._addNewLine = function () {
+		if (this.isTopLineActive) {
+			this._updateCursorByTopLine();
+		}
 		this._wrapText();
 		let sNewLine = "\n";
 		this._addChars( /*codeNewLine*/sNewLine);
+		if (this.isTopLineActive) {
+			// Force immediate scroll to new line
+			let skipTL = this.skipTLUpdate;
+			this.skipTLUpdate = false;
+			this._updateTopLineCurPos();
+			this.skipTLUpdate = skipTL;
+		}
 	};
 
 	CellEditor.prototype._removeChars = function (pos, length, isRange) {
@@ -2630,7 +3179,8 @@ function (window, undefined) {
 		} else if (action.fn === t._replaceFragments) {
 			pos = action.args[1];
 			len = action.args[2];
-			list2.push({fn: t._replaceFragments, args: [t._getFragments(pos, len), pos, len]});
+			let newLen = AscCommonExcel.getFragmentsLength(action.args[0]);
+			list2.push({fn: t._replaceFragments, args: [t._getFragments(pos, len), pos, newLen]});
 		} else {
 			return;
 		}
@@ -2700,7 +3250,7 @@ function (window, undefined) {
 	CellEditor.prototype.executeShortcut = function(nShortcutAction) {
 		let oResult = {keyResult: keydownresult_PreventAll};
 		const oApi = window["Asc"]["editor"];
-		const bHieroglyph = this.isTopLineActive && AscCommonExcel.getFragmentsLength(this.options.fragments) !== this.input.value.length;
+		const bHieroglyph = this.isTopLineActive && AscCommonExcel.getFragmentsLength(this.options.fragments) !== this._getInputValue().length;
 		switch (nShortcutAction) {
 			case Asc.c_oAscSpreadsheetShortcutType.Strikeout: {
 				if (bHieroglyph) {
@@ -2788,10 +3338,32 @@ function (window, undefined) {
 			}
 			case Asc.c_oAscSpreadsheetShortcutType.CellEditorSwitchReference: {
 				const oRes = this._findRangeUnderCursor();
-				if (oRes.range) {
-					oRes.range.switchReference();
+				if (oRes.allRanges) {
+					const sortedAsc = oRes.allRanges.slice().sort(function (a, b) { return a.range.cursorePos - b.range.cursorePos; });
+					const anchor = sortedAsc[0].range;
+					const rowAbs = anchor.isAbsRow(anchor.refType1) || anchor.isAbsRow(anchor.refType2);
+					const colAbs = anchor.isAbsCol(anchor.refType1) || anchor.isAbsCol(anchor.refType2);
+					const nextType = ((rowAbs ? 0 : 2) + (colAbs ? 0 : 1) + 1) % 4;
+					let totalLengthChange = 0;
+					for (let i = sortedAsc.length - 1; i >= 0; i--) {
+						const item = sortedAsc[i];
+						item.range.refType1 = nextType;
+						item.range.refType2 = nextType;
+						totalLengthChange += item.range.getName().length - item.range.formulaRangeLength;
+						// ToDo add change ref to other sheet
+						this.changeCellRange(item.range);
+					}
+					const baseMax = oRes.expandToLast ? oRes.lastOverlappingEnd : oRes.selMax;
+					const newSelMax = baseMax + totalLengthChange;
+					this.skipTLUpdate = false;
+					this._moveCursor(kPosition, oRes.selMin);
+					this._selectChars(kPosition, newSelMax);
+					this.skipTLUpdate = true;
+				} else if (oRes.range) {
+					const switchPart = oRes.switchPart;
+					oRes.range.switchReference(switchPart);
 					// ToDo add change ref to other sheet
-					this.changeCellRange(oRes.range);
+					this.changeCellRange(oRes.range, undefined, switchPart);
 				}
 				break;
 			}
@@ -2836,7 +3408,7 @@ function (window, undefined) {
 		oThis.skipTLUpdate = false;
 
 		// hieroglyph input definition
-		const bHieroglyph = oThis.isTopLineActive && AscCommonExcel.getFragmentsLength(oThis.options.fragments) !== oThis.input.value.length;
+		const bHieroglyph = oThis.isTopLineActive && AscCommonExcel.getFragmentsLength(oThis.options.fragments) !== oThis._getInputValue().length;
 
 		nRetValue = keydownresult_PreventKeyPress;
 		const nShortcutAction = oApi.getShortcut(oEvent);
@@ -3079,6 +3651,11 @@ function (window, undefined) {
 		return this.EnterText(Code);
 	};
 
+	// "-7", "+7,5" - a number, not a formula
+	CellEditor.prototype._isSignedNumberInput = function () {
+		return rx_signedNumber.test(AscCommonExcel.getFragmentsText(this.options.fragments));
+	};
+
 	CellEditor.prototype.EnterText = function (codePoints) {
 		var t = this;
 
@@ -3087,7 +3664,7 @@ function (window, undefined) {
 				return true;
 			}
 			// hieroglyph input definition
-			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t.input.value.length) {
+			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t._getInputValue().length) {
 				t._syncEditors();
 			}
 		}
@@ -3114,7 +3691,8 @@ function (window, undefined) {
 			tmpCursorPos = t.cursorPos;
 			t.undoMode = true;
 			// add the percentage only to the line without a formula
-			if (!t._formula) {
+			// a leading sign is a formula state too, but "-7" is a number
+			if (!t._formula || t._isSignedNumberInput()) {
 				t._addChars("%");
 			}
 			t.cursorPos = tmpCursorPos;
@@ -3271,6 +3849,9 @@ function (window, undefined) {
 	/** @param event {jQuery.Event} */
 	CellEditor.prototype._onInputTextArea = function (event) {
 		//TODO save the text!
+		if (this._programmaticInput) {
+			return true;
+		}
 		var t = this;
 		if (!this.handlers.trigger("canEdit") || this.loadFonts) {
 			return true;
@@ -3284,18 +3865,30 @@ function (window, undefined) {
 		}
 		this.loadFonts = true;
 
-		let checkedText = this.input.value.replace(/[\r\n]+/g, '');
+		// While composing on the div, sync the model but leave the DOM to the browser
+		// (rebuilding it would break the IME); the full sync runs on compositionend
+		var isComposing = this._isContentEditable() && (this._isComposing || (event && event.isComposing));
+
+		let checkedText = t._getInputValue().replace(/[\r\n]+/g, '');
 		AscFonts.FontPickerByCharacter.checkText(checkedText, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
-			var length = t.replaceText(0, t.textRender.getEndOfText(), t.input.value);
+			t.replaceText(0, t.textRender.getEndOfText(), t._getInputValue());
 			t._updateCursorByTopLine();
-
-			if (length !== t.input.value.length) {
-				t.input.value = AscCommonExcel.getFragmentsText((t.options.fragments));
+			if (!isComposing) {
+				t._setInputFragments(t._getRenderFragments());
 				t._updateTopLineCurPos();
 			}
 		});
+		return true;
+	};
+
+	CellEditor.prototype._onCompositionEnd = function (event) {
+		this._isComposing = false;
+		// composition finished: run the full sync skipped during composition
+		if (this._isContentEditable() && this.isOpened) {
+			this._onInputTextArea(event);
+		}
 		return true;
 	};
 
@@ -3337,28 +3930,102 @@ function (window, undefined) {
 			this.beginCompositePos = Math.min(this.selectionBegin, this.selectionEnd);
 			this.compositeLength = Math.max(this.selectionBegin, this.selectionEnd) - this.beginCompositePos;
 		}
-		this.setTextStyle('u', Asc.EUnderline.underlineSingle);
+		this.lastCompositeCodes = null;
+		this.compositeUndoBase = null;
+		this.compositeUndoFragments = null;
+		this.compositeUndoPos = this.beginCompositePos;
+		if (this.compositeLength !== 0) {
+			if (this.options.fragments) {
+				this.compositeUndoFragments = this._getFragments(this.beginCompositePos, this.compositeLength);
+			}
+			var undoLength = this.undoList.length;
+			this.setTextStyle('u', Asc.EUnderline.underlineSingle);
+			this.undoList.length = undoLength;
+		}
 	};
 	CellEditor.prototype.Replace_CompositeText = function (arrCharCodes) {
 		if (!this.isOpened) {
 			return;
 		}
 
+		// The browser fires compositionstart/compositionupdate/input for a single keystroke,
+		// each re-applying the same composition text. Skip the redundant full re-measure.
+		if (this._isSameCompositeCodes(arrCharCodes)) {
+			return;
+		}
+
 		var newText = this.getTextFromCharCodes(arrCharCodes);
-		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText);
 
-		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
+		// Insert composite text already underlined so the whole replace needs a single re-measure,
+		// instead of a separate setTextStyle('u') pass that re-measured the cell a second time.
+		var compositeFormat = this._getCompositeTextFormat(this.beginCompositePos);
+		var undoLength = this.undoList.length;
+		this.compositeLength = this.replaceText(this.beginCompositePos, this.compositeLength, newText, compositeFormat);
+		this.undoList.length = undoLength;
+		this._updateCompositeUndo();
 
-		this.selectionBegin = this.beginCompositePos;
-		this.selectionEnd = this.beginCompositePos + this.compositeLength;
-		this.setTextStyle('u', Asc.EUnderline.underlineSingle);
-
-		this.selectionBegin = tmpBegin;
-		this.selectionEnd = tmpEnd;
+		// remember codes only after they are actually applied
+		this.lastCompositeCodes = arrCharCodes.slice();
 
 		// Refreshing the selection
 		this._cleanSelection();
 		this._drawSelection();
+	};
+
+	CellEditor.prototype._createCompositeUndo = function (fragments, pos, length) {
+		if (!fragments) {
+			return 0 !== length ? {fn: this._removeChars, args: [pos, length]} : null;
+		}
+		return 0 !== length ?
+			{fn: this._replaceFragments, args: [fragments, pos, length]} :
+			{fn: this._addFragments, args: [fragments, pos]};
+	};
+
+	CellEditor.prototype._removeCompositeUndo = function () {
+		if (this.compositeUndoBase) {
+			var index = this.undoList.lastIndexOf(this.compositeUndoBase);
+			if (-1 !== index) {
+				this.undoList.splice(index, 1);
+			}
+			this.compositeUndoBase = null;
+		}
+	};
+
+	CellEditor.prototype._updateCompositeUndo = function () {
+		this._removeCompositeUndo();
+
+		this.compositeUndoBase = this._createCompositeUndo(this.compositeUndoFragments, this.compositeUndoPos, this.compositeLength);
+		if (this.compositeUndoBase) {
+			this.undoList.push(this.compositeUndoBase);
+			this.redoList = [];
+		}
+	};
+
+	CellEditor.prototype._isSameCompositeCodes = function (arrCharCodes) {
+		var prev = this.lastCompositeCodes;
+		if (!prev || prev.length !== arrCharCodes.length) {
+			return false;
+		}
+		for (var i = 0; i < arrCharCodes.length; ++i) {
+			if (prev[i] !== arrCharCodes[i]) {
+				return false;
+			}
+		}
+		return true;
+	};
+	
+	CellEditor.prototype._getCompositeTextFormat = function (pos) {
+		var opt = this.options;
+		if (this.isFormula() || !opt || !opt.fragments) {
+			return null;
+		}
+		var f = this._findFragmentToInsertInto(pos);
+		if (!f) {
+			return null;
+		}
+		var format = opt.fragments[f.index].format.clone();
+		this._setFormatProperty(format, 'u', Asc.EUnderline.underlineSingle, false);
+		return format;
 	};
 	CellEditor.prototype.End_CompositeInput = function () {
 		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
@@ -3369,10 +4036,17 @@ function (window, undefined) {
 			this.selectionBegin = this.beginCompositePos;
 			this.selectionEnd = this.beginCompositePos + this.compositeLength;
 		}
+		var undoLength = this.undoList.length;
 		this.setTextStyle('u', Asc.EUnderline.underlineNone);
+		this.undoList.length = undoLength;
+
+		if (0 === this.compositeLength && !this.compositeUndoFragments) {
+			this._removeCompositeUndo();
+		}
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
+		this.lastCompositeCodes = null;
 		this.selectionBegin = tmpBegin;
 		this.selectionEnd = tmpEnd;
 

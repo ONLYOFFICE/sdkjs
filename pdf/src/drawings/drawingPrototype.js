@@ -47,6 +47,7 @@
         this._doc           = undefined;
         this._needRecalc    = true;
         this._redactIds     = [];
+		this._layer         = undefined;
 
         this.redactsArrayChanges = new AscCommon.CContentChanges(); // related redacts list
     }
@@ -214,7 +215,7 @@
                     oDrawSelectionState.beginRange(iRange);
                     
                     for (let pos = nRangeStart; pos <= nRangeEnd; ++pos) {
-                        oPara.Content[pos].drawSelectionInRange(iLine, iRange, oDrawSelectionState);
+                        oPara.Content[pos].drawSelectionInRange(oDrawSelectionState);
                     }
                     
                     oDrawSelectionState.endRange();
@@ -283,6 +284,18 @@
     CPdfDrawingPrototype.prototype.GetRedactIds = function() {
         return this._redactIds;
     };
+	CPdfDrawingPrototype.prototype.SetLayer = function(nLayer) {
+		if (this._layer === nLayer) {
+			return;
+		}
+
+		AscCommon.History.Add(new CChangesPDFObjectLayer(this, this._layer, nLayer));
+		this._layer = nLayer;
+		this.AddToRedraw();
+	};
+	CPdfDrawingPrototype.prototype.GetLayer = function() {
+		return this._layer;
+	};
     CPdfDrawingPrototype.prototype.RemoveRedactId = function(nPos) {
         let ids = this._redactIds.splice(nPos, 1);
         AscCommon.History.Add(new CChangesPDFDrawingRedacts(this, nPos, ids, false));
@@ -380,10 +393,31 @@
             return;
         }
 
+		let nExtMM = AscPDF.PARTIAL_REDRAW_EXT;
+		let oBounds = null;
+		if (this.bounds.l !== 0 && this.bounds.r !== 0 && this.bounds.r !== 0 && this.bounds.b !== 0) {
+			let drawingBounds = this.getBoundsByDrawing();
+			oBounds = {l: drawingBounds.l - nExtMM, t: drawingBounds.t - nExtMM, r: drawingBounds.r + nExtMM, b: drawingBounds.b + nExtMM};
+		}
+
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
-                oViewer.pagesInfo.pages[nPage].needRedrawDrawings = true;
-                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+                let oPageInfo = oViewer.pagesInfo.pages[nPage];
+                oPageInfo.needRedrawDrawings = true;
+
+                if (oBounds && oPageInfo.dirtyDrawingsBounds !== null) {
+                    if (!oPageInfo.dirtyDrawingsBounds) {
+                        oPageInfo.dirtyDrawingsBounds = {l: oBounds.l, t: oBounds.t, r: oBounds.r, b: oBounds.b};
+                    }
+					else {
+                        oPageInfo.dirtyDrawingsBounds.l = Math.min(oPageInfo.dirtyDrawingsBounds.l, oBounds.l);
+                        oPageInfo.dirtyDrawingsBounds.t = Math.min(oPageInfo.dirtyDrawingsBounds.t, oBounds.t);
+                        oPageInfo.dirtyDrawingsBounds.r = Math.max(oPageInfo.dirtyDrawingsBounds.r, oBounds.r);
+                        oPageInfo.dirtyDrawingsBounds.b = Math.max(oPageInfo.dirtyDrawingsBounds.b, oBounds.b);
+                    }
+                }
+
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage, oBounds);
             }
         }
 
@@ -426,6 +460,12 @@
             if (oGroup && oGroup != this) {
                 oGroup.SetNeedRecalc(true);
             }
+
+			let oFile = oDoc.GetFile();
+			let nPage = this.GetPage();
+			if (oFile.pages[nPage]) {
+				oFile.pages[nPage].drawingsText = null;
+			}
         }
     };
     CPdfDrawingPrototype.prototype.addToRecalculate = function() {
@@ -436,47 +476,18 @@
         return fontMap;
     };
     CPdfDrawingPrototype.prototype.CheckTextOnOpen = function() {};
-    CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
-        function normRect(r) {
-			const x1 = Math.min(r[0], r[2]);
-			const y1 = Math.min(r[1], r[3]);
-			const x2 = Math.max(r[0], r[2]);
-			const y2 = Math.max(r[1], r[3]);
-			return [x1, y1, x2, y2];
-		}
+    CPdfDrawingPrototype.prototype.IsIntersectWithRedact = function() {
+        let aDrawingRect = normRect(this.GetRect());
+        let aRectsList = getRedactRects(this);
 
-        this.Recalculate();
-        if (this.IsEditFieldShape()) {
-            this.draw(oGraphicsWord);
-            return;
-        }
-
-        let _t = this;
+        return aRectsList.some(function(aRedactRect) {
+            return isRectsIntersect(aDrawingRect, aRedactRect);
+        });
+    };
+    CPdfDrawingPrototype.prototype.StartRedactClip = function(oGraphicsWord) {
         let oDoc = Asc.editor.getPDFDoc();
         let nPage = this.GetPage();
-        let aRedactIds = this.GetRedactIds();
-        
-        let aRedactAnnots = [];
-        oDoc.annots.forEach(function(annot) {
-            if (!annot.IsRedact() || !annot.GetRedactId() || annot.GetPage() != _t.GetPage()) {
-                return;
-            }
-
-            let sRedactId = annot.GetRedactId();
-            if (aRedactIds.includes(sRedactId)) {
-                aRedactAnnots.push(annot);
-            }
-        });
-
-        const aRectsList = [];
-        aRedactAnnots.forEach(function(annot) {
-            const aQuadsParts = annot.GetQuads();
-
-            aQuadsParts.forEach(function(quads) {
-                const r = normRect([quads[0], quads[1], quads[6], quads[7]]);
-                aRectsList.push(r);
-            });
-        });
+        let aRectsList = getRedactRects(this);
 
         let unredactedPolygon = null;
         let zoom = AscCommon.AscBrowser.convertToRetinaValue(oGraphicsWord.m_lWidthPix) / (oDoc.GetPageWidthMM(nPage) * g_dKoef_mm_to_pix);
@@ -549,12 +560,27 @@
             ctx.save();
         }
 
-        this.draw(oGraphicsWord);
+		return !!unredactedPolygon;
+	};
+	CPdfDrawingPrototype.prototype.EndRedactClip = function(oGraphicsWord, isRedactClipApplied) {
+		if (!isRedactClipApplied) {
+			return;
+		}
 
-        if (unredactedPolygon) {
-            oGraphicsWord.restore();
-            oGraphicsWord.restore();
+		oGraphicsWord.restore();
+		oGraphicsWord.restore();
+	};
+    CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
+        this.Recalculate();
+        if (this.IsEditFieldShape()) {
+            this.draw(oGraphicsWord);
+            return;
         }
+
+		let isRedactClipApplied = this.StartRedactClip(oGraphicsWord);
+
+        this.draw(oGraphicsWord);
+		this.EndRedactClip(oGraphicsWord, isRedactClipApplied);
     };
     CPdfDrawingPrototype.prototype.onMouseDown = function(x, y, e) {};
     CPdfDrawingPrototype.prototype.onMouseUp = function(x, y, e) {};
@@ -710,6 +736,47 @@
             oDoc.SetMouseDownObject(this);
     };
 
+	function normRect(r) {
+		const x1 = Math.min(r[0], r[2]);
+		const y1 = Math.min(r[1], r[3]);
+		const x2 = Math.max(r[0], r[2]);
+		const y2 = Math.max(r[1], r[3]);
+		return [x1, y1, x2, y2];
+	}
+    function getRedactRects(oDrawing) {
+        let oDoc = Asc.editor.getPDFDoc();
+        let nPage = oDrawing.GetPage();
+        let aRedactIds = oDrawing.GetRedactIds();
+        let aRectsList = [];
+
+        if (aRedactIds.length == 0) {
+            return aRectsList;
+        }
+
+        oDoc.annots.forEach(function(annot) {
+            if (!annot.IsRedact() || !annot.GetRedactId() || annot.GetPage() != nPage) {
+                return;
+            }
+
+            let sRedactId = annot.GetRedactId();
+            if (!aRedactIds.includes(sRedactId)) {
+                return;
+            }
+
+            const aQuadsParts = annot.GetQuads();
+            aQuadsParts.forEach(function(quads) {
+                const r = normRect([quads[0], quads[1], quads[6], quads[7]]);
+                aRectsList.push(r);
+            });
+        });
+
+        return aRectsList;
+    }
+    function isRectsIntersect(a, b) {
+        return a[0] < b[2] && a[2] > b[0] &&
+            a[1] < b[3] && a[3] > b[1];
+    }
+
     /////////////////////////////
     /// saving
     ////////////////////////////
@@ -720,6 +787,8 @@
         } else {
             // Write base64 binaryData
             let writer = new AscCommon.CBinaryFileWriter();
+			writer.tableStylesGuides = memory.context.tableStylesIdToGuid;
+			
             writer.WriteSpTreeElem(this);
             memory.WriteXmlString(writer.GetBase64Memory());
         }

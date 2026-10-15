@@ -74,7 +74,8 @@ var c_oMainTables = {
 	SlideNotesRels	: 45,
 	NotesRels		: 46,
 	NotesMastersRels: 47,
-	CustomProperties: 48
+	CustomProperties: 48,
+	HandoutMastersRels: 49
 };
 
 function CSeekTableEntry()
@@ -376,9 +377,14 @@ function CBinaryFileWriter()
     this.WriteBuffer = function(data, _pos, count)
     {
         this.CheckSize(count);
-        for (var i = 0; i < count; i++)
-        {
-            this.data[this.pos++] = data[_pos+i];
+        if (data && data.subarray) {
+            this.data.set(data.subarray(_pos, _pos + count), this.pos);
+            this.pos += count;
+        } else {
+            for (var i = 0; i < count; i++)
+            {
+                this.data[this.pos++] = data[_pos + i];
+            }
         }
     };
     // ---------------------------
@@ -652,6 +658,14 @@ function CBinaryFileWriter()
     //////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////
 
+	function collectThemes(slides, themes) {
+		const themeRels = [];
+		for (let i = 0; i < slides.length; i++) {
+			themeRels.push(themes.length);
+			themes.push(slides[i].Theme);
+		}
+		return themeRels;
+	}
     this.WriteDocument2 = function(presentation)
     {
         this.font_map = {};
@@ -709,7 +723,7 @@ function CBinaryFileWriter()
             let _len_dst = _dst_masters.length;
             _dst_masters[_len_dst] = _m;
 
-            let _m_rels = { ThemeIndex : 0, Layouts : [] };
+            let _m_rels = { Layouts : [] };
             let _lay_c = _m.sldLayoutLst.length;
 
             let _ind_l = _dst_layouts.length;
@@ -755,65 +769,11 @@ function CBinaryFileWriter()
             }
         }
 
-        var _dst_masters_len = _dst_masters.length;
-        if (0 == _dst_masters_len && presentation.slideMasters.length > 0)
-        {
-            var _m = presentation.slideMasters[0];
-
-            _dst_masters[0] = _m;
-
-            var _m_rels = { ThemeIndex : 0, Layouts : [] };
-            var _lay_c = _m.sldLayoutLst.length;
-
-            var _ind_l = _dst_layouts.length;
-            for (var k = 0; k < _lay_c; k++)
-            {
-                _dst_layouts[_ind_l] = _m.sldLayoutLst[k];
-                _m_rels.Layouts[k] = _ind_l;
-                _ind_l++;
-            }
-
-            _master_rels[0] = _m_rels;
-            _dst_masters_len = 1;
-        }
-
-        for (var i = 0; i < _dst_masters_len; i++)
-        {
-            var _t = _dst_masters[i].Theme;
-
-            var is_found = false;
-            var _len_dst = _dst_themes.length;
-            for (var j = 0; j < _len_dst; j++)
-            {
-                if (_dst_themes[j] == _t)
-                {
-                    is_found = true;
-                    break;
-                }
-            }
-
-            if (!is_found)
-            {
-                _dst_themes[_len_dst] = _t;
-                _master_rels[i].ThemeIndex = _len_dst;
-            }
-        }
+	    const slideMasterThemeRels = collectThemes(_dst_masters, _dst_themes);
+	    const handoutMasterThemeRels = collectThemes(presentation.handoutMasters, _dst_themes);
+			const noteMasterThemeRels = collectThemes(_dst_notesMasters, _dst_themes);
 
         var i, j;
-        for(i = 0; i < _dst_notesMasters.length; ++i){
-            for(j = 0; j < _dst_themes.length; ++j){
-                if(_dst_themes[j] === _dst_notesMasters[i].Theme){
-                    break;
-                }
-            }
-            if(j === _dst_themes.length){
-                _dst_themes.push(_dst_notesMasters[i].Theme);
-            }
-        }
-
-        //var _count_table_styles = presentation.globalTableStyles.length;
-        //if (0 < _count_table_styles)
-        //{
 
         var oTableStyleIdMap;
         if(presentation.GetTableStyleIdMap)
@@ -909,22 +869,20 @@ function CBinaryFileWriter()
         this.WriteUChar(g_nodeAttributeStart);
         var _notes_masters = _dst_notesMasters;
         var _notes_masters_count = _notes_masters.length;
-        var _themes = _dst_themes;
-        var _thems_count = _themes.length;
-        var _theme;
-        for(i = 0; i < _notes_masters_count; ++i){
-            _theme = _notes_masters[i].Theme;
-            _rels = -1;
-            for(j = 0; j < _thems_count; ++j){
-                if(_theme === _themes[j]){
-                    _rels = j;
-                    break;
-                }
-            }
-            this._WriteInt1(0, _rels);
-        }
+				for (let i = 0; i < noteMasterThemeRels.length; i += 1) {
+					this._WriteInt1(0, noteMasterThemeRels[i]);
+				}
         this.WriteUChar(g_nodeAttributeEnd);
         this.EndRecord();
+
+	    this.StartMainRecord(c_oMainTables.HandoutMastersRels);
+	    this.StartRecord(c_oMainTables.HandoutMastersRels);
+	    this.WriteUChar(g_nodeAttributeStart);
+	    for (let i = 0; i < handoutMasterThemeRels.length; i += 1) {
+		    this._WriteInt1(0, handoutMasterThemeRels[i]);
+	    }
+	    this.WriteUChar(g_nodeAttributeEnd);
+	    this.EndRecord();
 
         this.StartMainRecord(c_oMainTables.NotesRels);
         this.StartRecord(c_oMainTables.NotesRels);
@@ -957,7 +915,7 @@ function CBinaryFileWriter()
 
             this.WriteUChar(g_nodeAttributeStart);
 
-            this._WriteInt1(0, _master_rels[i].ThemeIndex);
+            this._WriteInt1(0, slideMasterThemeRels[i]);
             this.WriteUChar(1);
             this.WriteString(_dst_masters[i].ImageBase64);
 
@@ -1019,6 +977,12 @@ function CBinaryFileWriter()
         this.WriteULong(_count_arr);
         for (var i = 0; i < _count_arr; i++)
             this.WriteNoteMaster(_dst_notesMasters[i]);
+
+	    _count_arr = presentation.handoutMasters.length;
+	    this.StartMainRecord(c_oMainTables.HandoutMasters);
+	    this.WriteULong(_count_arr);
+	    for (var i = 0; i < _count_arr; i++)
+		    presentation.handoutMasters[i].toPPTY(this);
 
         // during writing - we also need to generate FontMap and ImagesMap
         this.StartMainRecord(c_oMainTables.FontMap);
@@ -1277,7 +1241,7 @@ function CBinaryFileWriter()
 
                     this._WriteInt1(0, _author.Id);
                     this._WriteInt1(1, _author.LastId);
-                    this._WriteInt1(2, _author.Id - 1);
+                    this._WriteInt1(2, _author.GetColorIndex());
                     this._WriteString1(3, _author.Name);
                     this._WriteString1(4, _author.Initials);
 
@@ -1963,14 +1927,14 @@ function CBinaryFileWriter()
                     case Asc.linerule_Auto:
                         oThis.StartRecord(0);
                         oThis.WriteUChar(g_nodeAttributeStart);
-                        oThis._WriteInt1(0, (spacing.Line * 100000) >> 0);
+                        oThis._WriteInt1(0, (spacing.Line * 100000 + 0.5) >> 0);
                         oThis.WriteUChar(g_nodeAttributeEnd);
                         oThis.EndRecord();
                         break;
                     case Asc.linerule_Exact:
                         oThis.StartRecord(0);
                         oThis.WriteUChar(g_nodeAttributeStart);
-                        _value = ((spacing.Line / 0.00352777778) >> 0);
+                        _value = ((spacing.Line / 0.00352777778 + 0.5) >> 0);
                         if(_value < 0){
                             _value = 0;
                         }
@@ -1989,7 +1953,7 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(1);
                     oThis.WriteUChar(g_nodeAttributeStart);
-                    _value = ((spacing.After / 0.00352777778) >> 0);
+                    _value = ((spacing.After / 0.00352777778 + 0.5) >> 0);
                     if(_value < 0){
                         _value = 0;
                     }
@@ -2005,7 +1969,7 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(2);
                     oThis.WriteUChar(g_nodeAttributeStart);
-                    _value = ((spacing.Before / 0.00352777778) >> 0);
+                    _value = ((spacing.Before / 0.00352777778 + 0.5) >> 0);
                     if(_value < 0){
                         _value = 0;
                     }
@@ -2281,15 +2245,28 @@ function CBinaryFileWriter()
 			action = parts[0];
 			url = parts[1];
 		}
+        else if (url == "ppaction://noaction")
+        {
+            action = url;
+            url = "";
+        }
         else
         {
             var mask = "ppaction://hlinksldjumpslide";
-            var indSlide = url.indexOf(mask);
-            if (0 == indSlide)
+            if (0 == url.indexOf(mask))
             {
-                var slideNum = parseInt(url.substring(mask.length));
-                url = "slide" + (slideNum + 1) + ".xml";
-                action = "ppaction://hlinksldjump";
+                var logicDocument = Asc.editor.getLogicDocument();
+                var slideNum = (logicDocument && logicDocument.getSlideJumpTargetIndex) ? logicDocument.getSlideJumpTargetIndex(hlink) : parseInt(url.substring(mask.length));
+                if (slideNum >= 0)
+                {
+                    url = "slide" + (slideNum + 1) + ".xml";
+                    action = "ppaction://hlinksldjump";
+                }
+                else
+                {
+                    url = "";
+                    action = "ppaction://noaction";
+                }
             }
         }
 
@@ -2552,19 +2529,15 @@ function CBinaryFileWriter()
         oThis.StartRecord(oEffect.Type);
 
         oThis.WriteUChar(g_nodeAttributeStart);
-        oThis.WriteString2(0, oEffect.name);
+        oThis._WriteString2(0, oEffect.name);
         oThis._WriteLimit2(1, oEffect.type);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        oThis.StartRecord(0);
         var len__ = oEffect.effectList.length;
-        oThis._WriteInt2(0, len__);
-
         for (var i = 0; i < len__; ++i)
         {
             oThis.WriteRecord1(1, oEffect.effectList[i], oThis.WriteEffect); // id doesn't matter
         }
-        oThis.EndRecord();
 
         oThis.EndRecord();
     };
@@ -2623,7 +2596,7 @@ function CBinaryFileWriter()
                     oThis._WriteInt2(2, oEffect.sx);
                     oThis._WriteInt2(3, oEffect.sy);
                     oThis._WriteInt2(4, oEffect.tx);
-                    oThis._WriteInt2(5, oEffect.tx);
+                    oThis._WriteInt2(5, oEffect.ty);
                     oThis.WriteUChar(g_nodeAttributeEnd);
                     oThis.EndRecord();
                     break;
@@ -2646,6 +2619,7 @@ function CBinaryFileWriter()
                     oThis._WriteInt2(1, oEffect.dist);
                     oThis._WriteLimit1(2, oEffect.prst);
                     oThis.WriteUChar(g_nodeAttributeEnd);
+                    oThis.WriteRecord1(0, oEffect.color, oThis.WriteUniColor);
                     oThis.EndRecord();
                     break;
                 }
@@ -2775,7 +2749,7 @@ function CBinaryFileWriter()
                     oThis.StartRecord(type);
 
                     oThis.WriteUChar(g_nodeAttributeStart);
-                    oThis.WriteString2(0, oEffect.ref);
+                    oThis._WriteString2(0, oEffect.ref);
                     oThis.WriteUChar(g_nodeAttributeEnd);
 
                     oThis.EndRecord();
@@ -2846,6 +2820,9 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(type);
 
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
+
                     oThis.WriteRecord1(0, oEffect.Fill, oThis.WriteUniFill);
 
                     oThis.EndRecord();
@@ -2854,6 +2831,9 @@ function CBinaryFileWriter()
                 case 26:/*EFFECT_TYPE_CLRREPL		    =*/
                 {
                     oThis.StartRecord(type);
+
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
 
                     oThis.WriteRecord1(0, oEffect.color, oThis.WriteUniColor);
 
@@ -2878,6 +2858,9 @@ function CBinaryFileWriter()
                 {
                     oThis.StartRecord(type);
 
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
+
                     oThis.WriteRecord1(0, oEffect.color, oThis.WriteUniColor);
 
                     oThis.EndRecord();
@@ -2886,6 +2869,9 @@ function CBinaryFileWriter()
                 case 29:/*EFFECT_TYPE_ALPHAMOD		=*/
                 {
                     oThis.StartRecord(type);
+
+                    oThis.WriteUChar(g_nodeAttributeStart);
+                    oThis.WriteUChar(g_nodeAttributeEnd);
 
                     oThis.WriteRecord1(0, oEffect.cont, oThis.WriteEffectDag);
 
@@ -2934,8 +2920,8 @@ function CBinaryFileWriter()
             }
             else if (0 != _src.indexOf("http:") && 0 != _src.indexOf("data:") && 0 != _src.indexOf("https:") && 0 != _src.indexOf("ftp:") && 0 != _src.indexOf("file:")){
                 if (AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isCryptoImages() &&
-                  window["AscDesktopEditor"] && window["AscDesktopEditor"]["Crypto_GetLocalImageBase64"]) {
-                    _src = window["AscDesktopEditor"]["Crypto_GetLocalImageBase64"](_src);
+                  AscCommon.CryptoProvider) {
+                    _src = AscCommon.CryptoProvider.getCryptoImageBase64(_src) || _src;
                 } else {
                     var imageUrl = AscCommon.g_oDocumentUrls.getImageUrl(_src);
                     if (imageUrl)
@@ -3395,7 +3381,7 @@ function CBinaryFileWriter()
                 }
                 case para_Hyperlink:
                 {
-                    var _hObj = { Value : _elem.GetValue(), tooltip: _elem.ToolTip};
+                    var _hObj = { Value : _elem.GetValue(), tooltip: _elem.ToolTip, slideJumpTargetId: _elem.slideJumpTargetId};
                     var _content_len_h = _elem.Content.length;
 
                     for (var hi = 0; hi < _content_len_h; hi++)
@@ -3771,11 +3757,13 @@ function CBinaryFileWriter()
             oThis.WriteRecord1(4, image, oThis.WriteOleInfo);
         } else {
             var _type;
-            var bMedia = false, _fileMask;
+            var bMedia = false, _fileMask, _start, _end;
             if(image.nvPicPr && image.nvPicPr.nvPr && image.nvPicPr.nvPr.unimedia && image.nvPicPr.nvPr.unimedia.type !== null
                 && typeof image.nvPicPr.nvPr.unimedia.media === "string" && image.nvPicPr.nvPr.unimedia.media.length > 0){
                 _type = image.nvPicPr.nvPr.unimedia.type;
                 _fileMask = image.nvPicPr.nvPr.unimedia.media;
+                _start = image.nvPicPr.nvPr.unimedia.start;
+                _end = image.nvPicPr.nvPr.unimedia.end;
                 bMedia = true;
             }
             else{
@@ -3786,6 +3774,8 @@ function CBinaryFileWriter()
                 oThis.WriteRecord1(5, null, function(){
                     oThis.WriteUChar(g_nodeAttributeStart);
                     oThis._WriteString1(0, _fileMask);
+                    oThis._WriteDoubleReal2(2, _start);
+                    oThis._WriteDoubleReal2(3, _end);
                     oThis.WriteUChar(g_nodeAttributeEnd);
                 });
             }
@@ -3838,7 +3828,7 @@ function CBinaryFileWriter()
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData.length !== 0)
+        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2 || ole.m_nOleType === 5) && ole.m_aBinaryData.length !== 0)
         {
             oThis.WriteRecord1(1, ole.m_nOleType, function(val){
                 oThis.WriteUChar(val);
@@ -4656,17 +4646,30 @@ function CBinaryFileWriter()
 			action = parts[0];
 			id = parts[1];
 		}
+        else if (id === "ppaction://noaction")
+        {
+            action = id;
+            id = "";
+        }
         else
         {
             if(typeof id === "string")
             {
                 var mask = "ppaction://hlinksldjumpslide";
-                var indSlide = id.indexOf(mask);
-                if (0 === indSlide)
+                if (0 === id.indexOf(mask))
                 {
-                    var slideNum = parseInt(id.substring(mask.length));
-                    id = "slide" + (slideNum + 1) + ".xml";
-                    action = "ppaction://hlinksldjump";
+                    var logicDocument = Asc.editor.getLogicDocument();
+                    var slideNum = (logicDocument && logicDocument.getSlideJumpTargetIndex) ? logicDocument.getSlideJumpTargetIndex(hyper) : parseInt(id.substring(mask.length));
+                    if (slideNum >= 0)
+                    {
+                        id = "slide" + (slideNum + 1) + ".xml";
+                        action = "ppaction://hlinksldjump";
+                    }
+                    else
+                    {
+                        id = "";
+                        action = "ppaction://noaction";
+                    }
                 }
             }
         }
@@ -5766,7 +5769,7 @@ function CBinaryFileWriter()
             var _writer = this.BinaryFileWriter;
 
             var isOle = AscDFH.historyitem_type_OleObject == image.getObjectType();
-            var _type, _fileMask;
+            var _type, _fileMask, _start, _end;
             if(isOle){
                 _writer.StartRecord(6);
                 //important to write at the beginning
@@ -5778,6 +5781,8 @@ function CBinaryFileWriter()
                 && typeof image.nvPicPr.nvPr.unimedia.media === "string" && image.nvPicPr.nvPr.unimedia.media.length > 0){
                     _type = image.nvPicPr.nvPr.unimedia.type;
                     _fileMask = image.nvPicPr.nvPr.unimedia.media;
+                    _start = image.nvPicPr.nvPr.unimedia.start;
+                    _end = image.nvPicPr.nvPr.unimedia.end;
                     bMedia = true;
                 }
                 else{
@@ -5788,6 +5793,8 @@ function CBinaryFileWriter()
                     _writer.WriteRecord1(5, null, function(){
                         _writer.WriteUChar(g_nodeAttributeStart);
                         _writer._WriteString2(0, _fileMask);
+                        _writer._WriteDoubleReal2(2, _start);
+                        _writer._WriteDoubleReal2(3, _end);
                         _writer.WriteUChar(g_nodeAttributeEnd);
                     });
                 }
@@ -5849,7 +5856,12 @@ function CBinaryFileWriter()
             //    group.spPr.WriteXfrm.chExtY = group.spPr.WriteXfrm.extY;
             //}
 
-            //_writer.WriteRecord1(0, group.nvGrpSpPr, oThis.WriteUniNvPr);
+			if (AscCommon.isRealObject(group.nvGrpSpPr)) {
+				group.nvGrpSpPr.locks = group.locks;
+				group.nvGrpSpPr.objectType = group.getObjectType();
+				_writer.WriteRecord1(0, group.nvGrpSpPr, _writer.WriteUniNvPr);
+			}
+
             _writer.WriteRecord1(1, group.spPr, _writer.WriteGrpSpPr);
 
             delete group.spPr.WriteXfrm;

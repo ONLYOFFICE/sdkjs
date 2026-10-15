@@ -2404,6 +2404,10 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
     this.Write_pPr = function(pPr, pPr_rPr, EndRun, paragraph, oDocument)
     {
         var oThis = this;
+		
+		if (paragraph)
+			pPr = paragraph.GetParaPrForWrite(pPr);
+		
         //Стили надо писать первыми, потому что применение стиля при открытии уничтажаются настройки параграфа
         if(null != pPr.PStyle)
         {
@@ -8870,7 +8874,7 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 		//посылаем событие о добавлении комментариев
-		if(api)
+		if(api && !(this.openParams && this.openParams.noSendComments))
 		{
 			for(var i in oCommentsNewId)
 			{
@@ -11662,10 +11666,15 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			{
 			    oCommon.oParent = paragraphContent;
 				var item = this.oComments[oCommon.Id];
+				
+				if (item && item.Start)
+					return;
+				
 				if(item)
 					item.Start = oCommon;
 				else
 					this.oComments[oCommon.Id] = {Start: oCommon};
+				
 				if(null == this.oCurComments[oCommon.Id])
 				{
 					this.nCurCommentsCount++;
@@ -11690,6 +11699,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 					item = {};
 					this.oComments[oCommon.Id] = item;
 				}
+				if (item.End)
+					return;
+				
 				item.End = oCommon;
 				var sQuoteText = this.oCurComments[oCommon.Id];
 				if(null != sQuoteText)

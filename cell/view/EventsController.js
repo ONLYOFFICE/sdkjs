@@ -1057,6 +1057,13 @@
 					this.view.setFontAttributes("changeFontSize", nShortcutAction === Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 					break;
 				}
+				case Asc.c_oAscSpreadsheetShortcutType.FillDown: {
+					if (!bCanEdit || bSelectionDialogMode || this.getCellEditMode()) {
+						break;
+					}
+					this.handlers.trigger("fillDown");
+					break;
+				}
 				default: {
 					const oCustom = this.view.Api.getCustomShortcutAction(nShortcutAction);
 					if (oCustom) {
@@ -1694,7 +1701,16 @@
 				t.handlers.trigger("canvasClick");
 			}
 
-			if (!(asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || this.getSelectionDialogMode() || this.getCellEditMode() && !this.handlers.trigger("stopCellEditing"))) {
+			// data validation may reject the entered value and keep the cell editor open.
+			// "stopCellEditing" must be triggered only once per mouse down, otherwise the error message is shown twice
+			var isCellEditingStopped = null;
+			var stopCellEditing = function () {
+				if (null === isCellEditingStopped) {
+					isCellEditingStopped = !!t.handlers.trigger("stopCellEditing");
+				}
+				return isCellEditingStopped;
+			};
+			if (!(asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || this.getSelectionDialogMode() || this.getCellEditMode() && !stopCellEditing())) {
 				const isPlaceholder = t.handlers.trigger("onPointerDownPlaceholder", coord.x, coord.y);
 				if (isPlaceholder) {
 					return;
@@ -1706,7 +1722,7 @@
 				if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
 
 
-					if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
+					if (this.getCellEditMode() && !stopCellEditing()) {
 						return;
 					}
 
@@ -1843,7 +1859,7 @@
 						return;
 					}
 				} else {
-					if (!this.handlers.trigger("stopCellEditing")) {
+					if (!stopCellEditing()) {
 						return;
 					}
 				}
@@ -1874,8 +1890,10 @@
 						//t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
 					} else {
 						this.isSelectMode = true;
-						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
-							ctrlKey);
+						if (!(ctrlKey && this.handlers.trigger("ctrlDeselect", coord.x, coord.y))) {
+							this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
+								ctrlKey);
+						}
 					}
 				}
 			}

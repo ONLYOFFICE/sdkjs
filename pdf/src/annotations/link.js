@@ -64,6 +64,78 @@
     AscFormat.InitClass(CAnnotationLink, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Link);
     Object.assign(CAnnotationLink.prototype, AscPDF.CAnnotationBase.prototype);
 
+	CAnnotationLink.prototype.private_UpdateRect = function(rect) {
+		let aQuads = this.GetQuads();	
+		let aCurRect = this.GetRect().slice();
+		let aCurRD = this.GetRectangleDiff();
+		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+
+		if (aQuads.length == 0 || aQuads.length > 1) {
+			if (aQuads.length > 1) {
+				this.SetQuads([]);
+			}
+			
+			AscCommon.History.StartNoHistoryMode();
+			rect && this.SetRect(rect);
+			this.SetRectangleDiff([0, 0, 0, 0]);
+			this.recalcBounds();
+			this.recalcGeometry();
+			this.Recalculate(true);
+			AscCommon.History.EndNoHistoryMode();
+		}
+		else {
+			if (rect) {
+				let aQuadsRect = AscPDF.rotateRect(rect, this.spPr.xfrm.getRot());
+				let aNewQuads = [aQuadsRect];
+				this.SetQuads(aNewQuads);
+			}
+
+			AscCommon.History.StartNoHistoryMode();
+			this.SetRectangleDiff([0, 0, 0, 0]);
+			this.recalcBounds();
+			this.recalcGeometry();
+			this.Recalculate(true);
+			AscCommon.History.EndNoHistoryMode();
+		}
+		
+		let oGrBounds = this.bounds;
+		let oShapeBounds = this.getRectBounds();
+
+		this._rect = aCurRect;
+		this._rectDiff = aCurRD;
+
+		if (this.GetBorderStyle() == AscPDF.BORDER_TYPES.underline) {
+			if (!rect) {
+				rect = [
+					(oShapeBounds.l - nLineW) * g_dKoef_mm_to_pt,
+					(oShapeBounds.t - nLineW) * g_dKoef_mm_to_pt,
+					(oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+					(oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+				];
+			}
+
+			this.SetRect(rect);
+		}
+		else {
+			if (!rect) {
+				rect = [
+					(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt,
+					(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt,
+					(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt,
+					(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt
+				]
+			}
+
+			this.SetRect(rect);
+			this.SetRectangleDiff([
+				(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+				(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+			]);
+		}
+	};
+
     CAnnotationLink.prototype.IsLink = function() {
         return true;
     };
@@ -93,13 +165,12 @@
             return;
         }
 
-        let nLineW = this.GetBorderWidth();
         let aQuads = this.GetQuads();
         
         AscCommon.History.StartNoHistoryMode();
         if (aQuads.length == 0 || aQuads.length > 1) {
             let aRect = this.GetRect();
-            let aRD = [nLineW / 2, nLineW / 2, nLineW / 2, nLineW / 2];
+            let aRD = this.GetRectangleDiff();
 
             let extX = ((aRect[2] - aRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
             let extY = ((aRect[3] - aRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
@@ -166,8 +237,6 @@
 
         let originView = AscPDF.CBaseField.prototype.GetOriginView.call(this, nImgType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
         if (!originView) {
-            this.DrawLocks(oGraphicsPDF);
-            this.DrawEdit(oGraphicsWord);
             return;
         }
 
@@ -273,9 +342,12 @@
     };
 
     CAnnotationLink.prototype.RefillGeometry = function() {
-        let aQuads = this.GetQuads();
-        if (aQuads.length == 0 || aQuads.length > 1 || this.GetBorderStyle() !== AscPDF.BORDER_TYPES.underline) {
-            return;
+        if (this.GetBorderStyle() !== AscPDF.BORDER_TYPES.underline) {
+			AscCommon.History.StartNoHistoryMode();
+        	this.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+			AscCommon.History.EndNoHistoryMode();
+
+			return this.spPr.geometry;
         }
 
         AscCommon.History.StartNoHistoryMode();
@@ -349,7 +421,7 @@
             this.GetDocument().ShowComment([this.GetId()]);
 
             this.DrawUnpressed();
-            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.mouseUp);
         }
     };
     CAnnotationLink.prototype.SetActions = function(nTriggerType, aActionsInfo) {
@@ -391,11 +463,11 @@
                             oPageInfo = oDoc.GetPageInfo(aActionsInfo[i]["page"]);
                         }
 
-                        oAction = new AscPDF.CActionGoTo(oPageInfo.GetId(), aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
+                        oAction = new AscPDF.CActionGoTo(oPageInfo.GetId(), aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], [oRect.left, oRect.top, oRect.right, oRect.bottom]);
                         aActions.push(oAction);
                         break;
                     case AscPDF.ACTIONS_TYPES.Named:
-                        oAction = new AscPDF.CActionNamed(AscPDF.CActionNamed.GetInternalType(aActionsInfo[i]["N"]));
+                        oAction = new AscPDF.CActionNamed(aActionsInfo[i]["N"]);
                         aActions.push(oAction);
                         break;
                 }
@@ -411,26 +483,27 @@
         AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseUp:
                 this._triggers.MouseUp = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseDown:
                 this._triggers.MouseDown = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseEnter:
                 this._triggers.MouseEnter = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseExit:
                 this._triggers.MouseExit = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.onFocus:
                 this._triggers.OnFocus = oNewTrigger;
                 break;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.onBlur:
                 this._triggers.OnBlur = oNewTrigger;
                 break;
         }
 
+        this.SetWasChanged(true, false);
         return aActions;
     };
     CAnnotationLink.prototype.GetActions = function(nTriggerType) {
@@ -444,48 +517,7 @@
         // Iterate through all actions associated with the trigger
         for (let i = 0; i < oTrigger.Actions.length; i++) {
             let oAction = oTrigger.Actions[i];
-            let actionInfo = {};
-            
-            // Determine the action type and populate the object with information
-            switch (oAction.GetType()) {
-                case AscPDF.ACTIONS_TYPES.JavaScript:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.JavaScript;
-                    actionInfo["JS"] = oAction.GetScript();
-                    break;
-                case AscPDF.ACTIONS_TYPES.ResetForm:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.ResetForm;
-                    actionInfo["Fields"] = oAction.GetNames();
-                    actionInfo["Flags"] = Number(oAction.GetNeedAllExcept());
-                    break;
-                case AscPDF.ACTIONS_TYPES.URI:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.URI;
-                    actionInfo["URI"] = oAction.GetURI();
-                    break;
-                case AscPDF.ACTIONS_TYPES.HideShow:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.HideShow;
-                    actionInfo["H"] = oAction.GetHidden();
-                    actionInfo["T"] = oAction.GetNames();
-                    break;
-                case AscPDF.ACTIONS_TYPES.GoTo:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.GoTo;
-                    actionInfo["page"] = oAction.GetPageIdx();
-                    actionInfo["pageId"] = oAction.GetPageId();
-                    actionInfo["kind"] = oAction.GetKind();
-                    actionInfo["zoom"] = oAction.GetZoom();
-                    let oRect = oAction.GetRect();
-                    actionInfo["top"] = oRect.top;
-                    actionInfo["right"] = oRect.right;
-                    actionInfo["bottom"] = oRect.bottom;
-                    actionInfo["left"] = oRect.left;
-                    break;
-                case AscPDF.ACTIONS_TYPES.Named:
-                    actionInfo["S"] = AscPDF.ACTIONS_TYPES.Named;
-                    actionInfo["N"] = oAction.GetNameStrType();
-                    break;
-                default:
-                    // If the type is not recognized, add handling or skip
-                    break;
-            }
+            let actionInfo = AscPDF.getJsonActionInfo(oAction);
             
             aActionsInfo.push(actionInfo);
         }
@@ -494,17 +526,17 @@
     };
     CAnnotationLink.prototype.GetTrigger = function(nType) {
         switch (nType) {
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseUp:
                 return this._triggers.MouseUp;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseDown:
                 return this._triggers.MouseDown;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseEnter:
                 return this._triggers.MouseEnter;
-            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.mouseExit:
                 return this._triggers.MouseExit;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.onFocus:
                 return this._triggers.OnFocus;
-            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.onBlur:
                 return this._triggers.OnBlur;
         }
 
@@ -513,32 +545,32 @@
     CAnnotationLink.prototype.GetListActions = function() {
         let aActions = [];
 
-        let oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+        let oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseUp);
         if (oAction) {
             aActions.push(oAction);
         }
         
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseDown);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseEnter);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseExit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onFocus);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnBlur);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.onBlur);
         if (oAction) {
             aActions.push(oAction);
         }
@@ -565,7 +597,7 @@
     CAnnotationLink.prototype.Copy = function(isForMove) {
         let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this, isForMove);
 
-        oCopy.SetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp, this.GetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp));
+        oCopy.SetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp, this.GetActions(AscPDF.PDF_TRIGGERS_TYPES.mouseUp));
         oCopy.SetHighlight(this.GetHighlight());
 
         return oCopy;
@@ -642,7 +674,7 @@
         let nPosForFlags = memory.GetCurPosition();
         memory.Skip(4);
 
-        let oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+        let oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.mouseUp);
         if (oAction) {
             nFlags |= (1 << 0);
             oAction.WriteToBinary(memory);
@@ -675,6 +707,15 @@
                 }
             }
         }
+
+		// rectangle diff
+		let aRD = this.GetRectangleDiff();
+		if (aRD) {
+			nFlags |= (1 << 4);
+			for (let i = 0; i < 4; i++) {
+				memory.WriteDouble(aRD[i]);
+			}
+		}
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(nPosForFlags);

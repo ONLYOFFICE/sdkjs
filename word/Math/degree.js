@@ -854,7 +854,10 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         var DivBaseline = 3.034*PlH;
         var ascIters, dgrHeight;
 
-        if(DivBaseline > minGap + iterDown.ascent + (iterUp.height - iterUp.ascent))
+        var bUpEmpty   = this.iters.iterUp.Is_Empty() || this.iters.iterUp.IsPlaceholder() || iterUp.height <= 0;
+        var bDownEmpty = this.iters.iterDn.Is_Empty() || this.iters.iterDn.IsPlaceholder() || iterDown.height <= 0;
+
+        if(!bUpEmpty && !bDownEmpty && DivBaseline > minGap + iterDown.ascent + (iterUp.height - iterUp.ascent))
         {
             dH = DivBaseline - iterDown.ascent - (iterUp.height - iterUp.ascent);
         }
@@ -866,7 +869,11 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         var GapDown = PlH;
 
         ascIters = iterUp.height + dH + GapDown;
-        dgrHeight = iterDown.height + iterUp.height + dH;
+
+        if(dH + iterDown.height < ascIters - iterUp.height)
+            dH = ascIters - iterUp.height - iterDown.height;
+
+        dgrHeight = iterUp.height + dH + iterDown.height;
 
         ascent = ascIters > baseAsc ? ascIters : baseAsc;
 
@@ -1107,48 +1114,48 @@ CDegreeSubSup.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
         PRS.bContainCompareOper = bContainCompareOper;
     }
 };
-CDegreeSubSup.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CDegreeSubSup.prototype.recalculateRangeWidth = function(widthState)
 {
     if(this.bOneLine == true)
     {
-        CDegreeSubSupBase.prototype.Recalculate_Range_Width.call(this, PRSC, _CurLine, _CurRange);
+        CDegreeSubSupBase.prototype.recalculateRangeWidth.call(this, widthState);
     }
     else
     {
-        var CurLine = _CurLine - this.StartLine;
-        var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+        var CurLine = widthState.CurLine - this.StartLine;
+        var CurRange = ( 0 === CurLine ? widthState.CurRange - this.StartRange : widthState.CurRange );
 
-        var RangeW = PRSC.Range.W;
+        var RangeW = widthState.Range.W;
 
         if(CurLine == 0 && CurRange == 0)
         {
-            PRSC.Range.W += this.BrGapLeft;
+            widthState.Range.W += this.BrGapLeft;
         }
 
         if(this.Pr.type == DEGREE_SubSup) // baseContent, iters
-            this.baseContent.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
+            this.baseContent.recalculateRangeWidth(widthState);
 
-        if(this.Need_Iters(_CurLine, _CurRange))
+        if(this.Need_Iters(widthState.CurLine, widthState.CurRange))
         {
-            var RangeW2 = PRSC.Range.W;
+            var RangeW2 = widthState.Range.W;
 
-            this.iters.iterUp.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
-            this.iters.iterDn.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
+            this.iters.iterUp.recalculateRangeWidth(widthState);
+            this.iters.iterDn.recalculateRangeWidth(widthState);
 
             this.iters.Bounds.SetWidth(0, 0, this.iters.size.width);
 
-            PRSC.Range.W = RangeW2 + this.iters.size.width + this.dW;
+            widthState.Range.W = RangeW2 + this.iters.size.width + this.dW;
         }
 
         if(this.Pr.type == DEGREE_PreSubSup) // iters, baseContent
-            this.baseContent.Recalculate_Range_Width(PRSC, _CurLine, _CurRange);
+            this.baseContent.recalculateRangeWidth(widthState);
 
-        if(this.baseContent.Math_Is_End(_CurLine, _CurRange))
+        if(this.baseContent.Math_Is_End(widthState.CurLine, widthState.CurRange))
         {
-            PRSC.Range.W += this.BrGapRight;
+            widthState.Range.W += this.BrGapRight;
         }
 
-        this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
+        this.Bounds.SetWidth(CurLine, CurRange, widthState.Range.W - RangeW);
     }
 };
 CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)
@@ -1172,6 +1179,7 @@ CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)
         }
 
         var PosIters = new CMathPosition();
+        var degAscent = this.Get_LineBound(Line, Range).Asc;
         if(this.Pr.type == DEGREE_SubSup)
         {
             this.baseContent.setPosition(pos, PosInfo);
@@ -1179,7 +1187,7 @@ CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)
             if(this.baseContent.Math_Is_End(Line, Range))
             {
                 PosIters.x = pos.x;
-                PosIters.y = pos.y - this.iters.size.ascent;
+                PosIters.y = pos.y - degAscent;
 
                 this.iters.setPosition(PosIters, PosInfo);
 
@@ -1191,7 +1199,7 @@ CDegreeSubSup.prototype.setPosition = function(pos, PosInfo)
             if(CurLine == 0 && CurRange == 0)
             {
                 PosIters.x = pos.x;
-                PosIters.y = pos.y - this.iters.size.ascent;
+                PosIters.y = pos.y - degAscent;
 
                 this.iters.setPosition(PosIters, PosInfo);
 
@@ -1235,12 +1243,14 @@ CDegreeSubSup.prototype.Apply_MenuProps = function(Props)
 		{
 			AscCommon.History.Add(new CChangesMathDegreeSubSupType(this, this.Pr.type, DEGREE_PreSubSup));
 			this.raw_SetType(DEGREE_PreSubSup);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.ScriptType == Asc.c_oAscMathInterfaceScript.SubSup && this.Pr.type == DEGREE_PreSubSup)
 		{
 			AscCommon.History.Add(new CChangesMathDegreeSubSupType(this, this.Pr.type, DEGREE_SubSup));
 			this.raw_SetType(DEGREE_SubSup);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };

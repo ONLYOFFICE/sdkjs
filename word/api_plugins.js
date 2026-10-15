@@ -476,7 +476,7 @@
 
         let oProps = new AscCommon.CSearchSettings();
         oProps.SetText(oProperties["searchString"]);
-        oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties.matchCase : true);
+        oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties["matchCase"] : true);
 
         var oSearchEngine = this.WordControl.m_oLogicDocument.Search(oProps);
         if (!oSearchEngine)
@@ -487,7 +487,7 @@
 	/**
 	 * Finds and selects the next occurrence of the text starting at the current position.
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "PDFE"]
 	 * @alias SearchNext
 	 * @param {Object} oProperties - An object which contains the search string.
 	 * @param {string} oProperties.searchString - The search string.
@@ -506,6 +506,13 @@
 		searchProps.SetText(oProperties["searchString"]);
 		searchProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties["matchCase"] : true);
 		
+		if (this.isPdfEditor()) {
+			let oViewer = logicDocument.Viewer;
+			oViewer.findText(searchProps, isForward !== false);
+			this._selectSearchingResults(true);
+			return 0 !== logicDocument.SearchEngine.Count;
+		}
+
 		logicDocument.Search(searchProps);
 		let elementId = logicDocument.GetSearchElementId(!(false === isForward || 0 === isForward));
 		if (null === elementId)
@@ -1000,7 +1007,7 @@
 
 				window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 				AscCommon.Check_LoadingDataBeforePrepaste(this, {}, oImagesMap, function() {
-					oLogicDocument.Reassign_ImageUrls(oImagesMap);
+					AscCommon.History.RewriteImageUrlsInLastPoint(oImagesMap);
 					oLogicDocument.Recalculate();
 					oLogicDocument.End_SilentMode();
 					oLogicDocument.LoadDocumentState(oStartState);
@@ -1528,13 +1535,14 @@
 	/**
 	 * Checks if the document is in the filling form mode.
 	 * @memberof Api
+	 * @function
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @alias IsFillingFormMode
+	 * @alias IsFillingForm
 	 * @returns {boolean} - Returns **true** if the document is in the filling form mode.
 	 * @since 9.3.0
-	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingFormMode.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingForm.js
 	 */
-	Api.prototype["pluginMethod_IsFillingFormMode"] = function()
+	Api.prototype["pluginMethod_IsFillingForm"] = Api.prototype["pluginMethod_IsFillingFormMode"] = function()
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1543,15 +1551,16 @@
 		return logicDocument.IsFillingFormMode();
 	};
 	/**
-	 * Checks if the document is in the filling OForm mode.
+	 * Checks if the document is in the filling PDF form mode.
 	 * @memberof Api
+	 * @function
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @alias IsFillingOFormMode
-	 * @returns {boolean} - Returns **true** if the document is in the filling OForm mode.
+	 * @alias IsFillingPdfForm
+	 * @returns {boolean} - Returns **true** if the document is in the filling PDF form mode.
 	 * @since 9.3.0
-	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingOFormMode.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingPdfForm.js
 	 */
-	Api.prototype["pluginMethod_IsFillingOFormMode"] = function()
+	Api.prototype["pluginMethod_IsFillingPdfForm"] = Api.prototype["pluginMethod_IsFillingOFormMode"] = function()
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1561,15 +1570,16 @@
 	};
 
 	/**
-	 * Checks if the document is in the editing OForm mode.
+	 * Checks if the document is in the editing PDF form mode.
 	 * @memberof Api
+	 * @function
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @alias IsEditingOFormMode
-	 * @returns {boolean} - Returns **true** if the document is in the editing OForm mode.
+	 * @alias IsEditingPdfForm
+	 * @returns {boolean} - Returns **true** if the document is in the editing PDF form mode.
 	 * @since 9.3.0
-	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsEditingOFormMode.js
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsEditingPdfForm.js
 	 */
-	Api.prototype["pluginMethod_IsEditingOFormMode"] = function()
+	Api.prototype["pluginMethod_IsEditingPdfForm"] = Api.prototype["pluginMethod_IsEditingOFormMode"] = function()
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)

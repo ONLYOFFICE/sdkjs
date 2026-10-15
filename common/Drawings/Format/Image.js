@@ -114,35 +114,9 @@
 		};
 
 		CImageShape.prototype.setBlipFill = function (pr) {
-			if(!Asc.editor.evalCommand) {
-				AscCommon.History.Add(new AscDFH.CChangesImageIdStart(this));
-				const prNoRaster = pr && pr.createDuplicateNoRaster();
-				const currentNoRaster = this.blipFill && this.blipFill.createDuplicateNoRaster();
-				AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetBlipFill, currentNoRaster, prNoRaster));
-				const rasterChunks = createRasterImageHistoryChunks(this, this.blipFill ? this.blipFill.RasterImageId : "", pr.RasterImageId, 1048576);
-				for (let chunkIdx = 0; chunkIdx < rasterChunks.length; ++chunkIdx) {
-					let chunk = rasterChunks[chunkIdx];
-					AscCommon.History.Add(chunk);
-				}
-				AscCommon.History.Add(new AscDFH.CChangesImageIdEnd(this));
-			}
-
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetBlipFill, this.blipFill, pr));
 			this.blipFill = pr;
 		};
-
-		function createRasterImageHistoryChunks(obj, oldStr, newStr, chunkSize) {
-			const changes = [];
-			const total = Math.ceil(Math.max(newStr.length, oldStr.length) / chunkSize);
-
-			for (let i = 0; i < total; i++) {
-				const newChunk = newStr.substr(i * chunkSize, chunkSize);
-				const oldChunk = oldStr.substr(i * chunkSize, chunkSize);
-				const change = new AscDFH.CChangesDrawingsImageRasterImageIdPart(obj, newChunk, oldChunk);
-				changes.push(change);
-			}
-
-			return changes;
-		}
 
 		CImageShape.prototype.setParent = function (pr) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetParent, this.parent, pr));
@@ -231,6 +205,8 @@
 			oProps.put_Type(Asc.c_oAscWatermarkType.Image);
 			oProps.setXfrmRot(AscFormat.normalizeRotate(this.getXfrmRot() || 0));
 			oProps.put_ImageUrl2(this.blipFill.RasterImageId);
+			let nTransparent = this.blipFill.getTransparent();
+			oProps.put_Opacity(AscFormat.isRealNumber(nTransparent) ? nTransparent : 255);
 			oProps.put_Scale(-1);
 			oProps.put_ImageSize(this.getXfrmExtX() * 36000 + 0.5 >> 0, this.getXfrmExtY() * 36000 + 0.5 >> 0);
 			var oApi;

@@ -46,7 +46,7 @@
 		}
 	}
 
-	var enginePath = "../../../../sdkjs/common/zlib/engine/";
+	var enginePath = AscCommon.RELATIVE_SDKJS_PATH + "common/zlib/engine/";
 
 	var scriptSrc = useWasm ? "zlib.js" : "zlib_ie.js";
 	scriptSrc = enginePath + scriptSrc;

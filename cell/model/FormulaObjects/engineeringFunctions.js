@@ -5716,12 +5716,28 @@ function (window, undefined) {
 			number1 = number1.cross(arguments[1]);
 		} else if (number1.type === cElementType.array) {
 			number1 = number1.getElement(0);
+		} else if (number1.type === cElementType.cell || number1.type === cElementType.cell3D) {
+			number1 = number1.getValue();
 		}
 
 		if (step.type === cElementType.cellsRange || step.type === cElementType.cellsRange3D) {
 			step = step.cross(arguments[1]);
 		} else if (step.type === cElementType.array) {
 			step = step.getElement(0);
+		} else if (step.type === cElementType.cell || step.type === cElementType.cell3D) {
+			step = step.getValue();
+		}
+
+		if (number1.type === cElementType.error) {
+			return number1;
+		} else if (number1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (step.type === cElementType.error) {
+			return step;
+		} else if (step.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		number1 = number1.tocNumber();
@@ -7000,7 +7016,7 @@ function (window, undefined) {
 				}
 				continue;
 			} else if (argI.type === cElementType.array) {
-				let dimensions = argI.getDimensions();
+				let dimensions = argI.getDimensions(true);
 
 				for (let row = 0; row < dimensions.row; row++) {
 					for (let col = 0; col < dimensions.col; col++) {

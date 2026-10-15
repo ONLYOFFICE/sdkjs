@@ -614,6 +614,9 @@
     };
 
     CConnectionShape.prototype.calculateTransform = function (bMove) {
+        if(this.group){
+            this.getMainGroup().normalize();
+        }
         var oBeginDrawing = null;
         var oEndDrawing = null;
         var sStId = this.getStCxnId();

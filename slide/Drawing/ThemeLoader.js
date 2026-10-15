@@ -226,7 +226,9 @@ function CThemeLoader()
 
 
             AscCommon.History.MinorChanges = true;
+            AscFonts.IsCheckSymbols = true;
             _loader.Load(_binary, pres);
+            AscFonts.IsCheckSymbols = false;
             AscCommon.History.MinorChanges = false;
 
             if (oThis.IsReloadBinaryThemeEditorNow || window["NATIVE_EDITOR_ENJINE"])

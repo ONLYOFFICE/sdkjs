@@ -387,6 +387,18 @@ function getFlatPenColor() {
 	CControl.prototype.isNeedResetState = function() {
 		return this.controller.isNeedResetState();
 	};
+	CControl.prototype.getAllFonts = function (fonts) {
+		AscFormat.CShape.prototype.getAllFonts.call(this, fonts);
+		if (this.formControlPr && this.formControlPr.objectType === CFormControlPr_objectType_checkBox) {
+			fonts[CHECKBOX_GLYPH_FONT_NAME] = 1;
+		}
+	};
+	CControl.prototype.documentGetAllFontNames = function (fonts) {
+		AscFormat.CShape.prototype.documentGetAllFontNames.call(this, fonts);
+		if (this.formControlPr && this.formControlPr.objectType === CFormControlPr_objectType_checkBox) {
+			fonts[CHECKBOX_GLYPH_FONT_NAME] = 1;
+		}
+	};
 	CControl.prototype.initController = function () {
 		switch (this.formControlPr.objectType) {
 			case CFormControlPr_objectType_checkBox: {
@@ -707,6 +719,75 @@ function getFlatPenColor() {
 	const CHECKBOX_BODYPR_INSETS_B = 32004 / 36000;
 	const CHECKBOX_OFFSET_X = CHECKBOX_SIDE_SIZE + (CHECKBOX_X_OFFSET * 2 - CHECKBOX_BODYPR_INSETS_L);
 
+	const CHECKBOX_GLYPH_FONT_NAME = "Segoe UI Symbol";
+	const CHECKBOX_GLYPH_CODE_CHECKED = 0x2611;
+	const CHECKBOX_GLYPH_CODE_UNCHECKED = 0x2610;
+	const CHECKBOX_GLYPH_CODE_MIXED = 0x25A3;
+	const CHECKBOX_GLYPH_PROBE_FONT_SIZE = 10;
+
+	let CHECKBOX_GLYPH_METRICS = null;
+	function getCheckBoxGlyphMetrics() {
+		if (CHECKBOX_GLYPH_METRICS) {
+			return CHECKBOX_GLYPH_METRICS;
+		}
+		const oTextPr = new AscCommonWord.CTextPr();
+		oTextPr.Set_FromObject({
+			FontFamily: {Name: CHECKBOX_GLYPH_FONT_NAME, Index: -1},
+			FontSize: CHECKBOX_GLYPH_PROBE_FONT_SIZE,
+			Bold: false,
+			Italic: false
+		});
+		oTextPr.RFonts.SetAll(CHECKBOX_GLYPH_FONT_NAME);
+
+		AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
+		const nProbeSlot = AscWord.GetFontSlotByTextPr(CHECKBOX_GLYPH_CODE_CHECKED, oTextPr);
+		AscCommon.g_oTextMeasurer.SetFontSlot(nProbeSlot, 1);
+		let oInfo = AscCommon.g_oTextMeasurer.Measure2Code(CHECKBOX_GLYPH_CODE_CHECKED);
+
+		if (!oInfo || !oInfo.WidthG || !oInfo.Height) {
+			return {useManual: true};
+		}
+
+		const nFontSize = CHECKBOX_GLYPH_PROBE_FONT_SIZE * (CHECKBOX_SIDE_SIZE / oInfo.Height);
+		oTextPr.FontSize = nFontSize;
+		oTextPr.FontSizeCS = nFontSize;
+		AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
+		AscCommon.g_oTextMeasurer.SetFontSlot(nProbeSlot, 1);
+		oInfo = AscCommon.g_oTextMeasurer.Measure2Code(CHECKBOX_GLYPH_CODE_CHECKED);
+
+		CHECKBOX_GLYPH_METRICS = {
+			useManual: false,
+			font: {
+				FontFamily: {Name: CHECKBOX_GLYPH_FONT_NAME, Index: -1},
+				FontSize: nFontSize,
+				Bold: false,
+				Italic: false
+			},
+			xCenter: (CHECKBOX_SIDE_SIZE - oInfo.WidthG) / 2 - (oInfo.rasterOffsetX || 0),
+			yBaseline: (CHECKBOX_SIDE_SIZE + oInfo.Height) / 2 + (oInfo.rasterOffsetY || 0)
+		};
+		return CHECKBOX_GLYPH_METRICS;
+	}
+
+	function drawCheckBoxGlyph(graphics, isChecked, isMixed) {
+		const oMetrics = getCheckBoxGlyphMetrics();
+		if (oMetrics.useManual) {
+			return false;
+		}
+		let nCode;
+		if (isChecked) {
+			nCode = CHECKBOX_GLYPH_CODE_CHECKED;
+		} else if (isMixed) {
+			nCode = CHECKBOX_GLYPH_CODE_MIXED;
+		} else {
+			nCode = CHECKBOX_GLYPH_CODE_UNCHECKED;
+		}
+		graphics.SetFont(oMetrics.font);
+		graphics.b_color1.apply(graphics, getFlatCheckBoxPenColor());
+		graphics.FillTextCode(oMetrics.xCenter, oMetrics.yBaseline, nCode);
+		return true;
+	}
+
 	function CCheckBox(oController) {
 		CButtonBase.call(this, oController);
 	}
@@ -732,24 +813,36 @@ function getFlatPenColor() {
 	CCheckBox.prototype.draw = function (graphics) {
 		graphics.SaveGrState();
 		graphics.transform3(this.transform);
-		const endRoundControl = startRoundControl(graphics, 0, 0, this.extX, this.extY, 2, getFlatCheckBoxPenColor());
-		CButtonBase.prototype.draw.call(this, graphics);
-		graphics.p_color.apply(graphics, this.getFlatPenColor());
-		graphics.p_width(400);
-		graphics._s();
-		if (this.isChecked()) {
-			graphics._m(2.5, 0.75);
-			graphics._l(1, 2.25);
-			graphics._l(0.5, 1.75);
+		if (!drawCheckBoxGlyph(graphics, this.isChecked(), this.isMixed())) {
+			const arrPenColor = getFlatCheckBoxPenColor();
+			graphics.p_width(0);
+			graphics.p_color.apply(graphics, arrPenColor);
+			graphics.b_color1.apply(graphics, this.getFlatFillColor());
+			graphics._s();
+			graphics._m(0, 0);
+			graphics._l(this.extX, 0);
+			graphics._l(this.extX, this.extY);
+			graphics._l(0, this.extY);
+			graphics._z();
+			graphics.df();
 			graphics.ds();
+			graphics._e();
 
-		} else if (this.isMixed()) {
-			graphics._m(CHECKBOX_SIDE_SIZE * 0.2, CHECKBOX_SIDE_SIZE * 0.5);
-			graphics._l(CHECKBOX_SIDE_SIZE * 0.8, CHECKBOX_SIDE_SIZE * 0.5);
-			graphics.ds();
+			graphics.p_color.apply(graphics, arrPenColor);
+			graphics.p_width(400);
+			graphics._s();
+			if (this.isChecked()) {
+				graphics._m(2.5, 0.75);
+				graphics._l(1, 2.25);
+				graphics._l(0.5, 1.75);
+				graphics.ds();
+			} else if (this.isMixed()) {
+				graphics._m(CHECKBOX_SIDE_SIZE * 0.2, CHECKBOX_SIDE_SIZE * 0.5);
+				graphics._l(CHECKBOX_SIDE_SIZE * 0.8, CHECKBOX_SIDE_SIZE * 0.5);
+				graphics.ds();
+			}
+			graphics._e();
 		}
-		graphics._e();
-		endRoundControl();
 		graphics.RestoreGrState();
 	};
 
@@ -757,6 +850,11 @@ function getFlatPenColor() {
 		CControlControllerBase.call(this, oControl);
 		this.checkBox = new CCheckBox(this);
 		this.initCheckBoxHandlers();
+		if (AscFonts.IsCheckSymbols) {
+			AscFonts.FontPickerByCharacter.getFontBySymbol(CHECKBOX_GLYPH_CODE_CHECKED);
+			AscFonts.FontPickerByCharacter.getFontBySymbol(CHECKBOX_GLYPH_CODE_UNCHECKED);
+			AscFonts.FontPickerByCharacter.getFontBySymbol(CHECKBOX_GLYPH_CODE_MIXED);
+		}
 	}
 	AscFormat.InitClassWithoutType(CCheckBoxController, CControlControllerBase);
 	CCheckBoxController.prototype.initCheckBoxHandlers = function () {
@@ -1024,7 +1122,7 @@ function getFlatPenColor() {
 		graphics.transform3(transform);
 		const endRoundControl = startRoundControl(graphics, 0, 0, oControl.extX, oControl.extY, 4, getFlatPenColor());
 		this.button.draw(graphics);
-		oControl.drawTxBody(graphics, transform, transformText, pageIndex);
+		AscCommon.drawTxBodyWithGraphicObjectDrawer(oControl, graphics, transform, transformText, pageIndex);
 		endRoundControl();
 		graphics.RestoreGrState();
 	};

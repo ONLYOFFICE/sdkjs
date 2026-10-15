@@ -35,528 +35,401 @@
 
 "use strict";
 
-(function(){
+(function () {
 
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetNotesTheme]  = AscDFH.CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetHF]          = AscDFH.CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetNotesStyle]  = AscDFH.CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToSpTree]    = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterRemoveFromTree] = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetBg]          = AscDFH.CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToNotesLst]  = AscDFH.CChangesDrawingsContentPresentation;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetName]        = AscDFH.CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetClrMap]      = AscDFH.CChangesDrawingsObject;
+	AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetNotesTheme] = AscDFH.CChangesDrawingsObject;
+	AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetHF] = AscDFH.CChangesDrawingsObject;
+	AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetNotesStyle] = AscDFH.CChangesDrawingsObjectNoId;
+	AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetClrMap] = AscDFH.CChangesDrawingsObject;
 
 
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesTheme]  = function(oClass, value){oClass.Theme = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetHF]          = function(oClass, value){oClass.hf = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesStyle]  = function(oClass, value){oClass.txStyles = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetName]        = function(oClass, value){oClass.cSld.name = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetClrMap]      = function(oClass, value){oClass.clrMap = value;};
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetBg]          = function(oClass, value, FromLoad){
-        oClass.cSld.Bg = value;
-        if(FromLoad){
-            var Fill;
-            if(oClass.cSld.Bg && oClass.cSld.Bg.bgPr && oClass.cSld.Bg.bgPr.Fill)
-            {
-                Fill = oClass.cSld.Bg.bgPr.Fill;
-            }
-            if(typeof AscCommon.CollaborativeEditing !== "undefined")
-            {
-                if(Fill && Fill.fill && Fill.fill.type === Asc.c_oAscFill.FILL_TYPE_BLIP && typeof Fill.fill.RasterImageId === "string" && Fill.fill.RasterImageId.length > 0)
-                {
-                    AscCommon.CollaborativeEditing.Add_NewImage(Fill.fill.RasterImageId);
-                }
-            }
-        }
-    };
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesTheme] = function (oClass, value) {
+		oClass.Theme = value;
+	};
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetHF] = function (oClass, value) {
+		oClass.hf = value;
+	};
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesStyle] = function (oClass, value) {
+		oClass.txStyles = value;
+	};
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetClrMap] = function (oClass, value) {
+		oClass.clrMap = value;
+	};
+	AscDFH.drawingsConstructorsMap[AscDFH.historyitem_NotesMasterSetNotesStyle] = AscFormat.TextListStyle;
 
-    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_NotesMasterSetNotesStyle] = AscFormat.TextListStyle;
-    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_NotesMasterSetBg]         = AscFormat.CBg;
+	function CNotesMaster() {
+		AscCommonSlide.SlideBase.call(this);
+		this.clrMap = new AscFormat.ClrMap();
+		this.hf = null;
+		this.txStyles = null;
 
-    AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterAddToSpTree]    = function(oClass){return oClass.cSld.spTree;};
-    AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterRemoveFromTree] = function(oClass){return oClass.cSld.spTree;};
-    AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterAddToNotesLst]  = function(oClass){return oClass.notesLst;};
+		this.Theme = null;
+		this.kind = AscFormat.TYPE_KIND.NOTES_MASTER;
+		this.setSlideSize(this.presentation.GetNotesWidthMM(), this.presentation.GetNotesHeightMM());
+	}
 
-    function CNotesMaster() {
-        AscFormat.CBaseFormatObject.call(this);
-        this.clrMap = new AscFormat.ClrMap();
-        this.cSld =  new AscFormat.CSld(this);
-        this.hf = null;
-        this.txStyles = null;
+	AscFormat.InitClass(CNotesMaster, AscCommonSlide.SlideBase, AscDFH.historyitem_type_NotesMaster);
 
-        this.Theme = null;
-        this.kind = AscFormat.TYPE_KIND.NOTES_MASTER;
-        this.notesLst = [];
+	CNotesMaster.prototype.setTheme = function (pr) {
+		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetNotesTheme, this.Theme, pr));
+		this.Theme = pr;
+	};
+	CNotesMaster.prototype.setClrMap = function (pr) {
+		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetClrMap, this.clrMap, pr));
+		this.clrMap = pr;
+	};
 
+	CNotesMaster.prototype.setHF = function (pr) {
+		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetHF, this.hf, pr));
+		this.hf = pr;
+	};
 
-        this.m_oContentChanges = new AscCommon.CContentChanges(); // list of changes (adding/removing elements)
-    }
-    AscFormat.InitClass(CNotesMaster, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_NotesMaster);
+	CNotesMaster.prototype.setNotesStyle = function (pr) {
+		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesMasterSetNotesStyle, this.txStyles, pr));
+		this.txStyles = pr;
+	};
 
-
-    CNotesMaster.prototype.getObjectType = function(){
-        return AscDFH.historyitem_type_NotesMaster;
-    };
-
-    CNotesMaster.prototype.setTheme = function(pr){
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetNotesTheme, this.Theme, pr));
-        this.Theme = pr;
-    };
-    CNotesMaster.prototype.setClrMap = function(pr){
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetClrMap, this.clrMap, pr));
-        this.clrMap = pr;
-    };
-
-    CNotesMaster.prototype.setHF = function(pr){
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetHF, this.hf, pr));
-        this.hf = pr;
-    };
-
-    CNotesMaster.prototype.setNotesStyle = function(pr){
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesMasterSetNotesStyle, this.txStyles, pr));
-        this.txStyles = pr;
-    };
-
-    CNotesMaster.prototype.addToSpTreeToPos = function(pos, obj){
-        var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
-        History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesMasterAddToSpTree, _pos, [obj], true));
-        this.cSld.spTree.splice(_pos, 0, obj);
-        obj.setParent2(this);
-    };
-
-    CNotesMaster.prototype.removeFromSpTreeByPos = function(pos){
-        if(pos > -1 && pos < this.cSld.spTree.length){
-            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesMasterRemoveFromTree, pos, this.cSld.spTree.splice(pos, 1), false));
-        }
-    };
-
-    CNotesMaster.prototype.removeFromSpTreeById = function(id){
-        for(var i = this.cSld.spTree.length - 1; i > -1; --i){
-            if(this.cSld.spTree[i].Get_Id() === id){
-                this.removeFromSpTreeByPos(i);
-            }
-        }
-    };
-
-    CNotesMaster.prototype.changeBackground = function(bg){
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesMasterSetBg, this.cSld.Bg , bg));
-        this.cSld.Bg = bg;
-    };
-
-    CNotesMaster.prototype.setCSldName = function(pr){
-        History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_NotesMasterSetName, this.cSld.name , pr));
-        this.cSld.name = pr;
-    };
+	CNotesMaster.prototype.createDuplicate = function (IdMap) {
+		var oIdMap = IdMap || {};
+		var oPr = new AscFormat.CCopyObjectProperties();
+		oPr.idMap = oIdMap;
+		var i;
+		var copy = new CNotesMaster();
+		if (this.clrMap) {
+			copy.setClrMap(this.clrMap.createDuplicate());
+		}
+		this.cSld.fillObject(copy.cSld, oPr);
+		if (this.hf) {
+			copy.setHF(this.hf.createDuplicate());
+		}
+		if (this.txStyles) {
+			copy.setNotesStyle(this.txStyles.createDuplicate());
+		}
+		return copy;
+	};
 
 
-    CNotesMaster.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
+	CNotesMaster.prototype.Clear_ContentChanges = function () {
+		this.m_oContentChanges.Clear();
+	};
 
-    CNotesMaster.prototype.addToNotesLst = function (pr, pos) {
-        var _pos = AscFormat.isRealNumber(pos) ? Math.max(0, Math.min(pos, this.notesLst.length)) : this.notesLst.length;
-        History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesMasterAddToNotesLst, _pos, [pr], true));
-        this.notesLst.splice(_pos, 0, pr);
-    };
+	CNotesMaster.prototype.Add_ContentChanges = function (Changes) {
+		this.m_oContentChanges.Add(Changes);
+	};
 
+	CNotesMaster.prototype.Refresh_ContentChanges = function () {
+		this.m_oContentChanges.Refresh();
+	};
 
-    CNotesMaster.prototype.getAllFonts = function(fonts)
-    {
-        var i;
-        if(this.Theme){
-            this.Theme.Document_Get_AllFontNames(fonts);
-        }
+	CNotesMaster.prototype.handleCSldRecalc = function (data) {
+		if (data) {
+			switch (data.Type) {
+				case AscDFH.historyitem_CSld_SetBg:
+					this.recalcInfo.recalculateBackground = true;
+					for (let i = 0; i < this.presentation.notes.length; i += 1) {
+						const note = this.presentation.notes[i];
+						if (note.Master === this) {
+							note.recalcBackground();
+							note.addToRecalculate();
+						}
+					}
+					break;
+				case AscDFH.historyitem_CSld_AddToSpTree:
+				case AscDFH.historyitem_CSld_RemoveFromSpTree:
+					this.recalcInfo.recalculateSpTree = true;
+					break;
+			}
+			this.addToRecalculate();
+		}
+	};
+	CNotesMaster.prototype.Refresh_RecalcData = function (data) {
+		if (data) {
+			switch (data.Type) {
+				case AscDFH.historyitem_NotesMasterSetNotesTheme: {
+					this.presentation.bNeedUpdateThemes = true;
+					this.checkSlideTheme();
+					for (let i = 0; i < this.presentation.notes.length; i += 1) {
+						if (this.presentation.notes[i].Master === this) {
+							this.presentation.notes[i].checkSlideTheme();
+							this.presentation.notes[i].addToRecalculate();
+						}
+					}
+					break;
+				}
+			}
+			this.addToRecalculate();
+		}
+	};
+	CNotesMaster.prototype.getThemeIndex = function () {
+		let aMasters = Asc.editor.WordControl.m_oLogicDocument.notesMasters;
+		for (let nIdx = 0; nIdx < aMasters.length; ++nIdx) {
+			if (aMasters[nIdx] === this) {
+				return -nIdx - 1;
+			}
+		}
+		return 0;
+	};
+	CNotesMaster.prototype.getDrawingsForController = function () {
+		return this.cSld.spTree;
+	};
+	CNotesMaster.prototype.getTheme = function () {
+		return this.Theme || null;
+	};
+	CNotesMaster.prototype.getColorMap = function () {
+		return AscFormat.GetDefaultColorMap();
+	};
+	CNotesMaster.prototype.recalculateBackground = function () {
+		let backgroundFill = null;
+		let rgba = {R: 0, G: 0, B: 0, A: 255};
 
-        if(this.txStyles){
-            this.txStyles.Document_Get_AllFontNames(fonts);
-        }
+		const layout = null;
+		const master = this;
+		const theme = this.Theme;
+		if (this.cSld.Bg != null) {
+			const ret = this.cSld.recalculateBackground(theme, this, layout, master, rgba);
+			backgroundFill = ret.backFill;
+			rgba = ret.RGBA || rgba;
+		}
+		if (backgroundFill != null)
+			backgroundFill.calculate(theme, this, layout, master, rgba);
 
-        for(i = 0; i < this.notesLst.length; ++i){
-            this.notesLst[i].getAllFonts(fonts);
-        }
+		this.backgroundFill = backgroundFill;
+	};
+	CNotesMaster.prototype.checkSlideColorScheme = function () {
+		this.recalcInfo.recalculateSpTree = true;
+		this.recalcInfo.recalculateBackground = true;
+		for (let i = 0; i < this.cSld.spTree.length; ++i) {
+			const shape = this.cSld.spTree[i];
+			if (!shape.isPlaceholder()) {
+				shape.handleUpdateFill();
+				shape.handleUpdateLn();
+			}
+		}
+	};
+	CNotesMaster.prototype.getAllFonts = function (fonts) {
+		var i;
+		if (this.Theme) {
+			this.Theme.Document_Get_AllFontNames(fonts);
+		}
 
-        for(i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            if(typeof  this.cSld.spTree[i].getAllFonts === "function")
-                this.cSld.spTree[i].getAllFonts(fonts);
-        }
-    };
+		if (this.txStyles) {
+			this.txStyles.Document_Get_AllFontNames(fonts);
+		}
 
-    CNotesMaster.prototype.createDuplicate = function(IdMap){
-        var oIdMap = IdMap || {};
-        var oPr = new AscFormat.CCopyObjectProperties();
-        oPr.idMap = oIdMap;
-        var i;
-        var copy = new CNotesMaster();
-        if(this.clrMap)
-        {
-            copy.setClrMap(this.clrMap.createDuplicate());
-        }
-        if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
-        {
-            copy.setCSldName(this.cSld.name);
-        }
-        if(this.cSld.Bg)
-        {
-            copy.changeBackground(this.cSld.Bg.createFullCopy());
-        }
-        for(i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            var _copy = this.cSld.spTree[i].copy(oPr);
-            oIdMap[this.cSld.spTree[i].Id] = _copy.Id;
-            copy.addToSpTreeToPos(copy.cSld.spTree.length, _copy);
-            copy.cSld.spTree[copy.cSld.spTree.length - 1].setParent2(copy);
-        }
-        if(this.hf)
-        {
-            copy.setHF(this.hf.createDuplicate());
-        }
-        if(this.txStyles)
-        {
-            copy.setNotesStyle(this.txStyles.createDuplicate());
-        }
-        return copy;
-    };
+		for (i = 0; i < this.cSld.spTree.length; ++i) {
+			if (typeof this.cSld.spTree[i].getAllFonts === "function")
+				this.cSld.spTree[i].getAllFonts(fonts);
+		}
+	};
+	CNotesMaster.prototype.createFontMap = function (oFontsMap, oCheckedMap, isNoPh) {
+		if (oCheckedMap[this.Get_Id()]) {
+			return;
+		}
+		const spTree = this.cSld.spTree;
+		for (let idx = 0; idx < spTree.length; ++idx) {
+			const oSp = spTree[idx];
+			if (isNoPh) {
+				if (oSp.isPlaceholder()) {
+					continue;
+				}
+			}
+			oSp.createFontMap(oFontsMap);
+		}
+		oCheckedMap[this.Get_Id()] = this;
+	};
+	CNotesMaster.prototype.recalculate = function () {
+		if (this.recalcInfo.recalculateSpTree) {
+			this.recalcInfo.recalculateSpTree = false;
+			for (let i = 0; i < this.cSld.spTree.length; ++i) {
+				this.cSld.spTree[i].recalculate();
+			}
+		}
+		if (this.recalcInfo.recalculateBackground) {
+			this.recalcInfo.recalculateBackground = false;
+			this.recalculateBackground();
+		}
+	};
 
+	CNotesMaster.prototype.getParentObjects = function () {
+		return {
+			presentation: Asc.editor.private_GetLogicDocument(),
+			master      : this,
+			layout      : null,
+			slide       : null
+		};
+	};
+	CNotesMaster.prototype.Get_ColorMap = function () {
+		return this.getColorMap();
+	};
+	CNotesMaster.prototype.IsUseInDocument = function () {
+		const presentation = this.presentation;
+		for (let i = 0; i < presentation.notesMasters.length; i += 1) {
+			if (presentation.notesMasters[i] === this) {
+				return true;
+			}
+		}
+		return false;
+	};
+	CNotesMaster.prototype.draw = function (graphics, slide) {
+		if (slide) {
+			if (AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
+				this.lastRecalcSlideIndex = slide.num;
+				this.cSld.refreshAllContentsFields(true);
+			}
+		} else {
+			if (-1 !== this.lastRecalcSlideIndex) {
+				this.lastRecalcSlideIndex = -1;
+				this.cSld.refreshAllContentsFields(true);
 
- 
-    CNotesMaster.prototype.Clear_ContentChanges = function()
-    {
-        this.m_oContentChanges.Clear();
-    };
+			}
+		}
+		this.recalculate();
 
-    CNotesMaster.prototype.Add_ContentChanges = function(Changes)
-    {
-        this.m_oContentChanges.Add( Changes );
-    };
+		DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
+		this.cSld.forEachSp(function (oSp) {
+			if (!AscCommon.IsHiddenObj(oSp)) {
+				oSp.draw(graphics);
+			}
+		});
+	};
+	CNotesMaster.prototype.drawNoPlaceholdersShapesOnly = function (graphics, slide) {
+		if (slide) {
+			if (AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
+				this.lastRecalcSlideIndex = slide.num;
+				this.cSld.refreshAllContentsFields(true);
+			}
+		} else {
+			if (-1 !== this.lastRecalcSlideIndex) {
+				this.lastRecalcSlideIndex = -1;
+				this.cSld.refreshAllContentsFields(true);
 
-    CNotesMaster.prototype.Refresh_ContentChanges = function()
-    {
-        this.m_oContentChanges.Refresh();
-    };
+			}
+		}
+		this.recalculate();
+		this.cSld.forEachSp(function (oSp) {
+			if (!AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
+				oSp.draw(graphics);
+			}
+		});
+	};
+	CNotesMaster.prototype.shapeRemove = function (pos, count) {
+		if (pos > -1 && pos < this.cSld.spTree.length) {
+			this.cSld.removeFromSpTree(pos, 1);
+		}
+	};
+	CNotesMaster.prototype.shapeAdd = function (pos, obj) {
+		var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
+		this.cSld.checkAndAssignName(obj);
+		this.cSld.addToSpTree(_pos, obj);
+		obj.setParent2(this);
+	};
+	CNotesMaster.prototype.setSlideSize = function (w, h) {
+		this.Width = w;
+		this.Height = h;
+	};
+	CNotesMaster.prototype.isNoteMaster = function () {
+		return true;
+	};
+	CNotesMaster.prototype.checkOnDeletePlaceholder = function (placeholdersMap) {
+		const presentation = Asc.editor.private_GetLogicDocument();
+		if (!presentation) return;
+		const notes = presentation.notes;
+		for (let noteIndex = 0; noteIndex < notes.length; ++noteIndex) {
+			const note = notes[noteIndex];
+			if (note.Master === this) {
+				note.checkOnDeletePlaceholderInSpTree(placeholdersMap);
+			}
+		}
+	};
+	CNotesMaster.prototype.collectRedrawSlides = function (redrawSlides, force) {
+		redrawSlides.addRedrawSlide(this);
+		const presentation = redrawSlides.presentation;
+		for (let i = 0; i < presentation.notes.length; i += 1) {
+			const note = presentation.notes[i];
+			if (note.Master === this) {
+				redrawSlides.addRedrawSlide(note);
+			}
+		}
+	};
+	CNotesMaster.prototype.Write_ToBinary2 = AscCommonSlide.SlideBase.prototype.writeMasterBinary;
+	CNotesMaster.prototype.Read_FromBinary2 = AscCommonSlide.SlideBase.prototype.readMasterBinary;
+	CNotesMaster.prototype.isMasterLikeObject = function () {
+		return true;
+	};
 
-    CNotesMaster.prototype.Refresh_RecalcData = function()
-    {
-    };
+	function CreateNotesMaster() {
+		var oNM = new CNotesMaster();
+		var oBG = new AscFormat.CBg();
+		var oBgRef = new AscFormat.StyleRef();
+		oBgRef.idx = 1001;
+		var oUniColor = new AscFormat.CUniColor();
+		oUniColor.color = new AscFormat.CSchemeColor();
+		oUniColor.color.id = 6;//bg1
+		oBgRef.Color = oUniColor;
+		oBG.bgRef = oBgRef;
+		oNM.changeBackground(oBG);
+		AscCommonSlide.addHeaderShape(oNM);
+		AscCommonSlide.addDateShape(oNM);
+		AscCommonSlide.addBodyShape(oNM);
+		AscCommonSlide.addFooterShape(oNM);
+		AscCommonSlide.addSlideImage(oNM);
+		AscCommonSlide.addNumberShape(oNM);
 
+		//clrMap
+		oNM.clrMap.setClr(0, 0);
+		oNM.clrMap.setClr(1, 1);
+		oNM.clrMap.setClr(2, 2);
+		oNM.clrMap.setClr(3, 3);
+		oNM.clrMap.setClr(4, 4);
+		oNM.clrMap.setClr(5, 5);
+		oNM.clrMap.setClr(10, 10);
+		oNM.clrMap.setClr(11, 11);
+		oNM.clrMap.setClr(6, 12);
+		oNM.clrMap.setClr(7, 13);
+		oNM.clrMap.setClr(15, 8);
+		oNM.clrMap.setClr(16, 9);
 
-    function CreateNotesMaster(){
-        var oNM = new CNotesMaster();
-        var oBG = new AscFormat.CBg();
-        var oBgRef = new AscFormat.StyleRef();
-        oBgRef.idx = 1001;
-        var oUniColor = new AscFormat.CUniColor();
-        oUniColor.color = new AscFormat.CSchemeColor();
-        oUniColor.color.id = 6;//bg1
-        oBgRef.Color = oUniColor;
-        oBG.bgRef = oBgRef;
-        oNM.changeBackground(oBG);
+		const oTxLstStyle = new AscFormat.TextListStyle();
 
-        var oSp = new AscFormat.CShape();
-        oSp.setBDeleted(false);
-        var oNvSpPr = new AscFormat.UniNvPr();
-        var oCNvPr = oNvSpPr.cNvPr;
-        oCNvPr.setId(2);
-        oCNvPr.setName("Header Placeholder 1");
-        var oPh = new AscFormat.Ph();
-        oPh.setType(AscFormat.phType_hdr);
-        oPh.setSz(2);
-        oNvSpPr.nvPr.setPh(oPh);
-        oSp.setNvSpPr(oNvSpPr);
-        oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-        oSp.setSpPr(new AscFormat.CSpPr());
-        oSp.spPr.setParent(oSp);
-        oSp.spPr.setXfrm(new AscFormat.CXfrm());
-        oSp.spPr.xfrm.setParent(oSp.spPr);
-        oSp.spPr.xfrm.setOffX(0);
-        oSp.spPr.xfrm.setOffY(0);
-        oSp.spPr.xfrm.setExtX(2971800/36000);
-        oSp.spPr.xfrm.setExtY(458788/36000);
-        oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        oSp.spPr.geometry.setParent(oSp.spPr);
-        oSp.createTextBody();
-        var oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-        oBodyPr.vert = AscFormat.nVertTThorz;
-        oBodyPr.lIns = 91440/36000;
-        oBodyPr.tIns = 45720/36000;
-        oBodyPr.rIns = 91440/36000;
-        oBodyPr.bIns = 45720/36000;
-        oBodyPr.rtlCol = false;
-        oBodyPr.anchor = 1;
-        oSp.txBody.setBodyPr(oBodyPr);
-        var oTxLstStyle = new AscFormat.TextListStyle();
-        oTxLstStyle.levels[0] =  new CParaPr();
-        oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
-        oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-        oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-        oSp.txBody.setLstStyle(oTxLstStyle);
-        oSp.setParent(oNM);
-        oNM.addToSpTreeToPos(0, oSp);
-        //endParaPr
+		oTxLstStyle.levels[0] = new CParaPr();
+		oTxLstStyle.levels[0].Ind.Left = 0;
+		oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
+		oTxLstStyle.levels[0].DefaultTab = 914400 / 36000;
 
-        oSp = new AscFormat.CShape();
-        oSp.setBDeleted(false);
-        oNvSpPr = new AscFormat.UniNvPr();
-        oCNvPr = oNvSpPr.cNvPr;
-        oCNvPr.setId(3);
-        oCNvPr.setName("Date Placeholder 2");
-        oPh = new AscFormat.Ph();
-        oPh.setType(AscFormat.phType_dt);
-        oPh.setIdx(2 + "");
-        oNvSpPr.nvPr.setPh(oPh);
-        oSp.setNvSpPr(oNvSpPr);
-        oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-        oSp.setSpPr(new AscFormat.CSpPr());
-        oSp.spPr.setParent(oSp);
-        oSp.spPr.setXfrm(new AscFormat.CXfrm());
-        oSp.spPr.xfrm.setParent(oSp.spPr);
-        oSp.spPr.xfrm.setOffX(3884613/36000);
-        oSp.spPr.xfrm.setOffY(0);
-        oSp.spPr.xfrm.setExtX(2971800/36000);
-        oSp.spPr.xfrm.setExtY(458788/36000);
-        oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        oSp.spPr.geometry.setParent(oSp.spPr);
-        oSp.createTextBody();
-        oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-        oBodyPr.vert = AscFormat.nVertTThorz;
-        oBodyPr.lIns = 91440/36000;
-        oBodyPr.tIns = 45720/36000;
-        oBodyPr.rIns = 91440/36000;
-        oBodyPr.bIns = 45720/36000;
-        oBodyPr.rtlCol = false;
-        oBodyPr.anchor = 1;
-        oSp.txBody.setBodyPr(oBodyPr);
-        oTxLstStyle = new AscFormat.TextListStyle();
-        oTxLstStyle.levels[0] =  new CParaPr();
-        oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-        oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-        oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-        //endParaPr
-        oSp.txBody.setLstStyle(oTxLstStyle);
-        oSp.setParent(oNM);
-        oNM.addToSpTreeToPos(1, oSp);
+		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
+		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
+		oTxLstStyle.levels[0].DefaultRunPr.Unifill = AscFormat.CreateUniFillSchemeColorWidthTint(15, 0);
 
-        oSp = new AscFormat.CShape();
-        oSp.setBDeleted(false);
-        oNvSpPr = new AscFormat.UniNvPr();
-        oCNvPr = oNvSpPr.cNvPr;
-        oCNvPr.setId(3);
-        oCNvPr.setName("Date Placeholder 2");
-        oPh = new AscFormat.Ph();
-        oPh.setType(AscFormat.phType_dt);
-        oPh.setIdx(3 + "");
-        oNvSpPr.nvPr.setPh(oPh);
-        oSp.setNvSpPr(oNvSpPr);
-        oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-        oSp.setSpPr(new AscFormat.CSpPr());
-        oSp.spPr.setParent(oSp);
-        oSp.spPr.setXfrm(new AscFormat.CXfrm());
-        oSp.spPr.xfrm.setParent(oSp.spPr);
-        oSp.spPr.xfrm.setOffX(3884613/36000);
-        oSp.spPr.xfrm.setOffY(0);
-        oSp.spPr.xfrm.setExtX(2971800/36000);
-        oSp.spPr.xfrm.setExtY(458788/36000);
-        oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        oSp.spPr.geometry.setParent(oSp.spPr);
-        oSp.createTextBody();
-        oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-        oBodyPr.vert = AscFormat.nVertTThorz;
-        oBodyPr.lIns = 91440/36000;
-        oBodyPr.tIns = 45720/36000;
-        oBodyPr.rIns = 91440/36000;
-        oBodyPr.bIns = 45720/36000;
-        oBodyPr.rtlCol = false;
-        oBodyPr.anchor = 1;
-        oSp.txBody.setBodyPr(oBodyPr);
-        oTxLstStyle = new AscFormat.TextListStyle();
-        oTxLstStyle.levels[0] =  new CParaPr();
-        oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-        oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-        oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-        //endParaPr
-        oSp.txBody.setLstStyle(oTxLstStyle);
-        oSp.setParent(oNM);
-        oNM.addToSpTreeToPos(2, oSp);
+		oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetFontStyle(AscFormat.fntStyleInd_minor);
 
-        oSp = new AscFormat.CShape();
-        oSp.setBDeleted(false);
-        oNvSpPr = new AscFormat.UniNvPr();
-        oCNvPr = oNvSpPr.cNvPr;
-        oCNvPr.setId(5);
-        oCNvPr.setName("Notes Placeholder 4");
-        oPh = new AscFormat.Ph();
-        oPh.setType(AscFormat.phType_body);
-        oPh.setIdx(1 + "");
-        oPh.setSz(2);
-        oNvSpPr.nvPr.setPh(oPh);
-        oSp.setNvSpPr(oNvSpPr);
-        oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-        oSp.setSpPr(new AscFormat.CSpPr());
-        oSp.spPr.setParent(oSp);
-        oSp.spPr.setXfrm(new AscFormat.CXfrm());
-        oSp.spPr.xfrm.setParent(oSp.spPr);
-        oSp.spPr.xfrm.setOffX(685800/36000);
-        oSp.spPr.xfrm.setOffY(4400550/36000);
-        oSp.spPr.xfrm.setExtX(5486400/36000);
-        oSp.spPr.xfrm.setExtY(3600450/36000);
-        oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        oSp.spPr.geometry.setParent(oSp.spPr);
-        oSp.createTextBody();
-        oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-        oBodyPr.vert = AscFormat.nVertTThorz;
-        oBodyPr.lIns = 91440/36000;
-        oBodyPr.tIns = 45720/36000;
-        oBodyPr.rIns = 91440/36000;
-        oBodyPr.bIns = 45720/36000;
-        oBodyPr.rtlCol = false;
-        oBodyPr.anchor = 1;
-        oSp.txBody.setBodyPr(oBodyPr);
-        oTxLstStyle = new AscFormat.TextListStyle();
-        //endParaPr
-        oSp.txBody.setLstStyle(oTxLstStyle);
-        oSp.setParent(oNM);
-        oNM.addToSpTreeToPos(3, oSp);
+		oTxLstStyle.levels[1] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[1].Ind.Left = 457200 / 36000;
 
-        oSp = new AscFormat.CShape();
-        oSp.setBDeleted(false);
-        oNvSpPr = new AscFormat.UniNvPr();
-        oCNvPr = oNvSpPr.cNvPr;
-        oCNvPr.setId(6);
-        oCNvPr.setName("Footer Placeholder 5");
-        oPh = new AscFormat.Ph();
-        oPh.setType(AscFormat.phType_ftr);
-        oPh.setIdx(4 + "");
-        oPh.setSz(2);
-        oNvSpPr.nvPr.setPh(oPh);
-        oSp.setNvSpPr(oNvSpPr);
-        oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-        oSp.setSpPr(new AscFormat.CSpPr());
-        oSp.spPr.setParent(oSp);
-        oSp.spPr.setXfrm(new AscFormat.CXfrm());
-        oSp.spPr.xfrm.setParent(oSp.spPr);
-        oSp.spPr.xfrm.setOffX(0);
-        oSp.spPr.xfrm.setOffY(8685213/36000);
-        oSp.spPr.xfrm.setExtX(2971800/36000);
-        oSp.spPr.xfrm.setExtY(458787/36000);
-        oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        oSp.spPr.geometry.setParent(oSp.spPr);
-        oSp.createTextBody();
-        oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-        oBodyPr.vert = AscFormat.nVertTThorz;
-        oBodyPr.lIns = 91440/36000;
-        oBodyPr.tIns = 45720/36000;
-        oBodyPr.rIns = 91440/36000;
-        oBodyPr.bIns = 45720/36000;
-        oBodyPr.rtlCol = false;
-        oBodyPr.anchor = 0;
-        oSp.txBody.setBodyPr(oBodyPr);
-        oTxLstStyle = new AscFormat.TextListStyle();
-        oTxLstStyle.levels[0] =  new CParaPr();
-        oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
-        oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-        oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-        //endParaPr
-        oSp.txBody.setLstStyle(oTxLstStyle);
-        oSp.setParent(oNM);
-        oNM.addToSpTreeToPos(4, oSp);
+		oTxLstStyle.levels[2] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[2].Ind.Left = 914400 / 36000;
 
-        oSp = new AscFormat.CShape();
-        oSp.setBDeleted(false);
-        oNvSpPr = new AscFormat.UniNvPr();
-        oCNvPr = oNvSpPr.cNvPr;
-        oCNvPr.setId(7);
-        oCNvPr.setName("Slide Number Placeholder 6");
-        oPh = new AscFormat.Ph();
-        oPh.setType(AscFormat.phType_sldNum);
-        oPh.setIdx(10 + "");
-        oPh.setSz(2);
-        oNvSpPr.nvPr.setPh(oPh);
-        oSp.setNvSpPr(oNvSpPr);
-        oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-        oSp.setSpPr(new AscFormat.CSpPr());
-        oSp.spPr.setParent(oSp);
-        oSp.spPr.setXfrm(new AscFormat.CXfrm());
-        oSp.spPr.xfrm.setParent(oSp.spPr);
-        oSp.spPr.xfrm.setOffX(3884613/36000);
-        oSp.spPr.xfrm.setOffY(8685213/36000);
-        oSp.spPr.xfrm.setExtX(2971800/36000);
-        oSp.spPr.xfrm.setExtY(458787/36000);
-        oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        oSp.spPr.geometry.setParent(oSp.spPr);
-        oSp.createTextBody();
-        oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-        oBodyPr.vert = AscFormat.nVertTThorz;
-        oBodyPr.lIns = 91440/36000;
-        oBodyPr.tIns = 45720/36000;
-        oBodyPr.rIns = 91440/36000;
-        oBodyPr.bIns = 45720/36000;
-        oBodyPr.rtlCol = false;
-        oBodyPr.anchor = 0;
-        oSp.txBody.setBodyPr(oBodyPr);
-        oTxLstStyle = new AscFormat.TextListStyle();
-        oTxLstStyle.levels[0] =  new CParaPr();
-        oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-        oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-        oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-        //endParaPr
-        oSp.txBody.setLstStyle(oTxLstStyle);
-        oSp.setParent(oNM);
-        oNM.addToSpTreeToPos(5, oSp);
+		oTxLstStyle.levels[3] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[3].Ind.Left = 1371600 / 36000;
 
-        //clrMap
-        oNM.clrMap.setClr(0, 0);
-        oNM.clrMap.setClr(1, 1);
-        oNM.clrMap.setClr(2, 2);
-        oNM.clrMap.setClr(3, 3);
-        oNM.clrMap.setClr(4, 4);
-        oNM.clrMap.setClr(5, 5);
-        oNM.clrMap.setClr(10, 10);
-        oNM.clrMap.setClr(11, 11);
-        oNM.clrMap.setClr(6, 12);
-        oNM.clrMap.setClr(7, 13);
-        oNM.clrMap.setClr(15, 8);
-        oNM.clrMap.setClr(16, 9);
+		oTxLstStyle.levels[4] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[4].Ind.Left = 1828800 / 36000;
 
-        oTxLstStyle = new AscFormat.TextListStyle();
+		oTxLstStyle.levels[5] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[5].Ind.Left = 2286000 / 36000;
 
-        oTxLstStyle.levels[0] =  new CParaPr();
-        oTxLstStyle.levels[0].Ind.Left = 0;
-        oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
-        oTxLstStyle.levels[0].DefaultTab = 914400/36000;
+		oTxLstStyle.levels[6] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[6].Ind.Left = 2743200 / 36000;
 
-        oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-        oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-        oTxLstStyle.levels[0].DefaultRunPr.Unifill = AscFormat.CreateUniFillSchemeColorWidthTint(15, 0);
+		oTxLstStyle.levels[7] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[7].Ind.Left = 3200400 / 36000;
 
-        oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetFontStyle(AscFormat.fntStyleInd_minor);
+		oTxLstStyle.levels[8] = oTxLstStyle.levels[0].Copy();
+		oTxLstStyle.levels[8].Ind.Left = 3657600 / 36000;
+		oNM.setNotesStyle(oTxLstStyle);
+		return oNM;
+	}
 
-        oTxLstStyle.levels[1] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[1].Ind.Left = 457200/36000;
-
-        oTxLstStyle.levels[2] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[2].Ind.Left = 914400/36000;
-
-        oTxLstStyle.levels[3] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[3].Ind.Left = 1371600/36000;
-
-        oTxLstStyle.levels[4] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[4].Ind.Left = 1828800/36000;
-
-        oTxLstStyle.levels[5] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[5].Ind.Left = 2286000/36000;
-
-        oTxLstStyle.levels[6] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[6].Ind.Left = 2743200/36000;
-
-        oTxLstStyle.levels[7] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[7].Ind.Left = 3200400/36000;
-
-        oTxLstStyle.levels[8] = oTxLstStyle.levels[0].Copy();
-        oTxLstStyle.levels[8].Ind.Left = 3657600/36000;
-        oNM.setNotesStyle(oTxLstStyle);
-        return oNM;
-    }
-
-    window['AscCommonSlide'] = window['AscCommonSlide'] || {};
-    window['AscCommonSlide'].CNotesMaster = CNotesMaster;
-    window['AscCommonSlide'].CreateNotesMaster = CreateNotesMaster;
+	window['AscCommonSlide'] = window['AscCommonSlide'] || {};
+	window['AscCommonSlide'].CNotesMaster = CNotesMaster;
+	window['AscCommonSlide'].CreateNotesMaster = CreateNotesMaster;
 })();

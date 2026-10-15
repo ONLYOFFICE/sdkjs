@@ -332,6 +332,7 @@ CChangesRunAddItem.prototype.Undo = function()
 	oRun.private_UpdateMarksOnRemove(this.Pos, this.Items.length);
 	oRun.private_UpdateTrackRevisionOnChangeContent(false);
 	oRun.private_UpdatePositionsOnRemove(this.Pos, this.Items.length);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunAddItem.prototype.Redo = function()
 {
@@ -353,6 +354,7 @@ CChangesRunAddItem.prototype.Redo = function()
 		if (this.Items[nIndex].SetParent)
 			this.Items[nIndex].SetParent(oRun);
 	}
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunAddItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -392,7 +394,7 @@ CChangesRunAddItem.prototype.Load = function(Color)
 	oRun.RecalcInfo.Measure = true;
 	oRun.OnContentChange();
 	oRun.private_UpdateTrackRevisionOnChangeContent(false);
-	oRun.private_UpdateDocumentOutline();
+	oRun.private_UpdateOutline();
 };
 CChangesRunAddItem.prototype.IsRelated = function(oChanges)
 {
@@ -437,6 +439,7 @@ CChangesRunRemoveItem.prototype.Undo = function()
 		if (this.Items[nIndex].SetParent)
 			this.Items[nIndex].SetParent(oRun);
 	}
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunRemoveItem.prototype.Redo = function()
 {
@@ -448,6 +451,7 @@ CChangesRunRemoveItem.prototype.Redo = function()
 	oRun.private_UpdateMarksOnRemove(this.Pos, this.Items.length);
 	oRun.private_UpdateTrackRevisionOnChangeContent(false);
 	oRun.private_UpdatePositionsOnRemove(this.Pos, this.Items.length);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunRemoveItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -509,7 +513,7 @@ CChangesRunRemoveItem.prototype.Load = function()
 	oRun.RecalcInfo.Measure = true;
 	oRun.OnContentChange();
 	oRun.private_UpdateTrackRevisionOnChangeContent(false);
-	oRun.private_UpdateDocumentOutline();
+	oRun.private_UpdateOutline();
 };
 CChangesRunRemoveItem.prototype.IsRelated = function(oChanges)
 {
@@ -564,6 +568,7 @@ CChangesRunItalic.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunItalic.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunItalic.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -586,6 +591,7 @@ CChangesRunStrikeout.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunStrikeout.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunStrikeout.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -608,6 +614,7 @@ CChangesRunUnderline.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunUnderline.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunUnderline.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -682,6 +689,7 @@ CChangesRunVertAlign.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunVertAlign.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunVertAlign.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -899,6 +907,7 @@ CChangesRunSpacing.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunSpacing.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunSpacing.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -921,6 +930,7 @@ CChangesRunDStrikeout.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunDStrikeout.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunDStrikeout.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -943,6 +953,7 @@ CChangesRunCaps.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunCaps.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunCaps.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -965,6 +976,7 @@ CChangesRunSmallCaps.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunSmallCaps.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunSmallCaps.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
@@ -1605,6 +1617,7 @@ CChangesRunTextPr.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.private_UpdatePresentationOutline();
 };
 CChangesRunTextPr.prototype.Load = function(Color)
 {

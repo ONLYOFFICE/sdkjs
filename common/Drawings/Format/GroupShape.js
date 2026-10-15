@@ -247,6 +247,13 @@
 				item.setGroup(this);
 			}
 			this.spTree.splice(pos, 0, item);
+			this.processSlideJumpLinks(item, true);
+		};
+		CGroupShape.prototype.processSlideJumpLinks = function (item, isAdd) {
+			var logicDocument = Asc.editor.getLogicDocument();
+			if (logicDocument && logicDocument.processSlideJumpLinksInSubtree) {
+				logicDocument.processSlideJumpLinksInSubtree(item, isAdd);
+			}
 		};
 
 		CGroupShape.prototype.setParent = function (pr) {
@@ -280,6 +287,9 @@
 			var aSplicedShape = this.spTree.splice(pos, 1);
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GroupShapeRemoveFromSpTree, pos, aSplicedShape, false));
 			this.handleUpdateSpTree();
+			if (aSplicedShape[0]) {
+				this.processSlideJumpLinks(aSplicedShape[0], false);
+			}
 			return aSplicedShape[0];
 		};
 
@@ -598,7 +608,8 @@
 						cy = dExtY / this.spPr.xfrm.chExtY;
 				}
 				if (isRealObject(this.group)) {
-					var group_scale_coefficients = this.group.getResultScaleCoefficients(true);
+					let ownRot = this.spPr && this.spPr.xfrm ? this.spPr.xfrm.rot : null;
+					let group_scale_coefficients = AscFormat.getScaleCoefficientsForRotate(this.group.getResultScaleCoefficients(true), ownRot);
 					cx *= group_scale_coefficients.cx;
 					cy *= group_scale_coefficients.cy;
 				}
@@ -1007,12 +1018,25 @@
 		};
 
 		CGroupShape.prototype.Search = function (SearchEngine, Type) {
-			var Len = this.arrGraphicObjects.length;
+			var Len = this.spTree.length;
 			for (var i = 0; i < Len; ++i) {
-				if (this.arrGraphicObjects[i].Search) {
-					this.arrGraphicObjects[i].Search(SearchEngine, Type);
+				if (this.spTree[i].Search) {
+					this.spTree[i].Search(SearchEngine, Type);
 				}
 			}
+		};
+
+		CGroupShape.prototype.GetAllParaMaths = function (arrParaMaths) {
+			if (!arrParaMaths) {
+				arrParaMaths = [];
+			}
+			var Len = this.arrGraphicObjects.length;
+			for (var i = 0; i < Len; ++i) {
+				if (this.arrGraphicObjects[i].GetAllParaMaths) {
+					this.arrGraphicObjects[i].GetAllParaMaths(arrParaMaths);
+				}
+			}
+			return arrParaMaths;
 		};
 
 		CGroupShape.prototype.GetSearchElementId = function (bNext, bCurrent) {
@@ -1236,11 +1260,14 @@
 				this.spTree[i].normalize();
 			}
 			AscFormat.CGraphicObjectBase.prototype.normalize.call(this);
-			var xfrm = this.spPr.xfrm;
-			xfrm.setChExtX(xfrm.extX);
-			xfrm.setChExtY(xfrm.extY);
-			xfrm.setChOffX(0);
-			xfrm.setChOffY(0);
+			let xfrm = this.spPr && this.spPr.xfrm;
+			if (!xfrm) {
+				return;
+			}
+			xfrm.chExtX !== xfrm.extX && xfrm.setChExtX(xfrm.extX);
+			xfrm.chExtY !== xfrm.extY && xfrm.setChExtY(xfrm.extY);
+			xfrm.chOffX !== 0 && xfrm.setChOffX(0);
+			xfrm.chOffY !== 0 && xfrm.setChOffY(0);
 		};
 
 		CGroupShape.prototype.updateCoordinatesAfterInternalResize = function () {

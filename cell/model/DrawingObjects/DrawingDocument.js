@@ -174,7 +174,6 @@ function CDrawingDocument()
 
     this.MathTrack = new AscCommon.CMathTrack();
 
-    this.CurrentSearchNavi = null;
     this.SearchTransform = null;
 
     this.m_lTimerUpdateTargetID = -1;
@@ -624,6 +623,11 @@ function CDrawingDocument()
     {
     };
 
+    this.GetTrackedTable = function()
+    {
+        return null;
+    };
+
     this.EndTrackTable = function(pointer, bIsAttack)
     {
     };
@@ -671,12 +675,14 @@ function CDrawingDocument()
 			_offY /= rPR;
         }
 
+        
         for (nIndex = 0; nIndex < PathLng; nIndex++)
         {
             oPath = this.MathTrack.GetPolygon(nIndex);
             this.MathTrack.Draw(overlay, oPath, 0, 0, "#939393", dKoefX, dKoefY, _offX, _offY, this.TextMatrix);
             this.MathTrack.Draw(overlay, oPath, 1, 1, "#FFFFFF", dKoefX, dKoefY, _offX, _offY, this.TextMatrix);
         }
+    
         for (nIndex = 0, nCount = this.MathTrack.GetSelectPathsCount(); nIndex < nCount; nIndex++)
         {
             oPath =  this.MathTrack.GetSelectPath(nIndex);
@@ -746,6 +752,10 @@ function CDrawingDocument()
 
     this.private_EndDrawSelection = function()
     {
+		if (null == this.Overlay) {
+			return;
+		}
+
         var ctx = this.Overlay.m_oContext;
 
         ctx.globalAlpha = 0.2;
@@ -877,6 +887,15 @@ function CDrawingDocument()
     {
         var PixelError = this.GetMMPerDot(1) * 3;
         this.MathTrack.Update(IsActive, IsContentActive, oMath, PixelError);
+        
+        // Force overlay redraw so the math selection highlight follows the caret.
+        // Without this the new polygons sit in memory until some other event repaints
+        // the overlay, leaving a stale highlight on the previously active math block
+        // (e.g. caret moves into the denominator but the numerator stays highlighted).
+        var drawingObjects = this.getDrawingObjects();
+        if (drawingObjects) {
+            drawingObjects.OnUpdateOverlay();
+        }
     };
 
     this.Update_ParaTab = function(Default_Tab, ParaTabs)

@@ -367,11 +367,19 @@ CChangesParagraphAddItem.prototype.Type = AscDFH.historyitem_Paragraph_AddItem;
 CChangesParagraphAddItem.prototype.Undo = function()
 {
 	var oParagraph = this.Class;
+	for (let idx = this.Items.length - 1; idx >= 0; --idx)
+	{
+		let item = this.Items[idx];
+		item.SetParent(null);
+		item.SetParagraph(null);
+		item.OnDetach();
+	}
 	oParagraph.Content.splice(this.Pos, this.Items.length);
 	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	private_ParagraphChangesOnSetValue(this.Class);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphAddItem.prototype.Redo = function()
 {
@@ -387,18 +395,17 @@ CChangesParagraphAddItem.prototype.Redo = function()
 
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
-		var oItem = this.Items[nIndex];
-		oItem.Parent = this.Class;
+		let item = this.Items[nIndex];
+		item.Parent = this.Class;
+		item.SetParent(this.Class);
+		item.SetParagraph(this.Class);
 
-		if (oItem.SetParent)
-			oItem.SetParent(this.Class);
-
-		if (oItem.SetParagraph)
-			oItem.SetParagraph(this.Class);
-
-		if (oItem.Recalc_RunsCompiledPr)
-			oItem.Recalc_RunsCompiledPr();
+		if (item.Recalc_RunsCompiledPr)
+			item.Recalc_RunsCompiledPr();
+		
+		item.OnAttach();
 	}
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphAddItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -425,11 +432,8 @@ CChangesParagraphAddItem.prototype.Load = function(Color)
 					oComment.UpdatePosition();
 			}
 
-			if (Element.SetParagraph)
-				Element.SetParagraph(oParagraph);
-
-			if (Element.SetParent)
-				Element.SetParent(oParagraph);
+			Element.SetParagraph(oParagraph);
+			Element.SetParent(oParagraph);
 
 			oParagraph.Content.splice(Pos, 0, Element);
 			oParagraph.private_UpdateSelectionPosOnAdd(Pos, 1);
@@ -437,13 +441,15 @@ CChangesParagraphAddItem.prototype.Load = function(Color)
 
 			if (Element.Recalc_RunsCompiledPr)
 				Element.Recalc_RunsCompiledPr();
+			
+			Element.OnAttach();
 		}
 	}
 
 	oParagraph.private_ResetSelection();
 	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
-	oParagraph.UpdateDocumentOutline();
+	oParagraph.UpdateOutline();
 
 	private_ParagraphChangesOnSetValue(this.Class);
 };
@@ -502,26 +508,32 @@ CChangesParagraphRemoveItem.prototype.Undo = function()
 	{
 		var oItem = this.Items[nIndex];
 
-		oItem.Parent = this.Class;
-
-		if (oItem.SetParent)
-			oItem.SetParent(this.Class);
-
-		if (oItem.SetParagraph)
-			oItem.SetParagraph(this.Class);
+		oItem.SetParent(this.Class);
+		oItem.SetParagraph(this.Class);
 
 		if (oItem.Recalc_RunsCompiledPr)
 			oItem.Recalc_RunsCompiledPr();
+
+		oItem.OnAttach();
 	}
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphRemoveItem.prototype.Redo = function()
 {
 	var oParagraph  = this.Class;
+	for (let idx = this.Items.length - 1; idx >= 0; --idx)
+	{
+		let item = this.Items[idx];
+		item.SetParent(null);
+		item.SetParagraph(null);
+		item.OnDetach();
+	}
 	oParagraph.Content.splice(this.Pos, this.Items.length);
 	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	private_ParagraphChangesOnSetValue(this.Class);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphRemoveItem.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -540,7 +552,12 @@ CChangesParagraphRemoveItem.prototype.Load = function(Color)
 
 		if (false === ChangesPos)
 			continue;
-
+		
+		let item = oParagraph.Content[ChangesPos];
+		item.SetParent(null);
+		item.SetParagraph(null);
+		item.OnDetach();
+		
 		oParagraph.Content.splice(ChangesPos, 1);
 		oParagraph.private_UpdateSelectionPosOnRemove(ChangesPos, 1);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oParagraph, ChangesPos, 1);
@@ -548,7 +565,7 @@ CChangesParagraphRemoveItem.prototype.Load = function(Color)
 	oParagraph.private_ResetSelection();
 	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
-	oParagraph.UpdateDocumentOutline();
+	oParagraph.UpdateOutline();
 	private_ParagraphChangesOnSetValue(this.Class);
 };
 CChangesParagraphRemoveItem.prototype.IsRelated = function(oChanges)
@@ -654,6 +671,7 @@ CChangesParagraphIndFirst.prototype.private_SetValue = function(Value)
 
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphIndFirst.prototype.Merge = private_ParagraphChangesOnMergePr;
 CChangesParagraphIndFirst.prototype.Load = private_ParagraphChangesOnLoadPr;
@@ -704,6 +722,7 @@ CChangesParagraphIndLeft.prototype.private_SetValue = function(Value)
 
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphIndLeft.prototype.Merge = private_ParagraphChangesOnMergePr;
 CChangesParagraphIndLeft.prototype.Load = private_ParagraphChangesOnLoadPr;
@@ -730,6 +749,7 @@ CChangesParagraphIndRight.prototype.private_SetValue = function(Value)
 
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphIndRight.prototype.Merge = private_ParagraphChangesOnMergePr;
 CChangesParagraphIndRight.prototype.Load = private_ParagraphChangesOnLoadPr;
@@ -1256,7 +1276,7 @@ CChangesParagraphPStyle.prototype.private_SetValue = function(Value)
 	oParagraph.RecalcCompiledPr(true);
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
 	oParagraph.Recalc_RunsCompiledPr();
-	oParagraph.UpdateDocumentOutline();
+	oParagraph.UpdateOutline();
 	oParagraph.private_RefreshNumbering();
 	private_ParagraphChangesOnSetValue(this.Class);
 };
@@ -1416,7 +1436,7 @@ CChangesParagraphPr.prototype.private_SetValue = function(Value)
 
 	oParagraph.RecalcCompiledPr(true);
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
-	oParagraph.UpdateDocumentOutline();
+	oParagraph.UpdateOutline();
 	private_ParagraphChangesOnSetValue(this.Class);
 
 	if (!oNumPr || !oParagraph.Pr.NumPr || oNumPr.NumId !== oParagraph.Pr.NumPr.NumId || oNumPr.Lvl !== oParagraph.Pr.NumPr.Lvl)
@@ -1673,6 +1693,7 @@ CChangesParagraphPresentationPrBullet.prototype.private_SetValue = function(Valu
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.Recalc_RunsCompiledPr();
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphPresentationPrBullet.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
@@ -1694,6 +1715,7 @@ CChangesParagraphPresentationPrLevel.prototype.private_SetValue = function(Value
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.Recalc_RunsCompiledPr();
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	oParagraph.UpdatePresentationOutline();
 };
 CChangesParagraphPresentationPrLevel.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**

@@ -140,6 +140,17 @@
             }
             return this.oSizes[8];//A4
         };
+        //see AscCommonExcel.DocumentPageSize.getIdByWHAndStored
+        this.getIdByWHAndStored = function(widthMm, heightMm, storedId)
+        {
+            if(null != storedId)
+            {
+                var stored = this.getSizeById(storedId);
+                if(stored.w_mm == widthMm && stored.h_mm == heightMm)
+                    return storedId;
+            }
+            return this.getSizeByWH(widthMm, heightMm).id;
+        };
     };
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,8 +365,11 @@
 		var dWidth = oPageSetup.asc_getWidth();
 		var dHeight = oPageSetup.asc_getHeight();
 		var nSizeId = undefined;
-		if(null != dWidth && null != dHeight)
-			nSizeId = DocumentPageSize.getSizeByWH(dWidth, dHeight).id;
+		if(null != dWidth && null != dHeight) {
+			//keep sizes sharing the same dimensions (e.g. Letter/LetterSmall) via the stored id while
+			//it is still consistent with the dimensions, otherwise derive it from them
+			nSizeId = DocumentPageSize.getIdByWHAndStored(dWidth, dHeight, oPageSetup.asc_getPaperSize());
+		}
 
 		return {
 			"blackAndWhite":      oPageSetup.blackAndWhite != null ? oPageSetup.blackAndWhite : undefined,
@@ -512,11 +526,11 @@
 			"showZeros":         oView.showZeros != null ? oView.showZeros : undefined,
 			"topLeftCell":       oView.topLeftCell != null ? oView.topLeftCell.getName() : undefined,
 			"zoomScale":         oView.zoomScale != null ? oView.zoomScale : undefined,
-			"pane":              oView.pane != null ? this.SerPane(oView.pane) : undefined, 
+			"pane":              oView.pane != null ? this.SerPane(oView.pane, oView) : undefined,
 			"selection":         oWorksheet.selectionRange != null ? this.SerSelectionRange(oWorksheet.selectionRange) : undefined
 		}
 	};
-	WriterToJSON.prototype.SerPane = function(oPane)
+	WriterToJSON.prototype.SerPane = function(oPane, oView)
 	{
 		if (!oPane)
 			return oPane;
@@ -531,13 +545,17 @@
 		} else if (0 < nCol) {
 			nActivePane = AscCommonExcel.EActivePane.topRight;
 		}
-		
+
+		// xSplit/ySplit = count of frozen cols/rows from the frozen area origin (sheetView.topLeftCell)
+		var nOriginCol = (oView && oView.topLeftCell) ? oView.topLeftCell.c1 : 0;
+		var nOriginRow = (oView && oView.topLeftCell) ? oView.topLeftCell.r1 : 0;
+
 		return {
 			"activePane":  nActivePane != null ? ToXML_EActivePane(nActivePane) : undefined,
 			"state":       "frozen", // Always write Frozen
 			"topLeftCell": oPane.topLeftFrozenCell.getID(),
-			"xSplit":      0 < nCol ? nCol : undefined,
-			"ySplit":      0 < nRow ? nRow : undefined
+			"xSplit":      0 < nCol ? nCol - nOriginCol : undefined,
+			"ySplit":      0 < nRow ? nRow - nOriginRow : undefined
 		}
 	};
 	WriterToJSON.prototype.SerSelectionRange = function(oSelection)
@@ -1810,6 +1828,7 @@
 	};
 	WriterToJSON.prototype.SerPivotCacheRecords = function(oRecords) // CT_PivotCacheRecords
 	{
+		var oCols = oRecords.getParsedCols();
 		var count = oRecords.getRowsCount();
 
 		let oResult = {
@@ -1820,8 +1839,8 @@
 
 		for (let i = 0; i < count; i++) {
 			let aRow = [];
-			for (let j = 0; j < oRecords._cols.length; j++)
-				aRow = aRow.concat(this.SerPivotRecords(oRecords._cols[j], i));
+			for (let j = 0; j < oCols.length; j++)
+				aRow = aRow.concat(this.SerPivotRecords(oCols[j], i));
 			
 			oResult["records"].push(aRow);
 		}
@@ -2624,11 +2643,39 @@
 	{
 		var oThis = this;
 		var aRows = [];
-		var oRange = oWorksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0);
+		var bbox = {c1: 0, r1: 0, c2: AscCommon.gc_nMaxCol0, r2: AscCommon.gc_nMaxRow0};
+		var oRange = oWorksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 		var oTempRow, oTempCell;
+
+		// Style-only events streamed alongside _foreachDataOnly via a shared
+		// drain (O(events)). Occupied _foreachNoEmpty would be O(maxRow)
+		// for a sparse far style entry.
+		function ensureRow(nRow0) {
+			if (oTempRow && oTempRow["r"] === nRow0 + 1) {
+				return;
+			}
+			oTempRow = {
+				"r":    nRow0 + 1,
+				"cell": []
+			};
+			aRows.push(oTempRow);
+		}
+
+		var styleDrain = AscCommonExcel.CellStyleStorage.createStyleOnlyDrain(
+			oWorksheet, bbox, null, function (r, col, xfIndex) {
+				ensureRow(r);
+				var sRef = AscCommon.g_oCellAddressUtils.colnumToColstr(col + 1) + (r + 1);
+				var oCellXfsForWrite = AscCommonExcel.g_StyleCache.getXf(xfIndex);
+				oTempRow["cell"].push({
+					"r": sRef,
+					"s": oThis.stylesForWrite.add(oCellXfsForWrite),
+					"t": ToXml_ST_CellValueType(AscCommon.CellValueType.Number)
+				});
+			});
 
 		function SerRow(oRow)
 		{
+			styleDrain.drainBefore(oRow.index, 0);
 			oTempRow = {
 				"collapsed":    oRow.getCollapsed(),
 				"customHeight": oRow.getCustomHeight(),
@@ -2644,12 +2691,16 @@
 
 		function SerCell(oCell)
 		{
+			styleDrain.drainBefore(oCell.nRow, oCell.nCol);
+			ensureRow(oCell.nRow);
 			var sRef = AscCommon.g_oCellAddressUtils.colnumToColstr(oCell.nCol + 1) + (oCell.nRow + 1);
 			var oFormulaForWrite = oCell.isFormula() ? oThis.InitSaveManager.PrepareFormulaToWrite(oCell) : null;
+			var oCellXfsForWrite = AscCommonExcel.CellStyleStorage.getWriterCellXfs(
+				oCell.ws, oCell.nRow, oCell.nCol, oCell);
 			oTempCell = {
 				"f": SerFormula(oFormulaForWrite),
 				"r": sRef,
-				"s": oThis.stylesForWrite.add(oCell.getStyle()),
+				"s": oThis.stylesForWrite.add(oCellXfsForWrite),
 				"t": ToXml_ST_CellValueType(oCell.type)
 			}
 			if (oCell.multiText)
@@ -2680,7 +2731,7 @@
 		{
 			if (!oFormulaForWrite)
 				return undefined;
-				
+
 			return {
 				"t":   ToXml_ST_CellFormulaType(oFormulaForWrite.type),
 				"ref": oFormulaForWrite.ref != null ? oFormulaForWrite.ref.getName() : undefined,
@@ -2698,7 +2749,8 @@
 			}
 		}
 
-		oRange._foreachNoEmpty(SerCell, SerRow);
+		oRange._foreachDataOnly(SerCell, SerRow);
+		styleDrain.drainTail();
 		return aRows;
 	};
 	WriterToJSON.prototype.SerDataValidations = function(oDataValidations)
@@ -4022,6 +4074,7 @@
 			var item = DocumentPageSize.getSizeById(oParsedSetup["paperSize"]);
 			oPageSetup.asc_setWidth(item.w_mm);
 			oPageSetup.asc_setHeight(item.h_mm);
+			oPageSetup.asc_setPaperSize(oParsedSetup["paperSize"]);
 		}
 		if (oParsedSetup["scale"] != undefined)
 			oPageSetup.scale = oParsedSetup["scale"];
@@ -7903,9 +7956,14 @@
 					oTempCell.setStyle(this.aCellXfs[oParsedCell["s"]]);
 
 				oTempCell.type = FromXml_ST_CellValueType(oParsedCell["t"]);
-				oTempCell.saveContent(true);
+				// Skip SheetMemory init row for pure style-only cells.
+				AscCommonExcel.CellStyleStorage.saveContentSkipStyleOnly(oTempCell, true);
 			}
 		}
+
+		// Migrate any legacy SheetMemory xf bits from older-build files;
+		// there is no read-side fallback after the sweep.
+		AscCommonExcel.CellStyleStorage.hydrateAllColumnsFromSheetMemory(oWorksheet);
 
 		// for(var j = 0; j < tmp.formulaArray.length; j++) {
 		// 	var curFormula = tmp.formulaArray[j];

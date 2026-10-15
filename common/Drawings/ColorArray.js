@@ -37,6 +37,8 @@
 
 (function(window, undefined){
 
+    const LOW_FILL_FACTOR = 50 / 255;
+    const HIGH_FILL_FACTOR = 0.4;
     function CShapeColor(r, g, b){
         this.r = r;
         this.g = g;
@@ -86,21 +88,21 @@
 
     CShapeColor.prototype.darken = function ()
     {
-        return this.getColorData(-0.4);
+        return this.getColorData(-HIGH_FILL_FACTOR);
     };
 
     CShapeColor.prototype.darkenLess = function ()
     {
-        return this.getColorData(-0.2);
+        return this.getColorData(-LOW_FILL_FACTOR);
     };
 
     CShapeColor.prototype.lighten  = function () {
-        return this.getColorData(0.4);
+        return this.getColorData(HIGH_FILL_FACTOR);
     };
 
     CShapeColor.prototype.lightenLess = function()
     {
-        return this.getColorData(0.2);
+        return this.getColorData(LOW_FILL_FACTOR);
     };
 
     CShapeColor.prototype.norm  = function(a){

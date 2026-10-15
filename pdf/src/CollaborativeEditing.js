@@ -46,10 +46,15 @@ function CPDFCollaborativeEditing(oDoc) {
     this.m_oLogicDocument = oDoc;
     this.m_oSelectedObjects = {};
     this.m_aEndLoadCallbacks = [];
+    this.m_aFieldNameConflicts = [];
 }
 
 CPDFCollaborativeEditing.prototype = Object.create(AscCommon.CWordCollaborativeEditing.prototype);
 CPDFCollaborativeEditing.prototype.constructor = CPDFCollaborativeEditing;
+CPDFCollaborativeEditing.prototype.Clear = function() {
+    AscCommon.CWordCollaborativeEditing.prototype.Clear.apply(this, arguments);
+    this.m_aFieldNameConflicts.length = 0;
+};
 
 CPDFCollaborativeEditing.prototype.CheckWaitingImages = function (aImages) {
     if (aImages.length !== 0) {
@@ -172,6 +177,270 @@ CPDFCollaborativeEditing.prototype.GetDocumentPositionBinary = function(oWriter,
 CPDFCollaborativeEditing.prototype.GetDocument = function() {
     return this.m_oLogicDocument;
 };
+CPDFCollaborativeEditing.prototype.private_StartCheckFieldNames = function() {
+	let oHistory = this.GetDocument().History;
+    let nStartPoint = null === oHistory.SavedIndex ? 0 : oHistory.SavedIndex + 1;
+    let nLastPoint = this.m_nUseType <= 0 ? oHistory.Points.length - 1 : oHistory.Index;
+    let oFields = {};
+    let oParents = {};
+
+    function addField(oField) {
+        if (!oField || !oField.IsForm || !oField.IsForm())
+            return;
+
+        let aWidgets = oField.GetAllWidgets();
+        for (let nWidget = 0; nWidget < aWidgets.length; ++nWidget)
+            oFields[aWidgets[nWidget].GetId()] = aWidgets[nWidget];
+    }
+
+    function addFields(aFields) {
+        if (!aFields)
+            return;
+
+        for (let nField = 0; nField < aFields.length; ++nField)
+            addField(aFields[nField]);
+    }
+
+    for (let nPoint = nStartPoint; nPoint <= nLastPoint; ++nPoint) {
+        let oPoint = oHistory.Points[nPoint];
+        if (!oPoint)
+            continue;
+
+        for (let nItem = 0; nItem < oPoint.Items.length; ++nItem) {
+            let oChange = oPoint.Items[nItem].Data;
+            if (!oChange)
+                continue;
+
+            if (oChange.Type === AscDFH.historyitem_TableId_Add) {
+                addField(oChange.NewClass);
+                if (oChange.NewClass && oChange.NewClass.IsForm && oChange.NewClass.IsForm()
+                    && !oChange.NewClass.IsWidget()) {
+                    oParents[oChange.NewClass.GetId()] = oChange.NewClass;
+                }
+            }
+            else if (oChange.Type === AscDFH.historyitem_PDF_Document_FieldsContent && oChange.IsAdd()) {
+                addFields(oChange.Items);
+            }
+            else if (oChange.Type === AscDFH.historyitem_Pdf_Form_Kids_Content && oChange.IsAdd()) {
+                addFields(oChange.Items);
+            }
+            else if (oChange.Type === AscDFH.historyitem_Pdf_Form_Partial_Name) {
+                addField(oChange.Class);
+            }
+        }
+    }
+
+    return {
+        OwnFields:        oFields,
+        OwnParents:       oParents,
+        FieldNodesBefore: private_CollectFieldNodes(this.GetDocument().widgets)
+    };
+};
+CPDFCollaborativeEditing.prototype.private_EndCheckFieldNames = function(oCheckInfo) {
+    let oDoc = this.GetDocument();
+    
+	let oOwnFields			= oCheckInfo.OwnFields;
+    let oOwnParents			= oCheckInfo.OwnParents;
+    let oFieldNodesBefore	= oCheckInfo.FieldNodesBefore;
+
+    let aFieldsAfter = oDoc.widgets;
+    let aForeignFields = [];
+    let oFieldNodesAfter = private_CollectFieldNodes(aFieldsAfter);
+    let oForeignParentsByName = {};
+
+    for (let nField = 0; nField < aFieldsAfter.length; ++nField) {
+        let oField = aFieldsAfter[nField];
+        let sId = oField.GetId();
+        let oFieldBefore = oFieldNodesBefore[sId];
+
+        if (!oOwnFields[sId]
+            && (!oFieldBefore || oFieldBefore.Name !== oField.GetFullName())) {
+            aForeignFields.push(oField);
+        }
+    }
+
+    for (let sNodeId in oFieldNodesAfter) {
+        let oNodeInfo = oFieldNodesAfter[sNodeId];
+        let oField = oNodeInfo.Field;
+        let oNodeBefore = oFieldNodesBefore[sNodeId];
+
+        if (!oField.IsWidget() && !oOwnParents[sNodeId]
+            && (!oNodeBefore || oNodeBefore.Name !== oNodeInfo.Name)) {
+            if (!oForeignParentsByName[oNodeInfo.Name])
+                oForeignParentsByName[oNodeInfo.Name] = [];
+            oForeignParentsByName[oNodeInfo.Name].push(oField);
+        }
+    }
+
+    let oParentConflicts = {};
+    let oFieldsWithParentConflict = {};
+    for (let sOwnId in oOwnFields) {
+        let oOwnField = oOwnFields[sOwnId];
+        let aOwnParents = [];
+        let oParent = oOwnField.GetParent();
+
+        while (oParent) {
+            if (oOwnParents[oParent.GetId()] === oParent)
+                aOwnParents.push(oParent);
+            oParent = oParent.GetParent();
+        }
+
+        aOwnParents.reverse();
+        for (let nParent = 0; nParent < aOwnParents.length; ++nParent) {
+            let oOwnParent = aOwnParents[nParent];
+            let sParentName = oOwnParent.GetFullName();
+            let aForeignParents = oForeignParentsByName[sParentName];
+            if (!aForeignParents)
+                continue;
+
+            oFieldsWithParentConflict[sOwnId] = true;
+            if (!oParentConflicts[oOwnParent.GetId()]) {
+                oParentConflicts[oOwnParent.GetId()] = true;
+                this.m_aFieldNameConflicts.push({
+                    Foreign:    aForeignParents[0],
+                    Parent:     oOwnParent,
+                    ParentName: sParentName
+                });
+            }
+            break;
+        }
+    }
+
+    for (let sOwnId in oOwnFields) {
+        if (oFieldsWithParentConflict[sOwnId])
+            continue;
+
+        let oOwnField = oOwnFields[sOwnId];
+        if (-1 === aFieldsAfter.indexOf(oOwnField))
+            continue;
+
+        let sOwnName = oOwnField.GetFullName();
+        for (let nForeign = 0; nForeign < aForeignFields.length; ++nForeign) {
+            let oForeignField = aForeignFields[nForeign];
+            if (sOwnName === oForeignField.GetFullName()) {
+                this.m_aFieldNameConflicts.push({
+                    Own:     oOwnField,
+                    Foreign: oForeignField,
+                    Name:    sOwnName
+                });
+            }
+        }
+    }
+};
+CPDFCollaborativeEditing.prototype.Apply_OtherChanges = function() {
+    let oCheckInfo = this.private_StartCheckFieldNames();
+
+    AscCommon.CWordCollaborativeEditing.prototype.Apply_OtherChanges.apply(this, arguments);
+
+    this.private_EndCheckFieldNames(oCheckInfo);
+};
+CPDFCollaborativeEditing.prototype.private_ResolveFieldNameConflicts = function() {
+    if (0 === this.m_aFieldNameConflicts.length)
+        return;
+
+    let oDoc = this.GetDocument();
+    let aFields = oDoc.widgets;
+    let oFieldNodes = {};
+    let oConflictingFields = {};
+    let aParentConflicts = [];
+    let bParentRenamed = false;
+
+    function createNameWithPostfix(sName, isNameUsed) {
+        let oPostfixMatch = /^(.*)_(\d+)$/.exec(sName);
+        let sBaseName = oPostfixMatch ? oPostfixMatch[1] : sName;
+        let nPostfix = oPostfixMatch ? Number(oPostfixMatch[2]) + 1 : 1;
+        let sNewName = sBaseName + "_" + nPostfix;
+        
+        while (isNameUsed(sNewName)) {
+            sNewName = sBaseName + "_" + ++nPostfix;
+        }
+
+        return sNewName;
+    }
+
+    for (let nField = 0; nField < aFields.length; ++nField) {
+        let oField = aFields[nField];
+        while (oField) {
+            oFieldNodes[oField.GetId()] = oField;
+            oField = oField.GetParent();
+        }
+    }
+
+    for (let nConflict = 0; nConflict < this.m_aFieldNameConflicts.length; ++nConflict) {
+        if (this.m_aFieldNameConflicts[nConflict].Parent)
+            aParentConflicts.push(this.m_aFieldNameConflicts[nConflict]);
+    }
+
+    aParentConflicts.sort(function(oFirst, oSecond) {
+        return oFirst.ParentName.split(".").length - oSecond.ParentName.split(".").length;
+    });
+
+    for (let nConflict = 0; nConflict < aParentConflicts.length; ++nConflict) {
+        let oConflict = aParentConflicts[nConflict];
+        let oOwnParent = oConflict.Parent;
+        let oForeignParent = oConflict.Foreign;
+
+        if (oFieldNodes[oOwnParent.GetId()] !== oOwnParent
+            || oFieldNodes[oForeignParent.GetId()] !== oForeignParent
+            || oConflict.ParentName !== oOwnParent.GetFullName()
+            || oConflict.ParentName !== oForeignParent.GetFullName()) {
+            continue;
+        }
+
+        let oOwnGrandParent = oOwnParent.GetParent();
+        let sParentPrefix = oOwnGrandParent ? oOwnGrandParent.GetFullName() + "." : "";
+        let sNewPartialName = createNameWithPostfix(oOwnParent.GetPartialName(), function(sName) {
+            return !!oDoc.GetField(sParentPrefix + sName);
+        });
+
+        oOwnParent.SetPartialName(sNewPartialName);
+        bParentRenamed = true;
+    }
+
+    for (let nConflict = 0; nConflict < this.m_aFieldNameConflicts.length; ++nConflict) {
+        let oConflict = this.m_aFieldNameConflicts[nConflict];
+        if (oConflict.Parent)
+            continue;
+
+        let oOwnField = oConflict.Own;
+        let oForeignField = oConflict.Foreign;
+
+        if (-1 === aFields.indexOf(oOwnField)
+            || -1 === aFields.indexOf(oForeignField)
+            || oConflict.Name !== oOwnField.GetFullName()
+            || oConflict.Name !== oForeignField.GetFullName()) {
+            continue;
+        }
+
+        let sName = oConflict.Name;
+        let nFieldType = oOwnField.GetType();
+        if (!oConflictingFields[sName])
+            oConflictingFields[sName] = {};
+        if (!oConflictingFields[sName][nFieldType])
+            oConflictingFields[sName][nFieldType] = [];
+        if (-1 === oConflictingFields[sName][nFieldType].indexOf(oOwnField))
+            oConflictingFields[sName][nFieldType].push(oOwnField);
+    }
+
+    for (let sName in oConflictingFields) {
+        for (let nFieldType in oConflictingFields[sName]) {
+            let aOwnFields = oConflictingFields[sName][nFieldType];
+            let sNewName = createNameWithPostfix(sName, function(sCandidate) {
+                return !!oDoc.GetField(sCandidate);
+            });
+
+            for (let nField = 0; nField < aOwnFields.length; ++nField) {
+                if (aOwnFields[nField].GetFullName() === sName)
+                    aOwnFields[nField].SetName(sNewName);
+            }
+        }
+    }
+
+    if (bParentRenamed && oDoc.private_UpdateTargetForCollaboration)
+        oDoc.private_UpdateTargetForCollaboration(true);
+
+    this.m_aFieldNameConflicts.length = 0;
+};
 CPDFCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave) {
 	if (!this.canSendChanges())
 		return;
@@ -181,6 +450,8 @@ CPDFCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Additiona
 	
 	let localHistory = AscCommon.History;
 	AscCommon.History = oHistory;
+
+    this.private_ResolveFieldNameConflicts();
 	
 	// Recalculate positions
 	this.Refresh_DCChanges();
@@ -353,10 +624,7 @@ CPDFCollaborativeEditing.prototype.Release_Locks = function() {
             Class.AddToRedraw && Class.AddToRedraw();
 
             if (Class.IsAnnot && Class.IsAnnot()) {
-                // if annot is comment or annot with comment then release locks for it too
-                if (Class.IsComment() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
-                    Asc.editor.sync_UnLockComment(Class.Get_Id());
-                }
+                Asc.editor.sync_UnLockComment(Class.Get_Id());
             }
         }
         else if (AscCommon.c_oAscLockTypes.kLockTypeOther3 === CurLockType)
@@ -374,6 +642,27 @@ CPDFCollaborativeEditing.prototype._PostUndo = function(state, changes) {
     this.private_RestoreDocumentState(state);
     logicDocument.History.Get_RecalcData(null, changes)
 };
+
+function private_CollectFieldNodes(aWidgets) {
+    let oNodes = {};
+
+    for (let nWidget = 0; nWidget < aWidgets.length; ++nWidget) {
+        let oField = aWidgets[nWidget];
+        while (oField) {
+            let sId = oField.GetId();
+            if (!oNodes[sId]) {
+                oNodes[sId] = {
+                    Field: oField,
+                    Name:  oField.GetFullName()
+                };
+            }
+
+            oField = oField.GetParent();
+        }
+    }
+
+    return oNodes;
+}
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscPDF'] = window['AscPDF'] || {};

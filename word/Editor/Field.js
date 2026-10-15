@@ -175,44 +175,48 @@ ParaField.prototype.CanSplit = function()
 {
 	return false;
 };
-ParaField.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange, _CurPage)
+ParaField.prototype.recalculateRangeAlign = function(alignState)
 {
-	var CurLine  = _CurLine - this.StartLine;
-	var CurRange = (0 === _CurLine ? _CurRange - this.StartRange : _CurRange);
+	// TODO: We should move all this logic to AlignRecalcState
 
-	if (0 === CurLine && 0 === CurRange && true !== PRSA.RecalcFast)
+	var CurLine  = alignState.CurLine - this.StartLine;
+	var CurRange = (0 === alignState.CurLine ? alignState.CurRange - this.StartRange : alignState.CurRange);
+
+	if (0 === CurLine && 0 === CurRange && true !== alignState.RecalcFast)
 		this.Bounds = {};
 
-	var X0 = PRSA.X;
-	var Y0 = PRSA.Y0;
-	var Y1 = PRSA.Y1;
+	var X0 = alignState.X;
+	var Y0 = alignState.Y0;
+	var Y1 = alignState.Y1;
 
-	CParagraphContentWithParagraphLikeContent.prototype.Recalculate_Range_Spaces.apply(this, arguments);
+	CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign.call(this, alignState);
 
-	var X1 = PRSA.X;
+	var X1 = alignState.X;
 
 	this.Bounds[((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF)] = {
 		X0           : X0,
 		X1           : X1,
 		Y0           : Y0,
 		Y1           : Y1,
-		PageIndex    : PRSA.Paragraph.GetAbsolutePage(_CurPage),
-		PageInternal : _CurPage
+		PageIndex    : alignState.Paragraph.GetAbsolutePage(alignState.CurPage),
+		PageInternal : alignState.CurPage
 	};
 };
-ParaField.prototype.Draw_HighLights = function(PDSH)
+ParaField.prototype.drawHighLights = function(drawState)
 {
-    var X0 = PDSH.X;
-    var Y0 = PDSH.Y0;
-    var Y1 = PDSH.Y1;
+	// TODO: We should move all this logic to AlignRecalcState
+	
+    var X0 = drawState.X;
+    var Y0 = drawState.Y0;
+    var Y1 = drawState.Y1;
 
-    CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
+    CParagraphContentWithParagraphLikeContent.prototype.drawHighLights.apply(this, arguments);
 
-    var X1 = PDSH.X;
+    var X1 = drawState.X;
 
-    if (Math.abs(X0 - X1) > 0.001 && (true === PDSH.DrawMMFields || AscWord.fieldtype_FORMTEXT === this.Get_FieldType()))
+    if (Math.abs(X0 - X1) > 0.001 && (true === drawState.DrawMMFields || AscWord.fieldtype_FORMTEXT === this.Get_FieldType()))
     {
-        PDSH.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
+        drawState.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
     }
 };
 ParaField.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseContentPos)

@@ -42,6 +42,7 @@ AscDFH.changesFactory[AscDFH.historyitem_TableRow_Height]      = CChangesTableRo
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_AddCell]     = CChangesTableRowAddCell;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_RemoveCell]  = CChangesTableRowRemoveCell;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_TableHeader] = CChangesTableRowTableHeader;
+AscDFH.changesFactory[AscDFH.historyitem_TableRow_CantSplit]   = CChangesTableRowCantSplit;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_Pr]          = CChangesTableRowPr;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_PrChange]    = CChangesTableRowPrChange;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_ReviewType]  = CChangesTableRowReviewType;
@@ -76,12 +77,17 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TableRow_TableHeader] = [
 	AscDFH.historyitem_TableRow_TableHeader,
 	AscDFH.historyitem_TableRow_Pr
 ];
+AscDFH.changesRelationMap[AscDFH.historyitem_TableRow_CantSplit] = [
+	AscDFH.historyitem_TableRow_CantSplit,
+	AscDFH.historyitem_TableRow_Pr
+];
 AscDFH.changesRelationMap[AscDFH.historyitem_TableRow_Pr]          = [
 	AscDFH.historyitem_TableRow_Before,
 	AscDFH.historyitem_TableRow_After,
 	AscDFH.historyitem_TableRow_CellSpacing,
 	AscDFH.historyitem_TableRow_Height,
 	AscDFH.historyitem_TableRow_TableHeader,
+	AscDFH.historyitem_TableRow_CantSplit,
 	AscDFH.historyitem_TableRow_Pr,
 	AscDFH.historyitem_TableRow_PrChange
 ];
@@ -441,7 +447,11 @@ CChangesTableRowAddCell.prototype.Undo = function()
 		return;
 
 	var oRow = this.Class;
-	oRow.Content[this.Pos].SetIndex(-1);
+	
+	let cell = oRow.Content[this.Pos];
+	cell.OnDetach();
+	oRow.private_UnlinkCell(cell);
+
 	oRow.Content.splice(this.Pos, 1);
 	oRow.CellsInfo.splice(this.Pos, 1);
 	oRow.Internal_ReIndexing(this.Pos);
@@ -456,9 +466,11 @@ CChangesTableRowAddCell.prototype.Redo = function()
 	var oRow = this.Class;
 	oRow.Content.splice(this.Pos, 0, this.Items[0]);
 	oRow.CellsInfo.splice(this.Pos, 0, {});
+	oRow.private_LinkCell(this.Pos);
 	oRow.Internal_ReIndexing(this.Pos);
 	oRow.private_CheckCurCell();
 	oRow.private_UpdateTableGrid();
+	this.Items[0].OnAttach();
 };
 CChangesTableRowAddCell.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -482,6 +494,8 @@ CChangesTableRowAddCell.prototype.Load = function(Color)
 	{
 		oRow.Content.splice(Pos, 0, Element);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oRow, Pos);
+		oRow.private_LinkCell(Pos);
+		Element.OnAttach();
 	}
 
 	oRow.Internal_ReIndexing();
@@ -519,9 +533,11 @@ CChangesTableRowRemoveCell.prototype.Undo = function()
 	var oRow = this.Class;
 	oRow.Content.splice(this.Pos, 0, this.Items[0]);
 	oRow.CellsInfo.splice(this.Pos, 0, {});
+	oRow.private_LinkCell(this.Pos);
 	oRow.Internal_ReIndexing(this.Pos);
 	oRow.private_CheckCurCell();
 	oRow.private_UpdateTableGrid();
+	this.Items[0].OnAttach();
 };
 CChangesTableRowRemoveCell.prototype.Redo = function()
 {
@@ -529,7 +545,11 @@ CChangesTableRowRemoveCell.prototype.Redo = function()
 		return;
 
 	var oRow = this.Class;
-	oRow.Content[this.Pos].SetIndex(-1);
+
+	let cell = oRow.Content[this.Pos];
+	cell.OnDetach();
+	oRow.private_UnlinkCell(cell);
+
 	oRow.Content.splice(this.Pos, 1);
 	oRow.CellsInfo.splice(this.Pos, 1);
 	oRow.Internal_ReIndexing(this.Pos);
@@ -555,7 +575,10 @@ CChangesTableRowRemoveCell.prototype.Load = function(Color)
 	if (false === Pos)
 		return;
 
-	oRow.Content[Pos].SetIndex(-1);
+	let cell = oRow.Content[Pos];
+	cell.OnDetach();
+	oRow.private_UnlinkCell(cell);
+
 	oRow.Content.splice(Pos, 1);
 	AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oRow, Pos, 1);
 
@@ -595,6 +618,26 @@ CChangesTableRowTableHeader.prototype.private_SetValue = function(Value)
 };
 CChangesTableRowTableHeader.prototype.Merge = private_TableRowChangesOnMergePr;
 CChangesTableRowTableHeader.prototype.CheckLock = private_TableChangesCheckLock;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesTableRowCantSplit(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesTableRowCantSplit.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesTableRowCantSplit.prototype.constructor = CChangesTableRowCantSplit;
+CChangesTableRowCantSplit.prototype.Type = AscDFH.historyitem_TableRow_CantSplit;
+CChangesTableRowCantSplit.prototype.private_SetValue = function(value)
+{
+	let row = this.Class;
+	row.Pr.CantSplit = value;
+	row.Recalc_CompiledPr();
+	row.RecalcCopiledPrCells();
+};
+CChangesTableRowCantSplit.prototype.Merge = private_TableRowChangesOnMergePr;
+CChangesTableRowCantSplit.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectValue}
@@ -661,6 +704,11 @@ CChangesTableRowPr.prototype.Merge = function(oChange)
 		case AscDFH.historyitem_TableRow_TableHeader:
 		{
 			this.New.TableHeader = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_TableRow_CantSplit:
+		{
+			this.New.CantSplit = oChange.New;
 			break;
 		}
 	}

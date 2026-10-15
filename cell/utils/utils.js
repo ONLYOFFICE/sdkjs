@@ -315,7 +315,7 @@
 					.replace(/(\+)/g, "\\+").replace(/(\[)/g, "\\[")
 					.replace(/(\])/g, "\\]").replace(/(\{)/g, "\\{")
 					.replace(/(\})/g, "\\}").replace(/(\$)/g, "\\$")
-					.replace(/(\.)/g, "\\.")
+					.replace(/(\.)/g, "\\.").replace(/(\|)/g, "\\|")
 					.replace(/(~)?\*/g, function ($0, $1) {
 						return $1 ? $0 : '(.*)';
 					})
@@ -328,6 +328,10 @@
 			if (options.isWholeWord)
 				value = '\\b' + value + '\\b';
 
+			// Every '*' becomes a '(.*)' group, so a mask of a few thousand asterisks (about 3000 in
+			// Chromium) throws on the first exec/test, not here - compilation is lazy. Deliberately not
+			// guarded: wildcards are reachable only from ApiRange.Find, so a macro sees the exception,
+			// while a formula criterion is capped at 255 characters.
 			return new RegExp(value, findFlags);
 		}
 
@@ -1101,15 +1105,30 @@
 		Range.prototype.isAbsAll = function () {
 			return this.isAbsR1() && this.isAbsC1() && this.isAbsR2() && this.isAbsC2();
 		};
-		Range.prototype.switchReference = function () {
-			this.refType1 = (this.refType1 + 1) % 4;
-			this.refType2 = (this.refType2 + 1) % 4;
+		Range.prototype.switchReference = function (part) {
+			if (part !== 1 && part !== 2) {
+				// OR-normalize so asymmetric ranges ($B1:B$2) always land on the same canonical type
+				const rowAbs = this.isAbsRow(this.refType1) || this.isAbsRow(this.refType2);
+				const colAbs = this.isAbsCol(this.refType1) || this.isAbsCol(this.refType2);
+				const nextType = ((rowAbs ? 0 : 2) + (colAbs ? 0 : 1) + 1) % 4;
+				this.refType1 = nextType;
+				this.refType2 = nextType;
+			} else {
+				if (part !== 2) this.refType1 = (this.refType1 + 1) % 4;
+				if (part !== 1) this.refType2 = (this.refType2 + 1) % 4;
+			}
 		};
 		Range.prototype.getWidth = function () {
 			return this.c2 - this.c1 + 1;
 		};
 		Range.prototype.getHeight = function () {
 			return this.r2 - this.r1 + 1;
+		};
+		Range.prototype.getSize = function () {
+			return {
+				row: this.getHeight(),
+				col: this.getWidth()
+			}
 		};
 		Range.prototype.transpose = function (startCol, startRow) {
 			if (startCol === undefined) {
@@ -1319,6 +1338,32 @@
 		SelectionRange.prototype.addRange = function () {
 			this.activeCellId = this.ranges.push(new Range(0, 0, 0, 0)) - 1;
 			this.activeCell.clean();
+		};
+		SelectionRange.prototype.isMultiSelect = function () {
+			return this.ranges.length > 1;
+		};
+		SelectionRange.prototype.excludeRange = function (range) {
+			var newRanges = [];
+			for (var i = 0; i < this.ranges.length; ++i) {
+				// difference splits by full-width/height bands, so an untouched range must be kept as is
+				if (!range.isIntersect(this.ranges[i])) {
+					newRanges.push(this.ranges[i]);
+					continue;
+				}
+				// difference gives top/left/right/bottom, MS orders the parts bottom/right/left/top
+				var diff = range.difference(this.ranges[i]);
+				for (var j = diff.length - 1; j >= 0; --j) {
+					newRanges.push(diff[j]);
+				}
+			}
+			if (0 === newRanges.length) {
+				return false;
+			}
+			this.ranges = newRanges;
+			if (this.activeCellId >= newRanges.length) {
+				this.activeCellId = newRanges.length - 1;
+			}
+			return true;
 		};
 		SelectionRange.prototype.assign2 = function (range) {
 			this.clean();
@@ -1566,11 +1611,11 @@
 			for (var i = 0; i < this.ranges.length; ++i) {
 				var range = this.ranges[i];
 				var type = range.getType();
-				if (byCol && c_oAscSelectionType.RangeCol !== type) {
+				if (byCol && c_oAscSelectionType.RangeCol !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
-				if (!byCol && c_oAscSelectionType.RangeRow !== type) {
+				if (!byCol && c_oAscSelectionType.RangeRow !== type && c_oAscSelectionType.RangeMax !== type) {
 					res = false;
 					break;
 				}
@@ -2212,6 +2257,22 @@
 			var valTrim = trim(val);
 			var valInt = valTrim - 0;
 			return valInt == valTrim && valTrim.length > 0 && MIN_EXCEL_INT < valInt && valInt < MAX_EXCEL_INT;//
+		}
+
+		// Parse to a number or null, preserving the legacy parseNum/isNumberInfinity acceptance rules, with one numeric coercion.
+		function tryFiniteNumberString(val) {
+			if (val.indexOf("x") > -1) {
+				return null;
+			}
+			var valTrim = trim(val);
+			if (0 === valTrim.length) {
+				return null;
+			}
+			var number = valTrim - 0;
+			if (number === number && MIN_EXCEL_INT < number && number < MAX_EXCEL_INT) {
+				return number;
+			}
+			return null;
 		}
 
 		function arrayToLowerCase(array) {
@@ -3254,6 +3315,7 @@
 			this.ignorePrintArea = null;
 
 			this.isOnlyFirstPage = null;
+			this.savePage = -1;//global (across all sheets) 0-based index of the only page that needs to be generated, -1 - generate all pages
 			this.nativeOptions = undefined;
 			this.activeSheetsArray = null;//array with sheet indices that need to be printed
 
@@ -3310,6 +3372,34 @@
 		};
 		asc_CAdjustPrint.prototype.asc_setPdfContent = function (val) {
 			this.pdfContent = val;
+		};
+
+		asc_CAdjustPrint.prototype.getLayoutKey = function () {
+			var mapKey = '';
+			if (this.pageOptionsMap) {
+				for (var idx in this.pageOptionsMap) {
+					var opt = this.pageOptionsMap[idx];
+					if (!opt) { mapKey += idx + ':null;'; continue; }
+					var s = opt.pageSetup;
+					var m = opt.pageMargins;
+					mapKey += idx + ':[' +
+						(s ? [s.orientation, s.width, s.height, s.scale, s.fitToWidth, s.fitToHeight, s.printArea, s.selection].join(',') : '') +
+						'][' +
+						(m ? [m.left, m.right, m.top, m.bottom, m.header, m.footer].join(',') : '') +
+						'][' +
+						[opt.headings ? 1 : 0, opt.gridLines ? 1 : 0, opt.horizontalCentered ? 1 : 0, opt.verticalCentered ? 1 : 0,
+						 opt.printTitlesHeight != null ? opt.printTitlesHeight : '',
+						 opt.printTitlesWidth != null ? opt.printTitlesWidth : ''].join(',') +
+						'];';
+				}
+			}
+			return [
+				this.printType,
+				this.ignorePrintArea ? 1 : 0,
+				this.isOnlyFirstPage ? 1 : 0,
+				this.activeSheetsArray ? this.activeSheetsArray.join(',') : '',
+				mapKey
+			].join('|');
 		};
 
 		/** @constructor */
@@ -3454,6 +3544,7 @@
 		function RedoObjectParam() {
 			this.bIsOn = false;
 			this.oChangeWorksheetUpdate = {};
+			this.oUpdateDefaultWidthSheets = {};
 			this.bUpdateWorksheetByModel = false;
 			this.bOnSheetsChanged = false;
 			this.oOnUpdateTabColor = {};
@@ -3560,6 +3651,7 @@
 			this.isMatchCase = false;					// case sensitive
 			this.isWholeCell = false;
 			this.isWholeWord = false;
+			this.isWildcard = false;
 			this.isSpellCheck = false;		    // change triggered by spell check
 			this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;				// search only on sheet/in workbook c_oAscSearchBy
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// search in formulas/values/comments
@@ -3585,6 +3677,7 @@
 
 			this.specificRange = null;
 			this.isForMacros = null;
+			this.isSync = null;
 			this.activeCell = null;
 			this.wsIndex = -1;  // forced worksheet index for ApiRange.Find (-1 = use active)
 
@@ -3604,11 +3697,12 @@
 			result.isMatchCase = this.isMatchCase;
 			result.isWholeCell = this.isWholeCell;
 			result.isWholeWord = this.isWholeWord;
+			result.isWildcard = this.isWildcard;
 			result.isSpellCheck = this.isSpellCheck;
 			result.scanOnOnlySheet = this.scanOnOnlySheet;
 			result.lookIn = this.lookIn;
 
-
+			result.findRegExp = this.findRegExp;
 			result.replaceWith = this.replaceWith;
 			result.isReplaceAll = this.isReplaceAll;
 
@@ -3639,7 +3733,9 @@
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
 			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows && this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
 				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells &&
-				this.wsIndex === obj.wsIndex;
+				this.wsIndex === obj.wsIndex && this.isWildcard === obj.isWildcard &&
+				// the string form keeps source and flags, so /cat/ vs /cat/i and wildcard-built vs raw RegExp differ
+				String(this.findRegExp || "") === String(obj.findRegExp || "");
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;
@@ -3734,6 +3830,9 @@
 		};
 		asc_CFindOptions.prototype.asc_setIsForMacros = function (val) {
 			this.isForMacros = val;
+		};
+		asc_CFindOptions.prototype.asc_setIsSync = function (val) {
+			this.isSync = val;
 		};
 		asc_CFindOptions.prototype.asc_setWsIndex = function (val) {
 			this.wsIndex = (val !== undefined && val !== null) ? val : -1;
@@ -4190,6 +4289,7 @@
 		window["AscCommonExcel"].getFullHyperlinkLength = getFullHyperlinkLength;
 		window["Asc"].outputDebugStr = outputDebugStr;
 		window["Asc"].isNumberInfinity = isNumberInfinity;
+		window["Asc"].tryFiniteNumberString = tryFiniteNumberString;
 		window["Asc"].trim = trim;
 		window["Asc"].arrayToLowerCase = arrayToLowerCase;
 		window["Asc"].isFixedWidthCell = isFixedWidthCell;
@@ -4337,6 +4437,7 @@
 		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
 		prot["asc_setActiveCell"] = prot.asc_setActiveCell;
 		prot["asc_setIsForMacros"] = prot.asc_setIsForMacros;
+		prot["asc_setIsSync"] = prot.asc_setIsSync;
 
 
 		window["AscCommonExcel"].findResults = findResults;

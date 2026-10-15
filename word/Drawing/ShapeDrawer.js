@@ -149,7 +149,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && !drawer.Graphics.isBoundsChecker()) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -224,7 +224,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 drawer._l(trans.TransformPointX(aSmall[i].x, aSmall[i].y), trans.TransformPointY(aSmall[i].x, aSmall[i].y));
             }
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && !drawer.Graphics.isBoundsChecker()) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -310,7 +310,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 trans.TransformPointX(cx3, cy3), trans.TransformPointY(cx3, cy3),
                 trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
 
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && !drawer.Graphics.isBoundsChecker()) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -410,7 +410,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && !drawer.Graphics.isBoundsChecker()) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -463,7 +463,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && !drawer.Graphics.isBoundsChecker()) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -902,7 +902,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
      */
     function stokeOrFillPath(drawer, isFilled) {
         if (isFilled) {
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && !drawer.Graphics.isBoundsChecker()) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -1160,8 +1160,95 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
 }
 
 
+    function CShapeDrawerBase() {
+    }
+
+    CShapeDrawerBase.prototype.Clear = function () {};
+    CShapeDrawerBase.prototype.isPdf = function () {
+        return this.Graphics.isPdf() || this.Graphics.isNativeDrawer();
+    };
+    CShapeDrawerBase.prototype.fromShape2 = function (shape, graphics, geom) {};
+    CShapeDrawerBase.prototype.fromShape = function (shape, graphics) {};
+    CShapeDrawerBase.prototype.draw = function (geom) {};
+    CShapeDrawerBase.prototype.p_width = function(w) {};
+    CShapeDrawerBase.prototype._m = function(x, y) {};
+    CShapeDrawerBase.prototype._l = function(x, y) {};
+    CShapeDrawerBase.prototype._c = function(x1, y1, x2, y2, x3, y3) {};
+    CShapeDrawerBase.prototype._c2 = function(x1, y1, x2, y2) {};
+    CShapeDrawerBase.prototype._cN = function(startPoint, controlPoints, endPoint) {};
+    CShapeDrawerBase.prototype._z = function() {};
+    CShapeDrawerBase.prototype._s = function() {};
+    CShapeDrawerBase.prototype._e = function() {};
+    CShapeDrawerBase.prototype.df = function() {};
+    CShapeDrawerBase.prototype.ds = function() {};
+    CShapeDrawerBase.prototype.drawFillStroke = function() {};
+    CShapeDrawerBase.prototype.drawStrokeFillStyle = function() {};
+    CShapeDrawerBase.prototype.check_bounds = function() {};
+    CShapeDrawerBase.prototype.CheckPoint = function() {};
+    CShapeDrawerBase.prototype.CheckDash = function() {};
+    CShapeDrawerBase.prototype.DrawPresentationComment = function() {};
+
+    function CShapeClipper(drawCallback) {
+        CShapeDrawerBase.call(this);
+        this.Shape = null;
+        this.Graphics = null;
+        this.bIsCheckBounds = false;
+        this.bIsNoStrokeAttack = false;
+        this.drawCallback = drawCallback;
+        this.Transform = null;
+    }
+    AscFormat.InitClassWithoutType(CShapeClipper, CShapeDrawerBase);
+    CShapeClipper.prototype.fromShape2 = function (shape, graphics, geom, transform) {
+        this.fromShape(shape, graphics, transform);
+    };
+    CShapeClipper.prototype.fromShape = function (shape, graphics, transform) {
+        this.Shape = shape;
+        this.Graphics = graphics;
+        this.Transform = transform;
+    };
+    CShapeClipper.prototype._s = function () {
+        this.Graphics.SaveGrState();
+        const bounds = this.Shape.bounds;
+        this.Graphics.AddClipRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        this.Graphics.transform3(this.Transform);
+        this.Graphics.StartClipPath();
+        this.Graphics._s();
+    };
+    CShapeClipper.prototype._m = function (x, y) {
+        this.Graphics._m(x, y);
+    };
+    CShapeClipper.prototype._l = function (x, y) {
+        this.Graphics._l(x, y);
+    };
+    CShapeClipper.prototype._c = function (x1, y1, x2, y2, x3, y3) {
+        this.Graphics._c(x1, y1, x2, y2, x3, y3);
+    };
+    CShapeClipper.prototype._c2 = function (x1, y1, x2, y2) {
+        this.Graphics._c2(x1, y1, x2, y2);
+    };
+    CShapeClipper.prototype._cN = function (startPoint, controlPoints, endPoint) {
+        this.Graphics._cN(startPoint, controlPoints, endPoint);
+    };
+    CShapeClipper.prototype._z = function () {
+        this.Graphics._z();
+    };
+    CShapeClipper.prototype._e = function () {
+        this.Graphics.EndClipPath();
+        this.drawCallback();
+        this.Graphics.RestoreGrState();
+    };
+
+    CShapeClipper.prototype.draw = function (geom) {
+        if (geom) {
+            geom.drawClip(this);
+        } else {
+            this.drawCallback();
+        }
+    };
+
 function CShapeDrawer()
 {
+    CShapeDrawerBase.call(this);
     this.Shape = null;
     this.Graphics = null;
     this.UniFill = null;
@@ -1189,10 +1276,9 @@ function CShapeDrawer()
 
     this.IsRectShape = false;
 }
+AscFormat.InitClassWithoutType(CShapeDrawer, CShapeDrawerBase);
 
-CShapeDrawer.prototype =
-{
-    Clear : function()
+CShapeDrawer.prototype.Clear = function()
     {
         //this.Shape = null;
         //this.Graphics = null;
@@ -1219,14 +1305,9 @@ CShapeDrawer.prototype =
         this.bIsCheckBounds = false;
 
         this.IsRectShape = false;
-    },
+};
 
-    isPdf : function()
-    {
-        return this.Graphics.isPdf() || this.Graphics.isNativeDrawer();
-    },
-
-    CheckPoint : function(_x,_y)
+CShapeDrawer.prototype.CheckPoint = function(_x,_y)
     {
         // TODO: !!!
         var x = _x;
@@ -1246,9 +1327,9 @@ CShapeDrawer.prototype =
             this.max_x = x;
         if (y > this.max_y)
             this.max_y = y;
-    },
+};
 
-    CheckDash : function()
+CShapeDrawer.prototype.CheckDash = function()
     {
         if (Asc.editor.isPdfEditor()) {
             let aDash;
@@ -1281,9 +1362,9 @@ CShapeDrawer.prototype =
         {
             this.Graphics.p_dash(null);
         }
-    },
+};
 
-    fromShape2 : function(shape, graphics, geom)
+CShapeDrawer.prototype.fromShape2 = function(shape, graphics, geom)
     {
         this.fromShape(shape, graphics);
 
@@ -1296,9 +1377,9 @@ CShapeDrawer.prototype =
             if (geom.preset == "rect" && !graphics.bDrawRectWithLines)
                 this.IsRectShape = true;
         }
-    },
+};
 
-    fromShape : function(shape, graphics)
+CShapeDrawer.prototype.fromShape = function(shape, graphics)
     {
         this.IsRectShape = false;
         this.Shape = shape;
@@ -1383,67 +1464,11 @@ CShapeDrawer.prototype =
         }
         else
         {
-            var _fill = this.Ln.Fill.fill;
-            switch (_fill.type)
-            {
-                case c_oAscFill.FILL_TYPE_BLIP:
-                {
-                    this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_SOLID:
-                {
-                    if(_fill.color)
-                    {
-                        this.StrokeUniColor = _fill.color.RGBA;
-                    }
-                    else
-                    {
-                        this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    }
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_GRAD:
-                {
-                    var _c = _fill.colors;
-                    if (_c == 0)
-                        this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    else
-                    {
-                        if(_fill.colors[0].color)
-                        {
-                            this.StrokeUniColor = _fill.colors[0].color.RGBA;
-                        }
-                        else
-                        {
-                            this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                        }
-                    }
-
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_PATT:
-                {
-                    if(_fill.fgClr)
-                    {
-                        this.StrokeUniColor = _fill.fgClr.RGBA;
-                    }
-                    else
-                    {
-                        this.StrokeUniColor = new AscFormat.CUniColor().RGBA;
-                    }
-                    break;
-                }
-                case c_oAscFill.FILL_TYPE_NOFILL:
-                {
-                    this.bIsNoStrokeAttack = true;
-                    break;
-                }
-                default:
-                {
-                    this.bIsNoStrokeAttack = true;
-                    break;
-                }
+            const RGBA = this.Ln.Fill.getLnColor();
+            if (RGBA) {
+                this.StrokeUniColor = RGBA;
+            } else {
+                this.bIsNoStrokeAttack = true;
             }
 
             this.StrokeWidth = (this.Ln.w == null) ? 12700 : parseInt(this.Ln.w);
@@ -1469,11 +1494,11 @@ CShapeDrawer.prototype =
             this.check_bounds();
             this.bIsCheckBounds = false;
         }
-    },
+};
 
-    draw : function(geom)
+CShapeDrawer.prototype.draw = function(geom)
     {
-        if (this.bIsNoStrokeAttack && this.bIsNoFillAttack)
+        if (this.bIsNoStrokeAttack && this.bIsNoFillAttack || this.Graphics.isPdfTextMetafile)
             return;
 
         var bIsPatt = false;
@@ -1516,14 +1541,14 @@ CShapeDrawer.prototype =
         }
 
         this.Graphics.p_dash(null);
-    },
+};
 
-    p_width : function(w)
+CShapeDrawer.prototype.p_width = function(w)
     {
         this.Graphics.p_width(w);
-    },
+};
 
-    _m : function(x, y)
+CShapeDrawer.prototype._m = function(x, y)
     {
         if (this.bIsCheckBounds)
         {
@@ -1532,9 +1557,9 @@ CShapeDrawer.prototype =
         }
 
         this.Graphics._m(x, y);
-    },
+};
 
-    _l : function(x, y)
+CShapeDrawer.prototype._l = function(x, y)
     {
         if (this.bIsCheckBounds)
         {
@@ -1543,9 +1568,9 @@ CShapeDrawer.prototype =
         }
 
         this.Graphics._l(x, y);
-    },
+};
 
-    _c : function(x1, y1, x2, y2, x3, y3)
+CShapeDrawer.prototype._c = function(x1, y1, x2, y2, x3, y3)
     {
         if (this.bIsCheckBounds)
         {
@@ -1556,7 +1581,7 @@ CShapeDrawer.prototype =
         }
 
         this.Graphics._c(x1, y1, x2, y2, x3, y3);
-    },
+};
 
     /**
      * @param x1 - cpx
@@ -1564,7 +1589,7 @@ CShapeDrawer.prototype =
      * @param x2 - end x
      * @param y2 - end y
      */
-    _c2 : function(x1, y1, x2, y2)
+CShapeDrawer.prototype._c2 = function(x1, y1, x2, y2)
     {
         if (this.bIsCheckBounds)
         {
@@ -1574,14 +1599,14 @@ CShapeDrawer.prototype =
         }
 
         this.Graphics._c2(x1, y1, x2, y2);
-    },
+};
 
     /**
      * @param {{x: Number, y: Number, z? :Number}} startPoint
      * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
      * @param {{x: Number, y: Number, z? :Number}} endPoint
      */
-    _cN : function(startPoint, controlPoints, endPoint)
+CShapeDrawer.prototype._cN = function(startPoint, controlPoints, endPoint)
     {
         if (this.bIsCheckBounds)
         {
@@ -1594,29 +1619,29 @@ CShapeDrawer.prototype =
         }
 
         this.Graphics._cN(startPoint, controlPoints, endPoint);
-    },
+};
 
-    _z : function()
+CShapeDrawer.prototype._z = function()
     {
         this.IsCurrentPathCanArrows = false;
         if (this.bIsCheckBounds)
             return;
 
         this.Graphics._z();
-    },
+};
 
-    _s : function()
+CShapeDrawer.prototype._s = function()
     {
         this.IsCurrentPathCanArrows = true;
         this.Graphics._s();
-    },
-    _e : function()
+};
+CShapeDrawer.prototype._e = function()
     {
         this.IsCurrentPathCanArrows = true;
         this.Graphics._e();
-    },
+};
 
-    drawTransitionTextures : function(oCanvas1, dAlpha1, oCanvas2, dAlpha2)
+CShapeDrawer.prototype.drawTransitionTextures = function(oCanvas1, dAlpha1, oCanvas2, dAlpha2)
     {
         const dOldGlobalAlpha = this.Graphics.m_oContext.globalAlpha;
         const dX = this.min_x;
@@ -1628,9 +1653,9 @@ CShapeDrawer.prototype =
         this.Graphics.m_oContext.globalAlpha = dAlpha2;
         this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas2);
         this.Graphics.m_oContext.globalAlpha = dOldGlobalAlpha;
-    },
+};
 
-	drawArrows: function (bIsSaveToPdfMode) {
+CShapeDrawer.prototype.drawArrows = function (bIsSaveToPdfMode) {
 		this.IsArrowsDrawing = true;
 		this.Graphics.p_dash(null);
 
@@ -1653,9 +1678,9 @@ CShapeDrawer.prototype =
 
 		this.IsArrowsDrawing = false;
 		this.CheckDash();
-	},
+};
 
-	drawBlipFill: function () {
+CShapeDrawer.prototype.drawBlipFill = function () {
 		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 		if (!graphics) return;
 		const imageName = this.UniFill.fill.RasterImageId;
@@ -1680,9 +1705,9 @@ CShapeDrawer.prototype =
 		}
 
 		graphics.restore();
-	},
+};
 
-	drawBlipFillTile: function (imageData) {
+CShapeDrawer.prototype.drawBlipFillTile = function (imageData) {
 		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 		if (!graphics) return;
 
@@ -1771,9 +1796,9 @@ CShapeDrawer.prototype =
 
 		graphics.m_bPenColorInit = false;
 		graphics.m_bBrushColorInit = false;
-	},
+};
 
-	drawBlipFillStretch: function (imageData) {
+CShapeDrawer.prototype.drawBlipFillStretch = function (imageData) {
 		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 		if (!graphics) return;
 
@@ -1831,10 +1856,10 @@ CShapeDrawer.prototype =
 			srcRect,
 			this.UniFill.fill.canvas
 		);
-	},
+};
 
-    df: function (mode) {
-        if (mode == "none" || this.bIsNoFillAttack)
+CShapeDrawer.prototype.df = function (mode) {
+        if (mode == "none" || this.bIsNoFillAttack || this.Graphics.isPdfTextMetafile)
             return;
 
         if (this.Graphics.isTrack())
@@ -2084,16 +2109,16 @@ CShapeDrawer.prototype =
             this.Graphics.b_color1(rgba.R, rgba.G, rgba.B, rgba.A);
         }
         this.Graphics.df();
-    },
+};
 
-    isArrowPresent: function()
+CShapeDrawer.prototype.isArrowPresent = function()
     {
         if(this.IsCurrentPathCanArrows && this.Ln && this.Ln.isArrowPresent() && !this.IsArrowsDrawing)
             return true;
         return false;
-    },
+};
 
-    ds : function()
+CShapeDrawer.prototype.ds = function()
     {
         if (this.bIsNoStrokeAttack)
             return;
@@ -2161,9 +2186,9 @@ CShapeDrawer.prototype =
 			const bIsSaveToPdfMode = false;
 			this.drawArrows(bIsSaveToPdfMode);
 		}
-	},
+};
 
-    drawFillStroke : function(bIsFill, fill_mode, bIsStroke)
+CShapeDrawer.prototype.drawFillStroke = function(bIsFill, fill_mode, bIsStroke)
     {
         if (this.Graphics.isTrack())
             this.Graphics.m_oOverlay.ClearAll = true;
@@ -2462,10 +2487,12 @@ CShapeDrawer.prototype =
 				this.drawArrows(bIsSaveToPdfMode);
 			}
         }
-    },
+};
 
-    drawStrokeFillStyle : function()
+CShapeDrawer.prototype.drawStrokeFillStyle = function()
     {
+        if (this.Graphics.isBoundsChecker())
+            return;
         if (!this.isPdf())
         {
             var gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
@@ -2484,29 +2511,29 @@ CShapeDrawer.prototype =
             this.Graphics.df();
             this.Graphics.b_color1(tmp.R, tmp.G, tmp.B, tmp.A);
         }
-    },
+};
 
-    check_bounds : function()
+CShapeDrawer.prototype.check_bounds = function()
     {
         this.Shape.check_bounds(this);
-    },
+};
 
     // common funcs
-    getNormalPoint : function(x0, y0, angle, x1, y1)
+CShapeDrawer.prototype.getNormalPoint = function(x0, y0, angle, x1, y1)
     {
         return AscCommon.getNormalPoint(x0, y0, angle, x1, y1);
-    },
+};
 
-    getGradientPoints : function(min_x, min_y, max_x, max_y, _angle, scale)
+CShapeDrawer.prototype.getGradientPoints = function(min_x, min_y, max_x, max_y, _angle, scale)
     {
         return AscCommon.getGradientPoints(min_x, min_y, max_x, max_y, _angle, scale);
-    },
+};
 
-    DrawPresentationComment : function(type, x, y, w, h)
+CShapeDrawer.prototype.DrawPresentationComment = function(type, x, y, w, h)
     {
-    },
+};
 
-    getEditorInfo: function()
+CShapeDrawer.prototype.getEditorInfo = function()
     {
         var _ret = {};
         _ret.editor = Asc.editor || window.editor;
@@ -2527,8 +2554,7 @@ CShapeDrawer.prototype =
                 break;
         }
         return _ret;
-    }
-};
+    };
 
 function ShapeToImageConverter(shape, pageIndex, sImageFormat)
 {
@@ -2643,7 +2669,9 @@ function getArrowDrawingParameters(drawer, bIsSaveToPdfMode) {
 			? drawer.Graphics.Graphics
 			: drawer.Graphics;
 		fullTransform = graphics.m_oFullTransform;
-		lineSize = graphics.m_oContext.lineWidth;
+		lineSize = graphics.isBoundsChecker()
+			? drawer.StrokeWidth
+			: graphics.m_oContext.lineWidth;
 		arrCoef = drawer.isArrPix
 			? 1 * AscCommon.g_dKoef_pix_to_mm
 			: 1;
@@ -2672,10 +2700,25 @@ function getUnclosedSubPaths(geometryPath) {
 	if (!geometryPath || !geometryPath.stroke) {
 		return [];
 	}
+
+	const isPresentation = Asc.editor.editorId === AscCommon.c_oEditorId.Presentation;
+	const isSpreadsheet = Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet;
+
 	const subPaths = geometryPath.getContinuousSubpaths();
-	return subPaths.filter(function (path) {
-		return !path.isClosed(0);
+	const unclosedSubPaths = subPaths.filter(function (path) {
+		if (!path.isClosed(0)) {
+			return true;
+		}
+
+		// We follow Microsoft's behavior for PE and SE:
+		// zero-length lines (moveTo + lineTo to same point) are not treated as closed
+		if (isPresentation || isSpreadsheet) {
+			return path.ArrPathCommand.length === 2 &&
+				path.ArrPathCommand[1].id === AscFormat.lineTo;
+		}
 	});
+
+	return unclosedSubPaths;
 }
 
 function drawArrowsOnPath(drawer, geometryPath, arrowEnd, isHead, params) {
@@ -2724,6 +2767,7 @@ function drawArrowsOnPath(drawer, geometryPath, arrowEnd, isHead, params) {
 //------------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommon'].CShapeDrawer = CShapeDrawer;
+window['AscCommon'].CShapeClipper = CShapeClipper;
 window['AscCommon'].ShapeToImageConverter = ShapeToImageConverter;
 window['AscCommon'].IsShapeToImageConverter = false;
 window['AscCommon'].DrawLineEnd = DrawLineEnd;

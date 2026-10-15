@@ -428,7 +428,7 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 		if (oDocPos[0].Class instanceof AscCommonWord.CDocumentContent && (oShape = oDocPos[0].Class.Is_DrawingShape(true)) && oShape.parent instanceof AscCommonWord.ParaDrawing)
 		{
 			var oDrawingDocPos = oShape.parent.GetDocumentPositionFromObject();
-			if (!oDrawingDocPos || !oDrawingDocPos.length)
+			if (!isValidDocPos(oDrawingDocPos))
 				return oDocPos;
 
 			return oDrawingDocPos.concat(oDocPos);
@@ -567,6 +567,10 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 		
 		return (docPos1[0].Class === docPos2[0].Class);
 	}
+	function isValidDocPos(docPos)
+	{
+		return !!(docPos && docPos.length && ((docPos[0].Class instanceof AscWord.CDocument) || (docPos[0].Class instanceof AscWord.CDocumentContent)));
+	}
 	function AlignFontSize(nFontSize, nCoef)
 	{
 		if (1 === nCoef)
@@ -668,9 +672,11 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 	window['AscWord'].sortByDocumentPosition   = sortByDocumentPosition;
 	window['AscWord'].checkAsYouTypeEnterText  = checkAsYouTypeEnterText;
 	window['AscWord'].isInSameTopDocContent    = isInSameTopDocContent;
+	window['AscWord'].isValidDocPos            = isValidDocPos;
 	
 	window['AscWord'].EPSILON                  = 0.001;
 	window['AscWord'].MAX_MM_VALUE             = 558.7;
+	window['AscWord'].PRESENTATION_LINE_ASCENT_RATIO = 0.75;
 	window['AscWord'].Direction                = Direction;
 
 })(window);

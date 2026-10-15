@@ -688,17 +688,17 @@ CRadical.prototype.getParagraphContentPosByXY = function(searchState)
 	else
 		this.Content[1].getParagraphContentPosByXY(searchState);
 };
-CRadical.prototype.Draw_LinesForContent = function(PDSL)
+CRadical.prototype.drawLinesForContent = function(drawState)
 {
-    if(this.Pr.type == SQUARE_RADICAL)
-    {
-        this.RealBase.Draw_Lines(PDSL);
-    }
-    else
-    {
-        this.RealBase.Draw_Lines(PDSL);
-        this.Iterator.Draw_Lines(PDSL);
-    }
+	if (this.Pr.type == SQUARE_RADICAL)
+	{
+		this.RealBase.drawLines(drawState);
+	}
+	else
+	{
+		this.RealBase.drawLines(drawState);
+		this.Iterator.drawLines(drawState);
+	}
 };
 CRadical.prototype.Draw_Elements = function(PDSE)
 {
@@ -734,6 +734,7 @@ CRadical.prototype.Apply_MenuProps = function(Props)
 		{
 			AscCommon.History.Add(new CChangesMathRadicalHideDegree(this, this.Pr.degHide, Props.HideDegree));
 			this.raw_SetHideDegree(Props.HideDegree);
+			this.private_UpdatePresentationOutline();
 		}
 	}
 };

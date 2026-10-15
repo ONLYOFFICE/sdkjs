@@ -119,6 +119,30 @@ CShape.prototype.hitInTextRect = function (x, y)
     return false;
 };
 
+function _invalidatePageBreakPreviewForWorksheet(worksheet)
+{
+    if(!worksheet) return;
+    var wsViews = Asc["editor"].wb && Asc["editor"].wb.wsViews;
+    if(!wsViews) return;
+    for(var i = 0; i < wsViews.length; ++i)
+    {
+        var ws = wsViews[i];
+        if(ws && ws.model === worksheet)
+        {
+            if(ws._cleanPagesModeData)
+            {
+                ws._cleanPagesModeData();
+            }
+            if(ws.isPageBreakPreview && ws.isPageBreakPreview() && ws.objectRender)
+            {
+                ws.objectRender.pageBreakPreviewNeedRedraw = true;
+                ws.objectRender.showDrawingObjects();
+            }
+            return;
+        }
+    }
+}
+
 function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
 {
 
@@ -183,6 +207,8 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
         graphic.addToRecalculate();
     }
 
+    _invalidatePageBreakPreviewForWorksheet(worksheet);
+
     return ret;
 }
 
@@ -198,6 +224,7 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
 
         if(this.IsAdd()) {
             AscFormat.deleteDrawingBase(this.Class.worksheet.Drawings, this.Class.Get_Id());
+            _invalidatePageBreakPreviewForWorksheet(this.Class.worksheet);
         }
         else {
             AscFormat.addToDrawings(this.Class.worksheet, this.Class, this.Pos);
@@ -209,6 +236,7 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
         }
         else {
             AscFormat.deleteDrawingBase(this.Class.worksheet.Drawings, this.Class.Get_Id());
+            _invalidatePageBreakPreviewForWorksheet(this.Class.worksheet);
         }
     };
 
@@ -229,6 +257,7 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
                     return;
                 }
                 AscFormat.deleteDrawingBase(this.Class.worksheet.Drawings, this.Class.Get_Id());
+                _invalidatePageBreakPreviewForWorksheet(this.Class.worksheet);
             }
         }
     };
@@ -434,6 +463,9 @@ CChangeContentDrawingWorksheet.prototype.constructor = CChangeContentDrawingWork
 
     function editorAddToDrawingObjects(oGraphicObject, pos, type)
     {
+        if (oGraphicObject.worksheet && oGraphicObject.worksheet.checkAndAssignName) {
+            oGraphicObject.worksheet.checkAndAssignName(oGraphicObject);
+        }
         var position = addToDrawings(oGraphicObject.worksheet, oGraphicObject, pos, /*lockByDefault*/undefined, type);
         //var data = {Type: AscDFH.historyitem_AutoShapes_AddToDrawingObjects, Pos: position};
         History.Add(new CChangeContentDrawingWorksheetAdd(oGraphicObject, position));

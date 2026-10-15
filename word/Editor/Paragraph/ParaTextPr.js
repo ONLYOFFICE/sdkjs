@@ -197,7 +197,7 @@ ParaTextPr.prototype.Apply_TextPr = function(TextPr)
 	}
 
 	if (undefined != TextPr.Lang)
-		this.Set_Lang(TextPr.Lang);
+		this.Set_Lang(null === TextPr.Lang.Val ? new CLang() : TextPr.Lang);
 
 	if (undefined != TextPr.Unifill)
 	{

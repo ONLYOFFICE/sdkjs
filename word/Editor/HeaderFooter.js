@@ -1118,6 +1118,11 @@ CHeaderFooter.prototype =
         return this.Content.IsMovingTableBorder();
     },
 
+	CancelTableBorderMove : function()
+    {
+        this.Content.CancelTableBorderMove();
+    },
+
 	CheckPosInSelection : function(X, Y, PageAbs, NearPos)
 	{
 		if (-1 === this.RecalcInfo.CurPage)
@@ -2553,6 +2558,11 @@ CHeaderFooterController.prototype =
             }
         }
 
+		if (this.LogicDocument.isHeaderEditing())
+			this.LogicDocument.Api.getMacroRecorder().addStepData('GoToHeader', true);
+		else if (this.LogicDocument.isFooterEditing())
+			this.LogicDocument.Api.getMacroRecorder().addStepData('GoToFooter', true);
+
 		this.WaitMouseDown = false;
         return true;
     },
@@ -2593,6 +2603,12 @@ CHeaderFooterController.prototype =
             return this.CurHdrFtr.IsMovingTableBorder();
 
         return false;
+    },
+
+	CancelTableBorderMove : function()
+    {
+        if ( null != this.CurHdrFtr )
+            this.CurHdrFtr.CancelTableBorderMove();
     },
 
 	CheckPosInSelection : function(X, Y, PageAbs, NearPos)

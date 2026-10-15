@@ -169,6 +169,7 @@ CBlockLevelSdt.prototype.Recalculate_Page = function(CurPage)
 		case recalcresult2_End: return recalcresult_NextElement;
 		case recalcresult2_NextPage: return recalcresult_NextPage;
 		case recalcresult2_CurPage: return recalcresult_CurPage;
+		case recalcresult2_PrevPage: return recalcresult_PrevPage | recalcresultflags_Column;
 		case recalcresult2_NextSection: return recalcresult_NextSection;
 		case recalcresult2_NextSection_Cur: return recalcresult_NextSection_Cur;
 	}
@@ -676,6 +677,28 @@ CBlockLevelSdt.prototype.PreDelete = function()
 		return;
 
 	this.Content.PreDelete();
+};
+CBlockLevelSdt.prototype.OnDetach = function()
+{
+	if (!this.IsUseInDocument())
+		return;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.OnDetachContentControl(this);
+	
+	this.Content.OnDetach();
+};
+CBlockLevelSdt.prototype.OnAttach = function()
+{
+	if (!this.IsUseInDocument())
+		return;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.OnAttachContentControl(this);
+	
+	this.Content.OnAttach();
 };
 CBlockLevelSdt.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextPr)
 {
@@ -1227,10 +1250,16 @@ CBlockLevelSdt.prototype.GetRevisionsChangeElement = function(SearchEngine)
 CBlockLevelSdt.prototype.AcceptRevisionChanges = function(Type, bAll)
 {
 	this.Content.AcceptRevisionChanges(Type, bAll);
+
+	if (this.IsEmpty())
+		this.ReplaceContentWithPlaceHolder();
 };
 CBlockLevelSdt.prototype.RejectRevisionChanges = function(Type, bAll)
 {
 	this.Content.RejectRevisionChanges(Type, bAll);
+
+	if (this.IsEmpty())
+		this.ReplaceContentWithPlaceHolder();
 };
 CBlockLevelSdt.prototype.IsContentOnFirstPage = function()
 {
@@ -1281,7 +1310,7 @@ CBlockLevelSdt.prototype.Get_Theme = function()
 };
 CBlockLevelSdt.prototype.GetPrevElementEndInfo = function()
 {
-	return this.Parent.GetPrevElementEndInfo(this);
+	return this.Parent ? this.Parent.GetPrevElementEndInfo(this) : null;
 };
 CBlockLevelSdt.prototype.GetEndInfo = function()
 {
@@ -1313,7 +1342,8 @@ CBlockLevelSdt.prototype.IsThisElementCurrent = function(oElement)
 };
 CBlockLevelSdt.prototype.OnContentReDraw = function(StartPageAbs, EndPageAbs)
 {
-	this.Parent.OnContentReDraw(StartPageAbs, EndPageAbs);
+	if (this.Parent)
+		this.Parent.OnContentReDraw(StartPageAbs, EndPageAbs);
 };
 CBlockLevelSdt.prototype.Document_CreateFontMap = function(FontMap)
 {
@@ -1765,16 +1795,24 @@ CBlockLevelSdt.prototype.GotoFootnoteRef = function(isNext, isCurrent, isStepFoo
 	return this.Content.GotoFootnoteRef(isNext, isCurrent, isStepFootnote, isStepEndnote);
 };
 /**
- * Получаем последний элемент содержимого
+ * Get the first element of the content
+ * @returns {?CDocumentContentElementBase}
+ */
+CBlockLevelSdt.prototype.GetFirstElement = function()
+{
+	if (this.Content.GetElementsCount() <= 0)
+		return null;
+
+	return this.Content.GetElement(0);
+};
+/**
+ * Get the last element of the content
  * @returns {?CDocumentContentElementBase}
  */
 CBlockLevelSdt.prototype.GetLastElement = function()
 {
-	var nCount = this.Content.GetElementsCount();
-	if (nCount <= 0)
-		return null;
-
-	return this.Content.GetElement(nCount - 1);
+	let count = this.Content.GetElementsCount();
+	return count <= 0 ? null : this.Content.GetElement(count - 1);
 };
 CBlockLevelSdt.prototype.GetElement = function(nIndex)
 {

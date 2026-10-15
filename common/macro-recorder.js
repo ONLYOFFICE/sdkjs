@@ -38,8 +38,42 @@
 (function (window)
 {
 	let oMacroRecorderContext = {};
-	let shapesMacro = {};
-	let nShape = 0;
+
+	function VarRegistry()
+	{
+		this.byId = {};
+		this.counters = {};
+
+		this.register = function(id, type)
+		{
+			if (!this.counters.hasOwnProperty(type))
+				this.counters[type] = 0;
+			this.counters[type]++;
+			let varName = type + this.counters[type];
+			this.byId[id] = varName;
+			return varName;
+		};
+		this.inc = function(type)
+		{
+			if (!this.counters.hasOwnProperty(type))
+				this.counters[type] = 0;
+			this.counters[type]++;
+			let varName = type + this.counters[type];
+			this.byId[type] = varName;
+			return varName;
+		};
+		this.get = function(id)
+		{
+			return this.byId[id];
+		};
+		this.reset = function()
+		{
+			this.byId = {};
+			this.counters = {};
+		};
+	}
+	let varRegistry = new VarRegistry();
+	let copiedRange = null;
 
 	/**
 	 * @param editor
@@ -59,6 +93,7 @@
 		this.isFirstAction = null;
 		this.currentDescription = null;
 
+		varRegistry.reset();
 		oMacroRecorderContext = this;
 	}
 	
@@ -72,13 +107,33 @@
 		this.paused = false;
 		this.inProgress = true;
 		this.isFirstAction = true;
-		shapesMacro = {};
-		nShape = 0;
+		varRegistry.reset();
+		copiedRange = null;
+
+		this.lastTableCell = private_getCurrentTableCell(this);
 
 		this.initEvents();
 		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
 
+		this.recordInitialState();
+
 		this.editor.sendEvent("asc_onMacroRecordingStart");
+	};
+	MacroRecorder.prototype.recordInitialState = function()
+	{
+		if (this.editor.editorId === AscCommon.c_oEditorId.Word)
+			this.recordInitialStateForWord();
+	};
+	MacroRecorder.prototype.recordInitialStateForWord = function()
+	{
+		let doc = this.editor.getLogicDocument();
+		if (!doc)
+			return;
+
+		if (doc.isHeaderEditing())
+			this.addStepData('GoToHeader', true);
+		else if (doc.isFooterEditing())
+			this.addStepData('GoToFooter', true);
 	};
 	MacroRecorder.prototype.initEvents = function()
 	{
@@ -88,7 +143,7 @@
 		{
 			if (e.KeyCode === 8) // BackSpace
 			{
-				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word && _t.editor.editorId !== AscCommon.c_oEditorId.Presentation)
 					return;
 
 				_t.addStepData("remove", 1);
@@ -98,17 +153,13 @@
 			}
 			else if (e.KeyCode === 9) // Tab
 			{
-				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word && _t.editor.editorId !== AscCommon.c_oEditorId.Presentation)
 					return;
 
-				let doc = _t.editor.getLogicDocument();
-				if (doc.GetCurrentTable())
+				let oCell = private_getCurrentTableCell(_t);
+				if (oCell)
 				{
-					_t.addStepData("moveCursorRight", [{
-						isRtl:			false,
-						isAddSelect:	e.IsShift(),
-						isWord:			e.IsCtrl()
-					}]);
+					_t.addStepData(e.IsShift() ? "moveToPrevCell" : "moveToNextCell", [{}]);
 				}
 			}
 			else if (e.KeyCode === 13) // Enter
@@ -134,7 +185,7 @@
 			}
 			else if (e.KeyCode === 37) // Left Arrow
 			{
-				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word && _t.editor.editorId !== AscCommon.c_oEditorId.Presentation)
 					return;
 
 				let doc = _t.editor.getLogicDocument();
@@ -145,15 +196,25 @@
 					? "moveCursorRight"
 					: "moveCursorLeft"
 
-				_t.addStepData(type, [{
-					isRtl:			isRtl,
-					isAddSelect:	e.IsShift(),
-					isWord:			e.IsCtrl()
-				}]);
+				let oPrevCell = _t.lastTableCell;
+				let oCurCell  = private_getCurrentTableCell(_t);
+
+				if (oPrevCell && oCurCell && oPrevCell !== oCurCell && !e.IsShift() && !e.IsCtrl())
+				{
+					_t.addStepData(type === "moveCursorRight" ? "moveToNextCell" : "moveToPrevCell", [{}]);
+				}
+				else
+				{
+					_t.addStepData(type, [{
+						isRtl:			isRtl,
+						isAddSelect:	e.IsShift(),
+						isWord:			e.IsCtrl()
+					}]);
+				}
 			}
 			else if (e.KeyCode === 38) // Top Arrow
 			{
-				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word && _t.editor.editorId !== AscCommon.c_oEditorId.Presentation)
 					return;
 
 				_t.addStepData('moveCursorUp', [{
@@ -163,7 +224,7 @@
 			}
 			else if (e.KeyCode === 39) // Right Arrow
 			{
-				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word && _t.editor.editorId !== AscCommon.c_oEditorId.Presentation)
 					return;
 
 				let doc = _t.editor.getLogicDocument();
@@ -174,15 +235,25 @@
 					? "moveCursorLeft"
 					: "moveCursorRight"
 
-				_t.addStepData(type, [{
-					isRtl:			isRtl,
-					isAddSelect:	e.IsShift(),
-					isWord:			e.IsCtrl()
-				}]);
+				let oPrevCell = _t.lastTableCell;
+				let oCurCell  = private_getCurrentTableCell(_t);
+
+				if (oPrevCell && oCurCell && oPrevCell !== oCurCell && !e.IsShift() && !e.IsCtrl())
+				{
+					_t.addStepData(type === "moveCursorRight" ? "moveToNextCell" : "moveToPrevCell", [{}]);
+				}
+				else
+				{
+					_t.addStepData(type, [{
+						isRtl:			isRtl,
+						isAddSelect:	e.IsShift(),
+						isWord:			e.IsCtrl()
+					}]);
+				}
 			}
 			else if (e.KeyCode === 40) // Bottom Arrow
 			{
-				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word && _t.editor.editorId !== AscCommon.c_oEditorId.Presentation)
 					return;
 
 				_t.addStepData('moveCursorDown', [{
@@ -199,6 +270,8 @@
 			else if (e.KeyCode === 145) // Scroll Lock
 			{
 			}
+
+			_t.lastTableCell = private_getCurrentTableCell(_t);
 		};
 	};
 	MacroRecorder.prototype.stop = function()
@@ -216,7 +289,7 @@
 			this.getResultByType(this.prevChangeType, this.prevData);
 			this.prevData = [];
 			this.prevChangeType = null;
-			CounterStore.reset();
+			varRegistry.reset();
 		}
 
 		let macroData = "";
@@ -300,11 +373,11 @@
 		let actionsMacros = null;
 
 		if (this.editor.editorId === AscCommon.c_oEditorId.Word)
-			actionsMacros = WordActionsMacroList;
+			actionsMacros = DEActionMap;
 		else if (this.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
-			actionsMacros = CellActionsMacroList;
+			actionsMacros = SEActionMap;
 		else if (this.editor.editorId === AscCommon.c_oEditorId.Presentation)
-			actionsMacros = PresentationActionMacroList;
+			actionsMacros = PEActionMap;
 
 		return actionsMacros;
 	}
@@ -317,6 +390,9 @@
 	};
 	MacroRecorder.prototype.addStepData = function(type, additional, isStart)
 	{
+		let list = this.getMacrosListForEditor();
+		if (list && !list[type])
+			return;
 		if (isStart === true)
 			this.currentDescription = type;
 
@@ -326,25 +402,177 @@
 		if (!this.isInProgress()
 			|| this.isPaused()
 			|| undefined === additional
+			|| !AscCommon.g_oTableId.IsOn()
 			|| (Array.isArray(additional) && additional.length === 0))
 			return;
 
-	    this.filterAction(type, additional);
+		this.filterAction(type, additional);
 	};
-	MacroRecorder.prototype.filterAction = function(type, additional){
-		if (type === "remove") {
-			this.getResultByType(type, additional);
-			return;
-		}
-		else if (this.prevChangeType === "DeselectDrawing" && type === AscDFH.historydescription_Document_AddNewShape)
+	const ACTION = {
+		NOT_WRITE_PREV: 0,
+		NOT_WRITE_NOW: 1,
+		EXIT: 2,
+	};
+	MacroRecorder.prototype.filterRules = [
 		{
-			if (this.prevData === additional.id || this.prevData.includes(additional.id)) // unselect by create shape - skip
-			{
+			prevType: "DeselectDrawing",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: AscDFH.historydescription_Document_AddNewShape,
+			check: function(type, additional) {
+				return Array.isArray(this.prevData)
+					? this.prevData.some(function(d) { return d && d.name === additional.id; })
+					: !!this.prevData && this.prevData.name === additional.id;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
+		{
+			prevType: "DeselectDrawing",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "SetDrawingPos",
+			check: function(type, additional) {
+				return Array.isArray(this.prevData)
+					? this.prevData.some(function(d) { return d && d.name === additional.id; })
+					: !!this.prevData && this.prevData.name === additional.id;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
+		{
+			prevType: "DeselectDrawing",
+			editor: [AscCommon.c_oEditorId.Word, AscCommon.c_oEditorId.Presentation, AscCommon.c_oEditorId.Spreadsheet],
+			curType: "SelectDrawing",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
+		{
+			prevType: "SetDrawingPos",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "SelectDrawing",
+			check: function(type, additional) {
+				let prevData = this.prevData;
+				let checkFunc = function(shape) { return shape.getObjectName() === prevData.id };
+				return additional.filter(checkFunc).length != 0
+			},
+			action: ACTION.NOT_WRITE_NOW
+		},
+		{
+			prevType: "SelectDrawing",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "SetDrawingPos",
+			check: function(type, additional) {
+				let prevData = this.prevData;
+				let checkFunc = function(shape) { return prevData.getObjectName() === shape.id };
+				return additional.filter(checkFunc).length != 0
+			},
+			action: ACTION.NOT_WRITE_NOW
+		},
+		{
+			prevType: "SetDrawingRotation",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "SetDrawingRotation",
+			check: function(type, additional) {
+				return this.prevData === additional || (Array.isArray(this.prevData) && this.prevData[this.prevData.length - 1] === additional)
+			},
+			action: ACTION.EXIT
+		},
+		{
+			prevType: "GoToHeader",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "GoToHeader",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.EXIT
+		},
+		{
+			prevType: "GoToFooter",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "GoToFooter",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.EXIT
+		},
+		{
+			prevType: "GoToDocContent",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "GoToDocContent",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.EXIT
+		},
+		{
+			prevType: "SelectTable",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "moveToNextCell",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
+		{
+			prevType: "SelectTable",
+			editor: [AscCommon.c_oEditorId.Word],
+			curType: "moveToPrevCell",
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
+		{
+			prevType: AscDFH.historydescription_Spreadsheet_SelectRange,
+			editor: [AscCommon.c_oEditorId.Spreadsheet],
+			curType: AscDFH.historydescription_Spreadsheet_SelectRange,
+			check: function(type, additional) {
+				return true;
+			},
+			action: ACTION.NOT_WRITE_PREV
+		},
+	];
+	MacroRecorder.prototype.filterAction = function(type, additional)
+	{
+		if (type === "remove") {
+			return this.getResultByType(type, additional);
+		}
+		else if (type === "CopyRange") {
+			if (this.prevChangeType !== AscDFH.historydescription_Spreadsheet_SelectRange) {
+				this.getResultByType(this.prevChangeType, this.prevData);
+				this.prevChangeType = null;
 				this.prevData = undefined;
-				this.prevChangeType = undefined;
+			}
+			return this.getResultByType(type, additional);
+		}
+		else {
+			for (let nFiler = 0; nFiler < this.filterRules.length; nFiler++) {
+				let currentRule = this.filterRules[nFiler];
+
+				if (currentRule.prevType === this.prevChangeType
+					&& currentRule.curType === type
+					&& currentRule.editor.includes(this.editor.editorId)) {
+					let bAction = currentRule.check.call(this, type, additional);
+
+					if (!bAction) continue;
+					let action = currentRule.action;
+
+					switch (action) {
+						case ACTION.NOT_WRITE_PREV:
+							this.prevData = undefined;
+							this.prevChangeType = undefined;
+							break;
+						case ACTION.NOT_WRITE_NOW:
+							type = "none";
+							break;
+						case ACTION.EXIT:
+							return;
+						default:
+							break;
+					}
+					break;
+				}
 			}
 		}
-
 		if (this.prevChangeType === type)
 		{
 			this.prevData = this.joinDataForMacros(this.prevData, additional);
@@ -375,7 +603,10 @@
 				&& type !== 'moveCursorRight'
 				&& type !== 'moveCursorUp'
 				&& type !== 'moveCursorDown'
+				&& type !== 'moveToNextCell'
+				&& type !== 'moveToPrevCell'
 				&& type !== 'SelectDrawing'
+				&& type !== 'SetTableBorder'
 			)
 			{
 				for (let i = 0; i < additional.length; i++)
@@ -473,36 +704,67 @@
 			+ "";
 	};
 
-	function CounterStoreFn()
+	function private_getTableVar(tableId)
 	{
-		this.store = {};
-		this.get = function(name)
-		{
-			this.create(name);
-			return name + (this.store[name] === 0 ? "" : this.store[name]);
-		};
-		this.inc = function(name) {
-			if (this.create(name))
-				return this.get(name);
+		let editorId = oMacroRecorderContext.editor.editorId;
 
-			this.store[name] = this.store[name] + 1;
-			return this.get(name);
-		};
-		this.create = function(name)
-		{
-			if (!this.store.hasOwnProperty(name)) {
-				this.store[name] = 1;
-				return true;
-			}
+		let varName = varRegistry.get(tableId);
+		if (varName)
+			return { varName: varName, declaration: "" };
 
-			return false;
-		};
-		this.reset = function()
+		varName = varRegistry.register(tableId, "table");
+
+		let getSelectedTables = "";
+		if (editorId === AscCommon.c_oEditorId.Word)
 		{
-			this.store = {};
-		};
+			getSelectedTables = " = doc.GetActiveTable();\n";
+		}
+		else if (editorId === AscCommon.c_oEditorId.Presentation)
+		{
+			getSelectedTables = " = presentation.GetActiveTable();\n";
+		}
+
+		return { varName: varName, declaration: "\tlet " + varName + getSelectedTables };
 	}
-	let CounterStore = new CounterStoreFn();
+
+	function private_getSelectedCellsVar(reg, getterName)
+	{
+		let getter = getterName || "GetSelectedCells";
+		let cellsVar = varRegistry.inc('cells');
+		let declaration = "\tlet " + cellsVar + " = " + reg.varName + "." + getter + "();\n";
+		return { varName: cellsVar, declaration: declaration };
+	}
+
+	function private_getSelectedRowsVar(reg)
+	{
+		let rowsVar = varRegistry.inc('rows');
+		let declaration = "\tlet " + rowsVar + " = " + reg.varName + ".GetSelectedRows();\n";
+		return { varName: rowsVar, declaration: declaration };
+	}
+
+	function private_GetAlignH(nAlign)
+	{
+		if (Asc.c_oAscAlignH.Left === nAlign)
+			return "left";
+		else if (Asc.c_oAscAlignH.Right === nAlign)
+			return "right";
+		else if (Asc.c_oAscAlignH.Center === nAlign)
+			return "center";
+
+		return "left";
+	}
+
+	function private_GetAlignV(nAlign)
+	{
+		if (Asc.c_oAscAlignV.Top === nAlign)
+			return "top";
+		else if (Asc.c_oAscAlignV.Bottom === nAlign)
+			return "bottom";
+		else if (Asc.c_oAscAlignV.Center === nAlign)
+			return "center";
+
+		return "center";
+	}
 
 	function iterByDataFn(object, key, templateFn, type) {
 		if (!object && !Array.isArray(object[0]))
@@ -551,100 +813,189 @@
 				return "unknown";
 			}
 			case Asc.c_oAscChartTypeSettings.barNormal: {
-				return "bar";
+				return "ColumnClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.barStacked: {
-				return "barStacked";
+				return "ColumnStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.barStackedPer: {
-				return "barStackedPercent";
+				return "ColumnStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.barNormal3d: {
-				return "bar3D";
+				return "3DColumnClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.barStacked3d: {
-				return "barStacked3D";
+				return "3DColumnStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.barStackedPer3d: {
-				return "barStackedPercent3D";
+				return "3DColumnStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.barNormal3dPerspective: {
-				return "barStackedPercent3DPerspective";
+				return "3DColumn";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarNormal: {
-				return "horizontalBar";
+				return "BarClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStacked: {
-				return "horizontalBarStacked";
+				return "BarStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStackedPer: {
-				return "horizontalBarStackedPercent";
+				return "BarStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarNormal3d: {
-				return "horizontalBar3D";
+				return "3DBarClustered";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStacked3d: {
-				return "horizontalBarStacked3D";
+				return "3DBarStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.hBarStackedPer3d: {
-				return "horizontalBarStackedPercent3D";
+				return "3DBarStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.lineNormal: {
-				return "lineNormal";
+				return "Line";
 			}
 			case Asc.c_oAscChartTypeSettings.lineStacked: {
-				return "lineStacked";
+				return "LineStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.lineStackedPer: {
-				return "lineStackedPercent";
+				return "LineStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.line3d: {
-				return "line3D";
+				return "3DLine";
 			}
 			case Asc.c_oAscChartTypeSettings.pie: {
-				return "pie";
+				return "Pie";
 			}
 			case Asc.c_oAscChartTypeSettings.pie3d: {
-				return "pie3D";
+				return "3DPie";
 			}
 			case Asc.c_oAscChartTypeSettings.doughnut: {
-				return "doughnut";
+				return "Doughnut";
 			}
 			case Asc.c_oAscChartTypeSettings.scatter: {
-				return "scatter";
+				return "XYScatter";
 			}
 			case Asc.c_oAscChartTypeSettings.stock: {
-				return "stock";
+				return "StockHLC";
 			}
 			case Asc.c_oAscChartTypeSettings.areaNormal: {
-				return "area";
+				return "Area";
 			}
 			case Asc.c_oAscChartTypeSettings.areaStacked: {
-				return "areaStacked";
+				return "AreaStacked";
 			}
 			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
-				return "areaStackedPercent";
+				return "AreaStacked100";
 			}
 			case Asc.c_oAscChartTypeSettings.comboBarLine: {
-				return "comboBarLine";
+				return "ComboColumnClusteredLine";
 			}
 			case Asc.c_oAscChartTypeSettings.comboBarLineSecondary: {
-				return "comboBarLineSecondary";
+				return "ComboColumnClusteredLineSecondaryAxis";
 			}
 			case Asc.c_oAscChartTypeSettings.comboCustom: {
-				return "comboCustom";
+				return "Combo";
 			}
 			case Asc.c_oAscChartTypeSettings.radar: {
-				return "radar";
+				return "Radar";
 			}
 			case Asc.c_oAscChartTypeSettings.radarMarker: {
-				return "radarMarker";
+				return "RadarMarkers";
 			}
 			case Asc.c_oAscChartTypeSettings.radarFilled: {
-				return "radarFilled";
+				return "RadarFilled";
 			}
 		}
 		return "unknown";
+	}
+
+	function private_getFillTransparentStr(unifill) {
+		if (!AscFormat.isRealNumber(unifill.transparent))
+			return "";
+
+		return "\t\t\tfill.SetTransparent(" + (1 - unifill.transparent / 255) + ");\n";
+	}
+
+	function private_getDrawingFillReplayCode(selectedDrawingsExpr, isArrowFn, unifill, getStopColorRGBA) {
+		function wrapFillCode(fillExpr, transparentStr) {
+			let forEachHeader = isArrowFn ? "\t\t.forEach(shape => {\n" : "\t\t.forEach(function(shape) {\n";
+			return "\t" + selectedDrawingsExpr + "\n"
+				+ forEachHeader
+				+ "\t\t\tvar fill = " + fillExpr + ";\n"
+				+ transparentStr
+				+ "\t\t\tshape.Fill(fill);\n"
+				+ "\t\t});\n";
+		}
+
+		if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
+		{
+			let color = unifill.getRGBAColor();
+			return wrapFillCode("Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + "))", private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CGradFill)
+		{
+			let colors = unifill.fill.colors;
+			let strColor = "";
+
+			for (let nColor = 0; nColor < colors.length; nColor++)
+			{
+				let gs = colors[nColor];
+				let color = getStopColorRGBA ? getStopColorRGBA(gs) : gs.color.RGBA;
+				strColor += (nColor !== 0)
+					? ",\n\t\t\t\t"
+					: "\n\t\t\t\t";
+				strColor += "Api.CreateGradientStop(Api.Color(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
+			}
+
+			let gradient = "Api.CreateNoFill()";
+			if (unifill.fill.lin) // leinear
+				gradient = "Api.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
+			else if (unifill.fill.path) // radial
+				gradient = "Api.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
+
+			return wrapFillCode(gradient, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CBlipFill)
+		{
+			let base64data = unifill.fill.getBase64RasterImageId();
+			let blipFill = "Api.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
+			return wrapFillCode(blipFill, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CPattFill)
+		{
+			let bgClr = unifill.fill.bgClr.RGBA;
+			let fgClr = unifill.fill.fgClr.RGBA;
+			let type = AscCommon.global_hatch_names[unifill.fill.ftype];
+
+			let pattFill = "Api.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\tApi.Color(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.Color(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")\n\t\t\t)";
+			return wrapFillCode(pattFill, private_getFillTransparentStr(unifill));
+		}
+		else if (unifill.fill instanceof AscFormat.CNoFill)
+		{
+			let forEachBody = isArrowFn ? "shape => shape.Fill(Api.CreateNoFill())" : "function(shape) { shape.Fill(Api.CreateNoFill()); }";
+			return "\t" + selectedDrawingsExpr + "\n"
+				+ "\t\t.forEach(" + forEachBody + ");\n";
+		}
+	}
+
+	function private_getCurrentTableCell(recorder) {
+		let doc = recorder.editor.getLogicDocument();
+		if (!doc)
+			return null;
+
+		let oTable = null;
+		if (recorder.editor.editorId === AscCommon.c_oEditorId.Word)
+		{
+			oTable = doc.GetCurrentTable();
+		}
+		else if (recorder.editor.editorId === AscCommon.c_oEditorId.Presentation)
+		{
+			let oController = doc.GetCurrentController();
+			let oContent = oController && oController.getTargetDocContent(undefined, true);
+			oTable = (oContent instanceof AscWord.CTable) ? oContent : null;
+		}
+
+		return oTable ? oTable.CurCell : null;
 	}
 
 	function sameConditional(a, b, ignoreRtl) {
@@ -718,10 +1069,288 @@
 				return "square";
 		}
 	}
-
-	function getShapeCount()
+	function GetDocAlignName(nData)
 	{
-		return nShape++;
+		let align = null;
+
+		switch (nData) {
+			case AscCommon.align_Left:		align = 'left';		break;
+			case AscCommon.align_Right:		align = 'right';	break;
+			case AscCommon.align_Center:	align = 'center';	break;
+			default:						align = 'center';
+		}
+
+		return align;
+	}
+
+	function tabLeaderToType(leader)
+	{
+		switch (leader) {
+			case 2:  return "dash";
+			case 5:  return "underline";
+			case 4:  return "none";
+			case 0:
+			default: return "dot";
+		}
+	}
+
+	function getShapesMergeOperationName(operation)
+	{
+		switch (operation) {
+			case "unite":     return "union";
+			case "exclude":   return "combine";
+			case "divide":    return "fragment";
+			case "intersect": return "intersect";
+			case "subtract":  return "subtract";
+		}
+	}
+
+	function buildTocPrObject(oPr)
+	{
+		const tocStyle = function(type) {
+			switch (type) {
+				case 1: return "simple";
+				case 2: return "standard";
+				case 3: return "modern";
+				case 4: return "classic";
+				case 5: return "online";
+				default: return null;
+			}
+		};
+
+		let buildFrom;
+		let styles = oPr.get_Styles();
+		if (Array.isArray(styles) && styles.length > 0) {
+			buildFrom = {
+				StylesLvls: styles.map(function(s) {
+					return { Name: s.Name, Lvl: s.Lvl };
+				})
+			};
+		} else {
+			buildFrom = { OutlineLvlStart: oPr.get_OutlineStart(), OutlineLvls: oPr.get_OutlineEnd() };
+		}
+
+		let object = {
+			ShowPageNums:	oPr.get_ShowPageNumbers(),
+			RightAlgn:		oPr.get_RightAlignTab(),
+			LeaderType:		tabLeaderToType(oPr.get_TabLeader()),
+			FormatAsLinks:	oPr.get_Hyperlink(),
+			BuildFrom:		buildFrom,
+		};
+
+		const style = tocStyle(oPr.get_StylesType());
+		if (style !== null)
+			object.TocStyle = style;
+
+		return object;
+	}
+
+	function buildTofPrObject(oPr)
+	{
+		const tofStyle = function(type) {
+			switch (type) {
+				case 1: return "classic";
+				case 2: return "distinctive";
+				case 3: return "centered";
+				case 4: return "formal";
+				case 5: return "simple";
+				case 6: return "online";
+				default: return null;
+			}
+		};
+
+		let buildFrom;
+		let caption = oPr.get_Caption();
+		if (typeof caption === "string" && caption.length > 0) {
+			buildFrom = caption;
+		} else {
+			let styles = oPr.get_Styles();
+			if (Array.isArray(styles) && styles.length > 0)
+				buildFrom = styles[0].Name;
+		}
+
+		let object = {
+			ShowPageNums:	oPr.get_ShowPageNumbers(),
+			RightAlgn:		oPr.get_RightAlignTab(),
+			LeaderType:		tabLeaderToType(oPr.get_TabLeader()),
+			FormatAsLinks:	oPr.get_Hyperlink(),
+			LabelNumber:	oPr.get_IncludeLabelAndNumber(),
+		};
+
+		if (buildFrom !== undefined)
+			object.BuildFrom = buildFrom;
+
+		const style = tofStyle(oPr.get_StylesType());
+		if (style !== null)
+			object.TofStyle = style;
+
+		return object;
+	}
+
+	function escapeMacroString(value)
+	{
+		return value
+			.replace(/\\/g, '\\\\')
+			.replace(/"/g, '\\"')
+			.replace(/\r/g, '\\r')
+			.replace(/\n/g, '\\n');
+	}
+
+	function private_getShapeVar(shapeId)
+	{
+		let varName = varRegistry.get(shapeId);
+		if (varName)
+			return { varName: varName, declaration: "" };
+
+		varName = varRegistry.register(shapeId, "shape");
+
+		let getSelectedShape = "";
+		let editorId = oMacroRecorderContext.editor.editorId;
+		if (editorId === AscCommon.c_oEditorId.Word)
+			getSelectedShape = "doc.GetSelectedDrawings().filter(function(item) { return item.GetClassType() === \"shape\"; })[0]";
+		else if (editorId === AscCommon.c_oEditorId.Spreadsheet)
+			getSelectedShape = "worksheet.GetSelectedShapes()[0]";
+		else if (editorId === AscCommon.c_oEditorId.Presentation)
+			getSelectedShape = "Api.GetSelection().GetShapes()[0]";
+
+		return { varName: varName, declaration: "\tlet " + varName + " = " + getSelectedShape + ";\n" };
+	}
+
+	function private_getCustomGeometryCode(oGeometry, sShapeVar)
+	{
+		let code = "\t\tlet oGeometry = Api.CreateCustomGeometry();\n";
+		for (let nPath = 0; nPath < oGeometry.pathLst.length; ++nPath)
+		{
+			let oPath = oGeometry.pathLst[nPath];
+			let sPathVar = "oPath" + nPath;
+			code += "\t\tlet " + sPathVar + " = oGeometry.AddPath();\n";
+			code += "\t\t" + sPathVar + ".SetStroke(" + oPath.stroke + ");\n";
+			code += "\t\t" + sPathVar + ".SetFill(\"" + (oPath.fill || "norm") + "\");\n";
+			code += "\t\t" + sPathVar + ".SetWidth(" + oPath.pathW + ");\n";
+			code += "\t\t" + sPathVar + ".SetHeight(" + oPath.pathH + ");\n";
+
+			let aCommands = oPath.ArrPathCommandInfo;
+			for (let nCommand = 0; nCommand < aCommands.length; ++nCommand)
+			{
+				let oCommand = aCommands[nCommand];
+				switch (oCommand.id)
+				{
+					case AscFormat.moveTo:
+						code += "\t\t" + sPathVar + ".MoveTo(" + oCommand.X + ", " + oCommand.Y + ");\n";
+						break;
+					case AscFormat.lineTo:
+						code += "\t\t" + sPathVar + ".LineTo(" + oCommand.X + ", " + oCommand.Y + ");\n";
+						break;
+					case AscFormat.bezier3:
+						code += "\t\t" + sPathVar + ".QuadBezTo(" + oCommand.X0 + ", " + oCommand.Y0 + ", " + oCommand.X1 + ", " + oCommand.Y1 + ");\n";
+						break;
+					case AscFormat.bezier4:
+						code += "\t\t" + sPathVar + ".CubicBezTo(" + oCommand.X0 + ", " + oCommand.Y0 + ", " + oCommand.X1 + ", " + oCommand.Y1 + ", " + oCommand.X2 + ", " + oCommand.Y2 + ");\n";
+						break;
+					case AscFormat.arcTo:
+						code += "\t\t" + sPathVar + ".ArcTo(" + oCommand.wR + ", " + oCommand.hR + ", " + oCommand.stAng + ", " + oCommand.swAng + ");\n";
+						break;
+					case AscFormat.close:
+						code += "\t\t" + sPathVar + ".Close();\n";
+						break;
+				}
+			}
+		}
+		code += "\t\t" + sShapeVar + ".SetGeometry(oGeometry);\n";
+		return code;
+	}
+
+	function private_getStrokeStyleCode(line)
+	{
+		let code = "";
+		let capTypes = {
+			[Asc.c_oAscLineCapType.Flat]: "flat",
+			[Asc.c_oAscLineCapType.Round]: "round",
+			[Asc.c_oAscLineCapType.Square]: "square"
+		};
+
+		if (capTypes[line.cap])
+			code += "\t\tstroke.SetCapType(\"" + capTypes[line.cap] + "\");\n";
+
+		let joinTypes = {
+			[AscFormat.LineJoinType.Empty]: "empty",
+			[AscFormat.LineJoinType.Round]: "round",
+			[AscFormat.LineJoinType.Bevel]: "bevel",
+			[AscFormat.LineJoinType.Miter]: "miter"
+		};
+
+		if (line.Join && joinTypes[line.Join.type])
+			code += "\t\tstroke.SetJoinType(\"" + joinTypes[line.Join.type] + "\");\n";
+
+		return code;
+	}
+
+	function getCreateShadowExpr(shadow)
+	{
+		if (!shadow)
+			return "null";
+
+		let color = shadow.color.RGBA;
+		let transparency = shadow.color.getTransparency() / 100;
+		let rad = shadow.dir / 60000 * Math.PI / 180;
+		let offsetX = shadow.dist / 12700 * Math.cos(rad);
+		let offsetY = shadow.dist / 12700 * Math.sin(rad);
+		let size = shadow.getSize();
+		let rotateWithShape = shadow.rotWithShape !== false;
+
+		return "Api.CreateShadow({\n" +
+			"\t\t\t\tcolor: Api.Color(" + color.R + ", " + color.G + ", " + color.B + "),\n" +
+			"\t\t\t\ttransparency: " + transparency + ",\n" +
+			"\t\t\t\toffsetX: " + offsetX + ",\n" +
+			"\t\t\t\toffsetY: " + offsetY + ",\n" +
+			"\t\t\t\tsize: " + size + ",\n" +
+			"\t\t\t\trotateWithShape: " + rotateWithShape + "\n" +
+			"\t\t\t})";
+	}
+
+	function getLineEndTypeName(type)
+	{
+		switch (type)
+		{
+			case AscFormat.LineEndType.Arrow:		return "arrow";
+			case AscFormat.LineEndType.Diamond:		return "diamond";
+			case AscFormat.LineEndType.Oval:		return "oval";
+			case AscFormat.LineEndType.Stealth:		return "stealth";
+			case AscFormat.LineEndType.Triangle:	return "triangle";
+		}
+		return null;
+	}
+
+	function getLineEndSizeName(size)
+	{
+		switch (size)
+		{
+			case AscFormat.LineEndSize.Large:	return "large";
+			case AscFormat.LineEndSize.Small:	return "small";
+		}
+		return "medium";
+	}
+
+	function getStrokeFillCode(unifill)
+	{
+		let color = unifill.getRGBAColor();
+		let code = "\t\tlet fill = Api.CreateSolidFill(Api.Color(" + color.R + ", " + color.G + ", " + color.B + "));\n";
+		if (AscFormat.isRealNumber(unifill.transparent))
+			code += "\t\tfill.SetTransparent(" + (1 - unifill.transparent / 255) + ");\n";
+
+		return code;
+	}
+
+	function getStrokeArrowCode(method, arrow)
+	{
+		if (!arrow)
+			return "";
+
+		let type = getLineEndTypeName(arrow.type);
+		if (!type)
+			return "";
+
+		return "\t\tstroke." + method + "(\"" + type + "\", \"" + getLineEndSizeName(arrow.w) + "\", \"" + getLineEndSizeName(arrow.len) + "\");\n";
 	}
 
 	const wordActions = {
@@ -729,6 +1358,7 @@
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
 		setTextUnderline		: function(underline){return "\tdoc.GetRangeBySelect().SetUnderline(" + underline + ");\n"},
 		setTextStrikeout		: function(strikeout){return "\tdoc.GetRangeBySelect().SetStrikeout(" + strikeout + ");\n"},
+		setTextSmallCaps		: function(smallCaps){return "\tdoc.GetRangeBySelect().SetSmallCaps(" + smallCaps + ");\n"},
 		setTextFontName			: function(name){return "\tdoc.GetRangeBySelect().SetFontFamily(\"" + name + "\");\n"},
 		setTextFontSize			: function(size){return "\tdoc.GetRangeBySelect().SetFontSize(" + (size * 2) + ");\n"},
 		setTextHighlightColor	: function(highlight){
@@ -756,8 +1386,16 @@
 
 			return "\tApi.GetDocument().GetRangeBySelect().SetVertAlign(\"" + align + "\");\n";
 		},
-		setTextColor			: function(color){return "\tdoc.GetRangeBySelect().SetColor(" + color.r + "," + color.g + "," + color.b  + ");\n"},
-		setStyleHeading			: function(name){return "\tdoc.GetRangeBySelect().SetStyle(doc.GetStyle(\"" + name + "\"));\n"},
+		setTextColor			: function(color){return "\tdoc.GetRangeBySelect().SetColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n"},
+		setStyleHeading			: function(data){
+			let name		= data.name;
+			let use_select	= data.use_select;
+
+			if (use_select)
+				return "\tdoc.GetRangeBySelect().SetStyle(doc.GetStyle(\"" + name + "\"));\n"
+			else
+				return "\tdoc.GetCurrentParagraph().SetStyle(doc.GetStyle(\"" + name + "\"));\n"
+		},
 		clearFormat				: function(){return "\tdoc.GetRangeBySelect().ClearFormating()\n"},
 		cut						: function(){return "\tdoc.GetRangeBySelect().Cut();\n"},
 		changeTextCase			: function(changeType){return ""; return "\tdoc.GetRangeBySelect().SetTextCase(\"" + changeType + "\");\n"},
@@ -766,8 +1404,12 @@
 			let textStr = "";
 			for (let i = 0; i < textArr.length; ++i)
 			{
-				textStr += String.fromCodePoint(textArr[i]);
+				if (textArr[i])
+					textStr += String.fromCodePoint(textArr[i]);
 			}
+
+			if ("" === textStr)
+				return "";
 
 			return "\tdoc.EnterText(\"" + textStr + "\");\n"
 		},
@@ -781,7 +1423,12 @@
 			}
 			return "\tdoc.GetCurrentParagraph().SetJc(\"" + align + "\");\n"
 		},
-		setParagraphShd			: function(color){return "\tdoc.GetRangeBySelect().SetShd(\"clear\", "+ color.asc_getR() + " , " + color.asc_getG() +", "+ color.asc_getB() +", false);\n"},
+		setParagraphShd			: function(color){return "\tdoc.GetRangeBySelect().SetShd(Api.CreateShd(\"clear\", Api.Color(" + color.asc_getR() + ", " + color.asc_getG() + ", " + color.asc_getB() + ")));\n"},
+		addDropCap				: function(data){
+			let type = data.bInText ? "drop" : "margin";
+			return "\tdoc.GetCurrentParagraph().SetDropCap(\"" + type + "\");\n";
+		},
+		removeDropCap			: function(){return "\tdoc.GetCurrentParagraph().SetDropCap(\"none\");\n"},
 		setLineSpacing			: function(lineSpacing){
 			let type = lineSpacing.type;
 			let value = lineSpacing.value;
@@ -804,9 +1451,10 @@
 		// 	//paragraph.SetIndFirstLine(1440);
 		// },
 		setParagraphNumbering	: function(num){
-			return "\tlet " + CounterStore.inc('numbering') + " = doc.CreateNumbering(\"" + num.Type + "\");\n" +
+			let numberingType = (num.Type === Asc.c_oAscJSONNumberingType.Number) ? "numbered" : "bullet";
+			return "\tlet " + varRegistry.inc('numbering') + " = doc.CreateNumbering(\"" + numberingType + "\");\n" +
 				"\tdoc.GetRangeBySelect().GetAllParagraphs().forEach(function(para) {\n" +
-				"\t\tpara.SetNumbering(" + CounterStore.get('numbering') + ".GetLevel(0));\n" +
+				"\t\tpara.SetNumbering(" + varRegistry.get('numbering') + ".GetLevel(0));\n" +
 				"\t\tpara.SetContextualSpacing(true);\n" +
 				"\t});\n";
 		},
@@ -832,16 +1480,40 @@
 			else if (type === Asc.c_oAscSectionBreakType.OddPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"oddPage\");\n";
 		},
-		addTable				: function(prop){
-			return "\t(function () {\n"
-				+ "\t\tlet tableStyle = doc.GetStyle(\"" + (prop.style ? prop.style : "") + "\");\n"
+		addTable : function(prop)
+		{
+			let varName = prop.tableId
+				? varRegistry.register(prop.tableId, "table")
+				: varRegistry.inc('table');
+
+			let width = prop.tableGrid.map(function(num) {
+				return AscCommon.MMToTwips(num, -1);
+			});
+
+			let styleStr = prop.style ? prop.style : "";
+			let styleVar = varRegistry.inc('tableStyle');
+
+			return "\tlet " + varName + " = (function()\n"
+				+ "\t{\n"
 				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
-				+ "\t\tif (tableStyle)\n"
-				+	"\t\t\ttable.SetStyle(tableStyle);\n"
-				+ "\t\ttable.SetWidth(\"percent\", 100);\n"
-				+ "\t\tdoc.Push(table);\n"
-				+ "\t\ttable.GetRange(0, 0).Select();\n"
-			+ "\t}());\n";
+				+ "\t\tif (!table) return null;\n"
+				+ "\t\tdoc.InsertContent([table])\n"
+				+ "\t\tlet " + styleVar + " = doc.GetStyle(\"" + styleStr + "\");\n"
+				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
+				+ "\t\ttable.SetTableLayout(\"autofit\");\n"
+				+ "\t\tlet row = table.GetRow(0);\n"
+				+ "\t\t[" + width.toString() + "].forEach(function(width, index){\n"
+				+ "\t\t\tlet cellColumnFirst = row.GetCell(index);\n"
+				+ "\t\t\tlet cellPr = Api.CreateTableCellPr();\n"
+				+ "\t\t\tcellPr.SetWidth(\"twips\", width);\n"
+				+ "\t\t\tcellColumnFirst.SetCellPr(cellPr);\n"
+				+ "\t\t});\n"
+				+ "\t\ttable.GetRange(0, 0).MoveCursorToPos(0);\n"
+				+ "\t\treturn table;\n"
+				+ "\t}());\n"
+				+ "\tif (!" + varName + ") return;\n";
+
+
 		},
 		applyTablePr			: function(style)
 		{
@@ -877,8 +1549,8 @@
 			let text = "";
 			if (image instanceof AscFonts.CImage)
 			{
-				text += "\tlet " + CounterStore.inc('image') + " = Api.CreateImage(\"" + image.src + "\", " + size.wEMU + ", " + size.hEMU + ");\n"
-				text += "\tdoc.GetCurrentParagraph().AddDrawing("+ CounterStore.get('image') + ");\n"
+				text += "\tlet " + varRegistry.inc('image') + " = Api.CreateImage(\"" + image.src + "\", " + size.wEMU + ", " + size.hEMU + ");\n"
+				text += "\tdoc.GetCurrentParagraph().AddDrawing("+ varRegistry.get('image') + ");\n"
 			}
 			return text;
 		},
@@ -906,7 +1578,7 @@
 			let title		= chart.getChartTitle().getDocContent().GetText();
 			title = title ? title.replace(/[\r\n\t]+/g, '') : "";
 
-			let value = "\tlet " + CounterStore.inc('chart') + " = Api.CreateChart(\n"
+			let value = "\tlet " + varRegistry.inc('chart') + " = Api.CreateChart(\n"
 				+ "\t\t\"" + chartType + "\",\n"
 				+ "\t\t" + JSON.stringify(seriesData) + ",\n"
 				+ "\t\t" + JSON.stringify(seriesNames) + ",\n"
@@ -915,29 +1587,46 @@
 				+ "\t\t" + height + ",\n"
 				+ "\t\t" + style + "\n"
 				+ "\t);\n"
-			//+ "\t" + CounterStore.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
-			+ "\tdoc.GetCurrentParagraph().AddDrawing(" + CounterStore.get('chart') + ");\n"
+			//+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
+			+ "\tdoc.GetCurrentParagraph().AddDrawing(" + varRegistry.get('chart') + ");\n"
 			return value;
 		},
 		addHyperlink			: function(hl){
-			// create hyperlink text
-			return "\tdoc.GetRangeBySelect().AddHyperlink(\"" + (hl.Value ? hl.Value : hl.Text) + "\", \"" + hl.ToolTip + "\");\n"
+			let args = "\"" + escapeMacroString(hl.Value) + "\", \"" + escapeMacroString(hl.ToolTip) + "\"";
+			if (hl.Anchor)
+				args += ", \"" + escapeMacroString(hl.Anchor) + "\"";
+
+			if (!hl.Text)
+			{
+				return "\t(function () {\n"
+						+ "\t\tlet range = doc.GetRangeBySelect();\n"
+						+ "\t\tlet length = range.GetText().length;\n"
+						+ "\t\trange.AddHyperlink(" + args + ");\n"
+						+ "\t\tdoc.MoveCursorRight(length, false, false);\n"
+					+ "\t}());\n";
+			}
+
+			return "\t(function () {\n"
+					+ "\t\tlet paragraph = Api.CreateParagraph();\n"
+					+ "\t\tparagraph.AddText(\"" + escapeMacroString(hl.Text) + "\").AddHyperlink(" + args + ");\n"
+					+ "\t\tdoc.InsertContent([paragraph], true);\n"
+				+ "\t}());\n";
 		},
 		addShape				: function(shapeProps){
 			let fill = shapeProps.fill.getRGBAColor();
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
-			shapesMacro[shapeProps.id] = getShapeCount();
+			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 
-			return "\t(function () {\n" +
-					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
-					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
+			return "\tlet " + varName + " = (function () {\n" +
+					"\t\tlet fill = Api.CreateSolidFill(Api.Color("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
+					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.Color("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = Api.CreateShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke);\n" +
 					"\t\tshape.SetWrappingStyle(\"inFront\");\n" +
 					"\t\tdoc.AddDrawingToPage(shape, doc.GetCurrentPage(), " + shapeProps.pos.x + " * 36000.0, " + shapeProps.pos.y + " * 36000.0 )\n" +
 					"\t\tshape.Select(true);\n" +
-					"\t\tshape.SetName(\"macroShape" + shapesMacro[shapeProps.id] + "\");\n" +
+					"\t\treturn shape\n" +
 				"\t}());\n";
 		},
 		removeHdr				: function(hdr){
@@ -947,8 +1636,8 @@
 				return "\tdoc.GetFinalSection().RemoveFooter(\"default\");\n";
 		},
 		addComment				: function(commentData){
-			return "\tlet " + CounterStore.inc('comment') + " = doc.AddComment(\"" + commentData.m_sText + "\", \"" + commentData.m_sUserName + "\", \"" + commentData.m_sUserId + "\");\n"
-				+ "\t" + CounterStore.get('comment') + ".SetTime(" + commentData.m_sTime + ")\n";
+			return "\tlet " + varRegistry.inc('comment') + " = doc.AddComment(\"" + commentData.m_sText + "\", \"" + commentData.m_sUserName + "\", \"" + commentData.m_sUserId + "\");\n"
+				+ "\t" + varRegistry.get('comment') + ".SetTime(" + commentData.m_sTime + ")\n";
 			// todo add time
 		},
 		addMath					: function(type){
@@ -972,20 +1661,20 @@
 			return "\tdoc.AddMathEquation(\"" + obj.math + "\", \"" + type + "\");\n";
 		},
 		addBlockContentControl	: function(strPlaceholder){
-			return "\tlet " + CounterStore.inc('block') + " = Api.CreateBlockLvlSdt();\n"
-				+ "\t" + CounterStore.get('block') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
-				+ "\tdoc.Push(" + CounterStore.get('block') + ");\n"
-				+ "\t" + CounterStore.get('block') + ".Select();\n";
+			return "\tlet " + varRegistry.inc('block') + " = Api.CreateBlockLvlSdt();\n"
+				+ "\t" + varRegistry.get('block') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+				+ "\tdoc.InsertContent([" + varRegistry.get('block') + "]);\n"
+				+ "\t" + varRegistry.get('block') + ".Select();\n";
 		},
 		addInlineContentControl	: function(strPlaceholder){
-				return "\tlet " + CounterStore.inc('inline') + " = Api.CreateInlineLvlSdt();\n"
-					+ "\t" + CounterStore.get('inline') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
-					+ "\tdoc.GetCurrentParagraph().Push(" + CounterStore.get('inline') + ");\n"
-					+ "\t" + CounterStore.get('inline') + ".Select();\n";
+				return "\tlet " + varRegistry.inc('inline') + " = Api.CreateInlineLvlSdt();\n"
+					+ "\t" + varRegistry.get('inline') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+					+ "\tdoc.GetCurrentParagraph().Push(" + varRegistry.get('inline') + ");\n"
+					+ "\t" + varRegistry.get('inline') + ".Select();\n";
 		},
 		addContentControlList	: function(props){
 			if (props.isComboBox === true)
-				return "\t doc.AddComboBoxContentControl();\n";
+				return "\tdoc.AddComboBoxContentControl();\n";
 			else if (props.isComboBox === false)
 				return "\tdoc.AddDropDownListContentControl();\n"
 		},
@@ -997,6 +1686,77 @@
 		},
 		addContentControlPicture: function(){
 			return "\tdoc.AddPictureContentControl(180 * 10000, 180 * 10000);\n";
+		},
+		changeContentControlProperties	: function(oData)
+		{
+			let isApplyToAll = (oData && true === oData.isApplyToAll);
+			let oPr = isApplyToAll ? oData.Pr : oData;
+			let text = "";
+
+			if (undefined !== oPr.Tag)
+				text += '\t\toCC.SetTag("' + escapeMacroString(oPr.Tag) + '");\n';
+
+			if (undefined !== oPr.Alias)
+				text += '\t\toCC.SetAlias("' + escapeMacroString(oPr.Alias) + '");\n';
+
+			if (undefined !== oPr.Lock)
+			{
+				let sLock = "unlocked";
+
+				if (Asc.c_oAscSdtLockType.ContentLocked === oPr.Lock)
+					sLock = "contentLocked";
+				else if (Asc.c_oAscSdtLockType.SdtContentLocked === oPr.Lock)
+					sLock = "sdtContentLocked";
+				else if (Asc.c_oAscSdtLockType.SdtLocked === oPr.Lock)
+					sLock = "sdtLocked";
+
+				text += '\t\toCC.SetLock("' + sLock + '");\n';
+			}
+
+			if (undefined !== oPr.Appearance)
+			{
+				let sAppearance = Asc.c_oAscSdtAppearance.Hidden === oPr.Appearance
+					? "hidden"
+					: "boundingBox";
+
+				text += '\t\toCC.SetAppearance("' + sAppearance + '");\n';
+			}
+
+			if (oPr.Color)
+				text += "\t\toCC.SetColor(Api.Color(" +
+					oPr.Color.r + ", " +
+					oPr.Color.g + ", " +
+					oPr.Color.b + "));\n";
+
+			if (oPr.BorderColor)
+				text += "\t\toCC.SetBorderColor(Api.Color(" +
+					oPr.BorderColor.r + ", " +
+					oPr.BorderColor.g + ", " +
+					oPr.BorderColor.b + ", " +
+					oPr.BorderColor.a + "));\n";
+
+			if (oPr.ShdColor)
+				text += "\t\toCC.SetBackgroundColor(Api.Color(" +
+					oPr.ShdColor.r + ", " +
+					oPr.ShdColor.g + ", " +
+					oPr.ShdColor.b + ", " +
+					oPr.ShdColor.a + "));\n";
+
+			if (isApplyToAll)
+			{
+				text =
+					"\tdoc.GetAllContentControls().forEach(function(oCC){\n" +
+					text +
+					"\t});\n";
+			}
+			else
+			{
+				text =
+					"\tvar oCC = doc.GetCurrentContentControl();\n" +
+					text;
+			}
+
+			return text;
 		},
 		moveCursorLeft			: function(arrData){
 			let data = groupDataForCursor(arrData);
@@ -1033,6 +1793,12 @@
 			}
 
 			return text;
+		},
+		moveToNextCell			: function(arrData){
+			return "\tdoc.MoveToNextCell(" + arrData.length + ");\n";
+		},
+		moveToPrevCell			: function(arrData){
+			return "\tdoc.MoveToPrevCell(" + arrData.length + ");\n";
 		},
 		moveCursorUp			: function(arrData){
 			let data = groupDataForCursor(arrData, true);
@@ -1076,106 +1842,54 @@
 		selectDrawing			: function(shapes)
 		{
 			let str = "";
-			let shapesSort = [];
+			let macroShapes = [];
+
 			shapes.forEach(function(element) {
-				if (!shapesSort.includes(element)) 
-					shapesSort.push(element);
+				if (!macroShapes.includes(element) && varRegistry.get(element.getFormatIdString()) !== undefined)
+					macroShapes.push(element);
 			});
 
-			shapesSort = shapesSort.filter(function(element) {
-				return shapesMacro[element.getObjectName()] !== undefined;
-			});
+			let ids = [];
 
-			if (shapesSort.length === 0)
-				return "";
-
-			let ids = ""
-			for(let i = 0; i < shapesSort.length; i++)
-			{
-				if (shapesMacro[shapesSort[i].getObjectName()] !== undefined)
-					ids +=  "\"" + "macroShape" + shapesMacro[shapesSort[i].getObjectName()] + "\"" + (i != shapesSort.length - 1 ? ", " : "")
+			for (let i = 0; i < macroShapes.length; i++) {
+				let varName = varRegistry.get(macroShapes[i].getFormatIdString());
+				if (varName !== undefined)
+					ids.push(varName);
 			}
 
-			return str + "\tdoc.GetDrawingsByName([" + ids + "])\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
+			ids = ids.join(", ");
+
+			if (macroShapes.length !== 0)
+				str = str + "\t[" + ids + "]\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
+
+			return str;
 		},
-		deselectDrawing			: function(name)
+		deselectDrawing			: function(oAdditional)
 		{
-			if (shapesMacro[name] === undefined) {
-				return "\tdoc.GetSelectedDrawings().forEach(function(drawing){drawing.Unselect()});\n";
+			// for non-stored shape don't write anything
+			let varName = varRegistry.get(oAdditional.formatId);
+			if (varName === undefined) {
+				return "";
 			}
-			return "\tdoc.GetDrawingsByName([\"" + ("macroShape" + shapesMacro[name]) + "\"])\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
+			return "\t[" + varName + "]\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.fill.color.color.RGBA;
-				//let transparent = unifill.transparent;
-
-				return "\tdoc.GetSelectedDrawings()\n" +
-					"\t\t.forEach(function(shape) {\n" +
-					"\t\t\tshape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")));\n" +
-					"\t\t});\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.color.RGBA;
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tdoc.GetSelectedDrawings()\n"
-      				+ "\t\t.forEach(function(shape) { shape.Fill(" + gradient + "); }\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tdoc.GetSelectedDrawings()\n"
-    		 		+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
-				return "\tdoc.GetSelectedDrawings()\n"
-       				+ "\t\t.forEach(function(shape) { shape.Fill(" + blipFill + "); }\n\t\t\t)\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tdoc.GetSelectedDrawings()\n"
-       				+ "\t\t.forEach(function(shape) { shape.Fill(Api.CreateNoFill()); });\n";
-			}
+			return private_getDrawingFillReplayCode("doc.GetSelectedDrawings()", false, unifill);
 		},
 		setDrawingLine			: function(line)
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.fill.color.color.RGBA;
+			strStrokeShape += getStrokeFillCode(line.Fill);
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+			strStrokeShape += private_getStrokeStyleCode(line);
+
+			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 
 			strStrokeShape += "\t\tdoc.GetSelectedDrawings()\n"
                  + "\t\t\t.forEach(function(draw) { draw.SetOutLine(stroke); });\n";
@@ -1183,6 +1897,13 @@
 			strStrokeShape += "\t}());\n";
 
 			return strStrokeShape;
+		},
+		setDrawingShadow		: function(shadow)
+		{
+			return "\tdoc.GetSelectedDrawings()\n" +
+				"\t\t.forEach(function(shape) {\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
+				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
 		{
@@ -1205,10 +1926,10 @@
 		},
 		setDrawingPos			: function(pos)
 		{
-			return "\tdoc.GetDrawingsByName([\"" + pos.name + "\"]).forEach(function(draw) {\n" +
-				"\t\tdraw.SetVerPosition(\"page\", " + pos.y + " * 36000.0);\n" +
-				"\t\tdraw.SetHorPosition(\"page\", " + pos.x + " * 36000.0);\n" +
-				"\t});\n"
+			let reg = private_getShapeVar(pos.formatId);
+			return reg.declaration +
+				"\t" + reg.varName + ".SetVerPosition(\"page\", " + pos.y + " * 36000.0);\n" +
+				"\t" + reg.varName + ".SetHorPosition(\"page\", " + pos.x + " * 36000.0);\n"
 		},
 		setPositionH			: function(data)
 		{
@@ -1363,101 +2084,517 @@
 				+ "\t\t.forEach(function(draw) {\n"
 				+ "\t\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"));\n"
 				+ "\t\t});\n";
+		},
+		setCustomGeometry	: function(oAdditional)
+		{
+			let reg = private_getShapeVar(oAdditional.id);
+			return reg.declaration
+				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
+				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
+		},
+		mergeShapes			: function(operation)
+		{
+			return "\tApi.MergeShapes(doc.GetSelectedDrawings(), \"" + getShapesMergeOperationName(operation) + "\");\n";
+		},
+		setDrawingTitle			: function(title){
+			return "\tdoc.GetSelectedDrawings().forEach(function(draw) { draw.SetTitle(\"" + title + "\") });\n";
+		},
+		setDrawingDescription	: function(description){
+			return "\tdoc.GetSelectedDrawings().forEach(function(draw) { draw.SetDescription(\"" + description + "\") });\n";
+		},
+		setDrawingAspectRatio	: function(aspect){
+			return "\tdoc.GetSelectedDrawings().forEach(function(draw) { draw.SetLockAspect(" + aspect + ") });\n";
+		},
+		setTableWidth			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let oWidth = oAdditional.data;
+			let strType = (oWidth.type === 3) ? "percent" : "twips";
+			let value = (oWidth.type === 3) ? oWidth.width : AscCommon.MMToTwips(oWidth.width, -1);
+			return reg.declaration + "\t" + reg.varName + ".SetWidth(\"" + strType + "\", " + value + ");\n";
+		},
+		setTableLayout			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let strLayout = oAdditional.data === Asc.c_oAscTableLayout.AutoFit ? "autofit" : "fixed";
+			return reg.declaration + "\t" + reg.varName + ".SetTableLayout(\"" + strLayout + "\");\n";
+		},
+		setTableDefaultMargin	: function(oAdditional){
+			let d = oAdditional.data;
+			if (!d || !d.Bottom || !d.Left || !d.Right || !d.Top)
+				return "";
+			let reg = private_getTableVar(oAdditional.tableId);
+			let bottom = d.Bottom;
+			let top = d.Top;
+			let left = d.Left;
+			let right = d.Right;
+			return reg.declaration +
+				(bottom ? "\t" + reg.varName + ".SetTableCellMarginBottom(" + AscCommon.MMToTwips(bottom, -1) + ");\n" : "") +
+				(left ? "\t" + reg.varName + ".SetTableCellMarginLeft(" + AscCommon.MMToTwips(left -1) + ");\n" : "") +
+				(right ? "\t" + reg.varName + ".SetTableCellMarginRight(" + AscCommon.MMToTwips(right, -1) + ");\n" : "") +
+				(top ? "\t" + reg.varName + ".SetTableCellMarginTop(" + AscCommon.MMToTwips(top, -1) + ");\n" : "");
+		},
+		setCellMargins			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let d = oAdditional.data;
+			let bottom = d.Bottom;
+			let top = d.Top;
+			let left = d.Left;
+			let right = d.Right;
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
+				(bottom ? "\t\tcell.SetCellMarginBottom(" + AscCommon.MMToTwips(bottom, -1) + ");\n" : "") +
+				(left ? "\t\tcell.SetCellMarginLeft(" + AscCommon.MMToTwips(left, -1) + ");\n" : "") +
+				(right ? "\t\tcell.SetCellMarginRight(" + AscCommon.MMToTwips(right, -1) + ");\n" : "") +
+				(top ? "\t\tcell.SetCellMarginTop(" + AscCommon.MMToTwips(top, -1) + ");\n" : "") +
+				"\t});\n";
+		},
+		setTableCellSpacing		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			return reg.declaration + "\t" + reg.varName + ".SetCellSpacing(" + AscCommon.MMToTwips(oAdditional.data, -1) + ");\n";
+		},
+		setTableBorders			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let borders = oAdditional.data;
+			let bottom = borders.Bottom;
+			let top = borders.Top;
+			let left = borders.Left;
+			let right = borders.Right;
+			let insideH = borders.InsideH;
+			let insideV = borders.InsideV;
+			let insideHStr = insideH
+				? "\t" + reg.varName + ".SetTableBorderInsideH(\"" + (insideH.Value ? 'single' : 'none') + "\", " + insideH.Size * 72 * 8 / 25.4 + ", " + insideH.Space + ", Api.Color(" + insideH.Color.r + ", " + insideH.Color.g + ", " + insideH.Color.b + "));\n"
+				: "";
+			let insideVStr = insideV
+				? "\t" + reg.varName + ".SetTableBorderInsideV(\"" + (insideV.Value ? 'single' : 'none') + "\", " + insideV.Size * 72 * 8 / 25.4 + ", " + insideV.Space + ", Api.Color(" + insideV.Color.r + ", " + insideV.Color.g + ", " + insideV.Color.b + "));\n"
+				: "";
+			return reg.declaration +
+				"\t" + reg.varName + ".SetTableBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", Api.Color(" + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + "));\n" +
+				"\t" + reg.varName + ".SetTableBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", Api.Color(" + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + "));\n" +
+				"\t" + reg.varName + ".SetTableBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", Api.Color(" + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + "));\n" +
+				"\t" + reg.varName + ".SetTableBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size * 72 * 8 / 25.4 + ", " + top.Space + ", Api.Color(" + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + "));\n" +
+				insideHStr +
+				insideVStr;
+		},
+		setCellBorders			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let borders = oAdditional.data;
+			let bottom = borders.Bottom;
+			let top = borders.Top;
+			let left = borders.Left;
+			let right = borders.Right;
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
+				"\t\tcell.SetCellBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", Api.Color(" + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + "));\n" +
+				"\t\tcell.SetCellBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", Api.Color(" + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + "));\n" +
+				"\t\tcell.SetCellBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", Api.Color(" + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + "));\n" +
+				"\t\tcell.SetCellBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size * 72 * 8 / 25.4 + ", " + top.Space + ", Api.Color(" + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + "));\n" +
+				"\t});\n";
+		},
+		setTableAlign			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let align = oAdditional.data;
+			let type;
+			if (AscCommon.align_Center === align)
+				type = "center";
+			else if (AscCommon.align_Right === align)
+				type = "right";
+			else
+				type = "left";
+			return reg.declaration + "\t" + reg.varName + ".SetJc(\"" + type + "\");\n";
+		},
+		setTableBackground		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let color = oAdditional.data.Color;
+			return reg.declaration + "\t" + reg.varName + ".SetBackgroundColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n";
+		},
+		setCellBackground		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let color = oAdditional.data.Color;
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
+				"\t\tcell.SetBackgroundColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n" +
+				"\t});\n";
+		},
+		setCellWidth			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let widthEMU = Math.round(oAdditional.data * 36000);
+			if (oAdditional.columns)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.columns.length; i++)
+					text += "\t" + reg.varName + ".SetColumnWidth(" + oAdditional.columns[i] + ", " + widthEMU + ");\n";
+				return text;
+			}
+			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
+			return reg.declaration + cellsReg.declaration
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
+				+ "\t\t" + reg.varName + ".SetColumnWidth(cell.GetIndex(), " + widthEMU + ");\n"
+				+ "\t});\n";
+		},
+		setCellWrap				: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let cellPrVar = varRegistry.inc('cellPr');
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration
+				+ "\tlet " + cellPrVar + " = Api.CreateTableCellPr();\n"
+				+ "\t" + cellPrVar + ".SetNoWrap(" + oAdditional.data + ");\n"
+				+ cellsReg.declaration
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
+				+ "\t\tcell.SetCellPr(" + cellPrVar + ");\n"
+				+ "\t});\n";
+		},
+		setTableInd				: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			return reg.declaration + "\t" + reg.varName + ".SetTableInd(" + AscCommon.MMToTwips(oAdditional.data, -1) + ");\n";
+		},
+		setTableStyle			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+
+			let style = oMacroRecorderContext.editor.getLogicDocument().GetStyleManager().GetName(oAdditional.data);
+			if (!style)
+				return "";
+			let styleVar = varRegistry.inc('tableStyle');
+			return reg.declaration
+				+ "\tlet " + styleVar + " = doc.GetStyle(\"" + style + "\");\n"
+				+ "\tif (" + styleVar + ") " + reg.varName + ".SetStyle(" + styleVar + ");\n";
+		},
+		setTableWrappingStyle	: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			return reg.declaration + "\t" + reg.varName + ".SetWrappingStyle(" + !!oAdditional.data + ");\n";
+		},
+		setRowHeightTable		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let twips = AscCommon.MMToTwips(oAdditional.data, -1);
+			if (oAdditional.rows)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.rows.length; i++)
+					text += "\t" + reg.varName + ".GetRow(" + oAdditional.rows[i] + ").SetHeight(\"atLeast\", " + twips + ");\n";
+				return text;
+			}
+			let rowsReg = private_getSelectedRowsVar(reg);
+			return reg.declaration + rowsReg.declaration
+				+ "\t" + rowsReg.varName + ".forEach(function(row){\n"
+				+ "\t\tif (row) row.SetHeight(\"atLeast\", " + twips + ");\n"
+				+ "\t});\n";
+		},
+		selectTable				: function(data){
+			let id = data.id;
+			let type = data.type;
+			let reg = private_getTableVar(id);
+
+			if (type === undefined || type === c_oAscTableSelectionType.Table) {
+				return reg.declaration + "\t" + reg.varName + ".Select();\n";
+			}
+			// else if (type === c_oAscTableSelectionType.Row) {
+			// 	return reg.declaration + "\t" + reg.varName + ".GetSelectedRows().forEach(function(row){row.Select()})"
+			// }
+			// else if (type === c_oAscTableSelectionType.Column) {
+
+			// }
+			// else if (type === c_oAscTableSelectionType.Cell) {
+
+			// }
+			return "";
+		},
+		setTableHPos			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let relative = oAdditional.data.relative;
+			let align = oAdditional.data.align;
+			let value = oAdditional.data.value;
+			let strRelate;
+
+			if (relative === Asc.c_oAscHAnchor.Text)
+				strRelate = "character"
+			else if (relative === Asc.c_oAscHAnchor.Margin)
+				strRelate = "margin";
+			else
+				strRelate = "page";
+
+			return reg.declaration + "\t" + reg.varName + ".SetHorPosition(\"" + strRelate + "\", " + align + ", " + (align ? value : AscCommon.MMToTwips(value, -1)) + ");\n";
+		},
+		setTableVPos			: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let relative = oAdditional.data.relative;
+			let align = oAdditional.data.align;
+			let value = oAdditional.data.value;
+			let strRelate;
+
+			if (relative === Asc.c_oAscVAnchor.Text)
+				strRelate = "character"
+			else if (relative === Asc.c_oAscVAnchor.Margin)
+				strRelate = "margin";
+			else
+				strRelate = "page";
+
+			return reg.declaration + "\t" + reg.varName + ".SetVerPosition(\"" + strRelate + "\", " + align + ", " + AscCommon.MMToTwips(value, -1) + ");\n";
+		},
+		setTableVAlign			: function(oAdditional)
+		{
+			let reg = private_getTableVar(oAdditional.tableId);
+			let relative = oAdditional.data.relative;
+			let value = oAdditional.data.value;
+			let strRelate;
+
+			if (relative === Asc.c_oAscVAnchor.Text)
+				strRelate = "character"
+			else if (relative === Asc.c_oAscVAnchor.Margin)
+				strRelate = "margin";
+			else
+				strRelate = "page";
+
+			return reg.declaration + "\t" + reg.varName + ".SetVerAlign(\"" + strRelate + "\", \"" + private_GetAlignV(value) + "\");\n";
+		},
+		setTableHAlign			: function(oAdditional)
+		{
+			let reg = private_getTableVar(oAdditional.tableId);
+			let relative = oAdditional.data.relative;
+			let value = oAdditional.data.value;
+			let strRelate;
+
+			if (relative === Asc.c_oAscVAnchor.Text)
+				strRelate = "character"
+			else if (relative === Asc.c_oAscVAnchor.Margin)
+				strRelate = "margin";
+			else
+				strRelate = "page";
+
+			return reg.declaration + "\t" + reg.varName + ".SetHorAlign(\"" + strRelate + "\", \"" + private_GetAlignH(value) + "\");\n";
+		},
+		setTableResize		: function(oAdditional)
+		{
+			let reg = private_getTableVar(oAdditional.tableId);
+			let grid = oAdditional.tableGrid;
+			if (!grid || !grid.length)
+				return "";
+			let text = reg.declaration;
+			for (let i = 0; i < grid.length; i++)
+				text += "\t" + reg.varName + ".SetColumnWidth(" + i + ", " + Math.round(grid[i] * 36000) + ");\n";
+			return text;
+		},
+		addTableOfContents: function(data)
+		{
+			let oPr = data.pr;
+			let fieldType = data.fieldType;
+			let object = buildTocPrObject(oPr);
+
+			if (fieldType === "tof")
+				return "\tlet " + varRegistry.inc('tof') + " = doc.GetTablesOfFigures().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+
+			return "\tlet " + varRegistry.inc('toc') + " = doc.GetTablesOfContents().Add(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+		},
+		updateTableOfContents: function(additional) {
+			let index = additional.index;
+			let isOnlyNumbers = additional.isUpdateNum;
+			return "\tdoc.GetTablesOfContents().GetItem(" + index + ").Update("+ isOnlyNumbers +");\n";
+		},
+		setComplexFieldPr: function(additional) {
+			if (!additional || !additional.fieldPr)
+				return "";
+
+			let oPr = additional.fieldPr;
+			let index = (typeof additional.index === "number" && additional.index >= 0)
+				? additional.index
+				: 0;
+
+			if (additional.fieldType === "tof") {
+				let object = buildTofPrObject(oPr);
+				return "\tdoc.GetTablesOfFigures().GetItem(" + index + ").SetPr(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+			}
+
+			let object = buildTocPrObject(oPr);
+			return "\tdoc.GetTablesOfContents().GetItem(" + index + ").SetPr(" + JSON.stringify(object, null, "\t").replace(/\n/g, "\n\t") + ");\n";
+		},
+		addPageNumToHdrFtr: function(data)
+		{
+			let str		= "\tlet p = doc.GetFinalSection()";
+			let AlignV	= data.AlignV;
+			let AlignH	= data.AlignH;
+			let align	= GetDocAlignName(AlignH);
+
+			if (AscCommon.hdrftr_Header === AlignV)
+			{
+				str += "\n\t\t.GetHeader(\"default\", true)"
+			}
+			else if (AscCommon.hdrftr_Footer === AlignV)
+			{
+				str += "\n\t\t.GetFooter(\"default\", true)"
+			}
+
+			let runVar = varRegistry.inc('run');
+			str += "\n\t\t.GetElement(0);\n\n\tp.RemoveAllElements();\n\tlet " + runVar + " = p.AddPageNumber();\n\tp.SetJc(\"" + align + "\");\n"
+				+ "\t" + runVar + ".MoveCursorToPos(" + runVar + ".GetText().length + 1);\n"
+
+			return str;
+		},
+		addPageNumToCurrentPos: function()
+		{
+			return "\tlet " + varRegistry.inc('run') + " = doc.GetCurrentParagraph().AddPageNumber();\n" 
+				+ "\t" + varRegistry.get('run') + ".MoveCursorToPos("+ varRegistry.get('run') + ".GetText().length + 1);\n";
+		},
+		addPageCount: function()
+		{
+			return "\tlet " + varRegistry.inc('run') + " = doc.GetCurrentParagraph().AddPagesCount();\n"
+				+"\t" + varRegistry.get('run') + ".MoveCursorToPos(" + varRegistry.get('run') + ".GetText().length + 1);\n";
+		},
+		setHdrFtrEvenAndOdd: function(data)
+		{
+			let isOn = data.isOn;
+			return "\tdoc.SetEvenAndOddHdrFtr(" + isOn + ");\n";
+		},
+		setHdrFtrFirstPage: function()
+		{
+			return ""; //no api
+		},
+		goToHeader: function()
+		{
+			return "\tdoc.MoveCursorToHeader();\n";
+		},
+		goToFooter: function()
+		{
+			return "\tdoc.MoveCursorToFooter();\n";
+		},
+		goToDocContent: function()
+		{
+			return "\tdoc.MoveCursorToMainDocument();\n";
 		}
 	};
-
-	const WordActionsMacroList = {};
+	
+	const DEActionMap = {};
 	// home tab and general changes
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextBold]				= wordActions.setTextBold;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextBoldHotKey]			= wordActions.setTextBold;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextItalic]				= wordActions.setTextItalic;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextItalicHotKey]		= wordActions.setTextItalic;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextUnderline]			= wordActions.setTextUnderline;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextUnderlineHotKey]		= wordActions.setTextUnderline;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextStrikeout]			= wordActions.setTextStrikeout;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextStrikeoutHotKey]		= wordActions.setTextStrikeout;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextFontName]			= wordActions.setTextFontName;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextFontNameLong]		= wordActions.setTextFontName;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextFontSize]			= wordActions.setTextFontSize;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextHighlightColor]		= wordActions.setTextHighlightNone;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextHighlightNone]		= wordActions.setTextHighlightColor;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextHighlight]			= wordActions.setTextHighlightColor;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextVertAlignHotKey2]	= wordActions.setTextVertAlign;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextVertAlignHotKey3]	= wordActions.setTextVertAlign;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextVertAlignHotKey]		= wordActions.setTextVertAlign;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetTextColor]				= wordActions.setTextColor;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetStyleHeading]			= wordActions.setStyleHeading;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetParagraphStyle]			= wordActions.setStyleHeading;
-	WordActionsMacroList[AscDFH.historydescription_Document_Shortcut_ClearFormatting]	= wordActions.clearFormat;
-	WordActionsMacroList[AscDFH.historydescription_Document_ClearFormatting]			= wordActions.clearFormat;
-	WordActionsMacroList[AscDFH.historydescription_Cut]									= wordActions.cut;
-	WordActionsMacroList[AscDFH.historydescription_Document_ChangeTextCase]				= wordActions.changeTextCase;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddLetter]					= wordActions.addLetter;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetParagraphAlign]			= wordActions.setAlign;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetParagraphAlignHotKey]	= wordActions.setAlign;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetParagraphShd]			= wordActions.setParagraphShd;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetParagraphLineSpacing]	= wordActions.setLineSpacing;
-	//WordActionsMacroList[AscDFH.historydescription_Document_IncParagraphIndent]		= wordActions.incIndentetLineSpacing;
-	//WordActionsMacroList[AscDFH.historydescription_Document_DecParagraphIndent]		= wordActions.decIndentetLineSpacing;
-	//WordActionsMacroList[AscDFH.historydescription_Document_IncFontSize]				= wordActions.incFontSize;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetParagraphNumbering]		= wordActions.setParagraphNumbering;
-	WordActionsMacroList[AscDFH.historydescription_Document_SetParagraphNumberingHotKey]= wordActions.setParagraphNumbering;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddParagraph]				= wordActions.addParagraph;
-	//WordActionsMacroList[AscDFH.historydescription_Document_AddPageNumHotKey]			= wordActions.addPageNum;
-	// WordActionsMacroList[AscDFH.historydescription_Document_FormatPasteHotKey]		= wordActions;
-	// WordActionsMacroList[AscDFH.historydescription_Document_PasteHotKey]				= wordActions;
-	// WordActionsMacroList[AscDFH.historydescription_Document_PasteSafariHotKey]		= wordActions;
-	// WordActionsMacroList[AscDFH.historydescription_Document_CutHotKey]				= wordActions;
-	WordActionsMacroList['moveCursorLeft']												= wordActions.moveCursorLeft;
-	WordActionsMacroList['moveCursorRight']												= wordActions.moveCursorRight;
-	WordActionsMacroList['moveCursorUp']												= wordActions.moveCursorUp;
-	WordActionsMacroList['moveCursorDown']												= wordActions.moveCursorDown;
-	WordActionsMacroList['remove']														= wordActions.remove;
+	DEActionMap[AscDFH.historydescription_Document_SetTextBold]				= wordActions.setTextBold;
+	DEActionMap[AscDFH.historydescription_Document_SetTextBoldHotKey]			= wordActions.setTextBold;
+	DEActionMap[AscDFH.historydescription_Document_SetTextItalic]				= wordActions.setTextItalic;
+	DEActionMap[AscDFH.historydescription_Document_SetTextItalicHotKey]		= wordActions.setTextItalic;
+	DEActionMap[AscDFH.historydescription_Document_SetTextUnderline]			= wordActions.setTextUnderline;
+	DEActionMap[AscDFH.historydescription_Document_SetTextUnderlineHotKey]		= wordActions.setTextUnderline;
+	DEActionMap[AscDFH.historydescription_Document_SetTextStrikeout]			= wordActions.setTextStrikeout;
+	DEActionMap[AscDFH.historydescription_Document_SetTextStrikeoutHotKey]		= wordActions.setTextStrikeout;
+	DEActionMap[AscDFH.historydescription_Document_SetTextSmallCapsHotKey]		= wordActions.setTextSmallCaps;
+	DEActionMap[AscDFH.historydescription_Document_SetTextFontName]			= wordActions.setTextFontName;
+	DEActionMap[AscDFH.historydescription_Document_SetTextFontNameLong]		= wordActions.setTextFontName;
+	DEActionMap[AscDFH.historydescription_Document_SetTextFontSize]			= wordActions.setTextFontSize;
+	DEActionMap[AscDFH.historydescription_Document_SetTextHighlightColor]		= wordActions.setTextHighlightNone;
+	DEActionMap[AscDFH.historydescription_Document_SetTextHighlightNone]		= wordActions.setTextHighlightColor;
+	DEActionMap[AscDFH.historydescription_Document_SetTextHighlight]			= wordActions.setTextHighlightColor;
+	DEActionMap[AscDFH.historydescription_Document_SetTextVertAlignHotKey2]	= wordActions.setTextVertAlign;
+	DEActionMap[AscDFH.historydescription_Document_SetTextVertAlignHotKey3]	= wordActions.setTextVertAlign;
+	DEActionMap[AscDFH.historydescription_Document_SetTextVertAlignHotKey]		= wordActions.setTextVertAlign;
+	DEActionMap[AscDFH.historydescription_Document_SetTextColor]				= wordActions.setTextColor;
+	DEActionMap[AscDFH.historydescription_Document_SetStyleHeading]			= wordActions.setStyleHeading;
+	DEActionMap[AscDFH.historydescription_Document_SetParagraphStyle]			= wordActions.setStyleHeading;
+	DEActionMap[AscDFH.historydescription_Document_Shortcut_ClearFormatting]	= wordActions.clearFormat;
+	DEActionMap[AscDFH.historydescription_Document_ClearFormatting]			= wordActions.clearFormat;
+	DEActionMap[AscDFH.historydescription_Cut]									= wordActions.cut;
+	DEActionMap[AscDFH.historydescription_Document_ChangeTextCase]				= wordActions.changeTextCase;
+	DEActionMap[AscDFH.historydescription_Document_AddLetter]					= wordActions.addLetter;
+	DEActionMap[AscDFH.historydescription_Document_SetParagraphAlign]			= wordActions.setAlign;
+	DEActionMap[AscDFH.historydescription_Document_SetParagraphAlignHotKey]	= wordActions.setAlign;
+	DEActionMap[AscDFH.historydescription_Document_SetParagraphShd]			= wordActions.setParagraphShd;
+	DEActionMap[AscDFH.historydescription_Document_SetParagraphLineSpacing]	= wordActions.setLineSpacing;
+	//DEActionMap[AscDFH.historydescription_Document_IncParagraphIndent]		= wordActions.incIndentetLineSpacing;
+	//DEActionMap[AscDFH.historydescription_Document_DecParagraphIndent]		= wordActions.decIndentetLineSpacing;
+	//DEActionMap[AscDFH.historydescription_Document_IncFontSize]				= wordActions.incFontSize;
+	DEActionMap[AscDFH.historydescription_Document_SetParagraphNumbering]		= wordActions.setParagraphNumbering;
+	DEActionMap[AscDFH.historydescription_Document_SetParagraphNumberingHotKey]= wordActions.setParagraphNumbering;
+	DEActionMap[AscDFH.historydescription_Document_AddParagraph]				= wordActions.addParagraph;
+	//DEActionMap[AscDFH.historydescription_Document_AddPageNumHotKey]			= wordActions.addPageNum;
+	// DEActionMap[AscDFH.historydescription_Document_FormatPasteHotKey]		= wordActions;
+	// DEActionMap[AscDFH.historydescription_Document_PasteHotKey]				= wordActions;
+	// DEActionMap[AscDFH.historydescription_Document_PasteSafariHotKey]		= wordActions;
+	// DEActionMap[AscDFH.historydescription_Document_CutHotKey]				= wordActions;
+	DEActionMap['moveCursorLeft']												= wordActions.moveCursorLeft;
+	DEActionMap['moveCursorRight']												= wordActions.moveCursorRight;
+	DEActionMap['moveToNextCell']												= wordActions.moveToNextCell;
+	DEActionMap['moveToPrevCell']												= wordActions.moveToPrevCell;
+	DEActionMap['moveCursorUp']												= wordActions.moveCursorUp;
+	DEActionMap['moveCursorDown']												= wordActions.moveCursorDown;
+	DEActionMap['remove']														= wordActions.remove;
 
-	//WordActionsMacroList[AscDFH.historydescription_Document_BackSpaceButton]			= wordActions.backSpaceButton;
-	// WordActionsMacroList[AscDFH.historydescription_Document_DeleteButton]			= wordActions.deleteButton;
+	//DEActionMap[AscDFH.historydescription_Document_BackSpaceButton]			= wordActions.backSpaceButton;
+	// DEActionMap[AscDFH.historydescription_Document_DeleteButton]			= wordActions.deleteButton;
 	
 	// input tab
-	WordActionsMacroList[AscDFH.historydescription_Document_AddBlankPage]				= wordActions.addBlankPage;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddPageBreak]				= wordActions.addPageBreak;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddSectionBreak]			= wordActions.addSectionBreak;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddTable]					= wordActions.addTable;
-	WordActionsMacroList[AscDFH.historydescription_Document_ApplyTablePr]				= wordActions.applyTablePr;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddChart]					= wordActions.addChart;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddImages]					= wordActions.addImage;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddHyperlink]				= wordActions.addHyperlink;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddNewShape]				= wordActions.addShape;
-	WordActionsMacroList['SelectDrawing']												= wordActions.selectDrawing;
-	WordActionsMacroList['DeselectDrawing']												= wordActions.deselectDrawing;
-	WordActionsMacroList['SetDrawingFill']												= wordActions.setDrawingFill;
-	WordActionsMacroList['SetDrawingLine']												= wordActions.setDrawingLine;
-	WordActionsMacroList['SetDrawingRotation']											= wordActions.setDrawingRotation;
-	WordActionsMacroList['SetDrawingPos']												= wordActions.setDrawingPos;
-	WordActionsMacroList['SetDrawingFlipH']												= wordActions.setDrawingFlipH;
-	WordActionsMacroList['SetDrawingFlipV']												= wordActions.setDrawingFlipV;
-	WordActionsMacroList['SetDrawingWrapping']											= wordActions.setDrawingWrapping;
-	WordActionsMacroList['SetPositionH']												= wordActions.setPositionH;
-	WordActionsMacroList['SetPositionV']												= wordActions.setPositionV;
-	WordActionsMacroList['SetShapeSize']												= wordActions.setShapeSize;
-	WordActionsMacroList['SetDrawingDistances']											= wordActions.setDrawingDistances;
-	WordActionsMacroList['SetShapeInnerPadding']										= wordActions.setShapeInnerPadding;
-	WordActionsMacroList['SetRelSizeH']													= wordActions.setShapeRelSizeH;
-	WordActionsMacroList['SetRelSizeV']													= wordActions.setShapeRelSizeV;
-	WordActionsMacroList['SetGeometry']													= wordActions.setGeometry;
-	WordActionsMacroList[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
-	//WordActionsMacroList[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
-	//WordActionsMacroList[AscDFH.AscDFH.historydescription_Document_AddDropCap]		= wordActions.addDropCap;
-	//WordActionsMacroList[AscDFH.AscDFH.historydescription_Document_AddDateTimeField]	= wordActions.addDateTimeField;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddMath]					= wordActions.addMath;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddMathHotKey]				= wordActions.addMathHotkey;
-	//WordActionsMacroList[AscDFH.historydescription_Document_AddTextWithProperties]	= wordActions.addMathHotkey;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddBlockLevelContentControl]= wordActions.addBlockContentControl;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddInlineLevelContentControl]= wordActions.addInlineContentControl;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddContentControlList]		= wordActions.addContentControlList;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddContentControlCheckBox]	= wordActions.addContentControlCheckBox;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddContentControlDatePicker]= wordActions.addContentControlDatePicker;
-	WordActionsMacroList[AscDFH.historydescription_Document_AddContentControlPicture]	= wordActions.addContentControlPicture;
+	DEActionMap[AscDFH.historydescription_Document_AddBlankPage]				= wordActions.addBlankPage;
+	DEActionMap[AscDFH.historydescription_Document_AddPageBreak]				= wordActions.addPageBreak;
+	DEActionMap[AscDFH.historydescription_Document_AddSectionBreak]			= wordActions.addSectionBreak;
+	DEActionMap[AscDFH.historydescription_Document_AddTable]					= wordActions.addTable;
+	//DEActionMap[AscDFH.historydescription_Document_ApplyTablePr]				= wordActions.applyTablePr;
+	DEActionMap[AscDFH.historydescription_Document_AddChart]					= wordActions.addChart;
+	DEActionMap[AscDFH.historydescription_Document_AddImages]					= wordActions.addImage;
+	DEActionMap[AscDFH.historydescription_Document_AddHyperlink]				= wordActions.addHyperlink;
+	DEActionMap[AscDFH.historydescription_Document_AddNewShape]				= wordActions.addShape;
+	DEActionMap['SelectDrawing']												= wordActions.selectDrawing;
+	DEActionMap['DeselectDrawing']												= wordActions.deselectDrawing;
+	DEActionMap['SetDrawingFill']												= wordActions.setDrawingFill;
+	DEActionMap['SetDrawingLine']												= wordActions.setDrawingLine;
+	DEActionMap['SetDrawingShadow']											= wordActions.setDrawingShadow;
+	DEActionMap['SetDrawingRotation']											= wordActions.setDrawingRotation;
+	DEActionMap['SetDrawingPos']												= wordActions.setDrawingPos;
+	DEActionMap['SetDrawingFlipH']												= wordActions.setDrawingFlipH;
+	DEActionMap['SetDrawingFlipV']												= wordActions.setDrawingFlipV;
+	DEActionMap['SetDrawingWrapping']											= wordActions.setDrawingWrapping;
+	DEActionMap['SetPositionH']												= wordActions.setPositionH;
+	DEActionMap['SetPositionV']												= wordActions.setPositionV;
+	DEActionMap['SetShapeSize']												= wordActions.setShapeSize;
+	DEActionMap['SetDrawingDistances']											= wordActions.setDrawingDistances;
+	DEActionMap['SetShapeInnerPadding']										= wordActions.setShapeInnerPadding;
+	DEActionMap['SetRelSizeH']													= wordActions.setShapeRelSizeH;
+	DEActionMap['SetRelSizeV']													= wordActions.setShapeRelSizeV;
+	DEActionMap['SetGeometry']													= wordActions.setGeometry;
+	DEActionMap['SetCustomGeometry']											= wordActions.setCustomGeometry;
+	DEActionMap[AscDFH.historydescription_Presentation_MergeSelectedShapes]	= wordActions.mergeShapes;
+	DEActionMap[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
+	DEActionMap[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
+	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
+	DEActionMap[AscDFH.historydescription_Document_AddDropCap]					= wordActions.addDropCap;
+	DEActionMap[AscDFH.historydescription_Document_RemoveDropCap]				= wordActions.removeDropCap;
+	//DEActionMap[AscDFH.AscDFH.historydescription_Document_AddDateTimeField]	= wordActions.addDateTimeField;
+	DEActionMap[AscDFH.historydescription_Document_AddMath]					= wordActions.addMath;
+	DEActionMap[AscDFH.historydescription_Document_AddMathHotKey]				= wordActions.addMathHotkey;
+	//DEActionMap[AscDFH.historydescription_Document_AddTextWithProperties]	= wordActions.addMathHotkey;
+	DEActionMap[AscDFH.historydescription_Document_AddBlockLevelContentControl]= wordActions.addBlockContentControl;
+	DEActionMap[AscDFH.historydescription_Document_AddInlineLevelContentControl]= wordActions.addInlineContentControl;
+	DEActionMap[AscDFH.historydescription_Document_AddContentControlList]		= wordActions.addContentControlList;
+	DEActionMap[AscDFH.historydescription_Document_AddContentControlCheckBox]	= wordActions.addContentControlCheckBox;
+	DEActionMap[AscDFH.historydescription_Document_AddContentControlDatePicker]= wordActions.addContentControlDatePicker;
+	DEActionMap[AscDFH.historydescription_Document_AddContentControlPicture]	= wordActions.addContentControlPicture;
+	DEActionMap[AscDFH.historydescription_Document_ChangeContentControlProperties]= wordActions.changeContentControlProperties;
+	DEActionMap['SetDrawingTitle']												= wordActions.setDrawingTitle;
+	DEActionMap['SetDrawingDescription']										= wordActions.setDrawingDescription;
+	DEActionMap['SetDrawingAspectRatio']										= wordActions.setDrawingAspectRatio;
+	DEActionMap["SetTableWidth"]												= wordActions.setTableWidth;
+	DEActionMap["SetTableLayout"]												= wordActions.setTableLayout;
+	DEActionMap["SetTableDefaultMargin"]										= wordActions.setTableDefaultMargin;
+	DEActionMap["SetTableCellSpacing"]											= wordActions.setTableCellSpacing;
+	DEActionMap["SetTableBorders"]												= wordActions.setTableBorders;
+	DEActionMap["SetCellBorders"]												= wordActions.setCellBorders;
+	DEActionMap["SetTableAlign"]												= wordActions.setTableAlign;
+	DEActionMap["SetTableBackground"]											= wordActions.setTableBackground;
+	DEActionMap["SetCellBackground"]											= wordActions.setCellBackground;
+	DEActionMap["SetCellWidth"]													= wordActions.setCellWidth;
+	DEActionMap["SetCellMargins"]												= wordActions.setCellMargins;
+	DEActionMap["SetCellWrap"]													= wordActions.setCellWrap;
+	DEActionMap["SetTableInd"]													= wordActions.setTableInd;
+	DEActionMap["SetTableStyle"]												= wordActions.setTableStyle;
+	DEActionMap["SetTableWrappingStyle"]										= wordActions.setTableWrappingStyle;
+	DEActionMap["SetRowHeightTable"]											= wordActions.setRowHeightTable;
+	DEActionMap["SelectTable"]													= wordActions.selectTable;
+	DEActionMap["SetTableHPosition"]											= wordActions.setTableHPos;
+	DEActionMap["SetTableVPosition"]											= wordActions.setTableVPos;
+	DEActionMap["SetTableVAlign"]												= wordActions.setTableVAlign;
+	DEActionMap["SetTableHAlign"]												= wordActions.setTableHAlign;
+	DEActionMap["SetTableResize"]												= wordActions.setTableResize;
+	DEActionMap[AscDFH.historydescription_Document_AddTableOfContents]			= wordActions.addTableOfContents;
+	DEActionMap[AscDFH.historydescription_Document_UpdateTableOfContents]		= wordActions.updateTableOfContents;
+	DEActionMap[AscDFH.historydescription_Document_SetComplexFieldPr]			= wordActions.setComplexFieldPr;
+	DEActionMap[AscDFH.historydescription_Document_AddPageNumToHdrFtr]			= wordActions.addPageNumToHdrFtr;
+	DEActionMap[AscDFH.historydescription_Document_AddPageNumToCurrentPos]		= wordActions.addPageNumToCurrentPos;
+	DEActionMap[AscDFH.historydescription_Document_AddPageCount]				= wordActions.addPageCount;
+	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrEvenAndOdd]			= wordActions.setHdrFtrEvenAndOdd;
+	DEActionMap[AscDFH.historydescription_Document_SetHdrFtrFirstPage]			= wordActions.setHdrFtrFirstPage;
+	DEActionMap["GoToHeader"]													= wordActions.goToHeader;
+	DEActionMap["GoToFooter"]													= wordActions.goToFooter;
+	DEActionMap["GoToDocContent"]												= wordActions.goToDocContent;
 
 	const cellActions = {
 		setCellIncreaseFontSize	: function(){return "\tApi.GetSelection().FontIncrease();\n"},
@@ -1518,14 +2655,14 @@
 		},
 		setCellTextColor		: function(clr){
 			let color = clr === null
-				? "Api.CreateColorFromRGB( 255, 255, 255)"
-				: "Api.CreateColorFromRGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
+				? "Api.RGB(255, 255, 255)"
+				: "Api.RGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
 			return "\tApi.GetSelection().SetFontColor(" + color + ");\n"
 		},
 		setCellBackgroundColor	: function(clr){
 			let color = clr === null
-				? "Api.CreateColorFromRGB( 255, 255, 255)"
-				: "Api.CreateColorFromRGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
+				? "Api.RGB(255, 255, 255)"
+				: "Api.RGB(" + clr.getR() + ", " + clr.getG() + ", " + clr.getB() + ")";
 			return "\tApi.GetSelection().SetBackgroundColor(" + color + ");\n"
 		},
 		setCellWrap				: function(wrap){return "\tApi.GetSelection().SetWrap(" + wrap + ");\n"},
@@ -1605,7 +2742,7 @@
 						default: continue;
 					}
 
-					let colorStr = "Api.CreateColorFromRGB(0, 0, 0)";
+					let colorStr = "Api.RGB(0, 0, 0)";
 					if (border.color) {
 						if (typeof border.color === 'string') {
 							let hex = border.color.replace('#', '');
@@ -1615,9 +2752,9 @@
 							let r = parseInt(hex.substr(0, 2), 16) || 0;
 							let g = parseInt(hex.substr(2, 2), 16) || 0;
 							let b = parseInt(hex.substr(4, 2), 16) || 0;
-							colorStr = "Api.CreateColorFromRGB(" + r + ", " + g + ", " + b + ")";
+							colorStr = "Api.RGB(" + r + ", " + g + ", " + b + ")";
 						} else if (typeof border.color === 'object') {
-							colorStr = "Api.CreateColorFromRGB(" + (border.color.r || 0) + ", " + (border.color.g || 0) + ", " + (border.color.b || 0) + ")";
+							colorStr = "Api.RGB(" + (border.color.r || 0) + ", " + (border.color.g || 0) + ", " + (border.color.b || 0) + ")";
 						}
 					}
 
@@ -1633,8 +2770,8 @@
 		// cut						: function(){return "ApiApi.GetSelection().Cut();\n"},
 		setCellStyle			: function(style){return ""},
 		setCellFormat			: function(format){
-			return "\tlet " + CounterStore.inc('format') + " = Api.Format(worksheet.GetActiveCell().GetValue(), \'" + format + "\')\n"
-			+ "\tworksheet.GetActiveCell().SetValue(" + CounterStore.get('format') + ");\n";
+			return "\tlet " + varRegistry.inc('format') + " = Api.Format(worksheet.GetActiveCell().GetValue(), \'" + format + "\')\n"
+			+ "\tworksheet.GetActiveCell().SetValue(" + varRegistry.get('format') + ");\n";
 		},
 		setCellHyperlinkRemove	: function(data){return ""},
 		setCellMerge			: function(data){
@@ -1648,18 +2785,56 @@
 				return "\tApi.GetSelection().Merge(false);\n";
 		},
 		setCellSort				: function(obj){
-			let range = "\tlet " + CounterStore.inc('range') + " = Api.GetSelection().GetAddress(true, true);\n";
+			let range = "\tlet " + varRegistry.inc('range') + " = Api.GetSelection().GetAddress(true, true);\n";
 
 			if (obj.type === Asc.c_oAscSortOptions.Ascending)
-				range += "\tApi.GetSelection().SetSort(" + CounterStore.get('range') + " , \"xlAscending\", undefined, undefined, undefined, undefined, \"xlYes\");\n";
+				range += "\tApi.GetSelection().SetSort(" + varRegistry.get('range') + " , \"xlAscending\", undefined, undefined, undefined, undefined, \"xlYes\");\n";
 			else if (obj.type === Asc.c_oAscSortOptions.Descending)
-				range += "\tApi.GetSelection().SetSort(" + CounterStore.get('range') + " , \"xlDescending\", undefined, undefined, undefined, undefined, \"xlYes\");\n";
+				range += "\tApi.GetSelection().SetSort(" + varRegistry.get('range') + " , \"xlDescending\", undefined, undefined, undefined, undefined, \"xlYes\");\n";
 
 			return range;
 		},
 		setCellEmpty			: function(){ return "\tApi.GetSelection().Clear();\n";},
 		setNumberFormat			: function(format){ return "\tApi.GetSelection().SetNumberFormat(\"" + format + "\");\n";},
-		setCellPaste			: function(){return "\tApi.GetSelection().Paste();\n";},
+		copyRange				: function(copy){
+			copiedRange = copy;
+			return "";
+		},
+		setCellPaste			: function(){
+			if (!copiedRange)
+				return "";
+
+			return "\tApi.GetSelection().Paste(Api.GetSheet(\"" + escapeMacroString(copiedRange.sheet) + "\").GetRange(\"" + copiedRange.range.getName() + "\"));\n";
+		},
+		cutRange				: function(){
+			if (!copiedRange)
+				return "";
+
+			let text = "\tApi.GetSheet(\"" + escapeMacroString(copiedRange.sheet) + "\").GetRange(\"" + copiedRange.range.getName() + "\").Cut(Api.GetSelection());\n";
+			copiedRange = null;
+			return text;
+		},
+		insertCells				: function(insert){
+			let ar = insert.range;
+			let isRows = Asc.c_oAscInsertOptions.InsertRows === insert.type || Asc.c_oAscInsertOptions.InsertCellsAndShiftDown === insert.type;
+			let range;
+			switch (insert.type) {
+				case Asc.c_oAscInsertOptions.InsertRows:				range = new Asc.Range(0, ar.r1, AscCommon.gc_nMaxCol0, ar.r2); break;
+				case Asc.c_oAscInsertOptions.InsertColumns:				range = new Asc.Range(ar.c1, 0, ar.c2, AscCommon.gc_nMaxRow0); break;
+				default:												range = ar;
+			}
+
+			// Replay reads the source at paste time, so it must follow the shifted cells.
+			if (copiedRange && copiedRange.sheet === insert.sheet) {
+				let src = copiedRange.range;
+				if (isRows && range.r1 <= src.r1 && range.c1 <= src.c1 && src.c2 <= range.c2)
+					src.setOffset(new AscCommon.CellBase(range.r2 - range.r1 + 1, 0));
+				else if (!isRows && range.c1 <= src.c1 && range.r1 <= src.r1 && src.r2 <= range.r2)
+					src.setOffset(new AscCommon.CellBase(0, range.c2 - range.c1 + 1));
+			}
+
+			return "\tApi.GetRange(\"" + range.getName() + "\").Insert(\"" + (isRows ? "down" : "right") + "\");\n";
+		},
 		addChart				: function(chart){ //todo title
 			let range = chart.parent.dataRefs.getRange();
 			let type = private_ChartInternalTypeToBuilder(chart.getChartType());
@@ -1673,12 +2848,14 @@
 			let col		= comment.coords.nCol;
 			let row		= comment.coords.nRow;
 			let time	= comment.sTime;
+			let rangeVar   = varRegistry.inc('range');
+			let commentVar = varRegistry.inc('comment');
 
-			return "\tlet range = worksheet.GetRangeByNumber(" + row + ", " + col + ");\n" +
-				"\tlet comment = range.AddComment(\""+ comment.sText + "\");\n" +
-				"\tcomment.SetAuthorName(\"" + comment.sUserName +"\");\n" +
-				"\tcomment.SetUserId(\"" + comment.sUserId +"\");\n" +
-				"\tcomment.SetTime(" + time +");\n"
+			return "\tlet " + rangeVar + " = worksheet.GetRangeByNumber(" + row + ", " + col + ");\n"
+				+ "\tlet " + commentVar + " = " + rangeVar + ".AddComment(\""+ comment.sText + "\");\n"
+				+ "\t" + commentVar + ".SetAuthorName(\"" + comment.sUserName +"\");\n"
+				+ "\t" + commentVar + ".SetUserId(\"" + comment.sUserId +"\");\n"
+				+ "\t" + commentVar + ".SetTime(" + time +");\n"
 		},
 		addHyperlink			: function(hp){
 			let box		= hp.hyperlinkModel.Ref.bbox;
@@ -1709,126 +2886,71 @@
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
-			shapesMacro[shapeProps.id] = getShapeCount();
+			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 			let from = shapeProps.base.from;
-			return "\t(function () {\n" +
-					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
-					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
+			return "\tlet " + varName + " = (function () {\n" +
+					"\t\tlet fill = Api.CreateSolidFill(Api.Color("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
+					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.Color("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = worksheet.AddShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke, " + from.col + ", " + from.colOff * 36000 + ", " + from.row + ", " + from.rowOff * 36000 + ");\n" +
 					"\t\tshape.Select();\n" +
-					"\t\tshape.SetName(\"macroShape" + shapesMacro[shapeProps.id] + "\");\n" +
+					"\t\treturn shape\n" +
 				"\t}());\n";
 		},
-		deselectDrawing				: function(name)
+		deselectDrawing				: function(oAdditional)
 		{
-			if (shapesMacro[name] === undefined) {
+			let varName = varRegistry.get(oAdditional.formatId);
+			if (varName === undefined) {
 				return "\tworksheet.GetSelectedDrawings().forEach(function(drawing){drawing.Unselect()});\n";
 			}
-			return "\tworkbook.GetDrawingsByName([\"" + ("macroShape" + shapesMacro[name])  + "\"])\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
+			return "\t[" + varName + "]\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
 		},
 		selectDrawing				: function(shapes)
 		{
 			let str = "";
 			let shapesSort = [];
-			
+
 			shapes.forEach(function(element) {
-				if (!shapesSort.includes(element)) 
+				if (!shapesSort.includes(element))
 					shapesSort.push(element);
 			});
 
-			// Remove elements where shapesMacro[element.getObjectName()] === undefined
 			shapesSort = shapesSort.filter(function(element) {
-				return shapesMacro[element.getObjectName()] !== undefined;
+				return varRegistry.get(element.getFormatIdString()) !== undefined;
 			});
 
 			if (shapesSort.length === 0)
 				return "";
 
-			let ids = ""
-			for(let i = 0; i < shapesSort.length; i++)
-			{
-				if (shapesMacro[shapesSort[i].getObjectName()] !== undefined)
-					ids +=  "\"" + "macroShape" + shapesMacro[shapesSort[i].getObjectName()] + "\"" + (i != shapesSort.length - 1 ? ", " : "")
+			let ids = "";
+			for (let i = 0; i < shapesSort.length; i++) {
+				let varName = varRegistry.get(shapesSort[i].getFormatIdString());
+				if (varName !== undefined)
+					ids += varName + (i != (shapesSort.length - 1) && shapesSort.length > 1 ? ", " : "")
 			}
 
-			return str + "\tworkbook.GetDrawingsByName([" + ids + "])\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
+			return str + "\t[" + ids + "]\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.fill.color.color.RGBA;
-				//let transparent = unifill.transparent;
-
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))));\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colorScheme = Asc.editor.getCurrentColorScheme();
-
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.color.RGBA;
-
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + gradient + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t\t)\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tworksheet.GetSelectedShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateNoFill()));\n";
-			}
+			let colorScheme = Asc.editor.getCurrentColorScheme();
+			return private_getDrawingFillReplayCode("worksheet.GetSelectedShapes()", true, unifill, function(gs) {
+				return gs.color.color.id !== undefined ? colorScheme.colors[gs.color.color.id].RGBA : gs.color.RGBA;
+			});
 		},
 		setDrawingLine			: function(line)
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.fill.color.color.RGBA;
 
+			strStrokeShape += getStrokeFillCode(line.Fill);
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+			strStrokeShape += private_getStrokeStyleCode(line);
+
+			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 
 			strStrokeShape += "\t\tworksheet.GetSelectedShapes()\n"
 				+ "\t\t\t.forEach(shape => shape.SetOutLine(stroke));\n";
@@ -1836,6 +2958,13 @@
 			strStrokeShape += "\t}());\n";
 
 			return strStrokeShape;
+		},
+		setDrawingShadow		: function(shadow)
+		{
+			return "\tworksheet.GetSelectedShapes()\n" +
+				"\t\t.forEach(shape => {\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
+				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
 		{
@@ -1893,63 +3022,93 @@
 				+ "\t\t.forEach(draw => {\n"
 					+ "\t\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"))\n"
 				+ "\t\t});\n"
+		},
+		setCustomGeometry	: function(oAdditional)
+		{
+			let reg = private_getShapeVar(oAdditional.id);
+			return reg.declaration
+				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
+				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
+		},
+		mergeShapes			: function(operation)
+		{
+			return "\tApi.MergeShapes(worksheet.GetSelectedDrawings(), \"" + getShapesMergeOperationName(operation) + "\");\n";
+		},
+		setDrawingTitle		: function(title){
+			return "\tworksheet.GetSelectedDrawings().forEach(function(draw) { draw.SetTitle(\"" + title + "\") });\n";
+		},
+		setDrawingDescription	: function(description){
+			return "\tworksheet.GetSelectedDrawings().forEach(function(draw) { draw.SetDescription(\"" + description + "\") });\n";
+		},
+		setDrawingAspectRatio	: function(aspect){
+			return "\tworksheet.GetSelectedDrawings().forEach(function(draw) { draw.SetLockAspect(" + aspect + ") });\n";
 		}
 	};
-	const CellActionsMacroList = {};
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellIncreaseFontSize]	= cellActions.setCellIncreaseFontSize,
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellDecreaseFontSize]	= cellActions.setCellDecreaseFontSize,
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellFontSize]				= cellActions.setCellFontSize;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellFontName]				= cellActions.setCellFontName;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellBold]					= cellActions.setCellBold;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellItalic]				= cellActions.setCellItalic;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellUnderline]			= cellActions.setCellUnderline;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellStrikeout]			= cellActions.setCellStrikeout;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellSubscript]			= cellActions.setCellSubscript;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellSuperscript]			= cellActions.setCellSuperscript;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellReadingOrder]			= cellActions.setCellReadingOrder;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellAlign]				= cellActions.setCellAlign;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellVertAlign]			= cellActions.setCellVerticalAlign;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellTextColor]			= cellActions.setCellTextColor;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellBackgroundColor]	    = cellActions.setCellBackgroundColor;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellWrap]				    = cellActions.setCellWrap;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellShrinkToFit]		= cellActions.setCellShrinkToFit;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellBorder]				= cellActions.setCellBorder;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellValue]				= cellActions.setCellValue;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellAngle]				= cellActions.setCellAngle;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellMerge]				= cellActions.setCellMerge;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellStyle]				= cellActions.setCellStyle;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellChangeTextCase]		= cellActions.setCellChangeTextCase;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellChangeFontSize]		= cellActions.setCellChangeFontSize;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellHyperlinkAdd]		= cellActions.setCellHyperlinkAdd;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellHyperlinkModify]	= cellActions.setCellHyperlinkModify;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellHyperlinkRemove]	= cellActions.setCellHyperlinkRemove;
-	//CellActionsMacroList[AscDFH.historydescription_Cut]									= cellActions.cut;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellFormat]				= cellActions.setCellFormat;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellSort]					= cellActions.setCellSort;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellEmpty]				= cellActions.setCellEmpty;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellChangeDigNum]			= cellActions.setNumberFormat;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellPaste]				= cellActions.setCellPaste;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddShape]					= cellActions.addShape;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddChart]					= cellActions.addChart;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddComment]					= cellActions.addComment;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellHyperlink]			= cellActions.addHyperlink;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddImageUrls]				= cellActions.addImageUrls;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddAutoFilter]				= cellActions.addAutoFilter;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_RemoveAutoFilter]			= cellActions.removeAutoFilter;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SelectRange]					= cellActions.selectRange;
-	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellFormula]				= cellActions.setCellFormula;
+	const SEActionMap = {};
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellIncreaseFontSize]	= cellActions.setCellIncreaseFontSize,
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellDecreaseFontSize]	= cellActions.setCellDecreaseFontSize,
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellFontSize]				= cellActions.setCellFontSize;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellFontName]				= cellActions.setCellFontName;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellBold]					= cellActions.setCellBold;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellItalic]				= cellActions.setCellItalic;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellUnderline]			= cellActions.setCellUnderline;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellStrikeout]			= cellActions.setCellStrikeout;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellSubscript]			= cellActions.setCellSubscript;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellSuperscript]			= cellActions.setCellSuperscript;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellReadingOrder]			= cellActions.setCellReadingOrder;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellAlign]				= cellActions.setCellAlign;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellVertAlign]			= cellActions.setCellVerticalAlign;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellTextColor]			= cellActions.setCellTextColor;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellBackgroundColor]	    = cellActions.setCellBackgroundColor;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellWrap]				    = cellActions.setCellWrap;
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellShrinkToFit]		= cellActions.setCellShrinkToFit;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellBorder]				= cellActions.setCellBorder;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellValue]				= cellActions.setCellValue;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellAngle]				= cellActions.setCellAngle;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellMerge]				= cellActions.setCellMerge;
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellStyle]				= cellActions.setCellStyle;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellChangeTextCase]		= cellActions.setCellChangeTextCase;
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellChangeFontSize]		= cellActions.setCellChangeFontSize;
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellHyperlinkAdd]		= cellActions.setCellHyperlinkAdd;
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellHyperlinkModify]	= cellActions.setCellHyperlinkModify;
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellHyperlinkRemove]	= cellActions.setCellHyperlinkRemove;
+	//SEActionMap[AscDFH.historydescription_Cut]									= cellActions.cut;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellFormat]				= cellActions.setCellFormat;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellSort]					= cellActions.setCellSort;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellEmpty]				= cellActions.setCellEmpty;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellChangeDigNum]			= cellActions.setNumberFormat;
+	//SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellPaste]				= cellActions.setCellPaste;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_AddShape]					= cellActions.addShape;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_AddChart]					= cellActions.addChart;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_AddComment]					= cellActions.addComment;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellHyperlink]			= cellActions.addHyperlink;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_AddImageUrls]				= cellActions.addImageUrls;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_AddAutoFilter]				= cellActions.addAutoFilter;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_RemoveAutoFilter]			= cellActions.removeAutoFilter;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SelectRange]					= cellActions.selectRange;
+	SEActionMap[AscDFH.historydescription_Spreadsheet_SetCellFormula]				= cellActions.setCellFormula;
 
-	CellActionsMacroList['DeselectDrawing']													= cellActions.deselectDrawing;
-	CellActionsMacroList['SelectDrawing']													= cellActions.selectDrawing;
-	CellActionsMacroList['SetDrawingFill']													= cellActions.setDrawingFill;
-	CellActionsMacroList['SetDrawingLine']													= cellActions.setDrawingLine;
-	CellActionsMacroList['SetDrawingRotation']												= cellActions.setDrawingRotation;
-	CellActionsMacroList['SetDrawingFlipH']													= cellActions.setDrawingFlipH;
-	CellActionsMacroList['SetDrawingFlipV']													= cellActions.setDrawingFlipV;
-	CellActionsMacroList['SetDrawingPos']													= cellActions.setDrawingPos;
-	CellActionsMacroList['SetShapeSize']													= cellActions.setShapeSize;
-	CellActionsMacroList['SetShapeInnerPadding']											= cellActions.setShapeInnerPadding;
-	CellActionsMacroList['SetGeometry']														= cellActions.setGeometry;
+	SEActionMap['DeselectDrawing']													= cellActions.deselectDrawing;
+	SEActionMap['SelectDrawing']													= cellActions.selectDrawing;
+	SEActionMap['SetDrawingFill']													= cellActions.setDrawingFill;
+	SEActionMap['SetDrawingLine']													= cellActions.setDrawingLine;
+	SEActionMap['SetDrawingShadow']												= cellActions.setDrawingShadow;
+	SEActionMap['SetDrawingRotation']												= cellActions.setDrawingRotation;
+	SEActionMap['SetDrawingFlipH']													= cellActions.setDrawingFlipH;
+	SEActionMap['SetDrawingFlipV']													= cellActions.setDrawingFlipV;
+	SEActionMap['SetDrawingPos']													= cellActions.setDrawingPos;
+	SEActionMap['SetShapeSize']													= cellActions.setShapeSize;
+	SEActionMap['SetShapeInnerPadding']											= cellActions.setShapeInnerPadding;
+	SEActionMap['SetGeometry']														= cellActions.setGeometry;
+	SEActionMap['SetCustomGeometry']												= cellActions.setCustomGeometry;
+	SEActionMap[AscDFH.historydescription_Presentation_MergeSelectedShapes]			= cellActions.mergeShapes;
+	SEActionMap['SetDrawingTitle']													= cellActions.setDrawingTitle;
+	SEActionMap['SetDrawingDescription']											= cellActions.setDrawingDescription;
+	SEActionMap['SetDrawingAspectRatio']											= cellActions.setDrawingAspectRatio;
+	SEActionMap['CopyRange']														= cellActions.copyRange;
+	SEActionMap['PasteRange']														= cellActions.setCellPaste;
+	SEActionMap['CutRange']															= cellActions.cutRange;
+	SEActionMap['InsertCells']														= cellActions.insertCells;
 
 	const presActions = {
 		setParagraphAlign		: function(align){
@@ -1974,14 +3133,12 @@
 			for (let nChar = 0; nChar < additional.length; nChar++)
 				text += String.fromCodePoint(additional[nChar]);
 
-			return "\t(function () {\n"
-				+ "\t\tlet shapes = Api.GetSelection().GetShapes();\n"
-				+ "\t\tif (shapes.length) {\n"
-				+	"\t\t\tlet content = shapes[0].GetDocContent();\n"
-				+	"\t\t\tlet len = content.GetElementsCount();\n"
-				+	"\t\t\tcontent.GetElement(len - 1).AddText(\"" + text + "\")\n"
-				+ "\t\t}\n"
-				+ "\t}());\n";
+			return "\tpresentation.EnterText(\"" + text + "\");\n"	
+		},
+		remove					: function(){
+			if (oMacroRecorderContext.prevChangeType === AscDFH.historydescription_Presentation_ParagraphAdd && oMacroRecorderContext.prevData.length)
+				oMacroRecorderContext.prevData.pop();
+			return "";
 		},
 		putTextPrBold			: function(bold){return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
 			"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
@@ -2043,23 +3200,23 @@
 			}
 			else
 			{
-				return "\tlet " + CounterStore.inc('slide') +" = Api.CreateSlide();\n"
-					+ "\tlet " + CounterStore.inc('master') +" = presentation.GetMaster(0);\n"
-					+ "\tlet " + CounterStore.inc('layout') +" = " + CounterStore.get('master') + ".GetLayout(" + data + ");\n"
-					+ "\t" + CounterStore.get('slide') + ".ApplyLayout(" + CounterStore.get('layout') + ");\n"
-					+ "\tpresentation.AddSlide(" + CounterStore.get('slide') + ");\n";
+				return "\tlet " + varRegistry.inc('slide') +" = Api.CreateSlide();\n"
+					+ "\tlet " + varRegistry.inc('master') +" = presentation.GetMaster(0);\n"
+					+ "\tlet " + varRegistry.inc('layout') +" = " + varRegistry.get('master') + ".GetLayout(" + data + ");\n"
+					+ "\t" + varRegistry.get('slide') + ".ApplyLayout(" + varRegistry.get('layout') + ");\n"
+					+ "\tpresentation.AddSlide(" + varRegistry.get('slide') + ");\n";
 			}
 		},
 		deleteSlides			: function(index){
-			return "\tlet " + CounterStore.inc('slide') +" = presentation.GetSlideByIndex(" + index + ");\n"
-				+ "\tif (" + CounterStore.get('slide') + ") " + CounterStore.get('slide') + ".Delete();\n";
+			return "\tlet " + varRegistry.inc('slide') +" = presentation.GetSlideByIndex(" + index + ");\n"
+				+ "\tif (" + varRegistry.get('slide') + ") " + varRegistry.get('slide') + ".Delete();\n";
 		},
 		changeLayout			: function(changeObj) {
 			return "\t[" + changeObj.slides.toString() + "].forEach(function(index) {\n"
-				+ "\t\tlet " + CounterStore.inc('slide') +" = presentation.GetSlideByIndex(index);\n"
-				+ "\t\tlet " + CounterStore.inc('master') +" = presentation.GetMaster(0);\n"
-				+ "\t\tlet " + CounterStore.inc('layout') +" = " + CounterStore.get('master') + ".GetLayout(" + changeObj.layout + ");\n"
-				+ "\t\tif (" + CounterStore.get('slide') + ") " + CounterStore.get('slide') + ".ApplyLayout(" + CounterStore.get('layout') + ");\n"
+				+ "\t\tlet " + varRegistry.inc('slide') +" = presentation.GetSlideByIndex(index);\n"
+				+ "\t\tlet " + varRegistry.inc('master') +" = presentation.GetMaster(0);\n"
+				+ "\t\tlet " + varRegistry.inc('layout') +" = " + varRegistry.get('master') + ".GetLayout(" + changeObj.layout + ");\n"
+				+ "\t\tif (" + varRegistry.get('slide') + ") " + varRegistry.get('slide') + ".ApplyLayout(" + varRegistry.get('layout') + ");\n"
 				+ "\t});\n";
 		},
 		//showfrom				: function(){},
@@ -2082,7 +3239,7 @@
 		putTextColor			: function(color){
 			return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
 				"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
-				"\t\t\tpara.SetColor(" + color.r + ", " + color.g + ", " + color.b + ");\n" +
+				"\t\t\tpara.SetColor(Api.Color(" + color.r + ", " + color.g + ", " + color.b + "));\n" +
 				"\t\t});\n" +
 				"\t});\n";
 		},
@@ -2159,9 +3316,28 @@
 		unGroup					: function(){
 			return "\tApi.GetSelection().GetShapes().forEach(function(shape) { shape.Ungroup(); });\n";
 		},
-		addFlowTable			: function(table){
-			return "\tconst table = Api.CreateTable(" + table.row + ", " + table.col + ");\n" +
-				"\tpresentation.GetCurrentSlide().AddObject(table);\n";
+		addFlowTable			: function(prop){
+			let varName = prop.tableId
+				? varRegistry.register(prop.tableId, "table")
+				: varRegistry.inc('table');
+			let width = prop.tableGrid.map(function(num) { return Math.round(num * 36000) });
+			let styleStr = prop.style ? prop.style : "";
+			let styleVar = varRegistry.inc('tableStyle');
+
+			return "\tlet " + varName + " = (function()\n"
+				+ "\t{\n"
+				+ "\t\tlet table = Api.CreateTable(" + prop.row + ", " + prop.col + ");\n"
+				+ "\t\tlet " + styleVar + " = presentation.GetStyle(\"" + styleStr + "\");\n"
+				+ "\t\tif (" + styleVar + ") table.SetStyle(" + styleVar + ");\n"
+				+ "\t\t[" + width.toString() + "].forEach(function(width, index){\n"
+				+ "\t\t\ttable.SetColumnWidth(index, width);\n"
+				+ "\t\t});\n"
+				+ "\t\tpresentation.GetCurrentSlide().AddObject(table);\n"
+				//+ "\t\ttable.GetRange(0, 0).Select();\n"
+				+ "\t\ttable.SetPosition(" + prop.x + " * 36000.0, " + prop.y + " * 36000.0);\n"
+				+ "\t\ttable.Select(true);\n"
+				+ "\t\treturn table;\n"
+				+ "\t}());\n";
 		},
 		addFlowImage			: function(image){
 			let text = "";
@@ -2177,9 +3353,9 @@
 				let posX = xfrm.offX;
 				let posY = xfrm.offY;
 
-				text += "\tlet " + CounterStore.inc('image') + " = Api.CreateImage(\"" + curImageUrl + "\", " + width + " * 36000, " + height + " * 36000);\n" +
-					"\t" + CounterStore.get('image') + ".SetPosition(" + posX + " * 36000, " + posY + " * 36000);\n" +
-					"\tpresentation.GetCurrentSlide().AddObject(" + CounterStore.get('image') + ");\n"
+				text += "\tlet " + varRegistry.inc('image') + " = Api.CreateImage(\"" + curImageUrl + "\", " + width + " * 36000, " + height + " * 36000);\n" +
+					"\t" + varRegistry.get('image') + ".SetPosition(" + posX + " * 36000, " + posY + " * 36000);\n" +
+					"\tpresentation.GetCurrentSlide().AddObject(" + varRegistry.get('image') + ");\n"
 			}
 			return text;
 		},
@@ -2207,7 +3383,7 @@
 			let title		= chart.getChartTitle().getDocContent().GetText();
 			title = title ? title.replace(/[\r\n\t]+/g, '') : "";
 
-			let value = "\tlet " + CounterStore.inc('chart') + " = Api.CreateChart(\n"
+			let value = "\tlet " + varRegistry.inc('chart') + " = Api.CreateChart(\n"
 			+ "\t\t\"" + chartType + "\",\n"
 			+ "\t\t" + JSON.stringify(seriesData) + ",\n"
 			+ "\t\t" + JSON.stringify(seriesNames) + ",\n"
@@ -2216,9 +3392,9 @@
 			+ "\t\t" + height + ",\n"
 			+ "\t\t" + style + "\n"
 			+ "\t);\n"
-			+ "\t" + CounterStore.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
-			+ "\t" + CounterStore.get('chart') + ".SetPosition("+ chart.x + " * 36000, " + chart.y +" * 36000);\n"
-			+ "\tpresentation.GetCurrentSlide().AddObject(" + CounterStore.get('chart') + ");\n"
+			+ "\t" + varRegistry.get('chart') + ".SetTitle(\"" + title + "\", " + 28 + ");\n"
+			+ "\t" + varRegistry.get('chart') + ".SetPosition("+ chart.x + " * 36000, " + chart.y +" * 36000);\n"
+			+ "\tpresentation.GetCurrentSlide().AddObject(" + varRegistry.get('chart') + ");\n"
 			return value;
 		},
 		addComment				: function(comment){
@@ -2232,33 +3408,43 @@
 
 			// api set time
 		},
-		addHyperlink			: function(hp){
-			// no api
-			return ""
+		addHyperlink			: function(hl){
+			let link = escapeMacroString(hl.Value);
+			let toolTip = escapeMacroString(hl.ToolTip);
+
+			if (!hl.Text)
+			{
+				return "\t(function () {\n"
+						+ "\t\tlet range = Api.GetSelection().GetTextRange();\n"
+						+ "\t\tif (range)\n"
+						+ "\t\t\trange.AddHyperlink(\"" + link + "\", \"" + toolTip + "\");\n"
+					+ "\t}());\n";
+			}
+
+			return "\tpresentation.EnterText(\"" + escapeMacroString(hl.Text) + "\");\n"
+				+ "\tpresentation.MoveCursorLeft(" + hl.Text.length + ", true, false);\n"
+				+ "\tApi.GetSelection().GetTextRange().AddHyperlink(\"" + link + "\", \"" + toolTip + "\");\n"
+				+ "\tpresentation.MoveCursorRight(1, false, false);\n";
 		},
 		addParagraph			: function()
 		{
-			return "\t(function () {\n"
-			+ "\t\tlet shapes = Api.GetSelection().GetShapes();\n"
-			+ "\t\tif (shapes.length)\n"
-			+	"\t\t\tshapes[0].GetDocContent().Push(Api.CreateParagraph());\n"
-			+ "\t}());\n";
+			return "\tpresentation.InsertParagraphBreak();\n"
 		},
 		addShape				: function(shapeProps){
 			let fill = shapeProps.fill.getRGBAColor();
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
-			shapesMacro[shapeProps.id] = getShapeCount();
+			let varName = varRegistry.register(shapeProps.formatId, 'shape');
 
-			return "\t(function () {\n" +
-					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor(" + fill.R +", " + fill.G + ", " + fill.B + "));\n" +
-					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor(" + borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
+			return "\tlet " + varName + " = (function () {\n" +
+					"\t\tlet fill = Api.CreateSolidFill(Api.Color(" + fill.R +", " + fill.G + ", " + fill.B + "));\n" +
+					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.Color(" + borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = Api.CreateShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke);\n" +
 					"\t\tshape.SetPosition(" + shapeProps.pos.x + " * 36000 , " + shapeProps.pos.y + " * 36000 );\n" +
 					"\t\tpresentation.GetCurrentSlide().AddObject(shape);\n" +
 					"\t\tshape.Select(true);\n" +
-					"\t\tshape.SetName(\"macroShape" + shapesMacro[shapeProps.id] + "\");\n" +
+					"\t\treturn shape\n" +
 				"\t}());\n";
 		},
 		selectDrawing				: function(shapes)
@@ -2288,103 +3474,54 @@
 				return "";
 
 			shapesSort = shapesSort.filter(function(element) {
-				return shapesMacro[element.getObjectName()] !== undefined;
+				return varRegistry.get(element.getFormatIdString()) !== undefined;
 			});
 
 			if (shapesSort.length === 0)
 				return "";
 
 			let ids = "";
-			for(let i = 0; i < shapesSort.length; i++)
-			{
-				if (shapesMacro[shapesSort[i].getObjectName()] !== undefined)
-					ids +=  "\"" + "macroShape" + shapesMacro[shapesSort[i].getObjectName()] + "\"" + (i != shapesSort.length - 1 ? ", " : "")
+			for (let i = 0; i < shapesSort.length; i++) {
+				let varName = varRegistry.get(shapesSort[i].getFormatIdString());
+				if (varName !== undefined)
+					ids += varName + (i != (shapesSort.length - 1) && shapesSort.length > 1 ? ", " : "")
 			}
 
-			return str + "\tpresentation.GetDrawingsByName([" + ids + "])\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
+			return str + "\t[" + ids + "]\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
 
 		},
-		deselectDrawing			: function(name)
+		deselectDrawing			: function(oAdditional)
 		{
-			if (shapesMacro[name] === undefined) {
+			let varName = varRegistry.get(oAdditional.formatId);
+			let isTable = oAdditional.isTable;
+
+			if (isTable === true) {
+				return "\tpresentation.GetActiveTable().Unselect();\n";
+			}
+
+			if (varName === undefined) {
 				return "\tApi.GetSelection().GetShapes().forEach(function(drawing){drawing.Unselect()});\n";
 			}
-			return "\tpresentation.GetDrawingsByName([\"" + ("macroShape" + shapesMacro[name]) + "\"])\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
+			return "\t[" + varName + "]\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
 		},
 		setDrawingFill			: function(unifill)
 		{
-			//TODO add transparent when add api
-			if (unifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID)
-			{
-				let color = unifill.fill.color.color.RGBA;
-				//let transparent = unifill.transparent;
-
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))));\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CGradFill)
-			{
-				let colors = unifill.fill.colors;
-				let strColor = "";
-
-				for(let nColor = 0; nColor < colors.length; nColor++)
-				{
-					let gs = colors[nColor];
-					let color = gs.color.color.RGBA;
-
-					strColor += (nColor !== 0)
-						? ",\n\t\t\t\t"
-						: "\n\t\t\t\t";
-
-					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
-				}
-
-				let gradient = "";
-				if (unifill.fill.lin) // leinear
-					gradient = "\n\t\t\tApi.CreateLinearGradientFill([" + strColor + "\n\t\t\t], " + unifill.fill.lin.angle + ")";
-				else if (unifill.fill.path) // radial
-					gradient = "\n\t\t\tApi.CreateRadialGradientFill([" + strColor + "\n\t\t\t])";
-
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + gradient + "));\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CBlipFill)
-			{
-				let base64data = unifill.fill.getBase64RasterImageId()
-				let blipFill = "\n\t\t\tApi.CreateBlipFill(\"" + base64data + "\", \"" + (unifill.fill.tile ? "tile" : "stretch") + "\")";
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t);\n";
-
-			}
-			else if (unifill.fill instanceof AscFormat.CPattFill)
-			{
-				let bgClr = unifill.fill.bgClr.color.RGBA;
-				let fgClr = unifill.fill.fgClr.color.RGBA;
-				let ftype = unifill.fill.ftype;
-				let type = AscCommon.global_hatch_names[ftype];
-
-				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(" + blipFill + ")\n\t\t\t)\n\t\t);\n";
-			}
-			else if (unifill.fill instanceof AscFormat.CNoFill)
-			{
-				return "\tApi.GetSelection().GetShapes()\n"
-						+ "\t\t.forEach(shape => shape.Fill(Api.CreateNoFill()));\n";
-			}
+			return private_getDrawingFillReplayCode("Api.GetSelection().GetShapes()", true, unifill);
 		},
 		setDrawingLine			: function(line)
 		{
 			let strStrokeShape = "\t(function () {\n";
 			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
-			let color = line.Fill.fill.color.color.RGBA;
 
+			strStrokeShape += getStrokeFillCode(line.Fill);
 			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
 					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
-					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\tfill,\n" +
 					"\t\t\t\"" + type + "\"\n" +
 				"\t\t);\n";
+			strStrokeShape += private_getStrokeStyleCode(line);
+
+			strStrokeShape += getStrokeArrowCode("SetBeginArrow", line.headEnd) + getStrokeArrowCode("SetEndArrow", line.tailEnd);
 
 			strStrokeShape += "\t\tApi.GetSelection().GetShapes()\n"
 				+ "\t\t\t.forEach(shape => shape.SetOutLine(stroke));\n";
@@ -2392,6 +3529,13 @@
 			strStrokeShape += "\t}());\n";
 
 			return strStrokeShape;
+		},
+		setDrawingShadow		: function(shadow)
+		{
+			return "\tApi.GetSelection().GetShapes()\n" +
+				"\t\t.forEach(shape => {\n" +
+				"\t\t\tshape.SetShadow(" + getCreateShadowExpr(shadow) + ");\n" +
+				"\t\t});\n";
 		},
 		setDrawingRotation		: function(nRot)
 		{
@@ -2417,10 +3561,17 @@
 		{
 			return "\tApi.GetSelection().GetShapes().forEach(draw => draw.SetWrappingStyle(\"" + getWrappingStyleName(props) + "\"))\n"
 		},
-		setDrawingPos			: function(pos)
+		setDrawingPos			: function(data)
 		{
+			// if (data.id.indexOf("Table") === 0)
+			// 	return "\tpresentation.GetActiveTable().SetPosition(" + data.x + " * 36000.0, " + data.y + " * 36000.0);\n";
+
 			return "\tApi.GetSelection().GetShapes().forEach(draw => {\n" +
-				"\t\tdraw.SetPosition(" + pos.x + " * 36000.0, " + pos.y + " * 36000.0);\n" +
+				"\t\tdraw.SetPosition(" + data.x + " * 36000.0, " + data.y + " * 36000.0);\n" +
+				"\t});\n"
+			
+			return "\tApi.GetSelection().GetShapes().forEach(draw => {\n" +
+				"\t\tdraw.SetPosition(" + data.x + " * 36000.0, " + data.y + " * 36000.0);\n" +
 				"\t});\n"
 		},
 		setShapeX				: function(pos)
@@ -2565,6 +3716,238 @@
 			return "\tApi.GetSelection().GetShapes().forEach(draw => {\n" +
 				"\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"));\n" +
 				"\t});\n"
+		},
+		setCustomGeometry	: function(oAdditional)
+		{
+			let reg = private_getShapeVar(oAdditional.id);
+			return reg.declaration
+				+ "\t" + reg.varName + ".SetSize(" + oAdditional.width + " * 36000.0, " + oAdditional.height + " * 36000.0);\n"
+				+ "\t{\n" + private_getCustomGeometryCode(oAdditional.geometry, reg.varName) + "\t}\n";
+		},
+		mergeShapes			: function(operation)
+		{
+			return "\tApi.MergeShapes(Api.GetSelection().GetShapes(), \"" + getShapesMergeOperationName(operation) + "\");\n";
+		},
+		setDrawingTitle		: function(title){
+			return "\tApi.GetSelection().GetShapes()\n"
+				+ "\t\t.forEach(function(shape) {\n"
+				+ "\t\t\tshape.SetTitle(\"" + title + "\");\n"
+				+ "\t\t});\n";
+		},
+		setDrawingDescription	: function(description){
+			return "\tApi.GetSelection().GetShapes()\n"
+				+ "\t\t.forEach(function(shape) {\n"
+				+ "\t\t\tshape.SetDescription(\"" + description + "\");\n"
+				+ "\t\t});\n";
+		},
+		setDrawingAspectRatio	: function(aspect){
+			return "\tApi.GetSelection().GetShapes().forEach(function(draw) { draw.SetLockAspect(" + aspect + ") });\n";
+		},
+		setTableStyle		: function(oAdditional)
+		{
+			let reg = private_getTableVar(oAdditional.tableId);
+			let style = oMacroRecorderContext.editor.getLogicDocument().globalTableStyles.GetName(oAdditional.data);
+			if (!style) return "";
+			let styleVar = varRegistry.inc('tableStyle');
+			return reg.declaration
+				+ "\tlet " + styleVar + " = presentation.GetStyle(\"" + style + "\");\n"
+				+ "\tif (" + styleVar + ") " + reg.varName + ".SetStyle(" + styleVar + ");\n";
+		},
+		setTableResize		: function(oAdditional)
+		{
+			let reg = private_getTableVar(oAdditional.tableId);
+			let grid = oAdditional.tableGrid;
+			if (!grid || !grid.length)
+				return "";
+			let text = reg.declaration;
+			for (let i = 0; i < grid.length; i++)
+				text += "\t" + reg.varName + ".SetColumnWidth(" + i + ", " + Math.round(grid[i] * 36000) + ");\n";
+			return text;
+		},
+		setTableBorders		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let borders = oAdditional.data;
+			let bottom = borders.Bottom;
+			let top = borders.Top;
+			let left = borders.Left;
+			let right = borders.Right;
+			let insideH = borders.InsideH;
+			let insideV = borders.InsideV;
+			let insideHStr = insideH
+				? "\t" + reg.varName + ".SetTableBorderInsideH(\"" + (insideH.Value ? 'single' : 'none') + "\", " + insideH.Size * 72 * 8 / 25.4 + ", " + insideH.Space + ", " + insideH.Color.r + ", " + insideH.Color.g + ", " + insideH.Color.b + ");\n"
+				: "";
+			let insideVStr = insideV
+				? "\t" + reg.varName + ".SetTableBorderInsideV(\"" + (insideV.Value ? 'single' : 'none') + "\", " + insideV.Size * 72 * 8 / 25.4 + ", " + insideV.Space + ", " + insideV.Color.r + ", " + insideV.Color.g + ", " + insideV.Color.b + ");\n"
+				: "";
+			return reg.declaration +
+				"\t" + reg.varName + ".SetTableBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size * 72 * 8 / 25.4 + ", " + bottom.Space + ", " + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + ");\n" +
+				"\t" + reg.varName + ".SetTableBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size * 72 * 8 / 25.4 + ", " + left.Space + ", " + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + ");\n" +
+				"\t" + reg.varName + ".SetTableBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size * 72 * 8 / 25.4 + ", " + right.Space + ", " + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + ");\n" +
+				"\t" + reg.varName + ".SetTableBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size * 72 * 8 / 25.4 + ", " + top.Space + ", " + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + ");\n" +
+				insideHStr +
+				insideVStr;
+		},
+		setCellBorders		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let borders = oAdditional.data;
+			let bottom = borders.Bottom;
+			let top = borders.Top;
+			let left = borders.Left;
+			let right = borders.Right;
+
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
+				+ (bottom ? "\t\tcell.SetCellBorderBottom(\"" + (bottom.Value ? 'single' : 'none') + "\", " + bottom.Size + ", Api.CreateSolidFill(Api.RGB(" + bottom.Color.r + ", " + bottom.Color.g + ", " + bottom.Color.b + "))); \n" : "")
+				+ (left ? "\t\tcell.SetCellBorderLeft(\"" + (left.Value ? 'single' : 'none') + "\", " + left.Size + ", Api.CreateSolidFill(Api.RGB(" + left.Color.r + ", " + left.Color.g + ", " + left.Color.b + "))); \n" : "")
+				+ (right ? "\t\tcell.SetCellBorderRight(\"" + (right.Value ? 'single' : 'none') + "\", " + right.Size + ", Api.CreateSolidFill(Api.RGB(" + right.Color.r + ", " + right.Color.g + ", " + right.Color.b + "))); \n" : "")
+				+ (top ? "\t\tcell.SetCellBorderTop(\"" + (top.Value ? 'single' : 'none') + "\", " + top.Size + ", Api.CreateSolidFill(Api.RGB(" + top.Color.r + ", " + top.Color.g + ", " + top.Color.b + "))); \n" : "")
+				+ "\t});\n";
+		},
+		setTableDefaultMargin	: function(oAdditional){
+			let d = oAdditional.data;
+			if (!d || !d.Bottom || !d.Left || !d.Right || !d.Top)
+				return "";
+			let reg = private_getTableVar(oAdditional.tableId);
+			let bottom = d.Bottom;
+			let top = d.Top;
+			let left = d.Left;
+			let right = d.Right;
+			return reg.declaration +
+				(bottom ? "\t" + reg.varName + ".SetTableCellMarginBottom(" + AscCommon.MMToTwips(bottom, -1) + ");\n" : "") +
+				(left ? "\t" + reg.varName + ".SetTableCellMarginLeft(" + AscCommon.MMToTwips(left, -1) + ");\n" : "") +
+				(right ? "\t" + reg.varName + ".SetTableCellMarginRight(" + AscCommon.MMToTwips(right, -1) + ");\n" : "") +
+				(top ? "\t" + reg.varName + ".SetTableCellMarginTop(" + AscCommon.MMToTwips(top, -1) + ");\n" : "");
+		},
+		setCellMargins		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let d = oAdditional.data;
+			let bottom = d.Bottom;
+			let top = d.Top;
+			let left = d.Left;
+			let right = d.Right;
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
+				(bottom ? "\t\tcell.SetCellMarginBottom(" + AscCommon.MMToTwips(bottom, -1) + ");\n" : "") +
+				(left ? "\t\tcell.SetCellMarginLeft(" + AscCommon.MMToTwips(left, -1) + ");\n" : "") +
+				(right ? "\t\tcell.SetCellMarginRight(" + AscCommon.MMToTwips(right, -1) + ");\n" : "") +
+				(top ? "\t\tcell.SetCellMarginTop(" + AscCommon.MMToTwips(top, -1) + ");\n" : "") +
+				"\t});\n";
+		},
+		setTableBackground	: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let color = oAdditional.data.Color;
+			return reg.declaration + "\t" + reg.varName + ".SetBackgroundColor(Api.RGB(" + color.r + ", " + color.g + ", " + color.b + "));\n";
+		},
+		setCellBackground	: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let color = oAdditional.data.Color;
+			let cellsReg = private_getSelectedCellsVar(reg);
+			return reg.declaration + cellsReg.declaration + "\t" + cellsReg.varName + ".forEach(function(cell){\n" +
+				"\t\tcell.SetBackgroundColor(Api.RGB(" + color.r + ", " + color.g + ", " + color.b + "));\n" +
+				"\t});\n";
+		},
+		setCellWidth		: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let widthEMU = Math.round(oAdditional.data * 36000);
+			if (oAdditional.columns)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.columns.length; i++)
+					text += "\t" + reg.varName + ".SetColumnWidth(" + oAdditional.columns[i] + ", " + widthEMU + ");\n";
+				return text;
+			}
+			let cellsReg = private_getSelectedCellsVar(reg, "GetSelectedColumnsCells");
+			return reg.declaration + cellsReg.declaration
+				+ "\t" + cellsReg.varName + ".forEach(function(cell){\n"
+				+ "\t\t" + reg.varName + ".SetColumnWidth(cell.GetIndex(), " + widthEMU + ");\n"
+				+ "\t});\n";
+		},
+		setRowHeightTable	: function(oAdditional){
+			let reg = private_getTableVar(oAdditional.tableId);
+			let heightEMU = Math.round(oAdditional.data * 36000);
+			if (oAdditional.rows)
+			{
+				let text = reg.declaration;
+				for (let i = 0; i < oAdditional.rows.length; i++)
+					text += "\t" + reg.varName + ".GetRow(" + oAdditional.rows[i] + ").SetHeight(" + heightEMU + ");\n";
+				return text;
+			}
+			let rowsReg = private_getSelectedRowsVar(reg);
+			return reg.declaration + rowsReg.declaration
+				+ "\t" + rowsReg.varName + ".forEach(function(row){\n"
+				+ "\t\tif (row) row.SetHeight(" + heightEMU + ");\n"
+				+ "\t});\n";
+		},
+		moveCursorLeft			: function(arrData){
+			let data = groupDataForCursor(arrData);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange = data[i];
+				let nCount = currentChange.count;
+				let pattern = currentChange.pattern;
+
+				if (pattern.isRtl)
+					text += "\tpresentation.MoveCursorRight(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+				else
+					text += "\tpresentation.MoveCursorLeft(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+
+			return text;
+		},
+		moveCursorRight			: function(arrData){
+			let data = groupDataForCursor(arrData);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange	= data[i];
+				let nCount			= currentChange.count;
+				let pattern			= currentChange.pattern;
+
+				if (pattern.isRtl)
+					text += "\tpresentation.MoveCursorLeft(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+				else
+					text += "\tpresentation.MoveCursorRight(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+
+			return text;
+		},
+		moveToNextCell			: function(arrData){
+			return "\tpresentation.MoveToNextCell(" + arrData.length + ");\n";
+		},
+		moveToPrevCell			: function(arrData){
+			return "\tpresentation.MoveToPrevCell(" + arrData.length + ");\n";
+		},
+		moveCursorUp			: function(arrData){
+			let data = groupDataForCursor(arrData, true);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange	= data[i];
+				let nCount			= currentChange.count;
+				let pattern			= currentChange.pattern;
+
+				text += "\tpresentation.MoveCursorUp(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+			return text;
+		},
+		moveCursorDown			: function(arrData){
+			let data = groupDataForCursor(arrData, true);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange	= data[i];
+				let nCount			= currentChange.count;
+				let pattern			= currentChange.pattern;
+
+				text += "\tpresentation.MoveCursorDown(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+			return text;
 		}
 	};
 
@@ -2572,61 +3955,86 @@
 	// merge shapes no api
 	// show from start/n-slide ... when add api
 
-	const PresentationActionMacroList = {};
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_ParagraphAdd] 				= presActions.paragraphAdd;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrBold]				= presActions.putTextPrBold;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextBoldHotKey]				= presActions.putTextPrBold;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrItalic]				= presActions.putTextPrItalic;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextItalicHotKey]				= presActions.putTextPrItalic;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrUnderline]			= presActions.putTextPrUnderline;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextUnderlineHotKey]			= presActions.putTextPrUnderline;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrStrikeout]			= presActions.putTextPrStrikeout;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextStrikeoutHotKey]			= presActions.putTextPrStrikeout;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextVertAlign]				= presActions.setTextVertAlign;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextVertAlignHotKey3]			= presActions.setTextVertAlign;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextVertAlignHotKey2]			= presActions.setTextVertAlign;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetTextHighlight]				= presActions.setTextHighlight;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextColor]				= presActions.putTextColor;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_ParagraphClearFormatting]	= presActions.clearFormatting;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrFontName]			= presActions.putTextPrFontName;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrFontSize]			= presActions.putTextPrFontSize;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_SetParagraphAlign]			= presActions.setParagraphAlign;
-	PresentationActionMacroList[AscDFH.historydescription_Document_SetParagraphAlignHotKey]			= presActions.setParagraphAlign;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_AddNextSlide]				= presActions.addNextSlide;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_DeleteSlides]				= presActions.deleteSlides;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_ChangeLayout]				= presActions.changeLayout;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_SetVerticalAlign]			= presActions.setVerticalAlign;
-	// PresentationActionMacroList[AscDFH.historydescription_Presentation_BringForward]				= presActions.bringForward;
-	// PresentationActionMacroList[AscDFH.historydescription_Presentation_BringToFront]				= presActions.bringToFront;
-	// PresentationActionMacroList[AscDFH.historydescription_Presentation_BringBackward]			= presActions.bringBackward;
-	// PresentationActionMacroList[AscDFH.historydescription_Presentation_SendToBack]				= presActions.sendToBack;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_CreateGroup]					= presActions.createGroup;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_UnGroup]						= presActions.unGroup;
-	//PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrIncreaseFontSize]	= presActions.putTextPrIncreaseFontSize;
-	//PresentationActionMacroList[AscDFH.historydescription_Presentation_ParagraphIncDecFontSize]	= presActions.incDecFontSize;
-	//PresentationActionMacroList[AscDFH.historydescription_Presentation_SetParagraphNumbering]		= presActions.setNumbering;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_PutTextPrLineSpacing]		= presActions.putTextPrLineSpacing;
-	//PresentationActionMacroList[AscDFH.historydescription_Spreadsheet_Remove]						= presActions.paragraphRemove; // stange
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_AddFlowTable]				= presActions.addFlowTable;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_AddFlowImage]				= presActions.addFlowImage;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_AddShape]					= presActions.addShape;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_AddChart]					= presActions.addChart;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_AddComment]					= presActions.addComment;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_HyperlinkAdd]				= presActions.addHyperlink;
-	PresentationActionMacroList[AscDFH.historydescription_Presentation_AddNewParagraph]				= presActions.addParagraph;
-	PresentationActionMacroList["SetDrawingPos"]													= presActions.setDrawingPos;
-	PresentationActionMacroList["SetShapeSize"]														= presActions.setShapeSize;
-	PresentationActionMacroList["SetDrawingRotation"]												= presActions.setDrawingRotation;
-	PresentationActionMacroList["SetDrawingFill"]													= presActions.setDrawingFill;
-	PresentationActionMacroList["SetGeometry"]														= presActions.setGeometry;
-	PresentationActionMacroList["SetDrawingLine"]													= presActions.setDrawingLine;
-	PresentationActionMacroList["SetShapeX"]														= presActions.setShapeX;
-	PresentationActionMacroList["SetShapeY"]														= presActions.setShapeY;
-	PresentationActionMacroList['SetShapeInnerPadding']												= presActions.setShapeInnerPadding;
-	PresentationActionMacroList['SetDrawingFlipH']													= presActions.setDrawingFlipH;
-	PresentationActionMacroList['SetDrawingFlipV']													= presActions.setDrawingFlipV;
-	PresentationActionMacroList["SelectDrawing"]													= presActions.selectDrawing;
-	PresentationActionMacroList["DeselectDrawing"]													= presActions.deselectDrawing;
+	const PEActionMap = {};
+	PEActionMap[AscDFH.historydescription_Presentation_ParagraphAdd] 				= presActions.paragraphAdd;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextPrBold]				= presActions.putTextPrBold;
+	PEActionMap[AscDFH.historydescription_Document_SetTextBoldHotKey]				= presActions.putTextPrBold;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextPrItalic]				= presActions.putTextPrItalic;
+	PEActionMap[AscDFH.historydescription_Document_SetTextItalicHotKey]				= presActions.putTextPrItalic;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextPrUnderline]			= presActions.putTextPrUnderline;
+	PEActionMap[AscDFH.historydescription_Document_SetTextUnderlineHotKey]			= presActions.putTextPrUnderline;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextPrStrikeout]			= presActions.putTextPrStrikeout;
+	PEActionMap[AscDFH.historydescription_Document_SetTextStrikeoutHotKey]			= presActions.putTextPrStrikeout;
+	PEActionMap[AscDFH.historydescription_Document_SetTextVertAlign]				= presActions.setTextVertAlign;
+	PEActionMap[AscDFH.historydescription_Document_SetTextVertAlignHotKey3]			= presActions.setTextVertAlign;
+	PEActionMap[AscDFH.historydescription_Document_SetTextVertAlignHotKey2]			= presActions.setTextVertAlign;
+	PEActionMap[AscDFH.historydescription_Document_SetTextHighlight]				= presActions.setTextHighlight;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextColor]				= presActions.putTextColor;
+	PEActionMap[AscDFH.historydescription_Presentation_ParagraphClearFormatting]	= presActions.clearFormatting;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextPrFontName]			= presActions.putTextPrFontName;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextPrFontSize]			= presActions.putTextPrFontSize;
+	PEActionMap[AscDFH.historydescription_Presentation_SetParagraphAlign]			= presActions.setParagraphAlign;
+	PEActionMap[AscDFH.historydescription_Document_SetParagraphAlignHotKey]			= presActions.setParagraphAlign;
+	PEActionMap[AscDFH.historydescription_Presentation_AddNextSlide]				= presActions.addNextSlide;
+	PEActionMap[AscDFH.historydescription_Presentation_DeleteSlides]				= presActions.deleteSlides;
+	PEActionMap[AscDFH.historydescription_Presentation_ChangeLayout]				= presActions.changeLayout;
+	PEActionMap[AscDFH.historydescription_Presentation_SetVerticalAlign]			= presActions.setVerticalAlign;
+	// PEActionMap[AscDFH.historydescription_Presentation_BringForward]				= presActions.bringForward;
+	// PEActionMap[AscDFH.historydescription_Presentation_BringToFront]				= presActions.bringToFront;
+	// PEActionMap[AscDFH.historydescription_Presentation_BringBackward]			= presActions.bringBackward;
+	// PEActionMap[AscDFH.historydescription_Presentation_SendToBack]				= presActions.sendToBack;
+	PEActionMap[AscDFH.historydescription_Presentation_CreateGroup]					= presActions.createGroup;
+	PEActionMap[AscDFH.historydescription_Presentation_UnGroup]						= presActions.unGroup;
+	//PEActionMap[AscDFH.historydescription_Presentation_PutTextPrIncreaseFontSize]	= presActions.putTextPrIncreaseFontSize;
+	//PEActionMap[AscDFH.historydescription_Presentation_ParagraphIncDecFontSize]	= presActions.incDecFontSize;
+	//PEActionMap[AscDFH.historydescription_Presentation_SetParagraphNumbering]		= presActions.setNumbering;
+	PEActionMap[AscDFH.historydescription_Presentation_PutTextPrLineSpacing]		= presActions.putTextPrLineSpacing;
+	//PEActionMap[AscDFH.historydescription_Spreadsheet_Remove]						= presActions.paragraphRemove; // stange
+	PEActionMap[AscDFH.historydescription_Presentation_AddFlowTable]				= presActions.addFlowTable;
+	PEActionMap[AscDFH.historydescription_Presentation_AddFlowImage]				= presActions.addFlowImage;
+	PEActionMap[AscDFH.historydescription_Presentation_AddShape]					= presActions.addShape;
+	PEActionMap[AscDFH.historydescription_Presentation_AddChart]					= presActions.addChart;
+	PEActionMap[AscDFH.historydescription_Presentation_AddComment]					= presActions.addComment;
+	PEActionMap[AscDFH.historydescription_Presentation_HyperlinkAdd]				= presActions.addHyperlink;
+	PEActionMap[AscDFH.historydescription_Presentation_AddNewParagraph]				= presActions.addParagraph;
+	PEActionMap["SetDrawingPos"]													= presActions.setDrawingPos;
+	PEActionMap["SetShapeSize"]														= presActions.setShapeSize;
+	PEActionMap["SetDrawingRotation"]												= presActions.setDrawingRotation;
+	PEActionMap["SetDrawingFill"]													= presActions.setDrawingFill;
+	PEActionMap["SetGeometry"]														= presActions.setGeometry;
+	PEActionMap["SetCustomGeometry"]												= presActions.setCustomGeometry;
+	PEActionMap[AscDFH.historydescription_Presentation_MergeSelectedShapes]			= presActions.mergeShapes;
+	PEActionMap["SetDrawingLine"]													= presActions.setDrawingLine;
+	PEActionMap["SetDrawingShadow"]												= presActions.setDrawingShadow;
+	PEActionMap["SetShapeX"]														= presActions.setShapeX;
+	PEActionMap["SetShapeY"]														= presActions.setShapeY;
+	PEActionMap['SetShapeInnerPadding']												= presActions.setShapeInnerPadding;
+	PEActionMap['SetDrawingFlipH']													= presActions.setDrawingFlipH;
+	PEActionMap['SetDrawingFlipV']													= presActions.setDrawingFlipV;
+	PEActionMap["SelectDrawing"]													= presActions.selectDrawing;
+	PEActionMap["DeselectDrawing"]													= presActions.deselectDrawing;
+	PEActionMap["SetDrawingTitle"]													= presActions.setDrawingTitle;
+	PEActionMap["SetDrawingDescription"]											= presActions.setDrawingDescription;
+	PEActionMap["SetDrawingAspectRatio"]											= presActions.setDrawingAspectRatio;
+	PEActionMap['remove']															= presActions.remove;
+	// Table
+	PEActionMap["SetTableBorders"]													= presActions.setTableBorders;
+	PEActionMap["SetTableResize"]													= presActions.setTableResize;
+	PEActionMap["SetTableStyle"]													= presActions.setTableStyle;
+	PEActionMap["SetCellBorders"]													= presActions.setCellBorders;
+	PEActionMap["SetTableBackground"]												= presActions.setTableBackground;
+	PEActionMap["SetCellBackground"]												= presActions.setCellBackground;
+	PEActionMap["SetTableDefaultMargin"]											= presActions.setTableDefaultMargin;
+	PEActionMap["SetCellMargins"]													= presActions.setCellMargins;
+	PEActionMap["SetRowHeightTable"]												= presActions.setRowHeightTable;
+	PEActionMap["SetCellWidth"]														= presActions.setCellWidth;
+	PEActionMap['moveCursorLeft']													= presActions.moveCursorLeft;
+	PEActionMap['moveCursorRight']													= presActions.moveCursorRight;
+	PEActionMap['moveToNextCell']													= presActions.moveToNextCell;
+	PEActionMap['moveToPrevCell']													= presActions.moveToPrevCell;
+	PEActionMap['moveCursorUp']														= presActions.moveCursorUp;
+	PEActionMap['moveCursorDown']													= presActions.moveCursorDown;
+	PEActionMap[AscDFH.historydescription_Document_AddLetter]						= presActions.addLetter;
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.MacroRecorder = MacroRecorder;

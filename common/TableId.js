@@ -44,7 +44,7 @@
 	function CTableId()
 	{
 		this.m_aPairs        = null;
-		this.m_bTurnOff      = false;
+		this.m_nTurnOff      = 0;
 		this.m_oFactoryClass = {};
 		this.Id              = null;
 		this.isInit          = false;
@@ -57,7 +57,7 @@
 	CTableId.prototype.init = function(editor)
 	{
 		this.m_aPairs        = {};
-		this.m_bTurnOff      = false;
+		this.m_nTurnOff      = 0;
 		this.m_oFactoryClass = {};
 		this.Id              = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
@@ -66,7 +66,7 @@
 	};
 	CTableId.prototype.Add = function(Class, Id)
 	{
-		if (this.m_bTurnOff || !Class)
+		if (!this.IsOn() || !Class)
 			return;
 		
 		Class.Id          = Id;
@@ -76,15 +76,17 @@
 	};
 	CTableId.prototype.TurnOff = function()
 	{
-		this.m_bTurnOff = true;
+		this.m_nTurnOff++;
 	};
 	CTableId.prototype.TurnOn = function()
 	{
-		this.m_bTurnOff = false;
+		this.m_nTurnOff--;
+		if(this.m_nTurnOff < 0)
+			this.m_nTurnOff = 0;
 	};
 	CTableId.prototype.IsOn = function()
 	{
-		return (!this.m_bTurnOff);
+		return 0 === this.m_nTurnOff;
 	};
 	/**
 	 * Get pointer to class by Id
@@ -138,7 +140,7 @@
 	CTableId.prototype.Clear = function()
 	{
 		this.m_aPairs   = {};
-		this.m_bTurnOff = false;
+		this.m_nTurnOff = 0;
 		this.Id         = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
 	};
@@ -354,6 +356,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtDrawing   ]     = AscFormat.Drawing;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DiagramData       ]     = AscFormat.DiagramData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_CEffectProperties ]     = AscFormat.CEffectProperties;
+		this.m_oFactoryClass[AscDFH.historyitem_type_CSld              ]     = AscFormat.CSld;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParagraphPermStart]     = AscWord.ParagraphPermStart;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParagraphPermEnd  ]     = AscWord.ParagraphPermEnd;
 		this.m_oFactoryClass[AscDFH.historyitem_type_CustomXml         ]     = AscWord.CustomXml;
@@ -364,9 +367,11 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_SlideLayout]         = AscCommonSlide.SlideLayout;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SlideMaster]         = AscCommonSlide.MasterSlide;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SlideComments]       = AscCommonSlide.SlideComments;
-			this.m_oFactoryClass[AscDFH.historyitem_type_PropLocker]          = AscCommonSlide.PropLocker;
+			this.m_oFactoryClass[AscDFH.historyitem_type_SlideComment]        = AscCommon.CSlideComment;
+			this.m_oFactoryClass[AscDFH.historyitem_type_PropLocker]          = AscCommon.PropLocker;
 			this.m_oFactoryClass[AscDFH.historyitem_type_NotesMaster]         = AscCommonSlide.CNotesMaster;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Notes]               = AscCommonSlide.CNotes;
+			this.m_oFactoryClass[AscDFH.historyitem_type_HandoutMaster]       = AscCommonSlide.CHandoutMaster;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PresentationSection] = AscCommonSlide.CPrSection;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SldSz]               = AscCommonSlide.CSlideSize;
 
@@ -489,7 +494,6 @@
 
 			// other
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Page]				= AscPDF.CPageInfo;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_PropLocker]        = AscPDF.PropLocker;
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;

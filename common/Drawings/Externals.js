@@ -594,7 +594,7 @@
 
         GetFontID : function(font_loader)
         {
-            let fontfile = font_loader.fontFiles[this.indexК];
+            let fontfile = font_loader.fontFiles[this.indexR];
             return { id: fontfile.Id, faceIndex : this.faceIndexR, file : fontfile };
         }
     };

@@ -3820,6 +3820,7 @@ CDelimiter.prototype.Apply_MenuProps = function(Props)
 
 			History.Add(new CChangesMathDelimBegOper(this, this.Pr.begChr, BegOper));
 			this.raw_HideBegOperator(BegOper);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.HideEndOper !== undefined && Props.HideEndOper !== this.endOper.Is_Empty())
@@ -3828,12 +3829,14 @@ CDelimiter.prototype.Apply_MenuProps = function(Props)
 
 			History.Add(new CChangesMathDelimEndOper(this, this.Pr.endChr, EndOper));
 			this.raw_HideEndOperator(EndOper);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.Grow !== undefined && Props.Grow !== this.Pr.grow)
 		{
 			History.Add(new CChangesMathDelimiterGrow(this, this.Pr.grow, Props.Grow));
 			this.raw_SetGrow(Props.Grow);
+			this.private_UpdatePresentationOutline();
 		}
 
 		if (Props.MatchBrackets !== undefined && this.Pr.grow == true)
@@ -3844,6 +3847,7 @@ CDelimiter.prototype.Apply_MenuProps = function(Props)
 			{
 				History.Add(new CChangesMathDelimiterShape(this, this.Pr.shp, Shp));
 				this.raw_SetShape(Shp);
+				this.private_UpdatePresentationOutline();
 			}
 		}
 
@@ -3853,6 +3857,7 @@ CDelimiter.prototype.Apply_MenuProps = function(Props)
 			{
 				History.Add(new CChangesMathDelimiterSetColumn(this, this.Pr.column, this.Pr.column - 1));
 				this.raw_SetColumn(this.Pr.column - 1);
+				this.private_UpdatePresentationOutline();
 
 				this.protected_RemoveItems(this.CurPos, [this.Content[this.CurPos]], true);
 			}
@@ -3864,6 +3869,7 @@ CDelimiter.prototype.Apply_MenuProps = function(Props)
 			{
 				History.Add(new CChangesMathDelimiterSetColumn(this, this.Pr.column, this.Pr.column + 1));
 				this.raw_SetColumn(this.Pr.column + 1);
+				this.private_UpdatePresentationOutline();
 
 				NewContent = new CMathContent();
 				NewContent.Correct_Content(true);
@@ -3873,6 +3879,7 @@ CDelimiter.prototype.Apply_MenuProps = function(Props)
 			{
 				History.Add(new CChangesMathDelimiterSetColumn(this, this.Pr.column, this.Pr.column + 1));
 				this.raw_SetColumn(this.Pr.column + 1);
+				this.private_UpdatePresentationOutline();
 
 				NewContent = new CMathContent();
 				NewContent.Correct_Content(true);
@@ -4632,6 +4639,7 @@ CGroupCharacter.prototype.private_InversePr = function()
     var OldPr = this.Pr.Copy();
     History.Add(new CChangesMathGroupCharPr(this, OldPr, NewPr));
     this.raw_SetPr(NewPr);
+    this.private_UpdatePresentationOutline();
 };
 CGroupCharacter.prototype.raw_SetPr = function(Pr)
 {

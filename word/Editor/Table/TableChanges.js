@@ -673,7 +673,10 @@ CChangesTableAddRow.prototype.Undo = function()
 {
 	var oTable = this.Class;
 
-	oTable.Content[this.Pos].SetIndex(-1);
+	let row = oTable.Content[this.Pos];
+	row.OnDetach();
+	oTable.private_UnlinkRow(row);
+
 	oTable.Content.splice(this.Pos, 1);
 	oTable.TableRowsBottom.splice(this.Pos, 1);
 	oTable.RowsInfo.splice(this.Pos, 1);
@@ -689,15 +692,19 @@ CChangesTableAddRow.prototype.Redo = function()
 		return;
 
 	var oTable = this.Class;
+	let row    = this.Items[0];
 
-	oTable.Content.splice(this.Pos, 0, this.Items[0]);
+	oTable.Content.splice(this.Pos, 0, row);
 	oTable.TableRowsBottom.splice(this.Pos, 0, {});
 	oTable.RowsInfo.splice(this.Pos, 0, new CTableRowsInfo());
+
+	oTable.private_LinkRow(this.Pos);
 
 	oTable.Internal_ReIndexing(this.Pos);
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
 	oTable.private_UpdateTableGrid();
+	row.OnAttach();
 };
 CChangesTableAddRow.prototype.private_WriteItem = function(Writer, Item)
 {
@@ -721,6 +728,8 @@ CChangesTableAddRow.prototype.Load = function(Color)
 	{
 		oTable.Content.splice(Pos, 0, Element);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oTable, Pos);
+		oTable.private_LinkRow(Pos);
+		Element.OnAttach();
 	}
 
 	oTable.Internal_ReIndexing();
@@ -762,10 +771,13 @@ CChangesTableRemoveRow.prototype.Undo = function()
 	oTable.TableRowsBottom.splice(this.Pos, 0, {});
 	oTable.RowsInfo.splice(this.Pos, 0, new CTableRowsInfo());
 
+	oTable.private_LinkRow(this.Pos);
+
 	oTable.Internal_ReIndexing(this.Pos);
 	oTable.Recalc_CompiledPr2();
 	oTable.private_CheckCurCell();
 	oTable.private_UpdateTableGrid();
+	this.Items[0].OnAttach();
 };
 CChangesTableRemoveRow.prototype.Redo = function()
 {
@@ -773,8 +785,11 @@ CChangesTableRemoveRow.prototype.Redo = function()
 		return;
 
 	var oTable = this.Class;
+	
+	let row = oTable.Content[this.Pos];
+	row.OnDetach();
+	oTable.private_UnlinkRow(row);
 
-	oTable.Content[this.Pos].SetIndex(-1);
 	oTable.Content.splice(this.Pos, 1);
 	oTable.TableRowsBottom.splice(this.Pos, 1);
 	oTable.RowsInfo.splice(this.Pos, 1);
@@ -803,7 +818,10 @@ CChangesTableRemoveRow.prototype.Load = function(Color)
 	if (false === Pos)
 		return;
 
-	oTable.Content[Pos].SetIndex(-1);
+	let row = oTable.Content[Pos];
+	row.OnDetach();
+	oTable.private_UnlinkRow(row);
+
 	oTable.Content.splice(Pos, 1);
 	AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oTable, Pos, 1);
 

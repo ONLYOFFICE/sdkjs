@@ -64,6 +64,22 @@
 		else
 			this.Continue();
 	};
+	CActionOnTimerBase.prototype.BeginSync = function()
+	{
+		if (this.Start)
+			this.End();
+
+		this.Start = true;
+
+		this.OnBegin.apply(this, arguments);
+
+		while (this.IsContinue())
+		{
+			this.DoAction();
+		}
+
+		this.End();
+	};
 	CActionOnTimerBase.prototype.Continue = function()
 	{
 		if (this.IsContinue())

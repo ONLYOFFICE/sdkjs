@@ -53,26 +53,30 @@
 
         this._commitOnSelChange     = false;
         this._currentValueIndexes   = [];
-        this._textFont              = AscPDF.DEFAULT_FIELD_FONT;
         this._options               = [];
     }
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CBaseListField.prototype.constructor = CBaseListField;
 
     CBaseListField.prototype.AddKid = function(oField) {
+		if (oField.GetPartialName()) {
+			AscPDF.CBaseField.prototype.AddKid.call(this, oField);
+			return;
+		}
+		
         oField.SetOptions([]);
         AscPDF.CBaseField.prototype.AddKid.call(this, oField);
     };
-    CBaseListField.prototype.SetParentCurIdxs = function(aIdxs) {
+    CBaseListField.prototype.SetLogicCurIdxs = function(aIdxs) {
         let oParent = this.GetParent(true);
         if (oParent && this.IsWidget())
-            oParent.SetParentCurIdxs(aIdxs);
+            oParent.SetLogicCurIdxs(aIdxs);
         else {
-            AscCommon.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetLogicCurIdxs(), aIdxs));
             this._currentValueIndexes = aIdxs;
         }
     };
-    CBaseListField.prototype.GetParentCurIdxs = function(bInherit) {
+    CBaseListField.prototype.GetLogicCurIdxs = function(bInherit) {
         let oParent = this.GetParent(true);
         if (oParent == null)
             return this._currentValueIndexes;
@@ -81,7 +85,7 @@
         }
         
         if (oParent)
-            return oParent.GetParentCurIdxs();
+            return oParent.GetLogicCurIdxs();
     };
     CBaseListField.prototype.SetTopIndex = function() {};
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {

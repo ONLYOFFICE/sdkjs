@@ -1435,14 +1435,16 @@ CMathContent.prototype.draw = function(x, y, pGraphics, PDSE)
         }
     }
 };
-CMathContent.prototype.Draw_Elements = function(PDSE)
+CMathContent.prototype.Draw_Elements = function(drawState)
 {
+	drawState.pushBidiFlow(false);
+	
     var StartPos, EndPos;
 
     if(this.protected_GetLinesCount() > 0)
     {
-        var CurLine  = PDSE.Line - this.StartLine;
-        var CurRange = ( 0 === CurLine ? PDSE.Range - this.StartRange : PDSE.Range );
+        var CurLine  = drawState.Line - this.StartLine;
+        var CurRange = ( 0 === CurLine ? drawState.Range - this.StartRange : drawState.Range );
 
         StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
         EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
@@ -1458,9 +1460,10 @@ CMathContent.prototype.Draw_Elements = function(PDSE)
     if( !bHidePlh )
     {
         for(var CurPos = StartPos; CurPos <= EndPos;CurPos++)
-            this.Content[CurPos].Draw_Elements(PDSE);
+            this.Content[CurPos].Draw_Elements(drawState);
     }
-
+	
+	drawState.popBidiFlow();
 };
 CMathContent.prototype.setCtrPrp = function(oPr)
 {
@@ -1469,6 +1472,7 @@ CMathContent.prototype.setCtrPrp = function(oPr)
 
 	History.Add(new CChangesMathContentTextPr(this, this.CtrPrp, oPr));
 	this.CtrPrp = oPr;
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.Is_InclineLetter = function()
 {
@@ -1689,6 +1693,7 @@ CMathContent.prototype.SetArgSize = function(val)
 {
 	AscCommon.History.Add(new CChangesMathContentArgSize(this, this.ArgSize.GetValue(), val));
 	this.ArgSize.SetValue(val);
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.GetArgSize = function()
 {
@@ -2259,6 +2264,7 @@ CMathContent.prototype.Internal_Content_Add = function(Pos, Item, bUpdatePositio
 	this.Content.splice(Pos, 0, Item);
 
 	this.private_UpdatePosOnAdd(Pos, bUpdatePosition);
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.private_UpdatePosOnAdd = function(Pos, bUpdatePosition)
 {
@@ -2384,6 +2390,7 @@ CMathContent.prototype.ConcatToContent = function(Pos, NewItems)
 		var Array_end   = this.Content.slice(Pos);
 
 		this.Content = Array_start.concat(NewItems, Array_end);
+		this.private_UpdatePresentationOutline();
 	}
 };
 CMathContent.prototype.Remove_FromContent = function(Pos, Count)
@@ -2402,6 +2409,7 @@ CMathContent.prototype.Remove_FromContent = function(Pos, Count)
 
 	this.private_CorrectCurPos();
 	this.private_UpdatePosOnRemove(Pos, Count);
+	this.private_UpdatePresentationOutline();
 };
 CMathContent.prototype.Remove_Content = function(Pos, Count)
 {
@@ -4139,6 +4147,8 @@ CMathContent.prototype.Add_MatrixWithBrackets = function(begChr, endChr, ctrPr, 
 };
 CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
+	positionCalculator.pushBidiFlow(false);
+	
 	let line  = positionCalculator.line;
 	let range = positionCalculator.range;
 	
@@ -4150,11 +4160,14 @@ CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, 
 	{
 		this.Content[pos].recalculateCursorPosition(positionCalculator, isCurrent && pos === this.CurPos);
 	}
+	
+	positionCalculator.popBidiFlow();
 };
 CMathContent.prototype.getParagraphContentPosByXY = function(searchState)
 {
-	searchState.reset();
+	searchState.pushBidiFlow(false);
 	CParagraphContentWithParagraphLikeContent.prototype.getParagraphContentPosByXY.call(this, searchState);
+	searchState.popBidiFlow();
 };
 CMathContent.prototype.GetCurrentParaPos = function(align)
 {
@@ -4580,10 +4593,12 @@ CMathContent.prototype.Get_EndPos = function(BehindEnd, ContentPos, Depth)
     if(undefined !== this.Content[nLastPos])
         this.Content[nLastPos].Get_EndPos(BehindEnd, ContentPos, Depth + 1);
 };
-CMathContent.prototype.Draw_HighLights = function(drawState)
+CMathContent.prototype.drawHighLights = function(drawState)
 {
 	if (!this.bRoot && this.Parent && true !== this.ParentElement.Is_ContentUse(this))
 		return;
+	
+	drawState.pushBidiFlow(false);
 	
 	let rangeInfo  = this.getRangePos(drawState.Line, drawState.Range);
 	let rangeStart = rangeInfo[0];
@@ -4605,29 +4620,32 @@ CMathContent.prototype.Draw_HighLights = function(drawState)
 	{
 		drawState.Y0 = Y0;
 		drawState.Y1 = Y1;
-		this.Content[pos].Draw_HighLights(drawState);
+		this.Content[pos].drawHighLights(drawState);
 	}
+	
+	drawState.popBidiFlow();
 };
-CMathContent.prototype.Draw_Lines = function(PDSL)
+CMathContent.prototype.drawLines = function(drawState)
 {
-    var CurLine  = PDSL.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSL.Range - this.StartRange : PDSL.Range );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var Bound = this.Get_LineBound(PDSL.Line, PDSL.Range);
-
-    var Baseline = Bound.Y + Bound.Asc;
-
-    PDSL.Baseline = Baseline;
-    PDSL.X        = Bound.X;
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Draw_Lines(PDSL);
-        PDSL.Baseline = Baseline;
-    }
+	drawState.pushBidiFlow(false);
+	
+	let bounds     = this.Get_LineBound(drawState.Line, drawState.Range);
+	let rangeInfo  = this.getRangePos(drawState.Line, drawState.Range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	
+	let baseline = bounds.Y + bounds.Asc;
+	
+	drawState.Baseline = baseline;
+	drawState.X        = bounds.X;
+	
+	for (let pos = rangeStart; pos <= rangeEnd; ++pos)
+	{
+		this.Content[pos].drawLines(drawState);
+		drawState.Baseline = baseline;
+	}
+	
+	drawState.popBidiFlow();
 };
 CMathContent.prototype.RemoveSelection = function(preserveCursorPosition)
 {
@@ -4672,8 +4690,13 @@ CMathContent.prototype.SelectAll = function(Direction)
         this.Content[nPos].SelectAll(Direction);
     }
 };
-CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
+CMathContent.prototype.drawSelectionInRange = function(drawSelectionState)
 {
+	drawSelectionState.pushBidiFlow(false);
+	
+	let line  = drawSelectionState.line;
+	let range = drawSelectionState.range;
+	
 	let rangeInfo  = this.getRangePos(line, range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
@@ -4700,10 +4723,12 @@ CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectio
 		let isSelected = this.Selection.Use && selectionStart <= pos && pos <= selectionEnd;
 		
 		if (para_Math_Composition !== item.Type || (isSelected && selectionStart === selectionEnd))
-			item.drawSelectionInRange(line, range, drawSelectionState);
+			item.drawSelectionInRange(drawSelectionState);
 		else
-			drawSelectionState.handleMathElement(item, isSelected);
+			drawSelectionState.handleMathBase(item, isSelected);
 	}
+	
+	drawSelectionState.popBidiFlow();
 };
 CMathContent.prototype.SelectElementByPos = function(nPos)
 {
@@ -5130,6 +5155,12 @@ CMathContent.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
     this.protected_FillRange(CurLine, CurRange, RangeStartPos, RangeEndPos);
 };
+CMathContent.prototype.recalculateRangeAlign = function(alignState)
+{
+	alignState.pushBidiFlow(false);
+	CParagraphContentWithParagraphLikeContent.prototype.recalculateRangeAlign.call(this, alignState);
+	alignState.popBidiFlow();
+};
 CMathContent.prototype.private_ForceBreakBox = function(PRS, Box, _Depth, PrevLastPos, LastPos)
 {
     var BoxLen = Box.size.width;
@@ -5312,21 +5343,23 @@ CMathContent.prototype.Displace_BreakOperator = function(isForward, bBrkBefore, 
 		this.Content[Pos].Displace_BreakOperator(isForward, bBrkBefore, CountOperators);
 	}
 };
-CMathContent.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
+CMathContent.prototype.recalculateRangeWidth = function(widthState)
 {
-    var RangeW = PRSC.Range.W;
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
+	widthState.pushBidiFlow(false);
+    var RangeW = widthState.Range.W;
+    var CurLine = widthState.CurLine - this.StartLine;
+    var CurRange = ( 0 === CurLine ? widthState.CurRange - this.StartRange : widthState.CurRange );
 
     var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
     for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
     {
-        this.Content[CurPos].Recalculate_Range_Width( PRSC, _CurLine, _CurRange );
+        this.Content[CurPos].recalculateRangeWidth(widthState);
     }
 
-    this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
+    this.Bounds.SetWidth(CurLine, CurRange, widthState.Range.W - RangeW);
+	widthState.popBidiFlow();
 };
 CMathContent.prototype.recalculateAllSize = function(textMeasurer)
 {
@@ -5807,6 +5840,7 @@ CMathContent.prototype.Apply_MenuProps = function(Props, Pos)
 
 			AscCommon.History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
 			this.Recalc_RunsCompiledPr();
+			this.private_UpdatePresentationOutline();
 		}
 	}
 	else if (Props.Action & c_oMathMenuAction.DecreaseArgumentSize)
@@ -5818,6 +5852,7 @@ CMathContent.prototype.Apply_MenuProps = function(Props, Pos)
 
 			AscCommon.History.Add(new CChangesMathContentArgSize(this, ArgSize, NewArgSize));
 			this.Recalc_RunsCompiledPr();
+			this.private_UpdatePresentationOutline();
 		}
 	}
 
@@ -6160,6 +6195,9 @@ CMathContent.prototype.Process_AutoCorrect = function(oElement)
 		return;
 
 	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && !logicDocument.CanDoAutoCorrect())
+		return;
+
 	let nInputType = logicDocument
 		? logicDocument. Api.getMathInputType()
 		: Asc.c_oAscMathInputType.Unicode;
@@ -6924,4 +6962,5 @@ var g_AutoCorrectMathsList = {
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CMathContent = CMathContent;
 window['AscCommonWord'].g_AutoCorrectMathsList = g_AutoCorrectMathsList;
+AscWord.MathContent = CMathContent;
 
