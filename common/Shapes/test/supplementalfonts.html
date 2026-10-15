@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>theme supplemental font regression tests</title>
+		<script>
+			window.AscCommon = { c_dScalePPTXSizes: 36000 };
+			window.Asc = { c_oAscShdClear: 0, c_oAscColor: {}, c_oAscFill: {} };
+			window.AscFormat = {};
+			window.AscDFH = {};
+		</script>
+		<script src="./../../SerializeCommonWordExcel.js"></script>
+		<script src="./../SerializeWriter.js"></script>
+		<script src="./../Serialize.js"></script>
+		<script src="./supplementalfonts.js"></script>
+	</head>
+	<body onload="javascript: runSupplementalFontsTests();">
+		Results are written to the browser console.
+	</body>
+</html>
