@@ -487,8 +487,7 @@
 	CRunText.prototype.IsSpaceBefore = function(fontHint)
 	{
 		return ((AscCommon.isEastAsianScript(this.Value)
-				&& !AscCommon.isHangul(this.Value)
-				&& !AscCommon.isEastAsianPunctuation(this.Value))
+				&& !AscCommon.isHangul(this.Value))
 			|| (AscWord.fonthint_EastAsia === fontHint && AscCommon.isAmbiguousCharacter(this.Value)));
 	};
 	CRunText.prototype.isHyphenAfter = function()
@@ -579,8 +578,7 @@
 		
 		return (AscCommon.isEastAsianScript(this.Value)
 			&& this.CanBeAtEndOfLine()
-			&& !AscCommon.isHangul(this.Value)
-			&& !AscCommon.isEastAsianPunctuation(this.Value));
+			&& !AscCommon.isHangul(this.Value));
 	};
 	CRunText.prototype.CanBeAtBeginOfLine = function()
 	{
