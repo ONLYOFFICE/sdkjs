@@ -4255,7 +4255,7 @@
 							width = colCounter;
 						}
 
-						if (13 === Code || '\n' === Char || sCurChar.length >= Asc.c_oAscMaxCellOrCommentLength) {
+						if ((!bPastedArray && (13 === Code || '\n' === Char)) || sCurChar.length >= Asc.c_oAscMaxCellOrCommentLength) {if ((!bPastedArray && (13 === Code || '\n' === Char)) || sCurChar.length >= Asc.c_oAscMaxCellOrCommentLength) {
 							if ("" === sCurChar) {
 								addTextIntoCell(rowCounter, colCounter, sCurChar);
 								colCounter = 0;
