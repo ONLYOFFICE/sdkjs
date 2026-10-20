@@ -67,7 +67,7 @@
 		this.brush = _brush;
 		this.pen = _pen;
 		this.TransformMatrix = transform;
-		this.shapeDrawer = new AscCommon.CShapeDrawer();
+		this.shapeDrawer = null;
 	}
 	OverlayObject.prototype.updateTransform = function (extX, extY, transform) {
 		this.ext.cx = extX;
@@ -87,6 +87,8 @@
 		this.TransformMatrix = transform;
 	};
 	OverlayObject.prototype.draw = function (overlay, transform) {
+		// Layout generation also uses overlays in SDK builds without a preview renderer.
+		if (!this.shapeDrawer) this.shapeDrawer = new AscCommon.CShapeDrawer();
 		var oldTransform = this.TransformMatrix;
 		if (transform) {
 			this.updateTransformMatrix(transform);

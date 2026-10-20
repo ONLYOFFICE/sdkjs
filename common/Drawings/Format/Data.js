@@ -7251,6 +7251,8 @@ Because of this, the display is sometimes not correct.
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtDataModel] = function (oClass, value) {
       oClass.dataModel = value;
+      oClass.smartArtTree = null;
+      oClass.recalcSmartArtConnections();
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtStyleDef] = function (oClass, value) {
       oClass.styleDef = value;
@@ -7566,9 +7568,9 @@ Because of this, the display is sometimes not correct.
 				this.drawing.setNvSpPr(nvSpPr);
 			}
 	  }
-    SmartArt.prototype.generateDrawingPart = function () {
+    SmartArt.prototype.generateDrawingPart = function (force) {
 	    this.isLocalDrawingPart = false;
-			if (!this.isCanGenerateSmartArt()) {
+			if (!force && !this.isCanGenerateSmartArt()) {
 				return;
 			}
       this.initSmartArtAlgorithm();

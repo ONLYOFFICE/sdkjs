@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SmartArt editing regression</title>
+<pre id="result">RUNNING</pre>
+<script>
+    window.testErrors = [];
+    window.onerror = function (message, source, line, column, error) {
+        testErrors.push(error ? error.stack : message);
+    };
+    window.testProduct = new URLSearchParams(location.search).get('product') || 'word';
+</script>
+<script src="../../web-apps/vendor/jquery/jquery.min.js"></script>
+<script src="../../web-apps/vendor/xregexp/xregexp-all-min.js"></script>
+<script>
+    var sdkProduct = testProduct === 'pdf' ? 'word' : testProduct;
+    document.write('<script src="../deploy/sdkjs/' + sdkProduct + '/sdk-all-min.js"><\/script>');
+    document.write('<script src="../deploy/sdkjs/' + sdkProduct + '/sdk-all.js"><\/script>');
+</script>
+<script src="../../web-apps/apps/common/main/lib/view/SmartArtDialog.js"></script>
+<script src="smartart-editing.js"></script>
