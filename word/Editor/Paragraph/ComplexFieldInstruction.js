@@ -1468,6 +1468,10 @@ CFieldInstructionParser.prototype.private_Parse = function()
 	{
 		this.private_ReadFORMCHECKBOX();
 	}
+	else if ("DOCPROPERTY" === sBuffer || AscWord.FieldInstructionDOCPROPERTY.IsInfoField(sBuffer))
+	{
+		this.private_ReadDOCPROPERTY(sBuffer);
+	}
 	else if(sBuffer.indexOf("=") === 0)
 	{
 		this.private_ReadFORMULA();
@@ -2081,6 +2085,44 @@ CFieldInstructionParser.prototype.private_ReadDATE = function()
 				if (arrArguments.length > 0)
 					this.Result.SetFormat(arrArguments[0]);
 			}
+		}
+	}
+};
+CFieldInstructionParser.prototype.private_ReadDOCPROPERTY = function(sFieldName)
+{
+	this.Result = new AscWord.FieldInstructionDOCPROPERTY(sFieldName);
+
+	let isDocProperty = !this.Result.IsInfoField();
+	let isFirstArg    = true;
+	while (this.private_ReadNext())
+	{
+		if (this.private_IsSwitch())
+		{
+			let sType = this.private_GetSwitchLetter();
+			if ('@' === sType || '#' === sType)
+			{
+				let arrArguments = this.private_ReadArguments();
+				if (arrArguments.length > 0)
+				{
+					if ('@' === sType)
+						this.Result.SetDateFormat(arrArguments[0]);
+					else
+						this.Result.SetNumericFormat(arrArguments[0]);
+				}
+			}
+			else
+			{
+				this.private_ReadGeneralFormatSwitch();
+			}
+		}
+		else if (isFirstArg)
+		{
+			if (isDocProperty)
+				this.Result.SetPropertyName(this.Buffer);
+			else
+				this.Result.SetArgument(this.Buffer);
+
+			isFirstArg = false;
 		}
 	}
 };

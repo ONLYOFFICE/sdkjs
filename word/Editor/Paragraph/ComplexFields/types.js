@@ -60,5 +60,6 @@
 	window['AscWord'].fieldtype_ADDIN        = 0x0014;
 	window['AscWord'].fieldtype_FORMCHECKBOX = 0x0015;
 	window['AscWord'].fieldtype_FORMDROPDOWN = 0x0016;
+	window['AscWord'].fieldtype_DOCPROPERTY  = 0x0017;
 	
 })(window);
