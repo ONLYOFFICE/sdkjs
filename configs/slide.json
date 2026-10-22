@@ -281,6 +281,7 @@
 			"word/Editor/Paragraph/ComplexFields/FormText.js",
 			"word/Editor/Paragraph/ComplexFields/MergeField.js",
 			"word/Editor/Paragraph/ComplexFields/ref.js",
+			"word/Editor/Paragraph/ComplexFields/docproperty.js",
 			"word/Editor/Paragraph/ComplexField.js",
 			"word/Editor/Paragraph/DisplayStyleCalculator.js",
 			"word/Editor/Paragraph/ParaRevisionMove.js",

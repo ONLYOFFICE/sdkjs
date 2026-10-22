@@ -737,6 +737,9 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case AscWord.fieldtype_NOTEREF:
 			this.private_UpdateNOTEREF();
 			break;
+		case AscWord.fieldtype_DOCPROPERTY:
+			this.private_UpdateDOCPROPERTY();
+			break;
 		case AscWord.fieldtype_FORMCHECKBOX:
 		case AscWord.fieldtype_FORMTEXT:
 		case AscWord.fieldtype_ADDIN:
@@ -798,6 +801,9 @@ CComplexField.prototype.CalculateValue = function()
 		case AscWord.fieldtype_NOTEREF:
 			sResult = this.private_CalculateNOTEREF();
 			break;
+		case AscWord.fieldtype_DOCPROPERTY:
+			sResult = this.private_CalculateDOCPROPERTY();
+			break;
 		case AscWord.fieldtype_FORMCHECKBOX:
 		case AscWord.fieldtype_FORMTEXT:
 		case AscWord.fieldtype_ADDIN:
@@ -852,6 +858,21 @@ CComplexField.prototype.private_UpdateSTYLEREF = function()
 CComplexField.prototype.private_CalculateSTYLEREF = function()
 {
 	return this.Instruction.GetText();
+};
+CComplexField.prototype.private_UpdateDOCPROPERTY = function()
+{
+	let text = this.Instruction.GetText();
+	if (null === text)
+		this.private_InsertContent(this.private_GetErrorContent(AscCommon.translateManager.getValue("Error! Unknown document property name.")));
+	else if (text)
+		this.LogicDocument.AddText(text);
+	else
+		this.LogicDocument.Remove(1, false, false, true);
+};
+CComplexField.prototype.private_CalculateDOCPROPERTY = function()
+{
+	let text = this.Instruction.GetText();
+	return null === text ? AscCommon.translateManager.getValue("Error! Unknown document property name.") : text;
 };
 CComplexField.prototype.private_InsertMessage = function(sMessage, oTextPr)
 {
