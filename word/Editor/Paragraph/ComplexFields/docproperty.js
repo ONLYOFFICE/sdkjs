@@ -88,6 +88,39 @@
 	};
 
 	/**
+	 * Default format of a date without \@ switch, like Word: short date (and time) of the given culture
+	 * @param {object} cultureInfo
+	 * @param {boolean} isWithTime
+	 * @param {boolean} isWithSeconds
+	 * @returns {string}
+	 */
+	function getDefaultDateFormat(cultureInfo, isWithTime, isWithSeconds)
+	{
+		if (!cultureInfo)
+			cultureInfo = AscCommon.g_aCultureInfos[1033];
+
+		const parts = {"0" : "d", "1" : "dd", "2" : "M", "3" : "MM", "4" : "yy", "5" : "yyyy"};
+
+		let dateElements = [];
+		for (let i = 0; i < cultureInfo.ShortDatePattern.length; ++i)
+		{
+			if (parts[cultureInfo.ShortDatePattern[i]])
+				dateElements.push(parts[cultureInfo.ShortDatePattern[i]]);
+		}
+
+		let result = dateElements.join(cultureInfo.DateSeparator || "/");
+		if (!isWithTime)
+			return result;
+
+		let sep     = cultureInfo.TimeSeparator || ":";
+		let seconds = isWithSeconds ? sep + "ss" : "";
+		if (cultureInfo.UseAMPM)
+			return result + " h" + sep + "mm" + seconds + " AM/PM";
+
+		return result + " HH" + sep + "mm" + seconds;
+	}
+
+	/**
 	 * DOCPROPERTY field and document information fields (TITLE, AUTHOR, SUBJECT, ...)
 	 * @param {string} [fieldName="DOCPROPERTY"]
 	 * @constructor
@@ -170,7 +203,7 @@
 		if (!property)
 			return null;
 
-		return this.private_ApplyTextCase(this.private_FormatValue(property.value, property.isDate));
+		return this.private_ApplyTextCase(this.private_FormatValue(property.value, property.isDate, property.isDateOnly));
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -217,17 +250,20 @@
 
 			let type  = property.asc_getType();
 			let value = property.asc_getValue();
+			// Custom date properties have no time part (Word shows only the date)
+			let isDate = (AscCommon.c_oVariantTypes.vtDate === type || AscCommon.c_oVariantTypes.vtFiletime === type);
 			return {
-				value  : (undefined === value || null === value) ? "" : value,
-				isDate : (AscCommon.c_oVariantTypes.vtDate === type || AscCommon.c_oVariantTypes.vtFiletime === type)
+				value      : (undefined === value || null === value) ? "" : value,
+				isDate     : isDate,
+				isDateOnly : isDate
 			};
 		}
 		return null;
 	};
-	FieldInstructionDOCPROPERTY.prototype.private_FormatValue = function(value, isDate)
+	FieldInstructionDOCPROPERTY.prototype.private_FormatValue = function(value, isDate, isDateOnly)
 	{
 		if (isDate)
-			return this.private_FormatDate(value);
+			return this.private_FormatDate(value, isDateOnly);
 
 		if ("boolean" === typeof(value))
 			return value ? "Y" : "N";
@@ -237,7 +273,7 @@
 
 		return "" + value;
 	};
-	FieldInstructionDOCPROPERTY.prototype.private_FormatDate = function(value)
+	FieldInstructionDOCPROPERTY.prototype.private_FormatDate = function(value, isDateOnly)
 	{
 		let date = value instanceof Date ? value : (value ? new Date(value) : null);
 		if (!date || isNaN(date.getTime()))
@@ -246,7 +282,7 @@
 		let langId = this.private_GetLang();
 		let format = this.DateFormat;
 		if (!format)
-			format = 1033 === langId ? "M/d/yyyy h:mm:ss am/pm" : "dd/MM/yyyy HH:mm:ss";
+			format = getDefaultDateFormat(AscCommon.g_aCultureInfos[langId], !isDateOnly, this.IsInfoField()); // Word: CREATEDATE shows seconds, DOCPROPERTY "CreateTime" doesn't
 
 		let numFormat = AscCommon.oNumFormatCache.get(format, AscCommon.NumFormatType.WordFieldDate);
 		if (!numFormat)
