@@ -3700,10 +3700,11 @@
 		if(oPlayerData)
 		{
 			let sCmd_ = sCmd;
-			if(sCmd.startsWith("playFrom") === 0)
+			// The native bridge has no seek command. Only translate a restart
+			// from zero; other offsets must not silently play from the beginning.
+			if(/^playFrom\(0(?:\.0*)?\)$/.test(sCmd))
 			{
 				sCmd_ = "play";
-				oPlayerData["Cmd"] = "play";
 			}
 			oPlayerData["Cmd"] = sCmd_;
 		}
@@ -3724,7 +3725,22 @@
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["CallMediaPlayerCommand"])
 		{
 			let oData = this.getPlayerData(sCmd);
-			if(!AscFormat.IsEqualObjects(this.lastPlCompareOayerData, oData))
+			if(!oData) return;
+			let bRestart = sCmd !== oData["Cmd"] && oData["Cmd"] === "play";
+			if(bRestart && oMediaData)
+			{
+				// Animation commands do not select the media shape. The desktop
+				// player must be created before play, even for an unselected shape.
+				// Recreate it so replaying an effect starts from the beginning and
+				// switching effects loads the new media file.
+				window["AscDesktopEditor"]["CallMediaPlayerCommand"]({"Cmd": "hideMediaControl"});
+				let oShowData = Object.assign({}, oData);
+				oShowData["Cmd"] = "showMediaControl";
+				oShowData["IsSelected"] = true;
+				window["AscDesktopEditor"]["CallMediaPlayerCommand"](oShowData);
+			}
+			// Playback is an action: identical commands must execute again.
+			if(bRestart || !AscFormat.IsEqualObjects(this.lastPlCompareOayerData, oData))
 			{
 				window["AscDesktopEditor"]["CallMediaPlayerCommand"](oData);
 				this.lastPlCompareOayerData = oData;
