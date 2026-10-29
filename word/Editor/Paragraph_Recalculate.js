@@ -2443,6 +2443,46 @@ Paragraph.prototype.private_RecalculateGetTabPos = function(PRS, X, ParaPr, CurP
 	};
 };
 
+Paragraph.prototype.private_RecalculateGetPositionTabPos = function(X, ParaPr, CurPage, positionTab)
+{
+	let contentFrame = this.GetPageContentFrame(CurPage);
+	
+	let startX = contentFrame.X;
+	let endX   = contentFrame.XLimit;
+	
+	let paraFrame = this.Get_FramePr();
+	if (paraFrame)
+	{
+		startX = 0;
+		endX   = paraFrame.W;
+	}
+	
+	if (ptab_RelativeTo_Indent === positionTab.RelativeTo)
+	{
+		startX += ParaPr.Ind.Left;
+		endX   -= ParaPr.Ind.Right;
+	}
+	
+	let tabValue = positionTab.Alignment;
+	let newX;
+	if (tab_Center === tabValue)
+		newX = (startX + endX) / 2;
+	else if (tab_Right === tabValue)
+		newX = endX;
+	else
+		newX = Math.max(startX, X);
+	
+	return {
+		TabWidth     : newX - X,
+		TabValue     : tabValue,
+		DefaultTab   : false,
+		TabLeader    : positionTab.Leader,
+		TabRightEdge : false,
+		PageX        : startX,
+		PageXLimit   : endX
+	};
+};
+
 Paragraph.prototype.private_CheckSkipKeepLinesAndWidowControl = function(CurPage)
 {
     var bSkipWidowAndKeepLines = false;

@@ -46,6 +46,9 @@ var tab_Left    = Asc.c_oAscTabType.Left;
 let tab_Symbol     = 0x0022;//0x2192;
 let tab_Symbol_Rtl = 0x0021;
 
+var ptab_RelativeTo_Indent = 0x00;
+var ptab_RelativeTo_Margin = 0x01;
+
 (function(window)
 {
 	let tabWidth = null;
@@ -168,6 +171,10 @@ let tab_Symbol_Rtl = 0x0021;
 	{
 		return new CRunTab();
 	};
+	CRunTab.prototype.IsPositionTab = function()
+	{
+		return false;
+	};
 	CRunTab.prototype.IsNeedSaveRecalculateObject = function()
 	{
 		return true;
@@ -205,8 +212,42 @@ let tab_Symbol_Rtl = 0x0021;
 	{
 		return AscBidi.TYPE.PM;
 	};
+	
+	function CRunPositionTab(alignment, relativeTo, leader)
+	{
+		CRunTab.call(this);
+		
+		this.Alignment  = undefined !== alignment ? alignment : tab_Left;
+		this.RelativeTo = undefined !== relativeTo ? relativeTo : ptab_RelativeTo_Indent;
+		this.Leader     = undefined !== leader ? leader : Asc.c_oAscTabLeader.None;
+	}
+	CRunPositionTab.prototype = Object.create(CRunTab.prototype);
+	CRunPositionTab.prototype.constructor = CRunPositionTab;
+	
+	CRunPositionTab.prototype.IsPositionTab = function()
+	{
+		return true;
+	};
+	CRunPositionTab.prototype.Copy = function()
+	{
+		return new CRunPositionTab(this.Alignment, this.RelativeTo, this.Leader);
+	};
+	CRunPositionTab.prototype.Write_ToBinary = function(Writer)
+	{
+		Writer.WriteLong(para_PositionTab);
+		Writer.WriteLong(this.Alignment);
+		Writer.WriteLong(this.RelativeTo);
+		Writer.WriteLong(this.Leader);
+	};
+	CRunPositionTab.prototype.Read_FromBinary = function(Reader)
+	{
+		this.Alignment  = Reader.GetLong();
+		this.RelativeTo = Reader.GetLong();
+		this.Leader     = Reader.GetLong();
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunTab = CRunTab;
+	window['AscWord'].CRunPositionTab = CRunPositionTab;
 
 })(window);
