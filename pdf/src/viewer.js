@@ -2910,9 +2910,7 @@
 
 					let hasMarkups = aMarkups.length != 0;
 					let hasDrawings = pageInfo.drawings.length != 0 || pageInfo.redactedFields.length != 0;
-					let hasBlended = pageInfo.annots.some(function(annot) {
-						return annot.IsTextMarkup() == false && annot.GetAppearanceBlendMode();
-					});
+					let hasBlended = this._annotsCompositedOnPage(i).length != 0;
 
 					if (false == hasDrawings && false == hasMarkups && false == hasBlended) {
 						oImageToDraw = page.Image;
@@ -4009,16 +4007,32 @@
 			ctx.restore();
 		}
 	};
-	// Appearances with a real blend mode have to be drawn on the page bitmap.
-	// The annotation overlay is cleared first, so Multiply there has no text to blend with.
+	// Non-markup annots that have to be drawn on the page bitmap, in Annots order.
+	// The overlay is cleared first, so a Multiply annot there never sees the text.
+	// A Normal annot underneath that Multiply annot is included too. Leaving it on
+	// the overlay would paint it back above the Multiply annot.
+	CHtmlPage.prototype._annotsCompositedOnPage = function(nPage)
+	{
+		let aAnnots = this.pagesInfo.pages[nPage].annots || [];
+		let aDesc = [];
+		for (let i = 0; i < aAnnots.length; i++) {
+			aDesc.push({
+				markup: aAnnots[i].IsTextMarkup() == true,
+				blend: aAnnots[i].GetAppearanceBlendMode()
+			});
+		}
+		let aIdx = AscPDF.annotsCompositedBeforeOverlay(aDesc);
+		let aDraw = [];
+		for (let i = 0; i < aIdx.length; i++)
+			aDraw.push(aAnnots[aIdx[i]]);
+		return aDraw;
+	};
 	CHtmlPage.prototype._drawBlendedAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM)
 	{
 		if (ctx.contentType && ctx.contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
 			return;
 		}
-		let aAnnots = this.pagesInfo.pages[nPage].annots.filter(function(annot) {
-			return annot.IsTextMarkup() == false && annot.GetAppearanceBlendMode();
-		});
+		let aAnnots = this._annotsCompositedOnPage(nPage);
 		if (aAnnots.length == 0)
 			return;
 
@@ -4343,15 +4357,16 @@
         oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
         
         if (this.pagesInfo.pages[nPage].annots != null) {
+			// Thumbnails and print already have the page pixels on this context, so
+			// every annot can composite in order there. The on-screen overlay does not.
+			let bDestinationHasPage = isThumbnails || ctx.contentType !== undefined;
+			let aOnPage = bDestinationHasPage ? null : this._annotsCompositedOnPage(nPage);
             this.pagesInfo.pages[nPage].annots.forEach(function(annot) {
 				if (isOnlyStamps && !annot.IsStamp()) {
 					return;
 				}
 
-				// Thumbnails and print already have the page pixels on this context.
-				// The on-screen overlay does not, so blended appearances are drawn with the page image.
-				let bDestinationHasPage = isThumbnails || ctx.contentType !== undefined;
-				if (annot.IsTextMarkup() == false && (bDestinationHasPage || !annot.GetAppearanceBlendMode())) {
+				if (annot.IsTextMarkup() == false && (bDestinationHasPage || aOnPage.indexOf(annot) < 0)) {
 					annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
 				}
             });
