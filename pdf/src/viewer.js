@@ -2898,6 +2898,7 @@
 					let ctx = page.Image.getContext("2d");
 					this._drawDrawingsOnCtx(i, ctx);
 					this._drawMarkupAnnotsOnCtx(i, ctx);
+					this._drawBlendedAnnotsOnCtx(i, ctx);
 					oImageToDraw = page.Image;
 				}
 				
@@ -2909,8 +2910,11 @@
 
 					let hasMarkups = aMarkups.length != 0;
 					let hasDrawings = pageInfo.drawings.length != 0 || pageInfo.redactedFields.length != 0;
+					let hasBlended = pageInfo.annots.some(function(annot) {
+						return annot.IsTextMarkup() == false && annot.GetAppearanceBlendMode();
+					});
 
-					if (false == hasDrawings && false == hasMarkups) {
+					if (false == hasDrawings && false == hasMarkups && false == hasBlended) {
 						oImageToDraw = page.Image;
 					}
 					else {
@@ -2935,12 +2939,13 @@
 						if (bCanPartialRedraw) {
 							this._drawDrawingsOnCtx(i, tmpPageCtx, false, oDirtyBounds, page.Image);
 							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx, oDirtyBounds);
+							this._drawBlendedAnnotsOnCtx(i, tmpPageCtx, oDirtyBounds);
 
 							pageInfo.needRedrawDrawings = false;
 							pageInfo.needRedrawMarkups = false;
 							pageInfo.dirtyDrawingsBounds = undefined;
 						}
-						else if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (needNewPage && !isStretchPaint)) {
+						else if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (hasBlended && pageInfo.needRedrawAnnots) || (needNewPage && !isStretchPaint)) {
 							if (page.Image) {
 								tmpPageImage.width = page.Image.width;
 								tmpPageImage.height = page.Image.height;
@@ -2954,6 +2959,7 @@
 
 							this._drawDrawingsOnCtx(i, tmpPageCtx);
 							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx);
+							this._drawBlendedAnnotsOnCtx(i, tmpPageCtx);
 
 							pageInfo.needRedrawDrawings = false;
 							pageInfo.needRedrawMarkups = false;
@@ -4003,6 +4009,56 @@
 			ctx.restore();
 		}
 	};
+	// Appearances with a real blend mode have to be drawn on the page bitmap.
+	// The annotation overlay is cleared first, so Multiply there has no text to blend with.
+	CHtmlPage.prototype._drawBlendedAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM)
+	{
+		if (ctx.contentType && ctx.contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
+			return;
+		}
+		let aAnnots = this.pagesInfo.pages[nPage].annots.filter(function(annot) {
+			return annot.IsTextMarkup() == false && annot.GetAppearanceBlendMode();
+		});
+		if (aAnnots.length == 0)
+			return;
+
+		let widthPx = ctx.canvas.width;
+		let heightPx = ctx.canvas.height;
+		ctx.globalAlpha = 1.0;
+
+		if (oDirtyBoundsMM) {
+			let oDoc = this.getPDFDoc();
+			let scaleX = widthPx / oDoc.GetPageWidthMM(nPage);
+			let scaleY = heightPx / oDoc.GetPageHeightMM(nPage);
+			let dirtyX = Math.max(0, (Math.floor(oDirtyBoundsMM.l * scaleX)) - 1);
+			let dirtyY = Math.max(0, (Math.floor(oDirtyBoundsMM.t * scaleY)) - 1);
+			let dirtyR = Math.min(widthPx, (Math.ceil(oDirtyBoundsMM.r * scaleX)) + 1);
+			let dirtyB = Math.min(heightPx, (Math.ceil(oDirtyBoundsMM.b * scaleY)) + 1);
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(dirtyX, dirtyY, dirtyR - dirtyX, dirtyB - dirtyY);
+			ctx.clip();
+		}
+
+		let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.isPrint = ctx.contentType !== undefined;
+		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage), this.file.getPageHeight(nPage));
+		oGraphicsPDF.SetCurPage(nPage);
+
+		let oDoc = this.getPDFDoc();
+		let oGraphicsWord = new AscCommon.CGraphics();
+		oGraphicsWord.init(ctx, widthPx, heightPx, oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
+		oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
+		oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
+		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
+
+		aAnnots.forEach(function(annot) {
+			annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
+		});
+
+		if (oDirtyBoundsMM)
+			ctx.restore();
+	};
 	CHtmlPage.prototype._paintDrawings = function() {
 		const ctx = this.canvas.getContext('2d');
 		ctx.globalAlpha = 1;
@@ -4292,7 +4348,10 @@
 					return;
 				}
 
-				if (annot.IsTextMarkup() == false) {
+				// Thumbnails and print already have the page pixels on this context.
+				// The on-screen overlay does not, so blended appearances are drawn with the page image.
+				let bDestinationHasPage = isThumbnails || ctx.contentType !== undefined;
+				if (annot.IsTextMarkup() == false && (bDestinationHasPage || !annot.GetAppearanceBlendMode())) {
 					annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
 				}
             });

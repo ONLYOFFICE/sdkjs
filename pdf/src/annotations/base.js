@@ -705,12 +705,13 @@
             let X = aOrigRect[0];
             let Y = aOrigRect[1];
 
-            if (this.IsHighlight())
-                AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
-            
-            oGraphicsPDF.SetGlobalAlpha(1);
+            let oCtx = oGraphicsPDF.GetContext();
+            if (!AscPDF.startBlendMode(oCtx, originView.ascBlendMode) && this.IsHighlight())
+                AscPDF.startMultiplyMode(oCtx);
+
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.DrawImageXY(originView, X, Y, undefined, true);
-            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
+            AscPDF.endMultiplyMode(oCtx);
         }
 
         // oGraphicsPDF.SetLineWidth(1);
@@ -750,6 +751,32 @@
 	 * @typeofeditors ["PDF"]
      * @returns {canvas}
 	 */
+    // The appearance is rasterized on a transparent buffer, so Multiply is not in the
+    // pixels. The engine reports that mode on the appearance (BlendMode). The shipped
+    // wasm still writes 0; the same /BM is then read from the PDF dictionaries.
+    CAnnotationBase.prototype._appearanceBlend = function(oFile, oApInfo) {
+        let mode = oApInfo ? (oApInfo["BlendMode"] || 0) : 0;
+        if (mode || !oFile || typeof oFile["getFileBinary"] !== "function")
+            return mode;
+        if (!oFile.ascBlendByName) {
+            try {
+                oFile.ascBlendByName = AscPDF.indexAppearanceBlend(oFile["getFileBinary"]());
+            } catch (e) {
+                oFile.ascBlendByName = {};
+            }
+        }
+        let sName = this.GetName && this.GetName();
+        return (sName && oFile.ascBlendByName[sName]) || 0;
+    };
+    // Non-zero when this appearance must be composited onto the page image.
+    // The forms overlay is transparent, so Multiply there never sees the text.
+    CAnnotationBase.prototype.GetAppearanceBlendMode = function() {
+        let oCached = this._originView && this._originView.normal;
+        if (oCached && oCached.ascBlendMode)
+            return oCached.ascBlendMode;
+        let oViewer = Asc.editor.getDocumentRenderer();
+        return this._appearanceBlend(oViewer && oViewer.file, null);
+    };
     CAnnotationBase.prototype.GetOriginView = function(nPageW, nPageH) {
         nPageW = Math.round(nPageW);
         nPageH = Math.round(nPageH);
@@ -767,6 +794,7 @@
         oSavedView = this._originView.normal;
         if (oSavedView) {
             if (oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]) {
+                oSavedView.ascBlendMode = this._appearanceBlend(oFile, oApInfoTmp);
                 return oSavedView;
             }
         }
@@ -780,6 +808,7 @@
 
         canvas.x    = oApearanceInfo["x"];
         canvas.y    = oApearanceInfo["y"];
+        canvas.ascBlendMode = this._appearanceBlend(oFile, oApInfoTmp);
         
         if (!oApInfoTmp)
             return null;
@@ -2185,6 +2214,118 @@
 	window["AscPDF"].ConvertPx2Pt       = ConvertPx2Pt;
     window["AscPDF"].ParsePDFDate       = ParsePDFDate;
 
+    // GfxBlendMode order. The appearance bitmap is isolated, so the page composite
+    // has to apply this mode. 0 is Normal and stays source-over.
+    window["AscPDF"].BLEND_COMPOSITE = [
+        null, "multiply", "screen", "overlay", "darken", "lighten",
+        "color-dodge", "color-burn", "hard-light", "soft-light",
+        "difference", "exclusion", "hue", "saturation", "color", "luminosity"
+    ];
+    window["AscPDF"].indexAppearanceBlend = function(bytes) {
+        if (!bytes || !bytes.length)
+            return {};
+        let src = typeof bytes === "string" ? bytes : new TextDecoder("latin1").decode(bytes);
+        let objects = Object.create(null);
+        let re = /(\d+)\s+\d+\s+obj/g;
+        let m;
+        while ((m = re.exec(src))) {
+            let start = m.index + m[0].length;
+            let streamAt = src.indexOf("stream", start);
+            let endobj = src.indexOf("endobj", start);
+            if (endobj < 0)
+                continue;
+            let dictEnd = (streamAt >= 0 && streamAt < endobj) ? streamAt : endobj;
+            let dict = src.slice(start, dictEnd);
+            objects[m[1]] = dict;
+            if (streamAt >= 0 && streamAt < endobj) {
+                let lengthMatch = /\/Length\s+(\d+)/.exec(dict);
+                if (lengthMatch) {
+                    let dataStart = streamAt + 6;
+                    if (src.charCodeAt(dataStart) === 13)
+                        dataStart++;
+                    if (src.charCodeAt(dataStart) === 10)
+                        dataStart++;
+                    re.lastIndex = dataStart + parseInt(lengthMatch[1], 10);
+                } else {
+                    let endstream = src.indexOf("endstream", streamAt);
+                    if (endstream > 0)
+                        re.lastIndex = endstream + 9;
+                }
+            }
+        }
+        function modeOf(dict, depth) {
+            if (!dict || depth > 5)
+                return 0;
+            let table = ["Normal", "Multiply", "Screen", "Overlay", "Darken", "Lighten", "ColorDodge", "ColorBurn", "HardLight", "SoftLight", "Difference", "Exclusion", "Hue", "Saturation", "Color", "Luminosity"];
+            let foundRe = /\/BM\s*\/([A-Za-z]+)/g;
+            let found;
+            while ((found = foundRe.exec(dict))) {
+                let idx = table.indexOf(found[1]);
+                if (idx > 0)
+                    return idx;
+            }
+            let ext = /\/ExtGState\s*<<([\s\S]*?)>>/.exec(dict);
+            if (ext) {
+                let refRe = /(\d+)\s+\d+\s+R/g;
+                let ref;
+                while ((ref = refRe.exec(ext[1]))) {
+                    let nested = modeOf(objects[ref[1]], depth + 1);
+                    if (nested)
+                        return nested;
+                }
+            }
+            return 0;
+        }
+        function literal(dict, key) {
+            let at = dict.indexOf("/" + key);
+            if (at < 0)
+                return null;
+            let open = dict.indexOf("(", at);
+            if (open < 0 || open - at > 12)
+                return null;
+            let out = "";
+            for (let i = open + 1; i < dict.length; i++) {
+                let ch = dict[i];
+                if (ch === "\\") {
+                    out += dict[++i] || "";
+                    continue;
+                }
+                if (ch === ")")
+                    return out;
+                out += ch;
+            }
+            return null;
+        }
+        let byName = Object.create(null);
+        for (let num in objects) {
+            let dict = objects[num];
+            if (!/\/Subtype\s*\/(Ink|Square|Circle|Polygon|PolyLine|Line|Stamp)\b/.test(dict))
+                continue;
+            let name = literal(dict, "NM");
+            if (!name)
+                continue;
+            let mode = 0;
+            let ap = /\/AP\s*<<[^>]*\/N\s+(\d+)\s+\d+\s+R/.exec(dict);
+            if (ap)
+                mode = modeOf(objects[ap[1]], 0);
+            if (!mode)
+                mode = modeOf(dict, 0);
+            if (mode)
+                byName[name] = mode;
+        }
+        return byName;
+    };
+    window["AscPDF"].startBlendMode = function(ctx, mode)
+    {
+        let op = AscPDF.BLEND_COMPOSITE[mode];
+        if (!ctx || !op)
+            return false;
+        if (!AscCommon.AscBrowser.isIE)
+            ctx.globalCompositeOperation = op;
+        else if (mode === 1)
+            AscPDF.startMultiplyMode(ctx);
+        return true;
+    };
     window["AscPDF"].startMultiplyMode = function(ctx)
     {
         if (!AscCommon.AscBrowser.isIE)
