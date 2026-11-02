@@ -187,7 +187,30 @@
 
 		// TODO: For speed, the match check is disabled (always matches)
 		if (!result.Grapheme)
+		{
 			result.Grapheme = GetGraphemeIndex(codePoints);
+		}
+		else if (codePoints && 1 === codePoints.getCount())
+		{
+			// The cache key is the glyph ids only, but the code points stored with
+			// the grapheme are what tg() reports and what the PDF writer encodes.
+			// One glyph can be reached from different code points: in a PDF subset
+			// font without a cmap, a space shaped by unicode resolves to GID 0x20,
+			// which is a letter of the subset. Reusing that grapheme for the letter
+			// made the saved PDF write a space instead of the letter.
+			let codePoint = codePoints.get(0);
+			let stored    = GRAPHEMES[result.Grapheme][8];
+			if (1 !== stored.length || codePoint !== stored[0])
+			{
+				if (!result.ByCodePoint)
+					result.ByCodePoint = {};
+
+				if (!result.ByCodePoint[codePoint])
+					result.ByCodePoint[codePoint] = GetGraphemeIndex(codePoints);
+
+				return result.ByCodePoint[codePoint];
+			}
+		}
 		// else if (!CompareGraphemes(result.Buffer))
 		// 	return GetGraphemeIndex(codePoints);
 
