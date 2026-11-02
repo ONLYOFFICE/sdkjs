@@ -2813,6 +2813,9 @@
         return this._textSize;
     };
     CBaseField.prototype.SetRect = function(aRect) {
+        if (AscPDF.isAnnotChangeLocked(this))
+            return;
+
 		if (aRect) {
 			aRect = aRect.slice();
 		}
@@ -2865,7 +2868,10 @@
         this.contentClipRect = null;
     };
     CBaseField.prototype.CalculateContentClipRect = function() {};
-    CBaseField.prototype.SetPosition = function(x, y) {
+    CBaseField.prototype.SetPosition = function(x, y, isHistory) {
+        if (isHistory !== true && AscPDF.isAnnotChangeLocked(this))
+            return;
+
         let nExtX = this.GetWidth();
         let nExtY = this.GetHeight();
 

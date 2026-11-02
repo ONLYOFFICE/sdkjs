@@ -320,8 +320,11 @@
             return false;
         }
         
-        if (oApi.getPDFDoc().IsViewerObject(this))
+        if (oApi.getPDFDoc().IsViewerObject(this)) {
+            if (AscPDF.isAnnotChangeLocked(this))
+                return false;
             return true;
+        }
 
 		if (isDrawHandles === false) {
 			return false;
@@ -336,6 +339,8 @@
         if (oEditField && oEditField.IsLocked()) {
             return false;
         }
+        if (AscPDF.isAnnotChangeLocked(this))
+            return false;
 
 		return AscFormat.CGraphicObjectBase.prototype.canResize.call(this);
 	};

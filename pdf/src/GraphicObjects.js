@@ -2315,7 +2315,9 @@
 					if (oSp.IsForm && oSp.IsForm()) {
 						return;
 					}
-					
+					if (AscPDF.isAnnotChangeLocked && AscPDF.isAnnotChangeLocked(oSp))
+						continue;
+
                     oSp.deleteDrawingBase();
                     oSp.setBDeleted(true);
                 }

@@ -89,7 +89,7 @@
     CAnnotationText.prototype.isShape = function() {};
     CAnnotationText.prototype.isImage = function() {};
     CAnnotationText.prototype.canMove = function() {
-        return true;
+        return !AscPDF.isAnnotChangeLocked(this);
     };
     CAnnotationText.prototype.canResize = function() {
         return false;

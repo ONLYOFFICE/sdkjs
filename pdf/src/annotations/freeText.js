@@ -208,8 +208,11 @@
     CAnnotationFreeText.prototype.canMove = function () {
 		var oApi = Asc.editor || editor;
 		var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
-        if (oApi.getPDFDoc().IsViewerObject(this))
+        if (oApi.getPDFDoc().IsViewerObject(this)) {
+            if (AscPDF.isAnnotChangeLocked(this))
+                return false;
             return true;
+        }
         
 		if (isDrawHandles === false) {
 			return false;
@@ -1457,7 +1460,10 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-    CAnnotationFreeText.prototype.SetPosition = function(x, y) {
+    CAnnotationFreeText.prototype.SetPosition = function(x, y, isHistory) {
+        if (isHistory !== true && AscPDF.isAnnotChangeLocked(this))
+            return;
+
         let oDoc        = this.GetDocument();
         let aCurRect    = this.GetRect();
 
