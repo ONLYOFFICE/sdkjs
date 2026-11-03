@@ -339,7 +339,10 @@
         
         this.SetNeedRecalcSizes(false);
     };
-    CAnnotationLine.prototype.SetPosition = function(x, y) {
+    CAnnotationLine.prototype.SetPosition = function(x, y, isHistory) {
+        if (isHistory !== true && AscPDF.isAnnotChangeLocked(this))
+            return;
+
         let aCurRect = this.GetRect();
 
         let nOldX = aCurRect[0];

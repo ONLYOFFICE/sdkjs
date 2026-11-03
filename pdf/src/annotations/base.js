@@ -844,7 +844,10 @@
     CAnnotationBase.prototype.ClearCache = function() {
         this._originView.normal = null;
     };
-    CAnnotationBase.prototype.SetPosition = function(x, y) {
+    CAnnotationBase.prototype.SetPosition = function(x, y, isHistory) {
+        if (isHistory !== true && AscPDF.isAnnotChangeLocked(this))
+            return;
+
         let aCurRect = this.GetRect();
 
         let nOldX = aCurRect[0];
@@ -985,6 +988,9 @@
 		}
 	};
     CAnnotationBase.prototype.SetRect = function(aRect) {
+        if (AscPDF.isAnnotChangeLocked(this))
+            return;
+
 		if (aRect) {
 			aRect = aRect.slice();
 		}
@@ -2128,11 +2134,13 @@
         return false;
     };
     CAnnotationBase.prototype.canResize = function () {
+        if (AscPDF.isAnnotChangeLocked(this))
+            return false;
         return true;
     };
 	CAnnotationBase.prototype.deleteDrawingBase = function() {
 		let oDoc = this.GetDocument();
-		if (!oDoc) {
+		if (!oDoc || AscPDF.isAnnotChangeLocked(this)) {
 			return;
 		}
 
@@ -2179,6 +2187,42 @@
         
         return formattedTimestamp;
     }
+
+    // Comment mode and PDF edit may change annotations. View mode, a session whose
+    // edit and comment permissions are both false, and form-only filling may not.
+    // explicit is the in-editor View/Comment/Edit switch. It wins over the permissions
+    // captured when the file was opened.
+    window["AscPDF"].annotChangeAllowed = function(state) {
+        if (!state)
+            return true;
+        if (state.explicit === true || state.explicit === false)
+            return state.explicit;
+        if (state.pdfViewer)
+            return false;
+        if (state.canEdit)
+            return true;
+        if (state.formsOnly)
+            return false;
+        if (state.edit === false && state.comment === false)
+            return false;
+        return true;
+    };
+    window["AscPDF"].isAnnotChangeLocked = function(annot) {
+        if (!annot)
+            return false;
+        if (AscCommon.History && AscCommon.History.UndoRedoInProgress)
+            return false;
+        // Loading and recalculation turn history off. Those updates keep the stored
+        // appearance and must not be treated as an edit.
+        if (AscCommon.History && AscCommon.History.Is_On && AscCommon.History.Is_On() === false)
+            return false;
+        if (annot.IsUseInDocument && annot.IsUseInDocument() !== true)
+            return false;
+        let api = Asc.editor || editor;
+        if (!api || typeof api.canModifyPdfAnnots !== "function")
+            return false;
+        return api.canModifyPdfAnnots() !== true;
+    };
 
 	window["AscPDF"].CAnnotationBase    = CAnnotationBase;
 	window["AscPDF"].ConvertPt2Px       = ConvertPt2Px;

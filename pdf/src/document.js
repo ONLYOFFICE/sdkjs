@@ -4674,6 +4674,9 @@ var CPresentation = CPresentation || function(){};
         if (!oAnnot || (oAnnot.IsLink() && canRemoveLink === false) || (oAnnot.IsRedact() && oAnnot.GetRedactId()))
             return;
 
+        if (bIsOnMove !== true && AscPDF.isAnnotChangeLocked(oAnnot))
+            return;
+
         let oPage = oAnnot.GetParentPage();
         oPage.RemoveAnnot(Id);
         
@@ -6713,7 +6716,7 @@ var CPresentation = CPresentation || function(){};
 
             bResult = true;
         }
-        if (oSelContent.Annots.length != 0) {
+        if (oSelContent.Annots.length != 0 && !(Asc.editor && Asc.editor.canModifyPdfAnnots && !Asc.editor.canModifyPdfAnnots())) {
             this.BlurActiveObject();
 
             let aAnnotsToPaste = oSelContent.Annots.map(function(pasteObj) {
@@ -9008,6 +9011,13 @@ var CPresentation = CPresentation || function(){};
                         if (selected_objects[i].IsDrawing() && !selected_objects[i].IsEditFieldShape()) {
                             return true;
                         }
+                    }
+                }
+
+                if (Asc.editor && Asc.editor.canModifyPdfAnnots && !Asc.editor.canModifyPdfAnnots()) {
+                    for (let i = 0; i < selected_objects.length; i++) {
+                        if (selected_objects[i].IsAnnot && selected_objects[i].IsAnnot())
+                            return true;
                     }
                 }
 

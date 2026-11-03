@@ -5602,6 +5602,20 @@
 	PDFEditorApi.prototype.asc_setPdfViewer = function(isPdfViewer) {
 		this.isPdfViewer = isPdfViewer;
 	};
+	PDFEditorApi.prototype.asc_setPdfCanModifyAnnots = function(canModify) {
+		this.pdfCanModifyAnnots = canModify === true;
+	};
+	PDFEditorApi.prototype.canModifyPdfAnnots = function() {
+		let permissions = this.DocInfo && this.DocInfo.asc_getPermissions && this.DocInfo.asc_getPermissions();
+		return AscPDF.annotChangeAllowed({
+			explicit: this.pdfCanModifyAnnots,
+			pdfViewer: this.isPdfViewer === true,
+			canEdit: this.canEdit() === true,
+			formsOnly: this.isRestrictionForms() === true,
+			edit: permissions ? permissions["edit"] : undefined,
+			comment: permissions ? permissions["comment"] : undefined
+		});
+	};
 	PDFEditorApi.prototype.isLiveViewer = function() {
 		return this.isPdfViewer && AscCommon.CollaborativeEditing.Is_Fast() && !this.VersionHistory;
 	};
@@ -6376,6 +6390,7 @@
 	PDFEditorApi.prototype['asc_getTableStylesPreviews']	= PDFEditorApi.prototype.asc_getTableStylesPreviews;
 	PDFEditorApi.prototype['asc_GetSelectionBounds']		= PDFEditorApi.prototype.asc_GetSelectionBounds;
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
+	PDFEditorApi.prototype['asc_setPdfCanModifyAnnots']		= PDFEditorApi.prototype.asc_setPdfCanModifyAnnots;
 
 	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
 	
