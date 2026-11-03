@@ -351,16 +351,17 @@
 		}
 		this.checkAnnotationChanges();
 	};
+	function inkTrackCanCreate(nCount, bInk) {
+		return bInk ? nCount > 0 : nCount > 1;
+	}
+
 	PolyLine.prototype.canCreateShape = function () {
 		var nCount = this.arrPoint.length;
-		if (nCount < 2) {
-			return false;
-		}
-		var oLast = this.arrPoint[this.arrPoint.length - 1];
-		if (oLast.bTemporary) {
+		var oLast = nCount > 0 ? this.arrPoint[nCount - 1] : null;
+		if (oLast && oLast.bTemporary) {
 			--nCount;
 		}
-		return nCount > 1;
+		return inkTrackCanCreate(nCount, this.bInk);
 	};
 	PolyLine.prototype.getPointsCount = function () {
 		return this.arrPoint.length;
@@ -414,6 +415,30 @@
 		};
 		this.draw = function (g) {
 			g._e();
+			var nCount = this.polyline.arrPoint.length;
+			var oLast = nCount > 0 ? this.polyline.arrPoint[nCount - 1] : null;
+			if (oLast && oLast.bTemporary) {
+				--nCount;
+			}
+			// A click stores one point. A zero-length stroke is invisible with a butt cap,
+			// so the preview uses a round cap and the stroke width becomes the dot diameter.
+			if (this.polyline.bInk && nCount === 1) {
+				var oPoint = this.polyline.arrPoint[0];
+				var oTrack = g.Graphics;
+				var oGraphics = g.m_oContext ? g : (oTrack && oTrack.isTrack && oTrack.isTrack() ? oTrack.Graphics : oTrack);
+				var oCtx = oGraphics && oGraphics.m_oContext;
+				g._m(oPoint.x, oPoint.y);
+				g._l(oPoint.x, oPoint.y);
+				if (oCtx) {
+					var sCap = oCtx.lineCap;
+					oCtx.lineCap = "round";
+					g.ds();
+					oCtx.lineCap = sCap;
+				} else {
+					g.ds();
+				}
+				return;
+			}
 			if (this.polyline.arrPoint.length < 2) {
 				return;
 			}
@@ -428,4 +453,5 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].PolyLine = PolyLine;
+	window['AscFormat'].inkTrackCanCreate = inkTrackCanCreate;
 })(window);

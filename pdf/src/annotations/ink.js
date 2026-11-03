@@ -75,6 +75,20 @@
     CAnnotationInk.prototype.IsInk = function() {
         return true;
     };
+    CAnnotationInk.prototype.private_UpdateLn = function() {
+        AscPDF.CAnnotationBase.prototype.private_UpdateLn.call(this);
+        if (!isSinglePointInk(this._gestures)) {
+            return;
+        }
+
+        let oRGB = this.GetRGBColor(this.GetBorderColor(), true);
+        let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        this.setFill(oFill);
+        if (this.spPr.Fill) {
+            this.spPr.Fill.transparent = this.GetOpacity() * 100 * 2.55;
+        }
+        this.handleUpdateFill();
+    };
     CAnnotationInk.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
     };
@@ -186,6 +200,7 @@
         let yMin = aMinRect[1];
         let xMax = aMinRect[2];
         let yMax = aMinRect[3];
+        let bSinglePoint = aAllPoints.length === 1;
 
         // calculate relative position of points inside the shape
         for (let nPath = 0; nPath < aShapePaths.length; nPath++) {
@@ -199,8 +214,8 @@
                 let nIndY = oPoint.y - yMin;
 
                 aTmpRelPoints.push({
-                    relX: nIndX / (xMax - xMin),
-                    relY: nIndY / (yMax - yMin)
+                    relX: bSinglePoint ? 0.5 : nIndX / (xMax - xMin),
+                    relY: bSinglePoint ? 0.5 : nIndY / (yMax - yMin)
                 });
             }
             
@@ -333,6 +348,61 @@
         memory.Seek(nEndPos);
     };
     
+    function isSinglePointInk(aGestures) {
+        return !!(aGestures && aGestures.length === 1 && aGestures[0] && aGestures[0].length === 2);
+    }
+
+    // The annotation rect is padded by the full stroke width on every side, so a
+    // disk of half that rect is exactly the stroke width across.
+    function singlePointInkDot(aBounds) {
+        let nWidth = aBounds[2] - aBounds[0];
+        let nHeight = aBounds[3] - aBounds[1];
+        if (!(nWidth > 0) || !(nHeight > 0)) {
+            return null;
+        }
+
+        return {
+            cx: (aBounds[0] + aBounds[2]) / 2,
+            cy: (aBounds[1] + aBounds[3]) / 2,
+            rx: nWidth / 4,
+            ry: nHeight / 4
+        };
+    }
+
+    function addFilledInkDot(geometry, aBounds) {
+        let oDot = singlePointInkDot(aBounds);
+        if (!oDot) {
+            return false;
+        }
+
+        let nPathW = 43200;
+        let nPathH = 43200;
+        let nWidth = aBounds[2] - aBounds[0];
+        let nHeight = aBounds[3] - aBounds[1];
+        let nKw = nPathW / nWidth;
+        let nKh = nPathH / nHeight;
+        let nCx = (oDot.cx - aBounds[0]) * nKw;
+        let nCy = (oDot.cy - aBounds[1]) * nKh;
+        let nRx = oDot.rx * nKw;
+        let nRy = oDot.ry * nKh;
+        let nKx = nRx * 0.5522847498307936;
+        let nKy = nRy * 0.5522847498307936;
+
+        function n(v) {
+            return (v >> 0) + "";
+        }
+
+        geometry.AddPathCommand(0, undefined, "norm", false, nPathW, nPathH);
+        geometry.AddRect("l", "t", "r", "b");
+        geometry.AddPathCommand(1, n(nCx), n(nCy - nRy));
+        geometry.AddPathCommand(5, n(nCx + nKx), n(nCy - nRy), n(nCx + nRx), n(nCy - nKy), n(nCx + nRx), n(nCy));
+        geometry.AddPathCommand(5, n(nCx + nRx), n(nCy + nKy), n(nCx + nKx), n(nCy + nRy), n(nCx), n(nCy + nRy));
+        geometry.AddPathCommand(5, n(nCx - nKx), n(nCy + nRy), n(nCx - nRx), n(nCy + nKy), n(nCx - nRx), n(nCy));
+        geometry.AddPathCommand(5, n(nCx - nRx), n(nCy - nKy), n(nCx - nKx), n(nCy - nRy), n(nCx), n(nCy - nRy));
+        geometry.AddPathCommand(6);
+        return true;
+    }
+
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMax = aShapeRect[2];
         let xMin = aShapeRect[0];
@@ -396,6 +466,10 @@
         for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
             let bClosed     = false;
             let aPoints     = arrOfArrPoints[nPath];
+            if (arrOfArrPoints.length === 1 && aPoints.length === 1) {
+                addFilledInkDot(geometry, [xMin, yMin, xMax, yMax]);
+                continue;
+            }
             let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
             let oLastPoint  = aPoints[aPoints.length-1];
             let nLastIndex  = aPoints.length-1;
@@ -523,6 +597,8 @@
         return [xMin, yMin, xMax, yMax];
     }
 
+    window["AscPDF"].isSinglePointInk  = isSinglePointInk;
+    window["AscPDF"].singlePointInkDot = singlePointInkDot;
     window["AscPDF"].generateGeometry  = generateGeometry;
     window["AscPDF"].fillShapeByPoints  = fillShapeByPoints;
     window["AscPDF"].initShape  = initShape;
