@@ -1445,6 +1445,9 @@
         }
     };
     CGraphicObjects.prototype.selectObject = function (object, pageIndex) {
+        if (AscPDF.isWatermarkDrawing(object))
+            return;
+
         let oDoc = this.document;
         if (this.selectedObjects.length == 0 && !oDoc.GetActiveObject()) {
             oDoc.SetMouseDownObject(object);

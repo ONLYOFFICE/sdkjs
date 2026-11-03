@@ -686,11 +686,11 @@ CChangesPDFDocumentDrawingsContent.prototype.Redo = function()
         {
             let oItem = this.Items[nIndex];
 
-            oItem.AddToRedraw();
-            oPage.drawings.splice(this.Pos, 0, oItem);
-
+            // The drawing has to belong to the page before redraw. Replaying
+            // an add otherwise asks a shape with no page for its drawing list.
             oItem.parent = oPage;
             oItem.selectStartPage = oItem._page;
+            oPage.drawings.splice(this.Pos, 0, oItem);
 
             oViewer.DrawingObjects.resetSelection();
             oItem.AddToRedraw();

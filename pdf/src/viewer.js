@@ -1982,6 +1982,10 @@
 					oDrawingUnderMouse = null;
 				}
 			}
+
+			// A watermark is document content. It is not a shape the user can drag.
+			if (oDrawingUnderMouse && AscPDF.isWatermarkDrawing(oDrawingUnderMouse))
+				oDrawingUnderMouse = null;
 			
 			this.DrawingObjects.curState = oCurState;
 

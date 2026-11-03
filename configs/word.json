@@ -431,6 +431,7 @@
 			"pdf/src/annotations/stamp.js",
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
+			"pdf/src/watermark.js",
 			"pdf/src/textSelectTrackHandler.js",
 			"pdf/src/annotations/textPrTrackHandler.js",
 			"pdf/src/annotations/annot-track-handler.js",
