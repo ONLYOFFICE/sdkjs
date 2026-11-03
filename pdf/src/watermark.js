@@ -207,6 +207,13 @@
 		var oPos = watermarkOffset(nPageW, nPageH, oXfrm.extX, oXfrm.extY);
 		oXfrm.setOffX(oPos.x);
 		oXfrm.setOffY(oPos.y);
+		// Word paints a semitransparent watermark as word art. A PDF shape
+		// otherwise draws the run at full opacity and the page shows through
+		// only when this outline exists.
+		if (oShape.recalcInfo)
+			oShape.recalcInfo.recalculateContent = true;
+		if (oShape.recalculateContent)
+			oShape.recalculateContent();
 		oDoc.AddDrawing(oShape, nPage, 0);
 		nameWatermark(oShape);
 	}
