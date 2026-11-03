@@ -67,6 +67,34 @@
 		return bDiagonal ? Math.PI * (360 - 45) / 180 : 0;
 	}
 
+	// The image dialog leaves opacity empty. Word still washes the picture,
+	// and the semitransparent checkbox defaults to on, which is 128.
+	function watermarkImageOpacity(nOpacity) {
+		if (typeof nOpacity === "number" && nOpacity === nOpacity)
+			return nOpacity;
+		return 128;
+	}
+
+	// Paper stays white in the page bitmap, so an image drawn after it covers
+	// the artwork. Keep the watermark only where the page is still paper.
+	function compositeImageWatermarkBehind(aPage, aMark) {
+		var nPaper = 250;
+		var nCount = Math.min(aPage.length, aMark.length);
+		for (var nIndex = 0; nIndex < nCount; nIndex += 4) {
+			var nAlpha = aMark[nIndex + 3];
+			if (!nAlpha)
+				continue;
+			if (aPage[nIndex] < nPaper || aPage[nIndex + 1] < nPaper || aPage[nIndex + 2] < nPaper)
+				continue;
+			var nCover = nAlpha / 255;
+			var nKeep = 1 - nCover;
+			aPage[nIndex] = (aMark[nIndex] * nCover + 255 * nKeep + 0.5) | 0;
+			aPage[nIndex + 1] = (aMark[nIndex + 1] * nCover + 255 * nKeep + 0.5) | 0;
+			aPage[nIndex + 2] = (aMark[nIndex + 2] * nCover + 255 * nKeep + 0.5) | 0;
+			aPage[nIndex + 3] = 255;
+		}
+	}
+
 	function isWatermarkDrawing(oDrawing) {
 		if (!oDrawing || !oDrawing.getCNvProps)
 			return false;
@@ -260,15 +288,9 @@
 		if (!AscFormat.fApproxEqual(0.0, dRot))
 			oXfrm.setRot(dRot);
 
-		var nOpacity = oProps.get_Opacity();
-		if (AscFormat.isRealNumber(nOpacity) && nOpacity < 255 && oImage.blipFill) {
-			var oBlipFill = oImage.blipFill.createDuplicate();
-			var oEffect = new AscFormat.CAlphaModFix();
-			var nAmt = (nOpacity / 255) * 100000 + 0.5 >> 0;
-			oEffect.amt = Math.max(0, Math.min(100000, nAmt));
-			oBlipFill.Effects.push(oEffect);
-			oImage.setBlipFill(oBlipFill);
-		}
+		var nOpacity = watermarkImageOpacity(oProps.get_Opacity());
+		if (nOpacity < 255 && oImage.blipFill)
+			oImage.setTransparent(nOpacity);
 
 		var oPos = watermarkOffset(nPageW, nPageH, oXfrm.extX, oXfrm.extY);
 		oXfrm.setOffX(oPos.x);
@@ -292,6 +314,8 @@
 	window.AscPDF.watermarkOffset = watermarkOffset;
 	window.AscPDF.watermarkAutoWidth = watermarkAutoWidth;
 	window.AscPDF.watermarkRotation = watermarkRotation;
+	window.AscPDF.watermarkImageOpacity = watermarkImageOpacity;
+	window.AscPDF.compositeImageWatermarkBehind = compositeImageWatermarkBehind;
 	window.AscPDF.isWatermarkDrawing = isWatermarkDrawing;
 	window.AscPDF.findPdfWatermark = findPdfWatermark;
 	window.AscPDF.removePdfWatermarks = removePdfWatermarks;

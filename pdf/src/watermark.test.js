@@ -59,3 +59,19 @@ assert.strictEqual(api.watermarkAutoWidth(200, 100, 0, 10, true), 200);
 
 assert.strictEqual(api.watermarkRotation(false), 0);
 assert.strictEqual(api.watermarkRotation(true), Math.PI * (360 - 45) / 180);
+
+assert.strictEqual(api.watermarkImageOpacity(null), 128);
+assert.strictEqual(api.watermarkImageOpacity(undefined), 128);
+assert.strictEqual(api.watermarkImageOpacity(255), 255);
+assert.strictEqual(api.watermarkImageOpacity(64), 64);
+
+// A half-red watermark shows on paper and leaves the artwork alone.
+const page = new Uint8ClampedArray([255, 255, 255, 255, 20, 60, 40, 255]);
+const mark = new Uint8ClampedArray([255, 0, 0, 128, 255, 0, 0, 128]);
+api.compositeImageWatermarkBehind(page, mark);
+assert.strictEqual(page[0], 255);
+assert.strictEqual(page[1], 127);
+assert.strictEqual(page[2], 127);
+assert.strictEqual(page[4], 20);
+assert.strictEqual(page[5], 60);
+assert.strictEqual(page[6], 40);
