@@ -524,9 +524,12 @@
 	{
 		this.m_oContext.stroke();
 	};
-	CGraphics.prototype.df = function()
+	CGraphics.prototype.df = function(rule)
 	{
-		this.m_oContext.fill();
+		if (rule === "evenodd")
+			this.m_oContext.fill("evenodd");
+		else
+			this.m_oContext.fill();
 	};
 
 	// canvas state
