@@ -632,6 +632,65 @@
 			return [this.getCurrentPage()];
 		}
 	};
+	/**
+	 * Copy the selected pages into a new PDF. The open document is not rewritten.
+	 * Page indexes are 0-based and are returned in document order.
+	 * The bytes include editor changes already present in the session (the same
+	 * buffer page copy uses) and are not a second reconstruction of the page.
+	 * @param {number[] | undefined} aPages
+	 * @returns {{requestId: string, fileType: string, title: string, pages: number[], base64: string} | null}
+	 */
+	PDFEditorApi.prototype.asc_extractSelectedPages = function(aPages) {
+		if (!this.DocumentRenderer)
+			return null;
+
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !oDoc.Viewer || !oDoc.Viewer.file || oDoc.Viewer.file.type !== 0)
+			return null;
+		if (!oDoc.Viewer.file.nativeFile || !oDoc.Viewer.file.nativeFile["SplitPages"])
+			return null;
+
+		let nCount = this.getCountPages();
+		let aRaw = (aPages != undefined) ? aPages : this.getSelectedPages();
+		let oSeen = {};
+		let aOrdered = [];
+		for (let i = 0; i < aRaw.length; i++) {
+			let nPage = aRaw[i] | 0;
+			if (nPage < 0 || nPage >= nCount || oSeen[nPage])
+				continue;
+			oSeen[nPage] = true;
+			aOrdered.push(nPage);
+		}
+		aOrdered.sort(function(a, b) { return a - b; });
+		if (!aOrdered.length)
+			return null;
+
+		let aBytes = null;
+		try {
+			aBytes = oDoc.GetPagesBinary(aOrdered, false, true);
+		}
+		catch (e) {
+			return null;
+		}
+		if (!aBytes || !aBytes.length)
+			return null;
+
+		let sTitle = "Extracted pages.pdf";
+		if (this.DocInfo && this.DocInfo.get_Title) {
+			let sRawTitle = this.DocInfo.get_Title();
+			if (sRawTitle) {
+				sTitle = String(sRawTitle).replace(/\.pdf$/i, "") + " extract.pdf";
+			}
+		}
+
+		return {
+			requestId: "extract-" + Date.now() + "-" + aOrdered.join("."),
+			fileType: "pdf",
+			title: sTitle,
+			pages: aOrdered,
+			base64: AscCommon.Base64.encode(aBytes, 0, aBytes.length)
+		};
+	};
 	PDFEditorApi.prototype.asc_getPdfProps = function() {
 		return  this.DocumentRenderer ? this.DocumentRenderer.getDocumentInfo() : null;
 	};
@@ -6102,6 +6161,7 @@
 	PDFEditorApi.prototype['getCurScroll']					= PDFEditorApi.prototype.getCurScroll;
 	PDFEditorApi.prototype['scrollToXY']					= PDFEditorApi.prototype.scrollToXY;
 	PDFEditorApi.prototype['getSelectedPages']				= PDFEditorApi.prototype.getSelectedPages;
+	PDFEditorApi.prototype['asc_extractSelectedPages']		= PDFEditorApi.prototype.asc_extractSelectedPages;
 	PDFEditorApi.prototype['asc_getPdfProps']				= PDFEditorApi.prototype.asc_getPdfProps;
 	PDFEditorApi.prototype['asc_enterText']					= PDFEditorApi.prototype.asc_enterText;
 	PDFEditorApi.prototype['asc_correctEnterText']			= PDFEditorApi.prototype.asc_correctEnterText;
