@@ -778,7 +778,12 @@
         if (oCached && oCached.ascBlendMode)
             return oCached.ascBlendMode;
         let oViewer = Asc.editor.getDocumentRenderer();
-        return this._appearanceBlend(oViewer && oViewer.file, null);
+        let fromFile = this._appearanceBlend(oViewer && oViewer.file, null);
+        if (fromFile)
+            return fromFile;
+        // A new highlighter has the tool opacity and no appearance stream yet.
+        // Multiply is what lets the page text show through. A solid pen stays Normal.
+        return AscPDF.blendModeForNewInk(this.IsInk && this.IsInk(), this.GetOpacity(), this.IsNeedDrawFromStream());
     };
     CAnnotationBase.prototype.GetOriginView = function(nPageW, nPageH) {
         nPageW = Math.round(nPageW);
@@ -1279,11 +1284,19 @@
 
         this.Recalculate();
         let aRect = this.GetRect();
+        // Shape ink has no appearance bitmap. The page context has the text, so
+        // the blend mode has to be set here. DrawFromStream does this itself.
+        let nBlend = this.GetAppearanceBlendMode();
+        let oCtx = oGraphicsWord && oGraphicsWord.m_oContext;
+        if (nBlend && oCtx)
+            AscPDF.startBlendMode(oCtx, nBlend);
 
 		// add clip only for changed annots
 		this.IsChanged() && oGraphicsWord.AddClipRect(aRect[0] * g_dKoef_pt_to_mm, aRect[1] * g_dKoef_pt_to_mm, (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm, (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
         this.draw(oGraphicsWord);
         this.IsChanged() && oGraphicsWord.RemoveLastClip();
+        if (nBlend && oCtx)
+            AscPDF.endMultiplyMode(oCtx);
     };
     CAnnotationBase.prototype.changeFlipH = function () {
         return false;
@@ -2404,7 +2417,26 @@
             for (let i = open + 1; i < dict.length; i++) {
                 let ch = dict[i];
                 if (ch === "\\") {
-                    out += dict[++i] || "";
+                    let esc = dict[++i] || "";
+                    if (esc >= "0" && esc <= "7") {
+                        let oct = esc;
+                        for (let k = 0; k < 2; k++) {
+                            let digit = dict[i + 1];
+                            if (digit >= "0" && digit <= "7") {
+                                oct += digit;
+                                i++;
+                            }
+                            else
+                                break;
+                        }
+                        out += String.fromCharCode(parseInt(oct, 8));
+                    }
+                    else if (esc === "n") out += "\n";
+                    else if (esc === "r") out += "\r";
+                    else if (esc === "t") out += "\t";
+                    else if (esc === "b") out += "\b";
+                    else if (esc === "f") out += "\f";
+                    else out += esc;
                     continue;
                 }
                 if (ch === ")")
@@ -2446,6 +2478,16 @@
                 aOnPage.push(i);
         }
         return aOnPage;
+    };
+    // A new highlighter stores the tool opacity and has no appearance yet.
+    // Multiply lets the page text show through. A solid pen, and any ink that
+    // still draws its file appearance, stays on the mode read from /BM.
+    window["AscPDF"].blendModeForNewInk = function(isInk, opacity, drawsFromStream) {
+        if (!isInk || drawsFromStream)
+            return 0;
+        if (typeof opacity !== "number" || !(opacity < 1))
+            return 0;
+        return 1;
     };
     window["AscPDF"].startBlendMode = function(ctx, mode)
     {

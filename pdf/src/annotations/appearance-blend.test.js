@@ -31,6 +31,29 @@ const byName = indexAppearanceBlend(fixture);
 assert.strictEqual(byName["ink-9"], 1);
 assert.strictEqual(byName["ink-11"], 1);
 assert.strictEqual(byName["ink-10"], undefined);
+
+// MuPDF writes the hyphen in /NM as an octal escape. The annotation's real
+// name is fitz-A0, so the map key has to be that string or the highlight
+// stays on Normal.
+const octalName = [
+	"1 0 obj",
+	"<< /Type /Annot /Subtype /Ink /NM (fitz\\055A0) /AP << /N 2 0 R >> >>",
+	"endobj",
+	"2 0 obj",
+	"<< /Type /XObject /Subtype /Form /Resources << /ExtGState << /R0 << /BM /Multiply >> >> >> /Length 8 >>",
+	"stream",
+	"/R0 gs\n",
+	"endstream",
+	"endobj"
+].join("\n");
+const octalByName = indexAppearanceBlend(Buffer.from(octalName, "latin1"));
+assert.strictEqual(octalByName["fitz-A0"], 1);
+assert.strictEqual(octalByName["fitz055A0"], undefined);
+
+assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 0.5, false), 1);
+assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 1, false), 0);
+assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 0.5, true), 0);
+assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(false, 0.5, false), 0);
 assert.strictEqual(Object.keys(byName).length, 2);
 assert.deepStrictEqual(Object.keys(indexAppearanceBlend(new Uint8Array())), []);
 
