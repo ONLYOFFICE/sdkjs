@@ -939,7 +939,7 @@ function CDrawingDocument()
 			AscCommon.g_inputContext.TargetOffsetY = ((this.m_oWordControl.m_oBottomPanesContainer.AbsolutePosition.T + this.m_oWordControl.m_oNotesContainer.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 		}
 
-		var targetZoom = isFocusOnSlide ? this.m_oWordControl.m_nZoomValue : 100;
+		var targetZoom = isFocusOnSlide ? this.m_oWordControl.m_nZoomValue : this.m_oWordControl.m_oNotesApi.Zoom;
 
 		var oldW = this.TargetHtmlElement.width;
 		var oldH = this.TargetHtmlElement.height;
@@ -981,8 +981,9 @@ function CDrawingDocument()
 
 			if (!isFocusOnSlide)
 			{
-				pos.X = x * g_dKoef_mm_to_pix + AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oNotesApi.OffsetX);
-				pos.Y = y * g_dKoef_mm_to_pix - this.m_oWordControl.m_oNotesApi.Scroll;
+				var notesScale = targetZoom / 100;
+				pos.X = x * g_dKoef_mm_to_pix * notesScale + AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oNotesApi.OffsetX);
+				pos.Y = y * g_dKoef_mm_to_pix * notesScale - this.m_oWordControl.m_oNotesApi.Scroll;
 			}
 
 			this.TargetHtmlElementLeft = roundPxForScale(pos.X);
@@ -1050,7 +1051,7 @@ function CDrawingDocument()
 		}
 
 		var isTargetOnNotes = this.m_oLogicDocument.IsFocusOnNotes();
-		var targetZoom = isTargetOnNotes ? 100 : this.m_oWordControl.m_nZoomValue;
+		var targetZoom = isTargetOnNotes ? this.m_oWordControl.m_oNotesApi.Zoom : this.m_oWordControl.m_nZoomValue;
 
 		/// detect need scrolling
 		var targetSize 	= Number(this.m_dTargetSize * targetZoom * g_dKoef_mm_to_pix / 100);
@@ -1140,12 +1141,13 @@ function CDrawingDocument()
 		}
 		else if (this.m_oWordControl.m_oNotesApi)
 		{
-			var yPos = _y * g_dKoef_mm_to_pix - this.m_oWordControl.m_oNotesApi.Scroll;
+			var notesScale = targetZoom / 100;
+			var yPos = _y * g_dKoef_mm_to_pix * notesScale - this.m_oWordControl.m_oNotesApi.Scroll;
 			var _hh = this.m_oWordControl.m_oNotes.HtmlElement.height;
 			_hh /= AscCommon.AscBrowser.retinaPixelRatio;
 
 			var boxY = 0;
-			var targetSizeAscent = (this.m_dTargetAscent * g_dKoef_mm_to_pix) >> 0;
+			var targetSizeAscent = (this.m_dTargetAscent * g_dKoef_mm_to_pix * notesScale) >> 0;
 
 			var boxB = _hh - (targetSize - targetSizeAscent);
 			if (boxB < 0)
@@ -1296,8 +1298,7 @@ function CDrawingDocument()
 			overlay = this.m_oWordControl.m_oNotesApi.m_oOverlayApi;
 			xDst = this.m_oWordControl.m_oNotesApi.OffsetX;
 			yDst = -dPR * this.m_oWordControl.m_oNotesApi.Scroll;
-			dKoefX = g_dKoef_mm_to_pix * dPR;
-			dKoefY = g_dKoef_mm_to_pix * dPR;
+			dKoefX = dKoefY = g_dKoef_mm_to_pix * dPR * this.m_oWordControl.m_oNotesApi.Zoom / 100;
 		}
 
 		if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity(this.TextMatrix))
@@ -2770,8 +2771,7 @@ function CDrawingDocument()
 		{
 			xDst = this.m_oWordControl.m_oNotesApi.OffsetX;
 			yDst = - this.m_oWordControl.m_oNotesApi.Scroll;
-			dKoefX = g_dKoef_mm_to_pix;
-			dKoefY = g_dKoef_mm_to_pix;
+			dKoefX = dKoefY = g_dKoef_mm_to_pix * this.m_oWordControl.m_oNotesApi.Zoom / 100;
 		}
 		let oTextMatrix = this.TextMatrix;
 		for (nIndex = 0; nIndex < PathLng; nIndex++)
@@ -6910,6 +6910,7 @@ function CNotesDrawer(page)
 	this.OffsetX = 10;
 	this.OffsetY = 10;
 
+	this.Zoom = 100;
 	this.Scroll = 0;
 	this.ScrollMax = 0;
 
@@ -6937,10 +6938,13 @@ function CNotesDrawer(page)
 		_elemOverlay.HtmlElement.onmousemove = this.onMouseMove;
 		_elemOverlay.HtmlElement.onmouseup = this.onMouseUp;
 
-		this.HtmlPage.m_oNotesContainer.HtmlElement.onmousewheel = this.onMouseWhell;
-		if (this.HtmlPage.m_oNotesContainer.HtmlElement.addEventListener)
+		var container = this.HtmlPage.m_oNotesContainer.HtmlElement;
+		if (this.HtmlPage.m_oApi.isReporterMode)
+			container.addEventListener("wheel", this.onMouseWhell, { passive: false });
+		else
 		{
-			this.HtmlPage.m_oNotesContainer.HtmlElement.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
+			container.onmousewheel = this.onMouseWhell;
+			container.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
 		}
 	};
 
@@ -6964,7 +6968,7 @@ function CNotesDrawer(page)
 		}
 
 		var dKoef = g_dKoef_mm_to_pix;
-		dKoef *= AscCommon.AscBrowser.retinaPixelRatio;
+		dKoef *= AscCommon.AscBrowser.retinaPixelRatio * this.Zoom / 100;
 
 		var w_mm = this.Width;
 		var h_mm = this.Height;
@@ -7019,7 +7023,7 @@ function CNotesDrawer(page)
 			this.IsEmptyDraw = true;
 		}
 
-		var settings = CreateScrollSettings(height, this.HtmlPage.m_oNotes.HtmlElement, this.OffsetY);
+		var settings = CreateScrollSettings(height * this.Zoom / 100, this.HtmlPage.m_oNotes.HtmlElement, this.OffsetY);
 
 		this.ScrollMax = Math.max(0, settings.contentH - settings.screenH);
 		if (this.Scroll > this.ScrollMax)
@@ -7091,8 +7095,8 @@ function CNotesDrawer(page)
 
 		_x -= oThis.OffsetX;
 		_y += oThis.Scroll;
-		_x *= g_dKoef_pix_to_mm;
-		_y *= g_dKoef_pix_to_mm;
+		_x *= g_dKoef_pix_to_mm * 100 / oThis.Zoom;
+		_y *= g_dKoef_pix_to_mm * 100 / oThis.Zoom;
 		return { Page : oThis.GetCurrentSlideNumber(), X : _x, Y : _y, isNotes : true };
 	};
 
@@ -7103,7 +7107,7 @@ function CNotesDrawer(page)
 			_pix_width = 10;
 		_pix_width = AscCommon.AscBrowser.convertToRetinaValue(_pix_width);
 		if (window["NATIVE_EDITOR_ENJINE"] && _pix_width < 100) _pix_width = 100;
-		return _pix_width / g_dKoef_mm_to_pix;
+		return _pix_width / g_dKoef_mm_to_pix * 100 / this.Zoom;
 	};
 
 	// events
@@ -7208,6 +7212,15 @@ function CNotesDrawer(page)
 		if (false === oThis.HtmlPage.m_oApi.bInit_word_control)
 			return;
 
+		var isReporter = oThis.HtmlPage.m_oApi.isReporterMode;
+		var deltaY = GetWheelDeltaY(e);
+		if (isReporter)
+		{
+			var deltaMode = e.deltaMode;
+			var unit = deltaMode === 1 ? 16 : deltaMode === 2 ? oThis.HtmlPage.m_oNotes.HtmlElement.clientHeight : 1;
+			deltaY = e.deltaY * unit;
+		}
+
 		var _ctrl = false;
 		if (e.metaKey !== undefined)
 			_ctrl = e.ctrlKey || e.metaKey;
@@ -7216,13 +7229,23 @@ function CNotesDrawer(page)
 
 		if (true === _ctrl)
 		{
+			if (isReporter && oThis.Slide >= 0 && deltaY)
+			{
+				var zoom = Math.max(50, Math.min(300, oThis.Zoom - Math.sign(deltaY) * 10));
+				if (zoom !== oThis.Zoom)
+				{
+					var scroll = oThis.ScrollMax ? oThis.Scroll / oThis.ScrollMax : 0;
+					oThis.Zoom = zoom;
+					oThis.OnResize();
+					if (oThis.HtmlPage.m_oScrollNotes_)
+						oThis.HtmlPage.m_oScrollNotes_.scrollToY(Math.round(scroll * oThis.ScrollMax));
+				}
+			}
 			AscCommon.stopEvent(e);
 			return false;
 		}
 
-		var deltaY = GetWheelDeltaY(e);
-
-		if (0 != deltaY)
+		if (0 != deltaY && oThis.HtmlPage.m_oScrollNotes_)
 			oThis.HtmlPage.m_oScrollNotes_.scrollBy(0, deltaY, false);
 
 		// here - simulate mouse move ---------------------------
