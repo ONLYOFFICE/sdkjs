@@ -504,10 +504,25 @@
 				"<li class=\"dem_draw_menu_divider\"></li>",
 				"<li><a data-ratio data-tool=\"eraser\"><span class=\"menu-item-icon btn-eraser back_image_buttons\"></span>" + this.reporterTranslates[7] + "</a></li>",
 				"<li><a data-tool=\"erase-all\"><span class=\"menu-item-icon btn-erase-all back_image_buttons\"></span>" + this.reporterTranslates[8] + "</a></li>",
+				"<li class=\"dem_draw_menu_divider\"></li>",
+				"<li><label class=\"dem-text-color\" style=\"display:flex;align-items:center;gap:8px;padding:5px 12px;white-space:nowrap;font:11px Arial,sans-serif;\">",
+				"<span id=\"dem_id_pointer_trail_label\"></span>",
+				"<select id=\"dem_id_pointer_trail\"><option value=\"3000\">3 s</option><option value=\"4000\" selected>4 s</option><option value=\"5000\">5 s</option></select>",
+				"</label></li>",
 				"</ul>"
 			].join("");
 
 			demBottonsDiv.innerHTML = _buttonsContent;
+
+			const trailDuration = document.getElementById("dem_id_pointer_trail");
+			document.getElementById("dem_id_pointer_trail_label").textContent = AscCommon.translateManager.getValue("Laser pointer trail duration");
+			trailDuration.onchange = () => {
+				this.DemonstrationManager.PointerTrailDuration = Number(trailDuration.value);
+			};
+			// The reporter toolbar prevents mousedown by default to keep focus on the slide.
+			trailDuration.parentElement.onmousedown = (e) => e.stopPropagation();
+			trailDuration.onkeydown = (e) => e.stopPropagation();
+			trailDuration.onkeyup = (e) => e.stopPropagation();
 
 			// events
 			this.m_oApi.asc_registerCallback("asc_onDemonstrationSlideChanged", function (slideNum) {
