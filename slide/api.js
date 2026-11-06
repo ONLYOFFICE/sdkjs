@@ -7511,6 +7511,8 @@ background-repeat: no-repeat;\
 			window.g_asc_plugins.onPluginEvent('onSlideShowEnd');
 	};
 	asc_docs_api.prototype.sync_DemonstrationSlideChanged = function (slideIndex, previousSlideIndex) {
+		if (slideIndex !== previousSlideIndex)
+			this.WordControl.DemonstrationManager.ClearPointerTrail();
 		this.sendEvent('asc_onDemonstrationSlideChanged', slideIndex);
 
 		if (window.g_asc_plugins) {
@@ -7752,7 +7754,9 @@ background-repeat: no-repeat;\
 				}
 				case "pointer_move":
 				{
-					_this.WordControl.DemonstrationManager.PointerMove(_obj["x"], _obj["y"], _obj["w"], _obj["h"]);
+					const manager = _this.WordControl.DemonstrationManager;
+					if (_obj["slide"] === undefined || _obj["slide"] === manager.SlideNum)
+						manager.PointerMove(_obj["x"], _obj["y"], _obj["trail"]);
 					break;
 				}
 				case "pointer_remove":
@@ -7859,6 +7863,10 @@ background-repeat: no-repeat;\
         var _btnNext = document.getElementById("dem_id_next");
         var _btnPointer = document.getElementById("dem_id_pointer");
         var _btnDrawMenu = document.getElementById("dem_id_draw_menu_trigger");
+
+		var trailLabel = document.getElementById("dem_id_pointer_trail_label");
+		if (trailLabel)
+			trailLabel.textContent = AscCommon.translateManager.getValue("Laser pointer trail duration");
 
 		var _miPen = document.querySelector("#dem_id_draw_menu a[data-tool=\"pen\"]");
 		var _miHighlighter = document.querySelector("#dem_id_draw_menu a[data-tool=\"highlighter\"]");

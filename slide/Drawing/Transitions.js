@@ -3195,6 +3195,11 @@ function CDemonstrationManager(htmlpage)
     this.waitReporterObject = null;
 
     this.PointerDiv = null;
+    this.PointerTrailDuration = 4000;
+    this.PointerTrailCanvas = null;
+    this.PointerTrailSegments = [];
+    this.PointerTrailFrame = null;
+    this.PointerTrailPoint = null;
 
     this.isMouseDown = false;
     this.StartSlideNum = -1;
@@ -3900,6 +3905,7 @@ function CDemonstrationManager(htmlpage)
 
     this.End = function(isNoUseFullScreen)
     {
+        this.ClearPointerTrail();
         this.GIFTimer.onEndSlide();
 		for (var key in this.GifDataLoading)
 		{
@@ -4608,6 +4614,14 @@ function CDemonstrationManager(htmlpage)
 
     this.onMouseDown = function(e)
     {
+        if (oThis.HtmlPage.reporterPointer && oThis.SlideNum < oThis.GetSlidesCount())
+        {
+            if (e.button === 0)
+                oThis.MoveReporterPointer(e, true);
+            AscCommon.stopEvent(e);
+            return false;
+        }
+
         oThis.startPageX = e.pageX;
         oThis.startPageY = e.pageY;
 
@@ -4667,6 +4681,7 @@ function CDemonstrationManager(htmlpage)
 		if (!oThis.HtmlPage.reporterPointer)
 			return;
 
+        oThis.PointerTrailPoint = null;
 		oThis.PointerRemove();
 
         e.preventDefault();
@@ -4676,49 +4691,16 @@ function CDemonstrationManager(htmlpage)
     this.onMouseMove = function(e)
     {
         oThis.LastMoveTime = (new Date()).getTime();
-        if (true)
+        if (oThis.HtmlPage.reporterPointer)
+        {
+            oThis.MoveReporterPointer(e, false);
+        }
+        else
         {
             var documentMI = oThis.documentMouseInfo(e);
             if (documentMI)
                 oThis.HtmlPage.m_oLogicDocument.OnMouseMove(AscCommon.global_mouseEvent, documentMI.x, documentMI.y, documentMI.page);
         }
-
-		if (!oThis.HtmlPage.reporterPointer)
-        {
-            AscCommon.stopEvent(e);
-            return;
-        }
-
-        var _x = 0;
-        var _y = 0;
-		if (e.pageX || e.pageY)
-		{
-			_x = e.pageX;
-			_y = e.pageY;
-		}
-		else if (e.clientX || e.clientY)
-		{
-			_x = e.clientX;
-			_y = e.clientY;
-		}
-
-		_x = (_x * AscCommon.AscBrowser.zoom) >> 0;
-		_y = (_y * AscCommon.AscBrowser.zoom) >> 0;
-
-		_x -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.left);
-		_y -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.top);
-
-        _x *= AscCommon.AscBrowser.retinaPixelRatio;
-        _y *= AscCommon.AscBrowser.retinaPixelRatio;
-
-		var _rect = oThis.Transition.Rect;
-		_x -= _rect.x;
-		_y -= _rect.y;
-		_x /= _rect.w;
-		_y /= _rect.h;
-
-		oThis.PointerMove(_x, _y);
-
 
         AscCommon.stopEvent(e);
         return false;
@@ -4726,6 +4708,15 @@ function CDemonstrationManager(htmlpage)
 
     this.onMouseUp = function(e, isAttack, isFromMainToReporter, isFromMainToReporterMouseDown)
     {
+        if (oThis.HtmlPage.reporterPointer && !isFromMainToReporter && oThis.SlideNum < oThis.GetSlidesCount())
+        {
+            if (oThis.PointerTrailPoint)
+                oThis.MoveReporterPointer(e, false, true);
+            oThis.PointerTrailPoint = null;
+            AscCommon.stopEvent(e);
+            return false;
+        }
+
     	if (!oThis.isMouseDown && true !== isAttack)
     		return;
 
@@ -4913,8 +4904,144 @@ function CDemonstrationManager(htmlpage)
 		oThis.HtmlPage.m_oApi.disableReporterEvents = false;
     };
 
-    this.PointerMove = function(x, y, w, h)
+    this.MoveReporterPointer = function(e, startStroke, endStroke)
     {
+        const bounds = this.Canvas.getBoundingClientRect();
+        const rect = this.Transition.Rect;
+        const x = ((e.clientX - bounds.left) * this.Canvas.width / bounds.width - rect.x) / rect.w;
+        const y = ((e.clientY - bounds.top) * this.Canvas.height / bounds.height - rect.y) / rect.h;
+
+        if (!isPointerTrailPoint(x, y) || this.Transition.IsPlaying())
+        {
+            this.PointerTrailPoint = null;
+            this.PointerRemove();
+            return;
+        }
+
+        const now = performance.now();
+        let trail;
+        if (startStroke)
+        {
+            this.PointerTrailPoint = {x: x, y: y, time: now};
+            trail = { "fromX": x, "fromY": y, "duration": this.PointerTrailDuration };
+        }
+        else if (!endStroke && !(e.buttons & 1))
+        {
+            this.PointerTrailPoint = null;
+        }
+        else if (this.PointerTrailPoint && (endStroke || now - this.PointerTrailPoint.time >= 1000 / 60))
+        {
+            const previous = this.PointerTrailPoint;
+            if (x !== previous.x || y !== previous.y)
+            {
+                trail = { "fromX": previous.x, "fromY": previous.y, "duration": this.PointerTrailDuration };
+                this.PointerTrailPoint = {x: x, y: y, time: now};
+            }
+        }
+        this.PointerMove(x, y, trail);
+    };
+
+    this.ClearPointerTrail = function()
+    {
+        this.PointerTrailPoint = null;
+        this.PointerTrailSegments.length = 0;
+        if (this.PointerTrailFrame !== null)
+        {
+            window.cancelAnimationFrame(this.PointerTrailFrame);
+            this.PointerTrailFrame = null;
+        }
+        if (this.PointerTrailCanvas)
+        {
+            this.DemonstrationDiv.removeChild(this.PointerTrailCanvas);
+            this.PointerTrailCanvas = null;
+        }
+    };
+
+    this.PaintPointerTrail = function(now)
+    {
+        oThis.PointerTrailFrame = null;
+        const segments = oThis.PointerTrailSegments.filter(function(segment) {
+            return now < segment.expires;
+        });
+        oThis.PointerTrailSegments = segments;
+        if (!segments.length)
+        {
+            oThis.DemonstrationDiv.removeChild(oThis.PointerTrailCanvas);
+            oThis.PointerTrailCanvas = null;
+            return;
+        }
+
+        const canvas = oThis.PointerTrailCanvas;
+        if (canvas.width !== oThis.Canvas.width || canvas.height !== oThis.Canvas.height)
+        {
+            canvas.width = oThis.Canvas.width;
+            canvas.height = oThis.Canvas.height;
+        }
+
+        const rect = oThis.Transition.Rect;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.w, rect.h);
+        ctx.clip();
+        ctx.strokeStyle = ctx.fillStyle = "#ff0000";
+        ctx.lineCap = "round";
+        ctx.lineWidth = 4 * AscCommon.AscBrowser.retinaPixelRatio;
+
+        for (const segment of segments)
+        {
+            const x = rect.x + segment.x * rect.w;
+            const y = rect.y + segment.y * rect.h;
+            const fromX = rect.x + segment.fromX * rect.w;
+            const fromY = rect.y + segment.fromY * rect.h;
+
+            ctx.globalAlpha = Math.min(1, (segment.expires - now) / 350);
+            ctx.beginPath();
+            if (x === fromX && y === fromY)
+            {
+                ctx.arc(x, y, ctx.lineWidth / 2, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            else
+            {
+                ctx.moveTo(fromX, fromY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
+        oThis.PointerTrailFrame = window.requestAnimationFrame(oThis.PaintPointerTrail);
+    };
+
+    function isPointerTrailPoint(x, y)
+    {
+        return Number.isFinite(x) && Number.isFinite(y) && x >= 0 && x <= 1 && y >= 0 && y <= 1;
+    }
+
+    this.PointerMove = function(x, y, trail)
+    {
+        if (!this.Mode || !this.Canvas || !Number.isFinite(x) || !Number.isFinite(y))
+            return;
+
+        if (trail && isPointerTrailPoint(x, y) && isPointerTrailPoint(trail["fromX"], trail["fromY"])
+            && (trail["duration"] === 3000 || trail["duration"] === 4000 || trail["duration"] === 5000))
+        {
+            if (!this.PointerTrailCanvas)
+            {
+                this.PointerTrailCanvas = document.createElement("canvas");
+                this.PointerTrailCanvas.setAttribute("style", "position:absolute;inset:0;width:100%;height:100%;z-index:99;pointer-events:none;");
+                this.PointerTrailCanvas.setAttribute("aria-hidden", "true");
+                this.DemonstrationDiv.appendChild(this.PointerTrailCanvas);
+            }
+            this.PointerTrailSegments.push({
+                x: x, y: y, fromX: trail["fromX"], fromY: trail["fromY"],
+                expires: performance.now() + trail["duration"]
+            });
+            if (this.PointerTrailFrame === null)
+                this.PointerTrailFrame = window.requestAnimationFrame(this.PaintPointerTrail);
+        }
+
         if (!this.PointerDiv)
         {
             this.PointerDiv = document.createElement("div");
@@ -4941,7 +5068,9 @@ function CDemonstrationManager(htmlpage)
             var _msg_ = {
                 "reporter_command" : "pointer_move",
                 "x" : x,
-                "y" : y
+                "y" : y,
+                "slide" : this.SlideNum,
+                "trail" : trail
             };
 			this.HtmlPage.m_oApi.sendFromReporter(JSON.stringify(_msg_));
         }
@@ -4949,6 +5078,7 @@ function CDemonstrationManager(htmlpage)
 
     this.PointerRemove = function()
     {
+        this.PointerTrailPoint = null;
         if (!this.PointerDiv)
             return;
 
