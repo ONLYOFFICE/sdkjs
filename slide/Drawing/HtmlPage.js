@@ -519,6 +519,8 @@
 			trailDuration.onchange = () => {
 				this.DemonstrationManager.PointerTrailDuration = Number(trailDuration.value);
 			};
+			// The reporter toolbar prevents mousedown by default to keep focus on the slide.
+			trailDuration.parentElement.onmousedown = (e) => e.stopPropagation();
 			trailDuration.onkeydown = (e) => e.stopPropagation();
 			trailDuration.onkeyup = (e) => e.stopPropagation();
 
