@@ -70,6 +70,11 @@
         backgroundColor : "#F1F1F1"
     };
 
+    // A press turns into a page drag only after the pointer moves more than this many
+    // CSS pixels (global_mouseEvent units, so the device pixel ratio does not matter).
+    // Slide thumbnails use the same distance (slide/Drawing/Thumbnails/MouseDownTrack.js).
+    var DRAG_START_DISTANCE = 10;
+
     PageStyle.numberFontHeight = function() {
         if (window["NATIVE_EDITOR_ENJINE"])
             return 7;
@@ -1086,6 +1091,9 @@
     
         this.isInFocus = true;
 
+        // A drag whose mouseup never arrived (released outside the frame) must not carry over.
+        this.cancelDrag();
+
         let dp = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         if (!dp) {
             // Click outside the page
@@ -1123,8 +1131,15 @@
         let mx = AscCommon.global_mouseEvent.X;
         let my = AscCommon.global_mouseEvent.Y;
     
-        // If left mouse button is held and we haven't started drag yet, check offset threshold
-        if (this.pendingDrag && !this.isDragging && !Asc.editor.isRestrictionView()) {
+        // No button held means the mouseup was lost: drop the press instead of dragging on hover.
+        if ((this.pendingDrag || this.isDragging) && e && e.buttons === 0) {
+            this.cancelDrag();
+            this.repaint();
+        }
+
+        // If left mouse button is held and we haven't started drag yet, check offset threshold.
+        // A trackpad force click fires mousemove as the pressure changes, so a move event alone is not a drag.
+        if (this.pendingDrag && !this.isDragging && this.isDragStart(mx, my)) {
             this.isDragging = true;
             this.canvas.style.cursor = AscCommon.Cursors.Grabbing;
 
@@ -1209,7 +1224,8 @@
         }
         // Otherwise it was a simple click (or minimal movement that didn't reach drag threshold)
         else if (this.pendingDrag) {
-            let dp = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+            // Select the pressed page; the pointer may have drifted off it by less than the drag distance.
+            let dp = this.getDrawingPage(this._mouseDownPage);
             if (dp) {
                 // Execute selection logic for shift/ctrl/single click
                 if (this._shiftPressed) {
@@ -1267,6 +1283,26 @@
         const oDoc = Asc.editor.getPDFDoc();
         oDoc.UpdateInterface();
         return false;
+    };
+
+    CDocument.prototype.isDragStart = function(x, y) {
+        // Shift and Ctrl/Cmd clicks change the selection. They never move pages.
+        if (this._shiftPressed || this._ctrlPressed || Asc.editor.isRestrictionView())
+            return false;
+
+        return Math.abs(x - this.dragStartX) > DRAG_START_DISTANCE || Math.abs(y - this.dragStartY) > DRAG_START_DISTANCE;
+    };
+
+    CDocument.prototype.cancelDrag = function() {
+        if (this.isDragging && this.canvas)
+            this.canvas.style.cursor = "default";
+        if (this.dragCanvas)
+            this.dragCanvas.style.display = "none";
+
+        this.isDragging = false;
+        this.pendingDrag = false;
+        this.dropInsertPosition = -1;
+        this.dragPageIndex = -1;
     };
 
     CDocument.prototype.selectAll = function() {
