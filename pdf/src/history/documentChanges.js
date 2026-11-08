@@ -43,6 +43,7 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_DrawingsContent]			= CChan
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PagesContent]				= CChangesPDFDocumentPagesContent;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]				= CChangesPDFDocumentRotatePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RecognizePage]			= CChangesPDFDocumentRecognizePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RestoreSavedShapes]		= CChangesPDFDocumentRestoreSavedShapes;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_SetDocument]      		= CChangesPDFObjectSetDocument;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_PageLocks]        		= CChangesPDFDocumentPageLocks;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Merge_Pages]		= CChangesPDFDocumentStartMergePages;
@@ -1030,6 +1031,51 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetLong();
+};
+
+/**
+ * Shapes the editor saved on the page (/OShapes MCIDs) that are shown as live drawings.
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFDocumentRestoreSavedShapes(Class, Old, New)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
+}
+CChangesPDFDocumentRestoreSavedShapes.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDocumentRestoreSavedShapes.prototype.constructor = CChangesPDFDocumentRestoreSavedShapes;
+CChangesPDFDocumentRestoreSavedShapes.prototype.Type = AscDFH.historyitem_PDF_Document_RestoreSavedShapes;
+CChangesPDFDocumentRestoreSavedShapes.prototype.WriteToBinary = function(Writer)
+{
+	function writeMCIDs(aMCID) {
+		if (!aMCID) {
+			Writer.WriteLong(-1);
+			return;
+		}
+		Writer.WriteLong(aMCID.length);
+		for (let i = 0; i < aMCID.length; i++)
+			Writer.WriteLong(aMCID[i]);
+	}
+	writeMCIDs(this.New);
+	writeMCIDs(this.Old);
+};
+CChangesPDFDocumentRestoreSavedShapes.prototype.ReadFromBinary = function(Reader)
+{
+	function readMCIDs() {
+		let nCount = Reader.GetLong();
+		if (nCount < 0)
+			return null;
+		let aMCID = [];
+		for (let i = 0; i < nCount; i++)
+			aMCID.push(Reader.GetLong());
+		return aMCID;
+	}
+	this.New = readMCIDs();
+	this.Old = readMCIDs();
+};
+CChangesPDFDocumentRestoreSavedShapes.prototype.private_SetValue = function(aMCID)
+{
+	this.Class.private_SetRestoredShapes(aMCID);
 };
 
 /**

@@ -1731,6 +1731,25 @@ var CPresentation = CPresentation || function(){};
             oController.OnMouseDown(e, X, Y, nPage);
             return;
         }
+        // a shape saved by the editor that is still page content: restore it, then handle the click on it
+        else if (!oMouseDownDrawing && !oMouseDownAnnot && !oMouseDownField && this.HitSavedShape(nPage, X, Y)) {
+            let oRestored = this.RestoreSavedShapesAction(nPage);
+            if (oRestored) {
+                // select the clicked one now: the click below waits for the page to repaint
+                let oHit = null;
+                oRestored.drawings.forEach(function(oDrawing) {
+                    let oXfrm = oDrawing.spPr && oDrawing.spPr.xfrm;
+                    if (oXfrm && X >= oXfrm.offX && X <= oXfrm.offX + oXfrm.extX && Y >= oXfrm.offY && Y <= oXfrm.offY + oXfrm.extY)
+                        oHit = oDrawing;
+                });
+                if (oHit) {
+                    oController.resetSelection();
+                    oController.selectObject(oHit, nPage);
+                    this.SetMouseDownObject(oHit);
+                }
+                return this.OnMouseDown(x, y, e);
+            }
+        }
         
         let isSameType = (oCurObject && oFloatObject) && ( (oCurObject.IsAnnot() && oFloatObject.IsAnnot()) || (oCurObject.IsDrawing() && oFloatObject.IsDrawing()) || (oCurObject.IsForm() && oFloatObject.IsForm()) ); 
         let isFloatSelected = oFloatObject && (oController.selectedObjects.includes(oFloatObject) || oController.selectedObjects.find(function(drawing) {
@@ -6403,6 +6422,130 @@ var CPresentation = CPresentation || function(){};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+    // Shapes inserted in the editor are saved twice: drawn into the page content, and stored as /OShapes
+    // metadata. After reopening they are plain page content. In Edit PDF a click on one of them restores
+    // the page's saved shapes as live drawings, without converting the rest of the page (Edit Text).
+    CPDFDoc.prototype.ReadSavedShape = function(sData) {
+        if (!sData || '<' === sData.charAt(0))
+            return null; // xml serialization: restored by Edit Text only
+
+        let oDrawing = null;
+        try {
+            const aBytes = AscCommon.Base64.decode(sData);
+            const loader = new AscCommon.BinaryPPTYLoader();
+            loader.Start_UseFullUrl();
+            loader.ClearConnectedObjects();
+            AscCommon.pptx_content_loader.Reader.Start_UseFullUrl();
+            loader.stream = new AscCommon.FileStream(aBytes, aBytes.length);
+            loader.presentation = Asc.editor.getLogicDocument();
+            loader.DrawingDocument = Asc.editor.getDrawingDocument();
+            oDrawing = loader.ReadGraphicObject();
+        } catch (e) {
+            oDrawing = null;
+        }
+        if (!oDrawing)
+            return null;
+
+        oDrawing.setBDeleted(false);
+        oDrawing.CheckTextOnOpen && oDrawing.CheckTextOnOpen();
+        return oDrawing;
+    };
+    CPDFDoc.prototype.CanRestoreSavedShapes = function(nPage) {
+        let oPageInfo = this.GetPageInfo(nPage);
+        return !!oPageInfo && this.Api.canEdit() && !oPageInfo.IsRecognized() && !oPageInfo.GetRestoredShapes() &&
+            undefined !== oPageInfo.GetOriginIndex();
+    };
+    CPDFDoc.prototype.HitSavedShape = function(nPage, X, Y) {
+        if (!this.CanRestoreSavedShapes(nPage))
+            return false;
+
+        let oPageInfo = this.GetPageInfo(nPage);
+        if (!oPageInfo.savedShapesBounds) {
+            oPageInfo.savedShapesBounds = [];
+            let aSaved = this.Viewer.file.scanSavedShapes(oPageInfo.GetOriginIndex(), 3);
+            if (aSaved.length) {
+                // read only for the bounds: no history, no ids for collaboration
+                AscCommon.History.TurnOff();
+                let isTableOn = AscCommon.g_oTableId.IsOn();
+                if (isTableOn)
+                    AscCommon.g_oTableId.TurnOff();
+                try {
+                    for (let i = 0; i < aSaved.length; i++) {
+                        let oDrawing = this.ReadSavedShape(aSaved[i].data);
+                        let oXfrm = oDrawing && oDrawing.spPr && oDrawing.spPr.xfrm;
+                        if (oXfrm)
+                            oPageInfo.savedShapesBounds.push({x: oXfrm.offX, y: oXfrm.offY, w: oXfrm.extX, h: oXfrm.extY});
+                    }
+                } finally {
+                    if (isTableOn)
+                        AscCommon.g_oTableId.TurnOn();
+                    AscCommon.History.TurnOn();
+                }
+            }
+        }
+
+        return oPageInfo.savedShapesBounds.some(function(oBox) {
+            return X >= oBox.x && X <= oBox.x + oBox.w && Y >= oBox.y && Y <= oBox.y + oBox.h;
+        });
+    };
+    // Adds the page's saved shapes as drawings and hides their copy in the page content. Call inside an action.
+    CPDFDoc.prototype.RestoreSavedShapes = function(nPage) {
+        if (!this.CanRestoreSavedShapes(nPage))
+            return null;
+
+        let oPageInfo = this.GetPageInfo(nPage);
+        let aSaved = this.Viewer.file.scanSavedShapes(oPageInfo.GetOriginIndex(), 3);
+        let aDrawings = [], aMCID = [], oFontMap = {};
+        for (let i = 0; i < aSaved.length; i++) {
+            let oDrawing = this.ReadSavedShape(aSaved[i].data);
+            // all or nothing: the page image hides every listed shape
+            if (!oDrawing)
+                return null;
+            aDrawings.push(oDrawing);
+            aMCID.push(aSaved[i].mcid);
+            oDrawing.getAllFonts && oDrawing.getAllFonts(oFontMap);
+        }
+        if (!aDrawings.length)
+            return null;
+
+        oPageInfo.SetRestoredShapes(aMCID);
+        for (let i = 0; i < aDrawings.length; i++) {
+            this.AddDrawing(aDrawings[i], nPage);
+            aDrawings[i].SetNeedRecalc && aDrawings[i].SetNeedRecalc(true);
+            aDrawings[i].recalculate && aDrawings[i].recalculate();
+        }
+
+        let aFonts = [];
+        for (let sFont in oFontMap) {
+            if (oFontMap.hasOwnProperty(sFont))
+                aFonts.push(new AscFonts.CFont(sFont));
+        }
+        return {drawings: aDrawings, fonts: aFonts};
+    };
+    // fCallback is called after the fonts are loaded. Returns {drawings, fonts}, or null when nothing was restored.
+    CPDFDoc.prototype.RestoreSavedShapesAction = function(nPage, fCallback) {
+        let oDoc = this;
+        this.StartAction(AscDFH.historydescription_Pdf_EditPage);
+        if (this.IsSelectionLocked(AscDFH.historydescription_Pdf_EditPage, [nPage])) {
+            this.FinalizeAction(true);
+            return null;
+        }
+
+        let oResult = this.RestoreSavedShapes(nPage);
+        this.FinalizeAction();
+        if (!oResult)
+            return null;
+
+        // geometry is known now; text is measured again once its fonts are loaded
+        Asc.editor.pre_Paste(oResult.fonts, {}, function() {
+            oResult.drawings.forEach(function(oDrawing) {
+                oDrawing.SetNeedRecalc && oDrawing.SetNeedRecalc(true);
+            });
+            oDoc.Viewer.paint();
+            fCallback && fCallback(oResult);
+        });
+        return oResult;
+    };
     CPDFDoc.prototype.EditPage = function(nPage, aSpsXmls) {
         if (null == this.Viewer.pagesInfo.pages[nPage] || this.Viewer.file.pages[nPage].isRecognized) {
             return null;
