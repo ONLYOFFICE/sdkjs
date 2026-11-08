@@ -52,6 +52,10 @@ assert.strictEqual(octalByName["fitz055A0"], undefined);
 
 assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 0.5, false), 1);
 assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 1, false), 0);
+// a 100% pen from the toolbar: 100 * 2.55 / 255
+assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, (100 * 2.55) / 255, false), 0);
+assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 0.99999, false), 0);
+assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 254 / 255, false), 1);
 assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(true, 0.5, true), 0);
 assert.strictEqual(sandbox.AscPDF.blendModeForNewInk(false, 0.5, false), 0);
 assert.strictEqual(Object.keys(byName).length, 2);

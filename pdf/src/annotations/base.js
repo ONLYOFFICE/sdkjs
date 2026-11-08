@@ -2485,7 +2485,9 @@
     window["AscPDF"].blendModeForNewInk = function(isInk, opacity, drawsFromStream) {
         if (!isInk || drawsFromStream)
             return 0;
-        if (typeof opacity !== "number" || !(opacity < 1))
+        // The pen stores its opacity as a 0..255 byte (100% * 2.55 = 254.99999...), so a full pen
+        // arrives as 0.99999. Within half a step of 1 it is opaque; 254/255 is still translucent.
+        if (typeof opacity !== "number" || !(opacity < 1 - 1 / 510))
             return 0;
         return 1;
     };
