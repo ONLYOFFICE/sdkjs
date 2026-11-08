@@ -7883,7 +7883,7 @@ var CPresentation = CPresentation || function(){};
         AscCommon.g_oTableId.Add(this.globalTableStyles, this.globalTableStyles.Id);
         this.DefaultTableStyleId = AscFormat.CreatePresentationTableStyles(this.globalTableStyles, this.TableStylesIdMap);
     };
-    CPDFDoc.prototype.GetPagesBinary = function(aIndexes, bytesToBase64) {
+    CPDFDoc.prototype.GetPagesBinary = function(aIndexes, bytesToBase64, bDocumentOrder) {
         let oDoc = this;
 
         let aOriginIndexes = [];
@@ -7903,11 +7903,17 @@ var CPresentation = CPresentation || function(){};
             }
         }
         
-        aOriginIndexes.sort(function(a, b) {
-            return a - b;
-        });
+        // Copy keeps source-file order. Extract keeps the order of the open document.
+        if (bDocumentOrder !== true) {
+            aOriginIndexes.sort(function(a, b) {
+                return a - b;
+            });
+        }
 
-        let aUint8Array = this.Viewer.file.nativeFile["SplitPages"](aOriginIndexes, oDoc.Viewer.SaveForSplit()); 
+        let aUint8Array = this.Viewer.file.nativeFile["SplitPages"](aOriginIndexes, oDoc.Viewer.SaveForSplit());
+        if (!aUint8Array || !aUint8Array.length) {
+            return null;
+        }
         let base64 = AscCommon.Base64.encode(aUint8Array, 0, aUint8Array.length);
         return bytesToBase64 != false ? base64 : aUint8Array;
     };
