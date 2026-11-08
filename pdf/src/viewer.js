@@ -2898,6 +2898,7 @@
 					let ctx = page.Image.getContext("2d");
 					this._drawDrawingsOnCtx(i, ctx);
 					this._drawMarkupAnnotsOnCtx(i, ctx);
+					this._drawBlendedAnnotsOnCtx(i, ctx);
 					oImageToDraw = page.Image;
 				}
 				
@@ -2909,8 +2910,9 @@
 
 					let hasMarkups = aMarkups.length != 0;
 					let hasDrawings = pageInfo.drawings.length != 0 || pageInfo.redactedFields.length != 0;
+					let hasBlended = this._annotsCompositedOnPage(i).length != 0;
 
-					if (false == hasDrawings && false == hasMarkups) {
+					if (false == hasDrawings && false == hasMarkups && false == hasBlended) {
 						oImageToDraw = page.Image;
 					}
 					else {
@@ -2935,12 +2937,13 @@
 						if (bCanPartialRedraw) {
 							this._drawDrawingsOnCtx(i, tmpPageCtx, false, oDirtyBounds, page.Image);
 							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx, oDirtyBounds);
+							this._drawBlendedAnnotsOnCtx(i, tmpPageCtx, oDirtyBounds);
 
 							pageInfo.needRedrawDrawings = false;
 							pageInfo.needRedrawMarkups = false;
 							pageInfo.dirtyDrawingsBounds = undefined;
 						}
-						else if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (needNewPage && !isStretchPaint)) {
+						else if (pageInfo.needRedrawDrawings || pageInfo.needRedrawMarkups || (hasBlended && pageInfo.needRedrawAnnots) || (needNewPage && !isStretchPaint)) {
 							if (page.Image) {
 								tmpPageImage.width = page.Image.width;
 								tmpPageImage.height = page.Image.height;
@@ -2954,6 +2957,7 @@
 
 							this._drawDrawingsOnCtx(i, tmpPageCtx);
 							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx);
+							this._drawBlendedAnnotsOnCtx(i, tmpPageCtx);
 
 							pageInfo.needRedrawDrawings = false;
 							pageInfo.needRedrawMarkups = false;
@@ -4003,6 +4007,72 @@
 			ctx.restore();
 		}
 	};
+	// Non-markup annots that have to be drawn on the page bitmap, in Annots order.
+	// The overlay is cleared first, so a Multiply annot there never sees the text.
+	// A Normal annot underneath that Multiply annot is included too. Leaving it on
+	// the overlay would paint it back above the Multiply annot.
+	CHtmlPage.prototype._annotsCompositedOnPage = function(nPage)
+	{
+		let aAnnots = this.pagesInfo.pages[nPage].annots || [];
+		let aDesc = [];
+		for (let i = 0; i < aAnnots.length; i++) {
+			aDesc.push({
+				markup: aAnnots[i].IsTextMarkup() == true,
+				blend: aAnnots[i].GetAppearanceBlendMode()
+			});
+		}
+		let aIdx = AscPDF.annotsCompositedBeforeOverlay(aDesc);
+		let aDraw = [];
+		for (let i = 0; i < aIdx.length; i++)
+			aDraw.push(aAnnots[aIdx[i]]);
+		return aDraw;
+	};
+	CHtmlPage.prototype._drawBlendedAnnotsOnCtx = function(nPage, ctx, oDirtyBoundsMM)
+	{
+		if (ctx.contentType && ctx.contentType !== AscPDF.PRINT_CONTENT_TYPES.docAndMarkups) {
+			return;
+		}
+		let aAnnots = this._annotsCompositedOnPage(nPage);
+		if (aAnnots.length == 0)
+			return;
+
+		let widthPx = ctx.canvas.width;
+		let heightPx = ctx.canvas.height;
+		ctx.globalAlpha = 1.0;
+
+		if (oDirtyBoundsMM) {
+			let oDoc = this.getPDFDoc();
+			let scaleX = widthPx / oDoc.GetPageWidthMM(nPage);
+			let scaleY = heightPx / oDoc.GetPageHeightMM(nPage);
+			let dirtyX = Math.max(0, (Math.floor(oDirtyBoundsMM.l * scaleX)) - 1);
+			let dirtyY = Math.max(0, (Math.floor(oDirtyBoundsMM.t * scaleY)) - 1);
+			let dirtyR = Math.min(widthPx, (Math.ceil(oDirtyBoundsMM.r * scaleX)) + 1);
+			let dirtyB = Math.min(heightPx, (Math.ceil(oDirtyBoundsMM.b * scaleY)) + 1);
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(dirtyX, dirtyY, dirtyR - dirtyX, dirtyB - dirtyY);
+			ctx.clip();
+		}
+
+		let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.isPrint = ctx.contentType !== undefined;
+		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage), this.file.getPageHeight(nPage));
+		oGraphicsPDF.SetCurPage(nPage);
+
+		let oDoc = this.getPDFDoc();
+		let oGraphicsWord = new AscCommon.CGraphics();
+		oGraphicsWord.init(ctx, widthPx, heightPx, oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
+		oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
+		oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
+		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
+
+		aAnnots.forEach(function(annot) {
+			annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
+		});
+
+		if (oDirtyBoundsMM)
+			ctx.restore();
+	};
 	CHtmlPage.prototype._paintDrawings = function() {
 		const ctx = this.canvas.getContext('2d');
 		ctx.globalAlpha = 1;
@@ -4287,12 +4357,16 @@
         oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
         
         if (this.pagesInfo.pages[nPage].annots != null) {
+			// Thumbnails and print already have the page pixels on this context, so
+			// every annot can composite in order there. The on-screen overlay does not.
+			let bDestinationHasPage = isThumbnails || ctx.contentType !== undefined;
+			let aOnPage = bDestinationHasPage ? null : this._annotsCompositedOnPage(nPage);
             this.pagesInfo.pages[nPage].annots.forEach(function(annot) {
 				if (isOnlyStamps && !annot.IsStamp()) {
 					return;
 				}
 
-				if (annot.IsTextMarkup() == false) {
+				if (annot.IsTextMarkup() == false && (bDestinationHasPage || aOnPage.indexOf(annot) < 0)) {
 					annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
 				}
             });
