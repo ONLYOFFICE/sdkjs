@@ -1775,6 +1775,14 @@
 		if (oLastCommand) {
 			if (oLastCommand.m_nType === DRAW_COMMAND_LINE && oLastCommand.isContentDrawType()) {
 				if (this.m_oTextPr && this.m_oTheme) {
+					// The paragraph painter always passes alpha 255. A fill that
+					// already carries transparency (a text watermark) must keep it,
+					// or the next rebuild paints the run opaque black.
+					var oKeepFill = this.m_oTextPr.TextFill || this.m_oTextPr.Unifill;
+					if (oKeepFill && AscFormat.isRealNumber(oKeepFill.transparent) && oKeepFill.transparent < 254.5) {
+						this.Get_PathToDraw(false, true);
+						return;
+					}
 					var oTextPr = this.m_oTextPr.Copy();
 					oTextPr.Unifill = undefined;
 					oTextPr.TextFill = undefined;

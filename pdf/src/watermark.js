@@ -189,9 +189,16 @@
 		oBodyPr.forceAA = false;
 		oBodyPr.compatLnSpc = true;
 		oBodyPr.prstTxWarp = null;
-		oBodyPr.textFit = null;
+		// Auto-fit would rebuild the box from the run on the next recalc (Edit Text)
+		// and the paragraph painter would then draw that run opaque.
+		oBodyPr.textFit = new AscFormat.CTextFit();
+		oBodyPr.textFit.type = AscFormat.text_fit_No;
 		oBodyPr.wrap = AscFormat.nTWTNone;
-		oShape.setBodyPr(oBodyPr);
+		// PDF shapes read txBody.bodyPr. setBodyPr on the shape only stores the Word copy.
+		if (oShape.txBody && oShape.txBody.setBodyPr)
+			oShape.txBody.setBodyPr(oBodyPr);
+		else
+			oShape.setBodyPr(oBodyPr);
 		return {content: oContent, textPr: oTextPr};
 	}
 

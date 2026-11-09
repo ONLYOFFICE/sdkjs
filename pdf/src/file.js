@@ -467,6 +467,9 @@ void main() {\n\
 
 		let metafile = new AscPDF.CPdfTextMetafile();
 		aDrawings.forEach(function(drawing) {
+			// Watermark glyphs would win the first containing line and block the text under them.
+			if (AscPDF.isWatermarkDrawing(drawing))
+				return;
 			drawing.draw(metafile);
 		});
 		

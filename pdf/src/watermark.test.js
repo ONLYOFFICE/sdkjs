@@ -75,3 +75,14 @@ assert.strictEqual(page[2], 127);
 assert.strictEqual(page[4], 20);
 assert.strictEqual(page[5], 60);
 assert.strictEqual(page[6], 40);
+
+// Hit testing and the text stream skip the watermark and keep searching.
+function sourceHas(rel, needle) {
+	const text = fs.readFileSync(path.join(__dirname, rel), "utf8");
+	assert.ok(text.indexOf(needle) !== -1, rel + " is missing: " + needle);
+}
+sourceHas("file.js", "if (AscPDF.isWatermarkDrawing(drawing))");
+sourceHas("GraphicObjects.js", "if (AscPDF.isWatermarkDrawing(object))");
+sourceHas("../../common/Drawings/DrawingObjectsHandlers.js", "AscPDF.isWatermarkDrawing(drawing)");
+sourceHas("watermark.js", "AscFormat.text_fit_No");
+sourceHas("../../common/Drawings/TextDrawer.js", "oKeepFill.transparent");
