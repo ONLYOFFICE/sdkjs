@@ -118,6 +118,34 @@
 		
 		return this.DocumentRenderer.getPDFDoc();
 	};
+	PDFEditorApi.prototype.asc_GetWatermarkProps = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return null;
+		return oDoc.GetWatermarkProps();
+	};
+	PDFEditorApi.prototype.asc_SetWatermarkProps = function(oProps) {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc || !this.canEdit() || this.isRestrictionView() || this.isViewMode)
+			return;
+		oDoc.SetWatermarkProps(oProps);
+	};
+	PDFEditorApi.prototype.asc_WatermarkRemove = function() {
+		let oProps = new Asc.CAscWatermarkProperties();
+		oProps.put_Type(Asc.c_oAscWatermarkType.None);
+		this.asc_SetWatermarkProps(oProps);
+	};
+	// A PDF document has no word content controls. The shared toolbar asks
+	// anyway when a dialog opens.
+	PDFEditorApi.prototype.asc_IsContentControl = function() {
+		return false;
+	};
+	PDFEditorApi.prototype.asc_GetContentControlProperties = function() {
+		return null;
+	};
+	PDFEditorApi.prototype.asc_GetCurrentContentControl = function() {
+		return null;
+	};
 	PDFEditorApi.prototype.IsNeedDefaultFonts = function() {
 		return false;
 	};
@@ -6376,6 +6404,10 @@
 	PDFEditorApi.prototype['asc_getTableStylesPreviews']	= PDFEditorApi.prototype.asc_getTableStylesPreviews;
 	PDFEditorApi.prototype['asc_GetSelectionBounds']		= PDFEditorApi.prototype.asc_GetSelectionBounds;
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
+
+	PDFEditorApi.prototype['asc_GetWatermarkProps']			= PDFEditorApi.prototype.asc_GetWatermarkProps;
+	PDFEditorApi.prototype['asc_SetWatermarkProps']			= PDFEditorApi.prototype.asc_SetWatermarkProps;
+	PDFEditorApi.prototype['asc_WatermarkRemove']			= PDFEditorApi.prototype.asc_WatermarkRemove;
 
 	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
 	

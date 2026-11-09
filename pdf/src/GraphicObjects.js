@@ -1370,6 +1370,10 @@
     };
     CGraphicObjects.prototype.handleTextHit = function (object, e, x, y, group, pageIndex, bWord) {
         var content, invert_transform_text, tx, ty, check_hyperlink;
+
+        // Never enter the watermark. The caller keeps searching underneath it.
+        if (AscPDF.isWatermarkDrawing(object))
+            return false;
     
         if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
             if (object.IsDrawing() && object.IsEditFieldShape()) {
@@ -1445,6 +1449,9 @@
         }
     };
     CGraphicObjects.prototype.selectObject = function (object, pageIndex) {
+        if (AscPDF.isWatermarkDrawing(object))
+            return;
+
         let oDoc = this.document;
         if (this.selectedObjects.length == 0 && !oDoc.GetActiveObject()) {
             oDoc.SetMouseDownObject(object);

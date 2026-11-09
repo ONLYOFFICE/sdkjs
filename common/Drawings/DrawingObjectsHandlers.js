@@ -326,6 +326,9 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     for(var i = drawingArr.length-1; i > -1; --i)
     {
         drawing = drawingArr[i];
+        // A watermark is not a shape. Skip it and keep looking at what is underneath.
+        if (window.AscPDF && AscPDF.isWatermarkDrawing && AscPDF.isWatermarkDrawing(drawing))
+            continue;
 
         switch(drawing.getObjectType())
         {

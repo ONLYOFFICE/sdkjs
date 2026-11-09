@@ -86,6 +86,10 @@
         }
     };
     CPdfShape.prototype.ShouldDrawImaginaryBorder = function(graphicsWord) {
+        // The dashed box marks a reconstructed text shape. A watermark is not
+        // one of those shapes, and the box would follow its rotated bounds.
+        if (AscPDF.isWatermarkDrawing(this))
+            return false;
         let bDraw = !!(this.spPr && (!this.spPr.Fill || this.spPr.hasNoFill()) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)));
         bDraw = bDraw && this.IsFromScan();
         bDraw = bDraw && !Asc.editor.isRestrictionView();

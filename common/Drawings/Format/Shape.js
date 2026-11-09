@@ -6512,15 +6512,16 @@
 				oTextPr.FontSize = -1;
 			}
 			oInterfaceTextPr = new Asc.CTextProp(oTextPr);
-			if (oTextPr.TextFill) {
-				oTextPr.TextFill.check(this.Get_Theme(), this.Get_ColorMap());
-				if (oTextPr.TextFill.fill && oTextPr.TextFill.fill.type === c_oAscFill.FILL_TYPE_SOLID && oTextPr.TextFill.fill.color) {
-					oInterfaceTextPr.put_Color(AscCommon.CreateAscColor(oTextPr.TextFill.fill.color));
+			var oFill = oTextPr.TextFill || oTextPr.Unifill;
+			if (oFill) {
+				oFill.check(this.Get_Theme(), this.Get_ColorMap());
+				if (oFill.fill && oFill.fill.type === c_oAscFill.FILL_TYPE_SOLID && oFill.fill.color) {
+					oInterfaceTextPr.put_Color(AscCommon.CreateAscColor(oFill.fill.color));
 				} else {
-					oRGBAColor = oTextPr.TextFill.getRGBAColor();
+					oRGBAColor = oFill.getRGBAColor();
 					oInterfaceTextPr.put_Color(AscCommon.CreateAscColorCustom(oRGBAColor.R, oRGBAColor.G, oRGBAColor.B, false));
 				}
-				oProps.put_Opacity(AscFormat.isRealNumber(oTextPr.TextFill.transparent) ? oTextPr.TextFill.transparent : 255);
+				oProps.put_Opacity(AscFormat.isRealNumber(oFill.transparent) ? oFill.transparent : 255);
 			}
 			oProps.put_TextPr(oInterfaceTextPr);
 			oContent.SetApplyToAll(false);

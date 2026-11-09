@@ -6435,7 +6435,10 @@ var CPresentation = CPresentation || function(){};
             oDrawing.setBDeleted(false);
             oDrawing.CheckTextOnOpen();
 
-            if (oDrawing.IsShape && oDrawing.IsShape()) {
+            // A watermark already has its box. Auto-fit here rebuilds that box
+            // and the saved fill comes back without the opacity the painter needs.
+            let bWatermark = window.AscPDF && AscPDF.isWatermarkDrawing && AscPDF.isWatermarkDrawing(oDrawing);
+            if (!bWatermark && oDrawing.IsShape && oDrawing.IsShape()) {
                 let new_body_pr = oDrawing.getBodyPr();
                 if (new_body_pr) {
                     new_body_pr = new_body_pr.createDuplicate();
@@ -6447,6 +6450,8 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
             }
+            if (bWatermark && AscPDF.restoreWatermarkTextFill)
+                AscPDF.restoreWatermarkTextFill(oDrawing);
         }
 
         const oLoadUrls = {};
@@ -6956,6 +6961,32 @@ var CPresentation = CPresentation || function(){};
         oPagesInfo.AddDrawing(oDrawing, nPosInTree);
         this.SetNeedUpdateSearch(true);
     };
+	CPDFDoc.prototype.GetWatermarkProps = function() {
+		let oDrawing = AscPDF.findPdfWatermark(this);
+		let oProps = oDrawing ? oDrawing.getWatermarkProps() : new Asc.CAscWatermarkProperties();
+		if (!oDrawing)
+			oProps.put_Type(Asc.c_oAscWatermarkType.None);
+		oProps.put_Api(this.GetApi());
+		return oProps;
+	};
+	CPDFDoc.prototype.SetWatermarkProps = function(oProps) {
+		if (!oProps || !this.CanEdit() || this.Api.isRestrictionView() || this.Api.isViewMode)
+			return false;
+
+		let oActive = this.GetActiveObject && this.GetActiveObject();
+		if (oActive && AscPDF.isWatermarkDrawing(oActive) && this.BlurActiveObject)
+			this.BlurActiveObject();
+
+		let oThis = this;
+		return this.DoAction(function() {
+			AscPDF.removePdfWatermarks(oThis);
+			if (oProps.get_Type() === Asc.c_oAscWatermarkType.None)
+				return;
+
+			for (let i = 0, nCount = oThis.GetPagesCount(); i < nCount; i++)
+				AscPDF.addPdfWatermark(oThis, i, oProps);
+		}, AscDFH.historydescription_Document_AddWatermark, this);
+	};
     CPDFDoc.prototype.AddTextArt = function(nStyle, nPage) {
         let oPagesInfo = this.GetPageInfo(nPage);
         if (!oPagesInfo)

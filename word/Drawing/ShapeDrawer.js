@@ -1879,6 +1879,10 @@ CShapeDrawer.prototype.df = function (mode) {
                 const image = getFullImageSrc2(this.UniFill.fill.RasterImageId);
                 const type = this.UniFill.fill.tile != null && this.Graphics.m_oContext !== undefined ? 1 : 0;
                 this.Graphics.put_brushTexture(image, type);
+                // drawBlipFill applies this on the canvas. The PDF writer fades
+                // a texture only when the alpha is stored with it.
+                if (this.UniFill && AscFormat.isRealNumber(this.UniFill.transparent) && this.UniFill.transparent < 255 && this.Graphics.put_BrushTextureAlpha)
+                    this.Graphics.put_BrushTextureAlpha(this.UniFill.transparent + 0.5 >> 0);
             } else {
                 this.drawBlipFill();
             }

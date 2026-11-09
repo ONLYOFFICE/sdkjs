@@ -1982,6 +1982,10 @@
 					oDrawingUnderMouse = null;
 				}
 			}
+
+			// A watermark is document content. It is not a shape the user can drag.
+			if (oDrawingUnderMouse && AscPDF.isWatermarkDrawing(oDrawingUnderMouse))
+				oDrawingUnderMouse = null;
 			
 			this.DrawingObjects.curState = oCurState;
 
@@ -4385,6 +4389,25 @@
 			ctx.clip();
 		}
 
+		// An image watermark sits behind the page, the way Word puts it behind
+		// the text. A text watermark is painted after every other drawing, so
+		// reconstructed shapes cannot cover it whichever order it was added.
+		let aImageWatermarks = [];
+		let aTextWatermarks = [];
+		let aOtherDrawings = [];
+		for (let nDrawing = 0; nDrawing < drawingsToRender.length; nDrawing++) {
+			let oDrawing = drawingsToRender[nDrawing];
+			if (AscPDF.isTextWatermarkDrawing(oDrawing))
+				aTextWatermarks.push(oDrawing);
+			else if (AscPDF.isWatermarkDrawing(oDrawing) && oDrawing.blipFill)
+				aImageWatermarks.push(oDrawing);
+			else
+				aOtherDrawings.push(oDrawing);
+		}
+		drawingsToRender = aOtherDrawings;
+		if (aImageWatermarks.length)
+			this._compositeImageWatermarksBehind(nPage, ctx, aImageWatermarks, widthPx, heightPx, pageWidthMM, pageHeightMM, bPartialRedraw ? oDirtyBoundsMM : null);
+
 		let oGraphicsWord = new AscCommon.CGraphics();
 		oGraphicsWord.isThumbnails = isThumbnails;
 		oGraphicsWord.init(ctx, widthPx, heightPx, pageWidthMM, pageHeightMM);
@@ -4431,11 +4454,48 @@
 				drawing.Draw(oGraphicsWord);
 			}
 		});
+		aTextWatermarks.forEach(function(drawing) {
+			drawing.Draw(oGraphicsWord);
+		});
 
 		if (bPartialRedraw) {
 			ctx.restore();
 			ctx.restore();
 		}
+	};
+	CHtmlPage.prototype._compositeImageWatermarksBehind = function(nPage, ctx, aWatermarks, nWidthPx, nHeightPx, nPageW, nPageH, oDirtyBoundsMM) {
+		let wmCanvas = document.createElement("canvas");
+		wmCanvas.width = nWidthPx;
+		wmCanvas.height = nHeightPx;
+		let wmCtx = wmCanvas.getContext("2d");
+		let oGraphics = new AscCommon.CGraphics();
+		oGraphics.init(wmCtx, nWidthPx, nHeightPx, nPageW, nPageH);
+		oGraphics.m_oFontManager = AscCommon.g_fontManager;
+		oGraphics.transform(1, 0, 0, 1, 0, 0);
+		for (let nIndex = 0; nIndex < aWatermarks.length; nIndex++)
+			aWatermarks[nIndex].Draw(oGraphics);
+
+		let nX = 0;
+		let nY = 0;
+		let nW = nWidthPx;
+		let nH = nHeightPx;
+		if (oDirtyBoundsMM) {
+			let nScaleX = nWidthPx / nPageW;
+			let nScaleY = nHeightPx / nPageH;
+			nX = Math.max(0, (Math.floor(oDirtyBoundsMM.l * nScaleX)) - 1);
+			nY = Math.max(0, (Math.floor(oDirtyBoundsMM.t * nScaleY)) - 1);
+			let nR = Math.min(nWidthPx, (Math.ceil(oDirtyBoundsMM.r * nScaleX)) + 1);
+			let nB = Math.min(nHeightPx, (Math.ceil(oDirtyBoundsMM.b * nScaleY)) + 1);
+			nW = nR - nX;
+			nH = nB - nY;
+		}
+		if (nW <= 0 || nH <= 0)
+			return;
+
+		let oPage = ctx.getImageData(nX, nY, nW, nH);
+		let oMark = wmCtx.getImageData(nX, nY, nW, nH);
+		AscPDF.compositeImageWatermarkBehind(oPage.data, oMark.data);
+		ctx.putImageData(oPage, nX, nY);
 	};
 	CHtmlPage.prototype.createComponents = function()
 	{
@@ -5042,7 +5102,7 @@
 
 				aLayers.forEach(function(nLayer) {
 					oPageInfo.drawings.forEach(function(drawing) {
-						if (drawing.GetLayer() === nLayer) {
+						if (drawing.GetLayer() === nLayer && !AscPDF.isTextWatermarkDrawing(drawing)) {
 							writeDrawing(drawing);
 						}
 					});
@@ -5053,9 +5113,14 @@
 				});
 
 				oPageInfo.drawings.forEach(function(drawing) {
-					if (drawing.GetLayer() == null) {
+					if (drawing.GetLayer() == null && !AscPDF.isTextWatermarkDrawing(drawing)) {
 						writeDrawing(drawing);
 					}
+				});
+				// Same order the editor paints: text watermarks above the page.
+				oPageInfo.drawings.forEach(function(drawing) {
+					if (AscPDF.isTextWatermarkDrawing(drawing))
+						writeDrawing(drawing);
 				});
 			}
 
