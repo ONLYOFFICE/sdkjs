@@ -4390,12 +4390,16 @@
 		}
 
 		// An image watermark sits behind the page, the way Word puts it behind
-		// the text. Drawings painted after the page bitmap cover the artwork.
+		// the text. A text watermark is painted after every other drawing, so
+		// reconstructed shapes cannot cover it whichever order it was added.
 		let aImageWatermarks = [];
+		let aTextWatermarks = [];
 		let aOtherDrawings = [];
 		for (let nDrawing = 0; nDrawing < drawingsToRender.length; nDrawing++) {
 			let oDrawing = drawingsToRender[nDrawing];
-			if (AscPDF.isWatermarkDrawing(oDrawing) && oDrawing.blipFill)
+			if (AscPDF.isTextWatermarkDrawing(oDrawing))
+				aTextWatermarks.push(oDrawing);
+			else if (AscPDF.isWatermarkDrawing(oDrawing) && oDrawing.blipFill)
 				aImageWatermarks.push(oDrawing);
 			else
 				aOtherDrawings.push(oDrawing);
@@ -4449,6 +4453,9 @@
 			if (drawing.GetLayer() == null) {
 				drawing.Draw(oGraphicsWord);
 			}
+		});
+		aTextWatermarks.forEach(function(drawing) {
+			drawing.Draw(oGraphicsWord);
 		});
 
 		if (bPartialRedraw) {
@@ -5095,7 +5102,7 @@
 
 				aLayers.forEach(function(nLayer) {
 					oPageInfo.drawings.forEach(function(drawing) {
-						if (drawing.GetLayer() === nLayer) {
+						if (drawing.GetLayer() === nLayer && !AscPDF.isTextWatermarkDrawing(drawing)) {
 							writeDrawing(drawing);
 						}
 					});
@@ -5106,9 +5113,14 @@
 				});
 
 				oPageInfo.drawings.forEach(function(drawing) {
-					if (drawing.GetLayer() == null) {
+					if (drawing.GetLayer() == null && !AscPDF.isTextWatermarkDrawing(drawing)) {
 						writeDrawing(drawing);
 					}
+				});
+				// Same order the editor paints: text watermarks above the page.
+				oPageInfo.drawings.forEach(function(drawing) {
+					if (AscPDF.isTextWatermarkDrawing(drawing))
+						writeDrawing(drawing);
 				});
 			}
 

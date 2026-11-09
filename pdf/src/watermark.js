@@ -102,6 +102,13 @@
 		return !!(oPr && isWatermarkName(oPr.name));
 	}
 
+	// A text watermark is painted and written after every other drawing, so
+	// reconstructed page shapes cannot cover it. An image watermark stays
+	// behind the page artwork.
+	function isTextWatermarkDrawing(oDrawing) {
+		return isWatermarkDrawing(oDrawing) && !oDrawing.blipFill;
+	}
+
 	function nextWatermarkName() {
 		if (window.AscFormat && window.AscFormat.Ax_Counter)
 			return WATERMARK_NAME + (++window.AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
@@ -352,7 +359,10 @@
 			oShape.recalcInfo.recalculateContent = true;
 		if (oShape.recalculateContent)
 			oShape.recalculateContent();
-		oDoc.AddDrawing(oShape, nPage, 0);
+		// Append. Inserting at 0 puts the watermark under shapes Edit Text
+		// already reconstructed. Paint and save also draw a text watermark
+		// last, so a drawing added afterwards stays underneath it.
+		oDoc.AddDrawing(oShape, nPage);
 		nameWatermark(oShape);
 		// Recalc keeps TextFill and drops Unifill. Put Unifill back on the run
 		// so the shape record written at save still carries the fill.
@@ -430,6 +440,7 @@
 	window.AscPDF.watermarkImageOpacity = watermarkImageOpacity;
 	window.AscPDF.compositeImageWatermarkBehind = compositeImageWatermarkBehind;
 	window.AscPDF.isWatermarkDrawing = isWatermarkDrawing;
+	window.AscPDF.isTextWatermarkDrawing = isTextWatermarkDrawing;
 	window.AscPDF.watermarkOpacityFromAlpha = watermarkOpacityFromAlpha;
 	window.AscPDF.restoreWatermarkTextFill = restoreWatermarkTextFill;
 	window.AscPDF.persistWatermarkTextFill = persistWatermarkTextFill;

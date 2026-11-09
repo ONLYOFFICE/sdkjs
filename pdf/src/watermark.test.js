@@ -89,6 +89,10 @@ sourceHas("watermark.js", "oRun.Pr.Unifill = oRun.Pr.TextFill.createDuplicate()"
 sourceHas("drawings/drawingPrototype.js", "AscPDF.persistWatermarkTextFill(this)");
 sourceHas("../../common/Drawings/TextDrawer.js", "oKeepFill.transparent");
 sourceHas("document.js", "AscPDF.restoreWatermarkTextFill(oDrawing)");
+sourceHas("viewer.js", "AscPDF.isTextWatermarkDrawing(oDrawing)");
+sourceHas("viewer.js", "AscPDF.isTextWatermarkDrawing(drawing)");
+sourceHas("drawings/shape.js", "if (AscPDF.isWatermarkDrawing(this))");
+sourceHas("watermark.js", "oDoc.AddDrawing(oShape, nPage);");
 // The writer stores 80 as an alpha mod. Reading it back is 80 again.
 assert.strictEqual(api.watermarkOpacityFromAlpha((80 * 100000 / 255) >> 0), 80);
 assert.strictEqual(api.watermarkOpacityFromAlpha((90 * 100000 / 255) >> 0), 90);
