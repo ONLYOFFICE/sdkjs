@@ -6435,7 +6435,10 @@ var CPresentation = CPresentation || function(){};
             oDrawing.setBDeleted(false);
             oDrawing.CheckTextOnOpen();
 
-            if (oDrawing.IsShape && oDrawing.IsShape()) {
+            // A watermark already has its box. Auto-fit here rebuilds that box
+            // and the saved fill comes back without the opacity the painter needs.
+            let bWatermark = window.AscPDF && AscPDF.isWatermarkDrawing && AscPDF.isWatermarkDrawing(oDrawing);
+            if (!bWatermark && oDrawing.IsShape && oDrawing.IsShape()) {
                 let new_body_pr = oDrawing.getBodyPr();
                 if (new_body_pr) {
                     new_body_pr = new_body_pr.createDuplicate();
@@ -6447,6 +6450,8 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
             }
+            if (bWatermark && AscPDF.restoreWatermarkTextFill)
+                AscPDF.restoreWatermarkTextFill(oDrawing);
         }
 
         const oLoadUrls = {};

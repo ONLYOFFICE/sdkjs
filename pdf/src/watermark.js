@@ -142,6 +142,106 @@
 		});
 	}
 
+	// The writer stores fill opacity as a color alpha mod (value * 100000 / 255).
+	function watermarkOpacityFromAlpha(nVal) {
+		return Math.round(nVal * 255 / 100000);
+	}
+
+	function fillOpacity(oFill) {
+		if (!oFill)
+			return null;
+		if (AscFormat.isRealNumber(oFill.transparent))
+			return Math.round(oFill.transparent);
+		var oColor = oFill.fill && oFill.fill.color;
+		var aMods = oColor && oColor.Mods && oColor.Mods.Mods;
+		if (!aMods)
+			return null;
+		for (var i = aMods.length - 1; i >= 0; i--) {
+			if (aMods[i].name === "alpha" && AscFormat.isRealNumber(aMods[i].val))
+				return watermarkOpacityFromAlpha(aMods[i].val);
+		}
+		return null;
+	}
+
+	function stripAlphaMod(oFill) {
+		var oColor = oFill && oFill.fill && oFill.fill.color;
+		var aMods = oColor && oColor.Mods && oColor.Mods.Mods;
+		if (!aMods)
+			return;
+		for (var i = aMods.length - 1; i >= 0; i--) {
+			if (aMods[i].name === "alpha")
+				aMods.splice(i, 1);
+		}
+	}
+
+	// The paragraph applicator keeps TextFill and deletes Unifill. The shape
+	// writer saves Unifill only, so copy the fill onto the run itself.
+	function persistWatermarkTextFill(oShape) {
+		if (!isWatermarkDrawing(oShape) || !oShape.getDocContent)
+			return;
+		var oContent = oShape.getDocContent();
+		if (!oContent || !oContent.Content)
+			return;
+		oContent.Content.forEach(function (oPara) {
+			(oPara.Content || []).forEach(function (oRun) {
+				if (!oRun.Pr || !oRun.Pr.TextFill || !oRun.Pr.TextFill.createDuplicate)
+					return;
+				oRun.Pr.Unifill = oRun.Pr.TextFill.createDuplicate();
+			});
+		});
+	}
+
+	// A reopened watermark has its opacity only as an alpha mod. Put it back on
+	// TextFill, which is what the word-art painter reads, and keep auto-fit off.
+	function restoreWatermarkTextFill(oShape) {
+		if (!isWatermarkDrawing(oShape) || !oShape.getDocContent)
+			return;
+		var oContent = oShape.getDocContent();
+		if (!oContent || !oContent.Content)
+			return;
+		var oSrc = null;
+		var nOpacity = null;
+		function remember(oFill) {
+			if (oSrc || !oFill || !oFill.createDuplicate)
+				return;
+			var n = fillOpacity(oFill);
+			if (!AscFormat.isRealNumber(n))
+				return;
+			oSrc = oFill;
+			nOpacity = n;
+		}
+		oContent.Content.forEach(function (oPara) {
+			(oPara.Content || []).forEach(function (oRun) {
+				if (oRun.Pr)
+					remember(oRun.Pr.Unifill || oRun.Pr.TextFill);
+			});
+			// A saved watermark keeps the fill on the paragraph mark, not on the letters.
+			if (oPara.TextPr && oPara.TextPr.Value)
+				remember(oPara.TextPr.Value.Unifill || oPara.TextPr.Value.TextFill);
+		});
+		if (!oSrc)
+			return;
+		oContent.Content.forEach(function (oPara) {
+			(oPara.Content || []).forEach(function (oRun) {
+				if (!oRun.Pr)
+					return;
+				var oFill = oSrc.createDuplicate();
+				stripAlphaMod(oFill);
+				oFill.transparent = nOpacity;
+				oRun.Pr.TextFill = oFill;
+				oRun.Pr.Unifill = oFill.createDuplicate();
+			});
+		});
+		if (oShape.recalcInfo)
+			oShape.recalcInfo.recalculateContent = true;
+		if (oShape.getBodyPr && oShape.txBody && oShape.txBody.setBodyPr) {
+			var oBodyPr = oShape.getBodyPr().createDuplicate();
+			oBodyPr.textFit = new AscFormat.CTextFit();
+			oBodyPr.textFit.type = AscFormat.text_fit_No;
+			oShape.txBody.setBodyPr(oBodyPr);
+		}
+	}
+
 	function applyWatermarkText(oShape, oProps) {
 		var oContent = oShape.getDocContent();
 		AscFormat.AddToContentFromString(oContent, oProps.get_Text() || "");
@@ -161,10 +261,13 @@
 			if (null !== oTextPropMenu.get_Lang())
 				oTextPr.SetLang(oTextPropMenu.get_Lang());
 		}
-		oTextPr.TextFill = AscFormat.CreateUnifillFromAscColor(oTextPropMenu && oTextPropMenu.get_Color() ? oTextPropMenu.get_Color() : new Asc.asc_CColor(0, 0, 0), 1);
+		// The shape record stores Unifill. TextFill is dropped on save, and the
+		// paragraph applicator keeps only one of the two, so the opacity has to
+		// be Unifill or the reopened letters come back with no fill at all.
+		oTextPr.Unifill = AscFormat.CreateUnifillFromAscColor(oTextPropMenu && oTextPropMenu.get_Color() ? oTextPropMenu.get_Color() : new Asc.asc_CColor(0, 0, 0), 1);
 		var nOpacity = oProps.get_Opacity();
 		if (AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
-			oTextPr.TextFill.transparent = (nOpacity >> 0);
+			oTextPr.Unifill.transparent = (nOpacity >> 0);
 
 		oContent.SetApplyToAll(true);
 		oContent.AddToParagraph(new ParaTextPr(oTextPr));
@@ -251,6 +354,9 @@
 			oShape.recalculateContent();
 		oDoc.AddDrawing(oShape, nPage, 0);
 		nameWatermark(oShape);
+		// Recalc keeps TextFill and drops Unifill. Put Unifill back on the run
+		// so the shape record written at save still carries the fill.
+		persistWatermarkTextFill(oShape);
 	}
 
 	function imageExtent(oDoc, oProps, nPageW, nPageH) {
@@ -324,6 +430,9 @@
 	window.AscPDF.watermarkImageOpacity = watermarkImageOpacity;
 	window.AscPDF.compositeImageWatermarkBehind = compositeImageWatermarkBehind;
 	window.AscPDF.isWatermarkDrawing = isWatermarkDrawing;
+	window.AscPDF.watermarkOpacityFromAlpha = watermarkOpacityFromAlpha;
+	window.AscPDF.restoreWatermarkTextFill = restoreWatermarkTextFill;
+	window.AscPDF.persistWatermarkTextFill = persistWatermarkTextFill;
 	window.AscPDF.findPdfWatermark = findPdfWatermark;
 	window.AscPDF.removePdfWatermarks = removePdfWatermarks;
 	window.AscPDF.addPdfWatermark = addPdfWatermark;

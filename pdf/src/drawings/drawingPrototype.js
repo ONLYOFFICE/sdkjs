@@ -782,6 +782,10 @@
     ////////////////////////////
 
     CPdfDrawingPrototype.prototype.WriteToBinary = function(memory) {
+        // A watermark's opacity lives on TextFill. The binary shape record
+        // stores Unifill, so copy it across before this shape is written.
+        if (window.AscPDF && AscPDF.persistWatermarkTextFill)
+            AscPDF.persistWatermarkTextFill(this);
         if (Asc.editor.getShapeSerializeType() === "xml") {
             this.toXml(memory, '');
         } else {
