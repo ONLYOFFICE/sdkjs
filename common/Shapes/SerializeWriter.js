@@ -4952,6 +4952,7 @@ function CBinaryFileWriter()
 					case "lightenLess": fillValue = Asc.c_oAscPathFillMode.LIGHTEN_LESS; break;
 					case "none":        fillValue = Asc.c_oAscPathFillMode.NONE; break;
 					case "norm":        fillValue = Asc.c_oAscPathFillMode.NORM; break;
+					case "evenOdd":     fillValue = Asc.c_oAscPathFillMode.EVEN_ODD; break;
 					default:            fillValue = Asc.c_oAscPathFillMode.NORM;
 				}
 				this._WriteLimit1(1, fillValue);

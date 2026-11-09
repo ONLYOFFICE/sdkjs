@@ -122,7 +122,8 @@
 			["Times New Roman", "Liberation Serif"],
 			["Courier New", "Liberation Mono"],
 			["Segoe", "Segoe UI"],
-			["Cambria", "Caladea"]
+			["Cambria", "Caladea"],
+			["Arial Narrow", "Helvetica Narrow", "Nimbus Sans Narrow", "Liberation Sans Narrow"]
 		];
 		this.FD_Ascii_Font_Like_Main = {
 			"Cambria Math"  : 0,
@@ -148,7 +149,16 @@
 			"Segoe UI"          : 5,
 
 			"Cambria"           : 6,
-			"Caladea"           : 6
+			"Caladea"           : 6,
+
+			// Not a like of regular Arial. "Arial" is a substring of "ArialNarrow",
+			// so without this group the name penalty picks the regular face.
+			"Arial Narrow"           : 7,
+			"ArialNarrow"            : 7,
+			"Helvetica Narrow"       : 7,
+			"HelveticaNarrow"        : 7,
+			"Nimbus Sans Narrow"     : 7,
+			"Liberation Sans Narrow" : 7
 		};
 
 		this.ChangeGlyphsMap = {
