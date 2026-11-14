@@ -1407,7 +1407,7 @@
 
 				let char = this.chars[i];
 				let bidiType = drawState.getBidiType(char, charProp);
-				drawState.bidiFlow.add({charIndex: i, charProp: charProp}, bidiType);
+				drawState.bidiFlow.add({charIndex: i, charProp: charProp, char: char}, bidiType);
 			}
 
 			drawState.bidiFlow.end();
@@ -1529,6 +1529,7 @@
 				this.bidiFlow.add({
 					charIndex: i,
 					charProp: charProp,
+					char: char,
 					fragmentProp: prop,
 					y: this.y,
 					baselineY: this.baselineY
