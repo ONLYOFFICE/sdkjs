@@ -4447,7 +4447,7 @@ CT_pivotTableDefinition.prototype.toXml = function(writer, stylesForWrite, dxfs)
 	if (null !== this.rowFields && this.rowFields.getCount() > 0) {
 		this.rowFields.toXml(writer, "rowFields");
 	}
-	if (null !== this.rowItems) {
+	if (null !== this.rowItems && this.rowItems.i.length > 0) {
 		this.rowItems.toXml(writer, "rowItems");
 	}
 	if (null !== this.colFields && this.colFields.getCount() > 0) {
@@ -5507,7 +5507,8 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 		this._updateRowColItemsGrandTotal(this.colGrandTotals, indexValues, colItems.i, colFields, dataFields);
 	}
 	if (rowFields || colFields || dataFields) {
-		if (!(rowItems && rowItems.i.length > 0)) {
+		//as Excel, row fields with no data lay out no row, not a blank one
+		if (!rowItems) {
 			rowItems = new CT_rowItems();
 			rowItems.i.push(new CT_I());
 		}
@@ -9035,7 +9036,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 	const colFields = this.asc_getColumnFields();
 	const rowItems = this.getRowItems();
 	const colItems = this.getColItems();
-	if (!rowItems || !colItems) {
+	if (!rowItems || !colItems || !rowItems.length || !colItems.length) {
 		return null;
 	}
 	let rowItemIndex = null;
@@ -12441,13 +12442,13 @@ PivotDataManager.prototype.getFieldIndex = function(isGrandRow, rowArrayV, colAr
 	const rowFields = this.pivot.asc_getRowFields();
 	if (isGrandRow || !rowFields) {
 		const colFields = this.pivot.asc_getColumnFields();
-		if (colFields && colFields[colArrayV.length - 1].asc_getIndex() !== AscCommonExcel.st_VALUES) {
+		if (colFields && colFields[colArrayV.length - 1] && colFields[colArrayV.length - 1].asc_getIndex() !== AscCommonExcel.st_VALUES) {
 			return colFields[colArrayV.length - 1].asc_getIndex();
 		} else if (colFields && colFields[colArrayV.length - 2]) {
 			return colFields[colArrayV.length - 2].asc_getIndex();
 		}
 	}
-	if (rowFields && rowFields[rowArrayV.length - 1].asc_getIndex() !== AscCommonExcel.st_VALUES) {
+	if (rowFields && rowFields[rowArrayV.length - 1] && rowFields[rowArrayV.length - 1].asc_getIndex() !== AscCommonExcel.st_VALUES) {
 		return rowFields[rowArrayV.length - 1].asc_getIndex();
 	} else if (rowFields && rowFields[rowArrayV.length - 2]) {
 		return rowFields[rowArrayV.length - 2].asc_getIndex();
