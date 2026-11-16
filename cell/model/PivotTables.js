@@ -18179,6 +18179,31 @@ CT_PivotField.prototype.removeGroupFromAxis = function() {
 	this.dataField = false;
 };
 /**
+ * The index of the first shared item of each type and value, the one a scan comparing them with shallowEqual finds first
+ * @param {CT_SharedItems} sharedItems
+ * @return {Map<number, Map<*, number>>} type to value to index
+ */
+function getFirstSharedItemIndexes(sharedItems) {
+	let indexes = new Map();
+	//todo getGroupOrSharedSize
+	for (let j = 0; j < sharedItems.Items.getSize(); ++j) {
+		let sharedItem = sharedItems.Items.get(j);
+		// shallowEqual compares with ===, by which NaN equals nothing; a Map key equals NaN
+		if (sharedItem.val !== sharedItem.val) {
+			continue;
+		}
+		let byValue = indexes.get(sharedItem.type);
+		if (!byValue) {
+			byValue = new Map();
+			indexes.set(sharedItem.type, byValue);
+		}
+		if (!byValue.has(sharedItem.val)) {
+			byValue.set(sharedItem.val, j);
+		}
+	}
+	return indexes;
+}
+/**
  * @param {CT_SharedItems} sharedItems
  * @param {CT_SharedItems} oldSharedItems
  * @return {PivotItemFieldsMap} old index to new index cacheField
@@ -18186,17 +18211,21 @@ CT_PivotField.prototype.removeGroupFromAxis = function() {
 CT_PivotField.prototype.refreshPivotFieldItem = function(sharedItems, oldSharedItems) {
 	let cacheFieldIndexesMap = new Map();
 	if (this.items) {
+		// one lookup per item instead of a scan of the new items: with tens of thousands of items on each side, the scan
+		// made the refresh quadratic in the number of items
+		let firstIndexes = null;
 		for (let i = 0; i < this.items.item.length; ++i) {
 			let item = this.items.item[i];
 			if (Asc.c_oAscItemType.Data === item.t && !item.m) {
 				let oldSharedItem = oldSharedItems.Items.get(item.x);
 				if (oldSharedItem) {
-					//todo getGroupOrSharedSize
-					for (let j = 0; j < sharedItems.Items.getSize(); ++j) {
-						if (oldSharedItem.shallowEqual(sharedItems.Items.get(j))) {
-							cacheFieldIndexesMap.set(item.x, j);
-							break;
-						}
+					if (!firstIndexes) {
+						firstIndexes = getFirstSharedItemIndexes(sharedItems);
+					}
+					let byValue = firstIndexes.get(oldSharedItem.type);
+					let j = byValue && byValue.get(oldSharedItem.val);
+					if (undefined !== j) {
+						cacheFieldIndexesMap.set(item.x, j);
 					}
 				}
 			}
