@@ -5472,6 +5472,7 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 	let rowItems = null;
 	let colItems = null;
 	let indexValues = null;
+	const itemPositions = new Map();
 	if (rowFields) {
 		rowItems = new CT_rowItems();
 		indexValues = this.getRowFieldsValuesIndex();
@@ -5485,6 +5486,7 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 			dataIndex: 0,
 			dataFields: dataFields,
 			indexValues: indexValues,
+			itemPositions: itemPositions,
 			showAll: false
 		});
 		this._updateRowColItemsGrandTotal(this.rowGrandTotals, indexValues, rowItems.i, rowFields, dataFields);
@@ -5502,6 +5504,7 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 			dataIndex: 0,
 			dataFields: dataFields,
 			indexValues: indexValues,
+			itemPositions: itemPositions,
 			showAll: false
 		});
 		this._updateRowColItemsGrandTotal(this.colGrandTotals, indexValues, colItems.i, colFields, dataFields);
@@ -5531,6 +5534,7 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
  * @property {number} index
  * @property {number} dataIndex
  * @property {number} indexValues
+ * @property {Map<CT_PivotField, ?Int32Array>} itemPositions see _getPresentItemIndexes
  * @property {boolean} isCol
  * @property {boolean} showAll
  */
@@ -5547,6 +5551,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(optio
 	const index = options.index;
 	const dataIndex = options.dataIndex;
 	const indexValues = options.indexValues;
+	const itemPositions = options.itemPositions;
 	const isCol = options.isCol;
 	let showAll = options.showAll;
 	let parentI = options.parentI;
@@ -5575,6 +5580,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(optio
 							indexItem: indexItem,
 							parentI: parentI,
 							indexValues: indexValues,
+							itemPositions: itemPositions,
 							showAll: showAll,
 							sd: true
 						});
@@ -5586,11 +5592,14 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(optio
 	} else {
 		let pivotField = pivotFields[x];
 		if (pivotField && pivotField.items) {
+			const present = showAll || pivotField.showAll ? null : this._getPresentItemIndexes(pivotField, dataMap, itemPositions);
 			const sortDataIndex = pivotField.getSortDataIndex();
 			if (c_oAscFieldSortType.Manual !== pivotField.sortType && 0 <= sortDataIndex && sortDataIndex < dataFieldsLength) {
-				pivotField = pivotField.clone();
 				const dataField = dataFields[sortDataIndex];
-				const sortedPivotItems = pivotField.items.item.map(function(currentValue, index) {
+				const pivotItems = pivotField.items.item;
+				const sortedPivotItems = present ? Array.from(present, function(index) {
+					return {item: pivotItems[index], index: index};
+				}) : pivotItems.map(function(currentValue, index) {
 					return {item: currentValue, index: index};
 				});
 				const sign = Asc.c_oAscSortOptions.Ascending == pivotField.sortType ? 1 : -1;
@@ -5635,6 +5644,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(optio
 								indexItem: itemIndex,
 								parentI: parentI,
 								indexValues: indexValues,
+								itemPositions: itemPositions,
 								showAll: showAll,
 								sd: item.sd
 							});
@@ -5643,7 +5653,9 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(optio
 					}
 				}
 			} else {
-				for (let indexItem = 0; indexItem < pivotField.items.item.length; ++indexItem) {
+				const count = present ? present.length : pivotField.items.item.length;
+				for (let k = 0; k < count; ++k) {
+					const indexItem = present ? present[k] : k;
 					const item = pivotField.items.item[indexItem];
 					if (Asc.c_oAscItemType.Data === item.t) {
 						let subDataMap = dataMap.vals[item.x];
@@ -5667,6 +5679,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(optio
 								indexItem: indexItem,
 								parentI: parentI,
 								indexValues: indexValues,
+								itemPositions: itemPositions,
 								showAll: showAll,
 								sd: item.sd
 							});
@@ -5691,6 +5704,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(optio
  * @property {number} dataIndex
  * @property {number} indexValues
  * @property {number} indexItem
+ * @property {Map<CT_PivotField, ?Int32Array>} itemPositions
  * @property {boolean} isCol
  * @property {boolean} showAll
  * @property {boolean} sd
@@ -5742,6 +5756,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(o
 		dataIndex: dataIndex,
 		dataFields: dataFields,
 		indexValues: indexValues,
+		itemPositions: options.itemPositions,
 		showAll: showAll
 	});
 	var subtotals;
@@ -5782,6 +5797,59 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(o
 		newI.x.push(newX);
 		items.push(newI);
 	}
+};
+/**
+ * The positions in pivotField.items of the data items that dataMap has values for, in ascending order, or null to scan
+ * every item instead. A parent usually has data for few items of the field below it: scanning all of them under every
+ * parent is quadratic for a field with many items under a field with many items (e.g. document numbers under dates).
+ * @param {CT_PivotField} pivotField
+ * @param {PivotDataElem} dataMap
+ * @param {Map<CT_PivotField, ?Int32Array>} [itemPositions] per field, the position in its items of each cache index x
+ * (-1 for none), or null when an x has several items or is out of proportion with them; filled on first use
+ * @return {?number[]}
+ */
+CT_pivotTableDefinition.prototype._getPresentItemIndexes = function(pivotField, dataMap, itemPositions) {
+	if (!itemPositions) {
+		return null;
+	}
+	let positions = itemPositions.get(pivotField);
+	if (undefined === positions) {
+		const items = pivotField.items.item;
+		let max = -1;
+		for (let i = 0; i < items.length; ++i) {
+			if (Asc.c_oAscItemType.Data === items[i].t) {
+				max = Math.max(max, items[i].x);
+			}
+		}
+		// x comes from the file: an index far beyond the item count would allocate a huge array, so such a field is scanned
+		positions = max < 2 * items.length + 64 ? new Int32Array(max + 1).fill(-1) : null;
+		for (let i = 0; positions && i < items.length; ++i) {
+			if (Asc.c_oAscItemType.Data === items[i].t) {
+				if (-1 !== positions[items[i].x]) {
+					positions = null;
+					break;
+				}
+				positions[items[i].x] = i;
+			}
+		}
+		itemPositions.set(pivotField, positions);
+	}
+	if (!positions) {
+		return null;
+	}
+	const res = [];
+	for (let x in dataMap.vals) {
+		const index = positions[x];
+		if (index >= 0) {
+			res.push(index);
+		}
+	}
+	if (res.length > 1) {
+		res.sort(function(a, b) {
+			return a - b;
+		});
+	}
+	return res;
 };
 CT_pivotTableDefinition.prototype._updateRowColItemsGrandTotal = function(grandTotals, indexValues, items, fields, dataFields) {
 	if (grandTotals && !(indexValues >= 0 && 1 === fields.length)) {
