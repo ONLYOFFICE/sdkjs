@@ -395,9 +395,17 @@
 
 		let nExtMM = AscPDF.PARTIAL_REDRAW_EXT;
 		let oBounds = null;
-		if (this.bounds.l !== 0 && this.bounds.r !== 0 && this.bounds.r !== 0 && this.bounds.b !== 0) {
+		let bFullRedraw = false;
+		if (window.AscPDF && AscPDF.expandRedrawBounds && AscPDF.currentDrawingRedrawBounds) {
+			oBounds = AscPDF.expandRedrawBounds(AscPDF.currentDrawingRedrawBounds(this), this._paintedRedrawBounds, nExtMM);
+			bFullRedraw = !oBounds;
+		}
+		else if (this.bounds && (this.bounds.l !== 0 || this.bounds.t !== 0 || this.bounds.r !== 0 || this.bounds.b !== 0)) {
 			let drawingBounds = this.getBoundsByDrawing();
 			oBounds = {l: drawingBounds.l - nExtMM, t: drawingBounds.t - nExtMM, r: drawingBounds.r + nExtMM, b: drawingBounds.b + nExtMM};
+		}
+		else {
+			bFullRedraw = true;
 		}
 
         function setRedrawPageOnRepaint() {
@@ -405,7 +413,10 @@
                 let oPageInfo = oViewer.pagesInfo.pages[nPage];
                 oPageInfo.needRedrawDrawings = true;
 
-                if (oBounds && oPageInfo.dirtyDrawingsBounds !== null) {
+                if (bFullRedraw) {
+                    oPageInfo.dirtyDrawingsBounds = null;
+                }
+                else if (oBounds && oPageInfo.dirtyDrawingsBounds !== null) {
                     if (!oPageInfo.dirtyDrawingsBounds) {
                         oPageInfo.dirtyDrawingsBounds = {l: oBounds.l, t: oBounds.t, r: oBounds.r, b: oBounds.b};
                     }
@@ -417,7 +428,7 @@
                     }
                 }
 
-                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage, oBounds);
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage, bFullRedraw ? null : oBounds);
             }
         }
 
@@ -570,10 +581,19 @@
 		oGraphicsWord.restore();
 		oGraphicsWord.restore();
 	};
+    CPdfDrawingPrototype.prototype._rememberPaintedRedrawBounds = function() {
+        if (!window.AscPDF || !AscPDF.currentDrawingRedrawBounds)
+            return;
+
+        let bounds = AscPDF.currentDrawingRedrawBounds(this);
+        if (bounds)
+            this._paintedRedrawBounds = {l: bounds.l, t: bounds.t, r: bounds.r, b: bounds.b};
+    };
     CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();
         if (this.IsEditFieldShape()) {
             this.draw(oGraphicsWord);
+            this._rememberPaintedRedrawBounds();
             return;
         }
 
@@ -581,6 +601,7 @@
 
         this.draw(oGraphicsWord);
 		this.EndRedactClip(oGraphicsWord, isRedactClipApplied);
+        this._rememberPaintedRedrawBounds();
     };
     CPdfDrawingPrototype.prototype.onMouseDown = function(x, y, e) {};
     CPdfDrawingPrototype.prototype.onMouseUp = function(x, y, e) {};

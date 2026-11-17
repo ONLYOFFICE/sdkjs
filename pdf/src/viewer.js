@@ -105,11 +105,80 @@
 			a.t < b.b && a.b > b.t;
 	}
 
+	// A new drawing starts at 0,0,0,0. That is not a real box on the page,
+	// and it must not be used as the clip for the next paint.
+	function isUnsetRedrawBounds(bounds) {
+		return !bounds || (bounds.l === 0 && bounds.t === 0 && bounds.r === 0 && bounds.b === 0);
+	}
+
+	function unionRedrawBounds(a, b) {
+		if (isUnsetRedrawBounds(b))
+			return a || null;
+		if (!a)
+			return {l: b.l, t: b.t, r: b.r, b: b.b};
+		return {
+			l: Math.min(a.l, b.l),
+			t: Math.min(a.t, b.t),
+			r: Math.max(a.r, b.r),
+			b: Math.max(a.b, b.b)
+		};
+	}
+
+	// Text in a PDF text box is allowed to extend past the shape (vertOverflow
+	// is overflow). The geometry box alone clips those glyphs on a partial paint.
+	function textOverflowBounds(drawing) {
+		if (!drawing || !drawing.GetDocContent || !drawing.transformText)
+			return null;
+
+		let content = drawing.GetDocContent();
+		let tr = drawing.transformText;
+		if (!content || !tr.TransformPointX || !content.GetSummaryHeight)
+			return null;
+
+		let w = content.XLimit;
+		let h = content.GetSummaryHeight();
+		if (!(w > 0) || !(h > 0))
+			return null;
+
+		let pad = Math.max(1, h * 0.35);
+		let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+		let xs = [0, w];
+		let ys = [-pad, h + pad];
+		for (let i = 0; i < xs.length; i++) {
+			for (let j = 0; j < ys.length; j++) {
+				let x = tr.TransformPointX(xs[i], ys[j]);
+				let y = tr.TransformPointY(xs[i], ys[j]);
+				if (x !== x || y !== y)
+					return null;
+				if (x < l) l = x;
+				if (y < t) t = y;
+				if (x > r) r = x;
+				if (y > b) b = y;
+			}
+		}
+		return {l: l, t: t, r: r, b: b};
+	}
+
+	function currentDrawingRedrawBounds(drawing) {
+		if (!drawing)
+			return null;
+		let geometry = drawing.getBoundsByDrawing ? drawing.getBoundsByDrawing() : drawing.bounds;
+		return unionRedrawBounds(unionRedrawBounds(null, geometry), textOverflowBounds(drawing));
+	}
+
+	function expandRedrawBounds(current, painted, extMM) {
+		let bounds = unionRedrawBounds(current, painted);
+		if (!bounds)
+			return null;
+		let ext = extMM || 0;
+		return {l: bounds.l - ext, t: bounds.t - ext, r: bounds.r + ext, b: bounds.b + ext};
+	}
+
 	function collectDrawingsForPartialRedraw(drawings, dirtyBounds) {
 		let result = [];
 
 		for (let i = 0; i < drawings.length; i++) {
-			let bounds = drawings[i].bounds;
+			let bounds = currentDrawingRedrawBounds(drawings[i]);
 			if (!bounds || isBoundsIntersect(bounds, dirtyBounds)) {
 				result.push(drawings[i]);
 			}
@@ -4352,15 +4421,27 @@
 		if (bPartialRedraw) {
 			let extMM = AscPDF.PARTIAL_REDRAW_EXT;
 			aDrawings.forEach(function(d) {
-				if (d.IsNeedRecalc()) {
+				let bNeed = d.IsNeedRecalc && d.IsNeedRecalc();
+				if (bNeed && d.Recalculate)
 					d.Recalculate();
-					if (d.bounds) {
-						let drawingBounds = d.getBoundsByDrawing();
-						oDirtyBoundsMM.l = Math.min(oDirtyBoundsMM.l, drawingBounds.l - extMM);
-						oDirtyBoundsMM.t = Math.min(oDirtyBoundsMM.t, drawingBounds.t - extMM);
-						oDirtyBoundsMM.r = Math.max(oDirtyBoundsMM.r, drawingBounds.r + extMM);
-						oDirtyBoundsMM.b = Math.max(oDirtyBoundsMM.b, drawingBounds.b + extMM);
-					}
+
+				let drawingBounds = currentDrawingRedrawBounds(d);
+				let paintedBounds = d._paintedRedrawBounds;
+				let bHit = bNeed || (drawingBounds && isBoundsIntersect(drawingBounds, oDirtyBoundsMM)) || (paintedBounds && isBoundsIntersect(paintedBounds, oDirtyBoundsMM));
+				if (!bHit)
+					return;
+
+				if (bNeed && paintedBounds) {
+					oDirtyBoundsMM.l = Math.min(oDirtyBoundsMM.l, paintedBounds.l - extMM);
+					oDirtyBoundsMM.t = Math.min(oDirtyBoundsMM.t, paintedBounds.t - extMM);
+					oDirtyBoundsMM.r = Math.max(oDirtyBoundsMM.r, paintedBounds.r + extMM);
+					oDirtyBoundsMM.b = Math.max(oDirtyBoundsMM.b, paintedBounds.b + extMM);
+				}
+				if (drawingBounds) {
+					oDirtyBoundsMM.l = Math.min(oDirtyBoundsMM.l, drawingBounds.l - extMM);
+					oDirtyBoundsMM.t = Math.min(oDirtyBoundsMM.t, drawingBounds.t - extMM);
+					oDirtyBoundsMM.r = Math.max(oDirtyBoundsMM.r, drawingBounds.r + extMM);
+					oDirtyBoundsMM.b = Math.max(oDirtyBoundsMM.b, drawingBounds.b + extMM);
 				}
 			});
 
@@ -5901,6 +5982,11 @@
 
 	window["AscPDF"].PARTIAL_REDRAW_EXT = 5;
 	window["AscPDF"].collectDrawingsForPartialRedraw = collectDrawingsForPartialRedraw;
+	window["AscPDF"].isUnsetRedrawBounds = isUnsetRedrawBounds;
+	window["AscPDF"].unionRedrawBounds = unionRedrawBounds;
+	window["AscPDF"].textOverflowBounds = textOverflowBounds;
+	window["AscPDF"].currentDrawingRedrawBounds = currentDrawingRedrawBounds;
+	window["AscPDF"].expandRedrawBounds = expandRedrawBounds;
 	window["AscPDF"].CPageInfo = CPageInfo;
 
 })();
