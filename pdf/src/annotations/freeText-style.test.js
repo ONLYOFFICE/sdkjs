@@ -43,7 +43,7 @@ function mockAnnot() {
 		rect: [1, 2, 3, 4],
 		callout: [9, 9, 9, 9, 9, 9]
 	};
-	["SetFillColor", "SetBorderColor", "SetBorderWidth", "SetBorderStyle", "SetDashPattern", "SetBorderEffectStyle", "SetBorderEffectIntensity", "private_UpdateRect", "SetOpacity", "SetLineEnd", "SetAlign", "SetFontFamily", "SetFontSize", "SetTextColor", "SetBold", "SetItalic", "SetContents", "SetRect", "SetCallout", "SetName", "SetAuthor", "SetSubject"].forEach(function(name) {
+	["SetFillColor", "SetBorderColor", "SetBorderWidth", "SetBorderStyle", "SetDashPattern", "SetBorderEffectStyle", "SetBorderEffectIntensity", "private_UpdateRect", "SetOpacity", "SetLineEnd", "SetAlign", "SetFontFamily", "SetFontSize", "SetTextColor", "SetBold", "SetItalic", "SetUnderline", "SetStrikeout", "SetContents", "SetRect", "SetCallout", "SetName", "SetAuthor", "SetSubject"].forEach(function(name) {
 		annot[name] = function() {
 			calls.push([name].concat([].slice.call(arguments)));
 		};
@@ -87,6 +87,10 @@ assert.strictEqual(arg(typed, "SetFontSize"), 12);
 assert.strictEqual(arg(typed, "SetFontFamily"), "Arial");
 assert.strictEqual(arg(typed, "SetBold"), true);
 assert.strictEqual(arg(typed, "SetItalic"), false);
+const marked = mockAnnot();
+assert.strictEqual(apply(marked, {underline: true, strikeout: false, fontSize: 12}, CALLOUT), true);
+assert.strictEqual(arg(marked, "SetUnderline"), true);
+assert.strictEqual(arg(marked, "SetStrikeout"), false);
 assert.strictEqual(arg(typed, "content.SetAlign"), 0);
 
 // 4-7. The next annotation inherits the style. The previous one is not touched,

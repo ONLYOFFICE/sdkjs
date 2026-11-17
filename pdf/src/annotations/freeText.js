@@ -1931,6 +1931,10 @@
             style.bold = raw.bold;
         if (raw.italic === true || raw.italic === false)
             style.italic = raw.italic;
+        if (raw.underline === true || raw.underline === false)
+            style.underline = raw.underline;
+        if (raw.strikeout === true || raw.strikeout === false)
+            style.strikeout = raw.strikeout;
         if (typeof raw.fontFamily === "string") {
             let family = raw.fontFamily.replace(/[\u0000-\u001f]/g, "").trim();
             if (family.length > 0 && family.length <= 200)
@@ -2028,6 +2032,10 @@
             annot.SetBold(normalized.bold);
         if (normalized.italic != null && annot.SetItalic)
             annot.SetItalic(normalized.italic);
+        if (normalized.underline != null && annot.SetUnderline)
+            annot.SetUnderline(normalized.underline);
+        if (normalized.strikeout != null && annot.SetStrikeout)
+            annot.SetStrikeout(normalized.strikeout);
 
         return true;
     }
