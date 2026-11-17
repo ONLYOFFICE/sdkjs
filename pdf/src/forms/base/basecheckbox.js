@@ -413,6 +413,8 @@
 		if (this.IsReadOnly()) {
             return;
         }
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
 
 		let bCommit = false;
         if (this.IsChecked()) {

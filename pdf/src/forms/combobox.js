@@ -258,6 +258,8 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.SelectOption = function(nIdx) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         if (this.GetCurIdxs().includes(nIdx))
             return;
         
@@ -425,6 +427,9 @@
         }
     };
 	CComboBoxField.prototype.EnterText = function(aChars) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
+
         let oKeystrokeEvent = this.DoKeystrokeAction(aChars);
 		if (!oKeystrokeEvent["rc"])
 			return false;
@@ -520,10 +525,12 @@
 		return AscPDF.CTextField.prototype.SetPlaceholder.call(this, sText);
 	};
 	CComboBoxField.prototype.InsertChars = function(aChars) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
 		this.content.EnterText(aChars);
 	};
 	CComboBoxField.prototype.canBeginCompositeInput = function() {
-		return this.IsEditable();
+		return this.IsEditable() && !AscPDF.isFormValueChangeLocked(this);
 	};
 	/**
 	 * Checks curValueIndex, corrects it and return.
@@ -574,7 +581,7 @@
     };
     CComboBoxField.prototype.IsCanEditText = function() {
         let oDoc = this.GetDocument();
-        if (oDoc.activeForm == this && this.IsEditable() && this.IsInForm() && !this.IsReadOnly())
+        if (oDoc.activeForm == this && this.IsEditable() && this.IsInForm() && !this.IsReadOnly() && !AscPDF.isFormValueChangeLocked(this))
             return true;
         
         return false;

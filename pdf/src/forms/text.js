@@ -132,7 +132,7 @@
     };
     CTextField.prototype.IsCanEditText = function() {
         let oDoc = this.GetDocument();
-        if (oDoc.activeForm == this && this.IsInForm() && !this.IsReadOnly())
+        if (oDoc.activeForm == this && this.IsInForm() && !this.IsReadOnly() && !AscPDF.isFormValueChangeLocked(this))
             return true;
         
         return false;
@@ -1578,6 +1578,9 @@
         }
     };
 	CTextField.prototype.EnterText = function(aChars, isOnCorrect) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
+
         let nEnteredCharsCount = aChars.length;
 
         AscCommon.History.ForbidUnionPoint();
@@ -1661,10 +1664,12 @@
         return this._needCheckAlign;
     };
     CTextField.prototype.InsertChars = function(aChars) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
 		this.content.EnterText(aChars);
 	};
 	CTextField.prototype.canBeginCompositeInput = function() {
-		return true;
+		return !AscPDF.isFormValueChangeLocked(this);
 	};
     CTextField.prototype.SelectAllText = function() {
         this.content.SelectAll();
@@ -1936,6 +1941,8 @@
 	 * @typeofeditors ["PDF"]
 	 */
 	CTextField.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord) {
+		if (AscPDF.isFormValueChangeLocked(this))
+			return false;
 		if (this.IsCanEditText() == false)
 			return false;
 		

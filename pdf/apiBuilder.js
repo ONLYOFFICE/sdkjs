@@ -2915,6 +2915,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseField/Methods/SetValue.js
 	 */
 	ApiBaseField.prototype.SetValue = function(value) {
+		if (AscPDF.isFormValueChangeLocked(this.Field))
+			return false;
+
 		let oDoc = private_GetLogicDocument();
 
 		let oFieldToCommit;
@@ -3990,6 +3993,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/SetValueIndexes.js
 	 */
 	ApiBaseListField.prototype.SetValueIndexes = function(valueIndexes) {
+		if (AscPDF.isFormValueChangeLocked(this.Field))
+			return false;
+
 		let oDoc = private_GetLogicDocument();
 
 		let oFieldToCommit = this.Field.IsWidget() ? this.Field : this.Field.GetKid(0);
@@ -4731,6 +4737,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiButtonField/Methods/SetValue.js
 	 */
 	ApiButtonField.prototype.SetValue = function(imageUrl) {
+		if (AscPDF.isFormValueChangeLocked(this.Field))
+			return false;
+
 		this.GetAllWidgets().forEach(function(apiWidget) {
 			apiWidget.SetImage(imageUrl);
 		});

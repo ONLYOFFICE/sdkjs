@@ -300,6 +300,9 @@
     };
 
     CListBoxField.prototype.SelectOption = function(nIdx, isSingleSelect) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         let curIdxs = this.GetCurIdxs();
         if (Array.isArray(curIdxs)) {
             if (curIdxs.includes(nIdx) && curIdxs.length == 1)
@@ -333,6 +336,9 @@
         this.AddToRedraw();
     };
 	CListBoxField.prototype.UnselectOption = function(nIdx) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
 		let oShd = private_GetShd('nil');
 		let oPara = this.content.GetElement(nIdx);
 
@@ -703,6 +709,9 @@
         }
     };
     CListBoxField.prototype.MoveSelectDown = function() {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         this._bAutoShiftContentView = true;
         this.content.MoveCursorDown();
 
@@ -718,6 +727,9 @@
         this.UpdateScroll(true);
     };
     CListBoxField.prototype.MoveSelectUp = function() {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         this._bAutoShiftContentView = true;
         this.content.MoveCursorUp();
 

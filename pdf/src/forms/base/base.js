@@ -2203,6 +2203,9 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.Reset = function() {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
             this.private_SetValue(defValue);
@@ -3704,7 +3707,47 @@
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
-    
+
+	// AcroForm values change only when the session is filling forms or editing the PDF.
+	// View and comment do not grant filling. Annotation permission is a different capability.
+	// A missing state is not permission.
+	window["AscPDF"].formValueChangeAllowed = function(state) {
+		if (!state)
+			return false;
+		if (state.formsOnly === true)
+			return true;
+		if (state.canEdit === true)
+			return true;
+		return false;
+	};
+	// Loading, undo and history-off recalculation are not user edits.
+	window["AscPDF"].isFormValueChangeLocked = function(field) {
+		if (!field)
+			return false;
+		if (AscCommon.History && AscCommon.History.UndoRedoInProgress)
+			return false;
+		if (AscCommon.History && AscCommon.History.Is_On && AscCommon.History.Is_On() === false)
+			return false;
+		if (field.IsUseInDocument && field.IsUseInDocument() !== true)
+			return false;
+		let api = Asc.editor || (typeof editor !== "undefined" ? editor : null);
+		if (!api)
+			return false;
+		let renderer = api.getDocumentRenderer && api.getDocumentRenderer();
+		if (renderer && renderer.IsOpenFormsInProgress)
+			return false;
+		if (typeof api.canFillPdfForms !== "function")
+			return false;
+		return api.canFillPdfForms() !== true;
+	};
+	// Tabbing into a field is a user action, so it follows the session and not the history-off exemption.
+	window["AscPDF"].pdfSessionCanFillForms = function() {
+		let api = Asc.editor || (typeof editor !== "undefined" ? editor : null);
+		if (!api || typeof api.canFillPdfForms !== "function")
+			return true;
+		return api.canFillPdfForms() === true;
+	};
+
 	CBaseField.prototype.updateSelectionState = function() {
 		let oDoc = this.GetDocument();
 		let oDrDoc = oDoc.GetDrawingDocument();

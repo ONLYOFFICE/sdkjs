@@ -1327,6 +1327,8 @@ var CPresentation = CPresentation || function(){};
 	 * @param {function(CBaseField): boolean} [checkFunc]
 	 */
     CPDFDoc.prototype.SelectNextForm = function(checkFunc) {
+		if (AscPDF.pdfSessionCanFillForms && AscPDF.pdfSessionCanFillForms() !== true)
+			return false;
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
 			return false;
@@ -1432,6 +1434,8 @@ var CPresentation = CPresentation || function(){};
 	 * @param {function(CBaseField): boolean} [checkFunc]
 	 */
     CPDFDoc.prototype.SelectPrevForm = function(checkFunc) {
+		if (AscPDF.pdfSessionCanFillForms && AscPDF.pdfSessionCanFillForms() !== true)
+			return false;
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
 			return false;
@@ -1912,6 +1916,8 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oObject.IsForm && oObject.IsForm()) {
+			if (AscPDF.isFormValueChangeLocked(oObject))
+				return;
 			if (oObject.IsForm() && !this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 				Asc.editor.sendEvent("asc_onAskEditPassword");
 				return;
@@ -2896,6 +2902,8 @@ var CPresentation = CPresentation || function(){};
             if (this.IsCalcFieldsLocked()) {
                 return;
             }
+            if (AscPDF.isFormValueChangeLocked(oField))
+                return;
 
             this.DoAction(function() {
                 oField.onMouseUp();
