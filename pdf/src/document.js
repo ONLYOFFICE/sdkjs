@@ -7195,7 +7195,7 @@ var CPresentation = CPresentation || function(){};
         
         return graphic_frame;
     };
-    CPDFDoc.prototype.AddFreeTextAnnot = function(nType, nPage) {
+    CPDFDoc.prototype.AddFreeTextAnnot = function(nType, nPage, oStyle) {
         let oController = this.GetController();
         let nRotAngle   = this.Viewer.getPageRotate(nPage);
         let oFile       = this.Viewer.file;
@@ -7331,6 +7331,10 @@ var CPresentation = CPresentation || function(){};
                 break;
             }
         }
+
+        // Defaults above stay in place. A saved style overrides appearance only.
+        if (oStyle)
+            AscPDF.applyFreeTextInitialStyle(oFreeText, oStyle, nType);
 
         oFreeText.SetInTextBox(true);
     };
