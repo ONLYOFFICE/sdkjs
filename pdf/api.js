@@ -1448,17 +1448,23 @@
 		return this.sendEvent("asc_onStartAddShapeChanged", value);
 	};
 
-	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType) {
+	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType, oStyle) {
+		if (this.canModifyPdfAnnots && this.canModifyPdfAnnots() === false)
+			return;
+
 		let oDoc = this.getPDFDoc();
 
 		oDoc.BlurActiveObject();
+		let aFonts = ["Arial"];
+		if (oStyle && typeof oStyle.fontFamily === "string" && oStyle.fontFamily && aFonts.indexOf(oStyle.fontFamily) < 0)
+			aFonts.push(oStyle.fontFamily);
 		function addFreeText() {
 			oDoc.DoAction(function() {
-				oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
+				oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage, oStyle);
 			}, AscDFH.historydescription_Pdf_AddAnnot, this);
 		}
 
-		if (oDoc.checkFonts(["Arial"], addFreeText)) {
+		if (oDoc.checkFonts(aFonts, addFreeText)) {
 			addFreeText();
 		}
 	};

@@ -1887,6 +1887,153 @@
         return oShape;
     }
 
+    // Last-used FreeText appearance. Geometry, text, identity and dates are never part of this.
+    function isByteComponent(value) {
+        return typeof value === "number" && value >= 0 && value <= 255 && value === Math.round(value);
+    }
+    function normalizeFreeTextColor(value, allowNull) {
+        if (value == null)
+            return allowNull && value === null ? null : undefined;
+        if (typeof value !== "object" || Array.isArray(value))
+            return undefined;
+        if (!isByteComponent(value.r) || !isByteComponent(value.g) || !isByteComponent(value.b))
+            return undefined;
+        return {r: value.r, g: value.g, b: value.b};
+    }
+    function normalizeFreeTextStyle(raw) {
+        if (!raw || typeof raw !== "object" || Array.isArray(raw))
+            return null;
+
+        let style = {};
+        let fill = Object.prototype.hasOwnProperty.call(raw, "fill") ? normalizeFreeTextColor(raw.fill, true) : undefined;
+        if (fill !== undefined)
+            style.fill = fill;
+        let stroke = Object.prototype.hasOwnProperty.call(raw, "stroke") ? normalizeFreeTextColor(raw.stroke, true) : undefined;
+        if (stroke !== undefined)
+            style.stroke = stroke;
+        let textColor = normalizeFreeTextColor(raw.textColor, false);
+        if (textColor)
+            style.textColor = textColor;
+
+        if (typeof raw.strokeWidth === "number" && isFinite(raw.strokeWidth) && raw.strokeWidth >= 0 && raw.strokeWidth <= 20)
+            style.strokeWidth = raw.strokeWidth;
+        if (typeof raw.strokeStyle === "number" && raw.strokeStyle >= 0 && raw.strokeStyle <= 8 && raw.strokeStyle === Math.round(raw.strokeStyle))
+            style.strokeStyle = raw.strokeStyle;
+        if (typeof raw.opacity === "number" && isFinite(raw.opacity) && raw.opacity >= 0 && raw.opacity <= 100)
+            style.opacity = raw.opacity;
+        if (typeof raw.lineEnd === "number" && raw.lineEnd >= 0 && raw.lineEnd <= 9 && raw.lineEnd === Math.round(raw.lineEnd))
+            style.lineEnd = raw.lineEnd;
+        if (typeof raw.align === "number" && raw.align >= 0 && raw.align <= 3 && raw.align === Math.round(raw.align))
+            style.align = raw.align;
+        if (typeof raw.fontSize === "number" && isFinite(raw.fontSize) && raw.fontSize >= 1 && raw.fontSize <= 300)
+            style.fontSize = raw.fontSize;
+        if (raw.bold === true || raw.bold === false)
+            style.bold = raw.bold;
+        if (raw.italic === true || raw.italic === false)
+            style.italic = raw.italic;
+        if (typeof raw.fontFamily === "string") {
+            let family = raw.fontFamily.replace(/[\u0000-\u001f]/g, "").trim();
+            if (family.length > 0 && family.length <= 200)
+                style.fontFamily = family;
+        }
+
+        return Object.keys(style).length ? style : null;
+    }
+    function colorToAnnot(color) {
+        if (!color)
+            return undefined;
+        return [color.r / 255, color.g / 255, color.b / 255];
+    }
+    function applyFreeTextComplexBorder(annot, nComplexType) {
+        let types = AscPDF.ANNOT_COMPLEX_BORDER_TYPES;
+        let dashes = AscPDF.ANNOT_BORDER_DASHED_VALUES;
+        let border = AscPDF.BORDER_TYPES;
+        let effect = AscPDF.BORDER_EFFECT_STYLES;
+        if (!types || !border || !effect || !annot.SetBorderStyle)
+            return;
+
+        function dashed(pattern) {
+            annot.SetBorderStyle(border.dashed);
+            annot.SetDashPattern(pattern || []);
+            annot.SetBorderEffectStyle(effect.none);
+            annot.SetBorderEffectIntensity(0);
+        }
+        switch (nComplexType) {
+            case types.solid:
+                annot.SetBorderStyle(border.solid);
+                annot.SetDashPattern([]);
+                annot.SetBorderEffectStyle(effect.none);
+                annot.SetBorderEffectIntensity(0);
+                break;
+            case types.dash1: dashed(dashes && dashes.dash1); break;
+            case types.dash2: dashed(dashes && dashes.dash2); break;
+            case types.dash3: dashed(dashes && dashes.dash3); break;
+            case types.dash4: dashed(dashes && dashes.dash4); break;
+            case types.dash5: dashed(dashes && dashes.dash5); break;
+            case types.dash6: dashed(dashes && dashes.dash6); break;
+            case types.cloud1:
+                annot.SetBorderStyle(border.solid);
+                annot.SetDashPattern([]);
+                annot.SetBorderEffectStyle(effect.cloud);
+                annot.SetBorderEffectIntensity(1);
+                break;
+            case types.cloud2:
+                annot.SetBorderStyle(border.solid);
+                annot.SetDashPattern([]);
+                annot.SetBorderEffectStyle(effect.cloud);
+                annot.SetBorderEffectIntensity(2);
+                break;
+        }
+    }
+    function applyFreeTextInitialStyle(annot, style, intent) {
+        let normalized = normalizeFreeTextStyle(style);
+        if (!annot || !normalized)
+            return false;
+
+        if (Object.prototype.hasOwnProperty.call(normalized, "fill") && annot.SetFillColor)
+            annot.SetFillColor(colorToAnnot(normalized.fill));
+        if (Object.prototype.hasOwnProperty.call(normalized, "stroke") && annot.SetBorderColor)
+            annot.SetBorderColor(colorToAnnot(normalized.stroke));
+        if (normalized.strokeWidth != null && annot.SetBorderWidth)
+            annot.SetBorderWidth(normalized.strokeWidth);
+        if (normalized.strokeStyle != null)
+            applyFreeTextComplexBorder(annot, normalized.strokeStyle);
+        if ((normalized.strokeWidth != null || normalized.strokeStyle != null) && annot.private_UpdateRect)
+            annot.private_UpdateRect();
+        if (normalized.opacity != null && annot.SetOpacity)
+            annot.SetOpacity(normalized.opacity / 100);
+
+        let callout = AscPDF.FREE_TEXT_INTENT_TYPE && intent === AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout;
+        if (callout && normalized.lineEnd != null && annot.SetLineEnd)
+            annot.SetLineEnd(normalized.lineEnd);
+        if (normalized.align != null && annot.SetAlign) {
+            annot.SetAlign(normalized.align);
+            let content = annot.GetDocContent && annot.GetDocContent();
+            if (content && content !== annot && content.SetAlign)
+                content.SetAlign(normalized.align);
+            else if (content && content !== annot && content.SetParagraphAlign && AscPDF.getInternalAlignByPdfType) {
+                content.SetApplyToAll && content.SetApplyToAll(true);
+                content.SetParagraphAlign(AscPDF.getInternalAlignByPdfType(normalized.align));
+                content.SetApplyToAll && content.SetApplyToAll(false);
+            }
+        }
+
+        if (normalized.fontFamily && annot.SetFontFamily)
+            annot.SetFontFamily(normalized.fontFamily);
+        if (normalized.fontSize != null && annot.SetFontSize)
+            annot.SetFontSize(normalized.fontSize);
+        if (normalized.textColor && annot.SetTextColor)
+            annot.SetTextColor(normalized.textColor.r, normalized.textColor.g, normalized.textColor.b);
+        if (normalized.bold != null && annot.SetBold)
+            annot.SetBold(normalized.bold);
+        if (normalized.italic != null && annot.SetItalic)
+            annot.SetItalic(normalized.italic);
+
+        return true;
+    }
+
+    window["AscPDF"].normalizeFreeTextStyle = normalizeFreeTextStyle;
+    window["AscPDF"].applyFreeTextInitialStyle = applyFreeTextInitialStyle;
     window["AscPDF"].CAnnotationFreeText    = CAnnotationFreeText;
     window["AscPDF"].FREE_TEXT_INTENT_TYPE  = window["AscPDF"]["FREE_TEXT_INTENT_TYPE"] = FREE_TEXT_INTENT_TYPE;
     FREE_TEXT_INTENT_TYPE['freeText']           = FREE_TEXT_INTENT_TYPE.freeText;
