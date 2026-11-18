@@ -148,7 +148,10 @@
 	PDFEditorApi.prototype["asc_setViewerTargetType"] = function(type) {
 		if (!this.DocumentRenderer)
 			return;
-		
+
+		// Hand and Select replace Pen. The toolbar already stops the drawer in
+		// edit mode; the status bar only changes the target type.
+		this.stopInkDrawer();
 		this.DocumentRenderer.setTargetType(type);
 	};
 	PDFEditorApi.prototype["asc_getPageSize"] = function(pageIndex) {
@@ -1306,6 +1309,9 @@
 		return null;
 	};
 	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b) {
+		// Highlight replaces Pen. SetMarkerFormat(false) runs when drawing starts.
+		if (value == true)
+			this.stopInkDrawer();
 		this.isMarkerFormat	= value;
 
 		// from edit mode
@@ -1449,6 +1455,7 @@
 	};
 
 	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType) {
+		this.stopInkDrawer();
 		let oDoc = this.getPDFDoc();
 
 		oDoc.BlurActiveObject();
@@ -1464,6 +1471,8 @@
 	};
 
 	PDFEditorApi.prototype.AddStampAnnot = function(sType, oImage) {
+		// Stamp replaces Pen. Callers include the toolbar and signature images.
+		this.stopInkDrawer();
 		let oDoc = this.getPDFDoc();
 		oDoc.BlurActiveObject();
 
@@ -1484,6 +1493,7 @@
 		
 	};
 	PDFEditorApi.prototype.AddSignatureImage = function(signatureResult) {
+		this.stopInkDrawer();
 		let oApi = this;
 
 		let fApplyCallback = function() {
@@ -1533,6 +1543,7 @@
 	PDFEditorApi.prototype.SetRedactTool = function(bUse) {
 		let oDoc = this.getPDFDoc();
 		if (bUse) {
+			this.stopInkDrawer();
 			oDoc.BlurActiveObject();
 		}
 		
@@ -1622,6 +1633,7 @@
 	PDFEditorApi.prototype.SetLinkTool = function(bUse) {
 		let oDoc = this.getPDFDoc();
 		if (bUse) {
+			this.stopInkDrawer();
 			oDoc.BlurActiveObject();
 		}
 		
