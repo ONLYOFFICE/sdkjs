@@ -2019,6 +2019,8 @@
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
 			AscCommon.check_MouseDownEvent(e, true);
+			// Before the hidden editor input is focused again by this gesture.
+			oThis.holdTextInputForPointer();
 
 			// down inside drawing (placeholders)
 			if (Asc.editor.canEdit()) {
@@ -2149,6 +2151,7 @@
 				return res;
 			}
 
+			oThis.releaseTextInputForPointer();
 			oThis.isFocusOnThumbnails = false;
 			//if (e && e.preventDefault)
 			//	e.preventDefault();
@@ -2336,6 +2339,56 @@
 				}
 			}
 			return false;
+		};
+		// A stamp, ink mark, or other non-text hit must not focus a writable
+		// input. Windows opens the touch keyboard when that input is focused.
+		this.fieldAcceptsKeyboard = function(field) {
+			if (!field || !field.GetType)
+				return false;
+			let nType = field.GetType();
+			if (nType !== AscPDF.FIELD_TYPES.text && nType !== AscPDF.FIELD_TYPES.combobox)
+				return false;
+			if (field.IsReadOnly && field.IsReadOnly())
+				return false;
+			// Absent on builds without the view-only fill lock: keep typing.
+			if (this.Api.canFillPdfForms)
+				return this.Api.canFillPdfForms() !== false;
+			return true;
+		};
+		this.pointerTargetsText = function() {
+			let oDoc = this.getPDFDoc();
+			if (!oDoc)
+				return false;
+			if (this.Api.isInkDrawerOn && this.Api.isInkDrawerOn())
+				return false;
+			if (this.Api.isStartAddShape)
+				return false;
+			let oActive = oDoc.activeForm;
+			if (oActive && oActive.IsInForm && oActive.IsInForm() && this.fieldAcceptsKeyboard(oActive))
+				return true;
+			let oField = this.getPageFieldByMouse();
+			if (oField && this.fieldAcceptsKeyboard(oField))
+				return true;
+			let oAnnot = this.getPageAnnotByMouse();
+			return !!(oAnnot && oAnnot.IsFreeText && oAnnot.IsFreeText());
+		};
+		this.holdTextInputForPointer = function() {
+			let oInput = AscCommon.g_inputContext;
+			if (!oInput)
+				return;
+			if (this.pointerTargetsText())
+				oInput.enableVirtualKeyboard_Hard();
+			else
+				oInput.preventVirtualKeyboard_Hard();
+		};
+		this.releaseTextInputForPointer = function() {
+			let oViewer = this;
+			setTimeout(function() {
+				let oInput = AscCommon.g_inputContext;
+				if (!oInput || oViewer.pointerTargetsText())
+					return;
+				oInput.enableVirtualKeyboard_Hard();
+			}, 0);
 		};
 		this.canMovePageByHand = function() {
 			return this.isMouseDown && this.MouseHandObject.Active && !this.doc.activeDrawing && !this.doc.mouseDownAnnot && !this.Api.isInkDrawerOn() && !this.Api.isStartAddShape;

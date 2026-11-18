@@ -117,6 +117,14 @@
 
 		global_mouseEvent.KoefPixToMM = 5;
 		AscCommon.check_MouseDownEvent(e.touches ? e.touches[0] : e, true);
+		// PDF touch uses this word manager. A stamp is not a word drawing, so
+		// the gesture never reaches the viewer's mouse path that holds text input.
+		if (this.Api.isPdfEditor())
+		{
+			let oRenderer = this.Api.getDocumentRenderer();
+			if (oRenderer && oRenderer.holdTextInputForPointer)
+				oRenderer.holdTextInputForPointer();
+		}
 		global_mouseEvent.KoefPixToMM = 1;
 		global_mouseEvent.LockMouse();
 
@@ -517,6 +525,13 @@
 	CMobileTouchManager.prototype.onTouchEnd   = function(e)
 	{
 		this.IsTouching = false;
+
+		if (this.Api.isPdfEditor())
+		{
+			let oRenderer = this.Api.getDocumentRenderer();
+			if (oRenderer && oRenderer.releaseTextInputForPointer)
+				oRenderer.releaseTextInputForPointer();
+		}
 
 		if (this.delegate.IsReader())
 		{
