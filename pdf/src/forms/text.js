@@ -1192,7 +1192,7 @@
 
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode()) {
+        if (oDoc.IsEditFieldsMode() && !AscPDF.editModeActivatesFormValue(global_mouseEvent.ClickCount)) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }

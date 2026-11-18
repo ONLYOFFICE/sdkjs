@@ -29,6 +29,12 @@ vm.runInNewContext(source.slice(start, end), sandbox);
 const formValueChangeAllowed = sandbox.AscPDF.formValueChangeAllowed;
 const isFormValueChangeLocked = sandbox.AscPDF.isFormValueChangeLocked;
 const pdfSessionCanFillForms = sandbox.AscPDF.pdfSessionCanFillForms;
+const editModeActivatesFormValue = sandbox.AscPDF.editModeActivatesFormValue;
+
+assert.strictEqual(editModeActivatesFormValue(1), false);
+assert.strictEqual(editModeActivatesFormValue(0), false);
+assert.strictEqual(editModeActivatesFormValue(2), true);
+assert.strictEqual(editModeActivatesFormValue(3), true);
 
 function allow(state) {
 	assert.strictEqual(formValueChangeAllowed(state), true, JSON.stringify(state));
@@ -188,6 +194,18 @@ has(apiSrc, "isFormValueChangeLocked(oField)");
 has(apiSrc, "this.canFillPdfForms() !== true");
 assert.strictEqual(docSrc.split("pdfSessionCanFillForms() !== true").length - 1, 3);
 has(docSrc, "formEditBlocked");
+has(docSrc, "editModeActivatesFormValue");
+has(textSrc, "editModeActivatesFormValue");
+has(comboSrc, "editModeActivatesFormValue");
+has(listSrc, "editModeActivatesFormValue");
+{
+	const hit = listSrc.indexOf("this.content.Internal_GetContentPosByXY");
+	assert.ok(hit > 0, "list click hit test");
+	assert.ok(listSrc.lastIndexOf("this.SetNeedRecalc(true)", hit) > hit - 600, "list options are laid out before the click hit test");
+	const guard = listSrc.indexOf("if (!oPara)", hit);
+	assert.ok(guard > hit && guard < listSrc.indexOf("oPara.Pr.Shd", hit), "a missed list row does not throw");
+}
+has(checkSrc, "editModeActivatesFormValue");
 has(docSrc, "_keepFormValueOnRestriction");
 has(apiSrc, "viewRestriction");
 function guardBeforeFocus(src, fnName) {

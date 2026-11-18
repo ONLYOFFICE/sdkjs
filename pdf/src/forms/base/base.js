@@ -3753,6 +3753,11 @@
 			return false;
 		return api.canFillPdfForms() === true;
 	};
+	// Edit mode selects a widget on the first click, the same way a text callout does.
+	// The second click enters the value. Form filling is not edit mode, so it is not gated here.
+	window["AscPDF"].editModeActivatesFormValue = function(clickCount) {
+		return clickCount >= 2;
+	};
 
 	CBaseField.prototype.updateSelectionState = function() {
 		let oDoc = this.GetDocument();

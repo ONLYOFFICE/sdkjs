@@ -631,7 +631,7 @@
         
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode()) {
+        if (oDoc.IsEditFieldsMode() && !AscPDF.editModeActivatesFormValue(global_mouseEvent.ClickCount)) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }
@@ -649,12 +649,21 @@
             if (this.GetOptions().length == 0)
                 return;
 
+            // Edit mode draws the widget as a shape, so the option paragraphs have no
+            // positions until the field is laid out for value editing.
+            if (oDoc.IsEditFieldsMode()) {
+                this.SetNeedRecalc(true);
+                this.Recalculate();
+            }
+
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
             let X       = oPos["X"];
             let Y       = oPos["Y"];
 
             let nPos    = this.content.Internal_GetContentPosByXY(X, Y, 0);
             let oPara   = this.content.GetElement(nPos);
+            if (!oPara)
+                return;
             let oShd    = oPara.Pr.Shd;
 
             this.UpdateScroll(true);

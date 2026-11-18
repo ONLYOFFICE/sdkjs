@@ -2733,7 +2733,7 @@ var CPresentation = CPresentation || function(){};
             if (AscPDF.pdfSessionCanFillForms && AscPDF.pdfSessionCanFillForms() !== true && !this.IsEditFieldsMode()) {
                 cursorType = defaultCursor;
             }
-            else if (this.IsEditFieldsMode()) {
+            else if (this.IsEditFieldsMode() && !(oMouseMoveField.IsInForm && oMouseMoveField.IsInForm())) {
                 cursorType = "pointer";
             }
             else {
@@ -2851,7 +2851,11 @@ var CPresentation = CPresentation || function(){};
 
         if (this.mouseDownField) {
             if (this.IsEditFieldsMode()) {
-                oController.OnMouseUp(e, X, Y, pageObjectMM.index);
+                let enterValue = oMouseUpField == this.mouseDownField && AscPDF.editModeActivatesFormValue(global_mouseEvent.ClickCount) && !AscPDF.isFormValueChangeLocked(this.mouseDownField);
+                if (enterValue)
+                    this.OnMouseUpField(this.mouseDownField);
+                else
+                    oController.OnMouseUp(e, X, Y, pageObjectMM.index);
             }
             else {
                 if (oMouseUpField == this.mouseDownField) {
