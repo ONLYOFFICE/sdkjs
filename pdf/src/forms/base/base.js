@@ -2919,6 +2919,9 @@
 	 */
     CBaseField.prototype.Blur = function() {
         let oDoc = this.GetDocument();
+        // The mode-switch commit already ran. Later blur actions are user-facing.
+        if (oDoc)
+            oDoc._keepFormValueOnRestriction = false;
         oDoc.SetGlobalHistory();
 
         this.SetInForm(false);
@@ -3709,10 +3712,12 @@
 	    window["AscPDF"] = {};
 
 	// AcroForm values change only when the session is filling forms or editing the PDF.
-	// View and comment do not grant filling. Annotation permission is a different capability.
-	// A missing state is not permission.
+	// View and comment do not grant filling. A View restriction wins over canEdit and OnlyForms.
+	// Annotation permission is a different capability. A missing state is not permission.
 	window["AscPDF"].formValueChangeAllowed = function(state) {
 		if (!state)
+			return false;
+		if (state.view === true)
 			return false;
 		if (state.formsOnly === true)
 			return true;
@@ -3720,31 +3725,32 @@
 			return true;
 		return false;
 	};
-	// Loading, undo and history-off recalculation are not user edits.
+	// Loading, undo, and the commit of a value typed before a mode switch are not user edits.
+	// History being off is not permission: setters turn history off around the write itself.
+	// A missing editor or permission method denies the change.
 	window["AscPDF"].isFormValueChangeLocked = function(field) {
 		if (!field)
 			return false;
 		if (AscCommon.History && AscCommon.History.UndoRedoInProgress)
 			return false;
-		if (AscCommon.History && AscCommon.History.Is_On && AscCommon.History.Is_On() === false)
-			return false;
 		if (field.IsUseInDocument && field.IsUseInDocument() !== true)
 			return false;
-		let api = Asc.editor || (typeof editor !== "undefined" ? editor : null);
-		if (!api)
+		let doc = field.GetDocument && field.GetDocument();
+		if (doc && doc._keepFormValueOnRestriction)
 			return false;
-		let renderer = api.getDocumentRenderer && api.getDocumentRenderer();
-		if (renderer && renderer.IsOpenFormsInProgress)
-			return false;
-		if (typeof api.canFillPdfForms !== "function")
-			return false;
-		return api.canFillPdfForms() !== true;
-	};
-	// Tabbing into a field is a user action, so it follows the session and not the history-off exemption.
-	window["AscPDF"].pdfSessionCanFillForms = function() {
 		let api = Asc.editor || (typeof editor !== "undefined" ? editor : null);
 		if (!api || typeof api.canFillPdfForms !== "function")
 			return true;
+		let renderer = api.getDocumentRenderer && api.getDocumentRenderer();
+		if (renderer && renderer.IsOpenFormsInProgress)
+			return false;
+		return api.canFillPdfForms() !== true;
+	};
+	// Tabbing into a field is a user action. An unknown session does not grant it.
+	window["AscPDF"].pdfSessionCanFillForms = function() {
+		let api = Asc.editor || (typeof editor !== "undefined" ? editor : null);
+		if (!api || typeof api.canFillPdfForms !== "function")
+			return false;
 		return api.canFillPdfForms() === true;
 	};
 

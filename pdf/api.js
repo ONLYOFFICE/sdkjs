@@ -5312,7 +5312,9 @@
 	};
 	PDFEditorApi.prototype.canEnterText = function()
 	{
-		return this.canEdit();
+		if (typeof this.canFillPdfForms !== "function")
+			return false;
+		return this.canFillPdfForms() === true;
 	};
 	PDFEditorApi.prototype.asc_GetTableOfContentsPr = function()
 	{
@@ -5614,10 +5616,17 @@
 		this.isPdfViewer = isPdfViewer;
 	};
 	// Form values require OnlyForms or an unrestricted edit session. View and comment do not qualify.
+	// isPdfViewer stays true after a view session switches to edit, so it is not the session mode.
+	// A View restriction wins over canEdit() and over an OnlyForms bit combined with View.
 	PDFEditorApi.prototype.canFillPdfForms = function() {
+		let viewMode = this.isViewMode === true;
+		let viewRestriction = this.isRestrictionView() === true;
+		let formsOnly = this.isRestrictionForms() === true && !viewMode && !viewRestriction;
+		let canEdit = this.canEdit() === true && !viewMode && !viewRestriction;
 		return AscPDF.formValueChangeAllowed({
-			formsOnly: this.isRestrictionForms() === true,
-			canEdit: this.canEdit() === true
+			view: viewMode || viewRestriction,
+			formsOnly: formsOnly,
+			canEdit: canEdit
 		});
 	};
 	PDFEditorApi.prototype.isLiveViewer = function() {

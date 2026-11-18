@@ -189,6 +189,8 @@
         return this.contentClipRect;
     };
     CComboBoxField.prototype.onMouseDown = function(x, y, e) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
         let oController     = oDoc.GetController();
@@ -327,6 +329,8 @@
     };
     
     CComboBoxField.prototype.SetValue = function(sValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
         let aIdxs = [];
         if (this.IsWidget()) {
             let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;

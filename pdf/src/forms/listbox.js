@@ -545,6 +545,8 @@
         }
     };
     CListBoxField.prototype.SetValue = function(value) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
         let aIndexes = [];
         let aOptions = this.GetOptions();
         if (this.IsWidget()) {
@@ -616,6 +618,8 @@
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
     
     CListBoxField.prototype.onMouseDown = function(x, y, e) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();

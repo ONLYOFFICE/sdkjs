@@ -562,8 +562,17 @@ var CPresentation = CPresentation || function(){};
             isEditMode = true;
         }
 
-        if (this.activeForm || this.mouseDownField) {
-            this.BlurActiveObject();
+        // Finish a value that was typed before the mode changed, then drop focus.
+        // The flag is cleared in Blur before blur actions, and again here.
+        this._keepFormValueOnRestriction = true;
+        try {
+            if (Asc.editor && Asc.editor.End_CompositeInput)
+                Asc.editor.End_CompositeInput();
+            if (this.activeForm || this.mouseDownField)
+                this.BlurActiveObject();
+        }
+        finally {
+            this._keepFormValueOnRestriction = false;
         }
         
         this.widgets.forEach(function(field) {
@@ -1903,6 +1912,13 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
+        // Before the same-widget early return, so a field that stayed down across a mode switch cannot press again.
+        if (oObject.IsForm && oObject.IsForm() && AscPDF.isFormValueChangeLocked(oObject)) {
+            if (this.activeForm === oObject || this.mouseDownField === oObject)
+                this.BlurActiveObject();
+            return;
+        }
+
         if (oObject.IsUseInDocument && false == oObject.IsUseInDocument()) {
             this.BlurActiveObject();
             return;
@@ -1916,8 +1932,6 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oObject.IsForm && oObject.IsForm()) {
-			if (AscPDF.isFormValueChangeLocked(oObject))
-				return;
 			if (oObject.IsForm() && !this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 				Asc.editor.sendEvent("asc_onAskEditPassword");
 				return;
@@ -2716,7 +2730,10 @@ var CPresentation = CPresentation || function(){};
             if (!pageObject)
                 return false;
 
-            if (this.IsEditFieldsMode()) {
+            if (AscPDF.pdfSessionCanFillForms && AscPDF.pdfSessionCanFillForms() !== true && !this.IsEditFieldsMode()) {
+                cursorType = defaultCursor;
+            }
+            else if (this.IsEditFieldsMode()) {
                 cursorType = "pointer";
             }
             else {
@@ -11051,7 +11068,13 @@ var CPresentation = CPresentation || function(){};
 		
 		this.inUse = false;
 	};
+	CPDFCompositeInput.prototype.formEditBlocked = function() {
+		let controller = this.textController;
+		return !!(controller && controller.IsForm && controller.IsForm() && AscPDF.isFormValueChangeLocked(controller));
+	};
 	CPDFCompositeInput.prototype.add = function(codePoint) {
+		if (this.formEditBlocked())
+			return;
 		this.doAction(function() {
 			this.runInput.add(codePoint);
 			if (this.textController.checkExtentsByDocContent) {
@@ -11062,6 +11085,8 @@ var CPresentation = CPresentation || function(){};
 		}, AscDFH.historydescription_Document_CompositeInputReplace);
 	};
 	CPDFCompositeInput.prototype.remove = function(count) {
+		if (this.formEditBlocked())
+			return;
 		this.doAction(function() {
 			this.runInput.remove(count);
 			if (this.textController.checkExtentsByDocContent) {
@@ -11072,6 +11097,8 @@ var CPresentation = CPresentation || function(){};
 		}, AscDFH.historydescription_Document_CompositeInputReplace);
 	};
 	CPDFCompositeInput.prototype.replace = function(codePoints) {
+		if (this.formEditBlocked())
+			return;
 		this.doAction(function() {
 			this.runInput.replace(codePoints);
 			if (this.textController.checkExtentsByDocContent) {

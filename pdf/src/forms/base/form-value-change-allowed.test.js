@@ -44,10 +44,15 @@ deny({ formsOnly: false, canEdit: false });
 deny({ canEdit: false });
 deny({ formsOnly: false });
 deny({ formsOnly: false, canEdit: false, comment: true });
+deny({ view: true });
+deny({ view: true, canEdit: true });
+deny({ view: true, formsOnly: true });
+deny({ view: true, formsOnly: true, canEdit: true });
 allow({ formsOnly: true });
 allow({ canEdit: true });
 allow({ formsOnly: true, canEdit: false });
 allow({ formsOnly: true, canEdit: true });
+allow({ view: false, formsOnly: true, canEdit: false });
 
 function placedField() {
 	return { IsUseInDocument: function() { return true; } };
@@ -69,10 +74,15 @@ sandbox.editor = sandbox.Asc.editor;
 assert.strictEqual(isFormValueChangeLocked(placedField()), false);
 assert.strictEqual(pdfSessionCanFillForms(), true);
 
+sandbox.Asc.editor = null;
+sandbox.editor = null;
+assert.strictEqual(isFormValueChangeLocked(placedField()), true);
+assert.strictEqual(pdfSessionCanFillForms(), false);
+
 sandbox.Asc.editor = { getDocumentRenderer: function() { return null; } };
 sandbox.editor = sandbox.Asc.editor;
-assert.strictEqual(isFormValueChangeLocked(placedField()), false);
-assert.strictEqual(pdfSessionCanFillForms(), true);
+assert.strictEqual(isFormValueChangeLocked(placedField()), true);
+assert.strictEqual(pdfSessionCanFillForms(), false);
 
 sandbox.Asc.editor = api(false);
 sandbox.editor = sandbox.Asc.editor;
@@ -80,13 +90,78 @@ sandbox.AscCommon.History.UndoRedoInProgress = true;
 assert.strictEqual(isFormValueChangeLocked(placedField()), false);
 sandbox.AscCommon.History.UndoRedoInProgress = false;
 sandbox.AscCommon.History.Is_On = function() { return false; };
-assert.strictEqual(isFormValueChangeLocked(placedField()), false);
+assert.strictEqual(isFormValueChangeLocked(placedField()), true, "history off is not permission");
 sandbox.AscCommon.History.Is_On = function() { return true; };
 assert.strictEqual(isFormValueChangeLocked({ IsUseInDocument: function() { return false; } }), false);
 sandbox.Asc.editor = api(false, { IsOpenFormsInProgress: true });
 sandbox.editor = sandbox.Asc.editor;
 assert.strictEqual(isFormValueChangeLocked(placedField()), false);
 assert.strictEqual(pdfSessionCanFillForms(), false);
+
+function widget(value) {
+	return {
+		value: value,
+		IsUseInDocument: function() { return true; },
+		GetDocument: function() { return this._doc || null; }
+	};
+}
+function userSet(field, next) {
+	if (isFormValueChangeLocked(field))
+		return false;
+	field.value = next;
+	return true;
+}
+function userActivate(field) {
+	return isFormValueChangeLocked(field) !== true;
+}
+
+const text = widget("hello");
+const multiline = widget("line");
+const checkbox = widget(false);
+const radio = widget("a");
+const combo = widget("one");
+const list = widget(["one"]);
+const date = widget("2026-01-01");
+const signature = widget(null);
+sandbox.Asc.editor = api(false);
+sandbox.editor = sandbox.Asc.editor;
+[text, multiline, checkbox, radio, combo, list, date, signature].forEach(function(field) {
+	assert.strictEqual(userActivate(field), false);
+	assert.strictEqual(userSet(field, "changed"), false);
+	assert.notStrictEqual(field.value, "changed");
+});
+assert.strictEqual(pdfSessionCanFillForms(), false);
+
+sandbox.Asc.editor = api(true);
+sandbox.editor = sandbox.Asc.editor;
+assert.strictEqual(userActivate(text), true);
+assert.strictEqual(userSet(text, "typed"), true);
+assert.strictEqual(text.value, "typed");
+assert.strictEqual(userSet(checkbox, true), true);
+assert.strictEqual(checkbox.value, true);
+assert.strictEqual(userSet(combo, "two"), true);
+assert.strictEqual(userSet(list, ["two"]), true);
+assert.strictEqual(userSet(date, "2026-02-02"), true);
+assert.strictEqual(userSet(signature, "signed"), true);
+assert.strictEqual(userSet(multiline, "line\n2"), true);
+
+const session = api(true);
+sandbox.Asc.editor = session;
+sandbox.editor = session;
+const live = widget("before");
+assert.strictEqual(userSet(live, "during edit"), true);
+session.canFillPdfForms = function() { return false; };
+assert.strictEqual(userActivate(live), false);
+assert.strictEqual(userSet(live, "during view"), false);
+assert.strictEqual(live.value, "during edit");
+live._doc = { _keepFormValueOnRestriction: true };
+assert.strictEqual(userSet(live, "committed"), true);
+assert.strictEqual(live.value, "committed");
+live._doc = null;
+session.canFillPdfForms = function() { return true; };
+assert.strictEqual(userActivate(live), true);
+assert.strictEqual(userSet(live, "after edit"), true);
+assert.strictEqual(live.value, "after edit");
 
 const root = path.join(__dirname, "..", "..", "..", "..");
 function read(rel) {
@@ -111,7 +186,24 @@ has(apiSrc, "isFormValueChangeLocked(textController)");
 has(apiSrc, "isFormValueChangeLocked(oActiveForm)");
 has(apiSrc, "isFormValueChangeLocked(oField)");
 has(apiSrc, "this.canFillPdfForms() !== true");
-assert.strictEqual(docSrc.split("pdfSessionCanFillForms() !== true").length - 1, 2);
+assert.strictEqual(docSrc.split("pdfSessionCanFillForms() !== true").length - 1, 3);
+has(docSrc, "formEditBlocked");
+has(docSrc, "_keepFormValueOnRestriction");
+has(apiSrc, "viewRestriction");
+function guardBeforeFocus(src, fnName) {
+	const start = src.indexOf(fnName);
+	const guard = src.indexOf("isFormValueChangeLocked(this)", start);
+	const focus = src.indexOf("activeForm = this", start);
+	assert.ok(start !== -1 && guard !== -1 && focus !== -1 && guard < focus, fnName);
+}
+guardBeforeFocus(textSrc, "CTextField.prototype.onMouseDown");
+guardBeforeFocus(comboSrc, "CComboBoxField.prototype.onMouseDown");
+guardBeforeFocus(listSrc, "CListBoxField.prototype.onMouseDown");
+guardBeforeFocus(checkSrc, "CBaseCheckBoxField.prototype.onMouseDown");
+guardBeforeFocus(read("pdf/src/forms/pushbutton.js"), "CPushButtonField.prototype.onMouseDown");
+has(textSrc, "CTextField.prototype.SetValue");
+has(textSrc, "CTextField.prototype.private_SetValue");
+has(checkSrc, "CBaseCheckBoxField.prototype.SetChecked");
 has(docSrc, "isFormValueChangeLocked(oObject)");
 has(docSrc, "isFormValueChangeLocked(oField)");
 has(textSrc, "isFormValueChangeLocked(this)");

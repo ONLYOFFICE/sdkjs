@@ -1446,6 +1446,8 @@
     };
 
     CPushButtonField.prototype.onMouseDown = function(x, y, e) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 

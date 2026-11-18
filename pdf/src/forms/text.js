@@ -352,6 +352,8 @@
         return this._richText;
     };
 	CTextField.prototype.SetValue = function(sValue) {
+		if (AscPDF.isFormValueChangeLocked(this))
+			return false;
 		if (this.IsWidget()) {
             let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
 
@@ -372,6 +374,8 @@
 		return true;
 	};
     CTextField.prototype.private_SetValue = function(sValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         if (this.IsWidget()) {
 			this.UpdateDisplayValue(sValue);
 		}
@@ -1176,6 +1180,8 @@
 		return this.contentClipRect;
     };
     CTextField.prototype.onMouseDown = function(x, y, e) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
 		let oController		= oDoc.GetController();
