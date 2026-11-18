@@ -3711,19 +3711,14 @@
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
 
-	// AcroForm values change only when the session is filling forms or editing the PDF.
-	// View and comment do not grant filling. A View restriction wins over canEdit and OnlyForms.
-	// Annotation permission is a different capability. A missing state is not permission.
+	// AcroForm values change in a session opened for editing, in any of its modes. A session opened for
+	// viewing does not change them. Annotation permission is a different capability. A missing state is not permission.
 	window["AscPDF"].formValueChangeAllowed = function(state) {
 		if (!state)
 			return false;
-		if (state.view === true)
+		if (state.viewSession === true)
 			return false;
-		if (state.formsOnly === true)
-			return true;
-		if (state.canEdit === true)
-			return true;
-		return false;
+		return state.editSession === true;
 	};
 	// Loading, undo, and the commit of a value typed before a mode switch are not user edits.
 	// History being off is not permission: setters turn history off around the write itself.

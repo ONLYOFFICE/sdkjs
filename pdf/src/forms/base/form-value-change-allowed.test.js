@@ -78,19 +78,13 @@ function deny(state) {
 deny(null);
 deny(undefined);
 deny({});
-deny({ formsOnly: false, canEdit: false });
-deny({ canEdit: false });
-deny({ formsOnly: false });
-deny({ formsOnly: false, canEdit: false, comment: true });
-deny({ view: true });
-deny({ view: true, canEdit: true });
-deny({ view: true, formsOnly: true });
+deny({ editSession: false });
+deny({ viewSession: true });
+deny({ viewSession: true, editSession: true });
 deny({ view: true, formsOnly: true, canEdit: true });
-allow({ formsOnly: true });
-allow({ canEdit: true });
-allow({ formsOnly: true, canEdit: false });
-allow({ formsOnly: true, canEdit: true });
-allow({ view: false, formsOnly: true, canEdit: false });
+allow({ editSession: true });
+allow({ viewSession: false, editSession: true });
+
 
 function placedField() {
 	return { IsUseInDocument: function() { return true; } };
@@ -250,7 +244,7 @@ has(listSrc, "enterValue !== true");
 }
 has(checkSrc, "enterValue !== true");
 has(docSrc, "_keepFormValueOnRestriction");
-has(apiSrc, "viewRestriction");
+has(apiSrc, "this.isPdfViewer === true");
 function guardBeforeFocus(src, fnName) {
 	const start = src.indexOf(fnName);
 	const guard = src.indexOf("isFormValueChangeLocked(this)", start);
@@ -289,6 +283,30 @@ if (fs.existsSync(annotPath)) {
 		assert.strictEqual(annotSandbox.AscPDF.annotChangeAllowed({ explicit: false }), false);
 		assert.strictEqual(annotSandbox.AscPDF.annotChangeAllowed({ canEdit: true }), true);
 	}
+}
+
+// canFillPdfForms reads the session mode, not the restriction: annotating in an editing session
+// runs under a View restriction and still fills forms. A document opened for viewing never does.
+{
+	const apiStart = apiSrc.indexOf("PDFEditorApi.prototype.canFillPdfForms = function");
+	const apiEnd = apiSrc.indexOf("};", apiStart) + 2;
+	const apiBox = { AscPDF: sandbox.AscPDF };
+	vm.runInNewContext("var PDFEditorApi = function() {};" + apiSrc.slice(apiStart, apiEnd) + ";this.P = PDFEditorApi;", apiBox);
+	const session = function(fields) {
+		const o = Object.assign(Object.create(apiBox.P.prototype), {
+			isViewMode: false, isPdfViewer: false, restrictions: 0,
+			isRestrictionView: function() { return this.restrictions === 128; },
+			isRestrictionForms: function() { return this.restrictions === 1; },
+			canEdit: function() { return this.restrictions === 0; }
+		}, fields);
+		return o.canFillPdfForms();
+	};
+	assert.strictEqual(session({ isPdfViewer: true, restrictions: 128 }), false, "view tab");
+	assert.strictEqual(session({ isPdfViewer: true, restrictions: 1 }), false, "view tab with forms bit");
+	assert.strictEqual(session({ isViewMode: true }), false, "view mode");
+	assert.strictEqual(session({ restrictions: 128 }), true, "edit tab, annotating");
+	assert.strictEqual(session({ restrictions: 1 }), true, "edit tab, form filling");
+	assert.strictEqual(session({ restrictions: 0 }), true, "edit tab, Edit PDF");
 }
 
 console.log("form-value-change-allowed.test.js ok");

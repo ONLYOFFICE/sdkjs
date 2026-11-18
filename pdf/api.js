@@ -5615,18 +5615,14 @@
 	PDFEditorApi.prototype.asc_setPdfViewer = function(isPdfViewer) {
 		this.isPdfViewer = isPdfViewer;
 	};
-	// Form values require OnlyForms or an unrestricted edit session. View and comment do not qualify.
-	// isPdfViewer stays true after a view session switches to edit, so it is not the session mode.
-	// A View restriction wins over canEdit() and over an OnlyForms bit combined with View.
+	// A document opened for viewing (editorConfig.mode "view") never changes form values. The editor reports
+	// that session with isPdfViewer: isViewMode is always false for PDF. An editing session fills forms in
+	// each of its modes. Annotating runs under a View restriction, so the restriction is not the session mode.
 	PDFEditorApi.prototype.canFillPdfForms = function() {
-		let viewMode = this.isViewMode === true;
-		let viewRestriction = this.isRestrictionView() === true;
-		let formsOnly = this.isRestrictionForms() === true && !viewMode && !viewRestriction;
-		let canEdit = this.canEdit() === true && !viewMode && !viewRestriction;
+		let viewSession = this.isViewMode === true || this.isPdfViewer === true;
 		return AscPDF.formValueChangeAllowed({
-			view: viewMode || viewRestriction,
-			formsOnly: formsOnly,
-			canEdit: canEdit
+			viewSession: viewSession,
+			editSession: !viewSession
 		});
 	};
 	PDFEditorApi.prototype.isLiveViewer = function() {
