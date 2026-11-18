@@ -213,7 +213,18 @@
 
             this.SetInForm(true);
             oDoc.SetLocalHistory();
-            oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
+            if (oDoc.IsEditFieldsMode()) {
+                // Edit mode hit-tests the widget's edit shape, so the controller would start a move.
+                // Place the caret and select text in the value itself, as form filling does. The value is
+                // the controller's text target, so keys, select all, and the clipboard edit the text, not the widget.
+                this.selectStartPage = this.GetPage();
+                oController.selection.textSelection = this;
+                this.selectionSetStart(e, pageObjectMM.x, pageObjectMM.y);
+                oController.changeCurrentState(new AscFormat.TextAddState(oController, this, pageObjectMM.x, pageObjectMM.y, e.Button));
+            }
+            else {
+                oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
+            }
             
             this.SetInForm(true);
 

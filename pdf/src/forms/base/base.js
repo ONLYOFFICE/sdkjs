@@ -3753,14 +3753,39 @@
 			return false;
 		return api.canFillPdfForms() === true;
 	};
-	// Edit mode starts a widget drag on mouse down. A release that barely moved is a click and
-	// enters the value. A few pixels of jitter must not count as a drag: that movement already
-	// clears ClickCount, so a real double click never reached the value.
+	// Edit mode keeps a click on a widget for selection, so it can be moved, resized, and configured.
+	// A click on the widget that is already the only selection fills its value, the same way a
+	// click on a selected shape enters its text. A double click is a select and then a fill.
+	// "select": the press only selects or drags the widget.
+	// "release": the press may drag the widget. A release without a drag fills the value.
+	// "press": the value is already being typed, so the press places the caret or selects text.
+	// Push buttons and signatures have no value to fill, so their actions stay off in Edit.
+	window["AscPDF"].editModeFieldPress = function(state) {
+		if (!state || state.locked !== false || state.wasSelected !== true || state.selectedCount !== 1)
+			return "select";
+		if (state.ctrl || state.shift || state.button !== 0)
+			return "select";
+		let types = AscPDF.FIELD_TYPES;
+		if (!types)
+			return "select";
+		switch (state.type) {
+			case types.text:
+			case types.combobox:
+				return state.inForm === true ? "press" : "release";
+			case types.checkbox:
+			case types.radiobutton:
+			case types.listbox:
+				return "release";
+		}
+		return "select";
+	};
+	// The controller moves a widget on any movement, so only a release within the editor's own
+	// click tolerance counts as a click.
 	window["AscPDF"].editModePressEditsValue = function() {
 		let mouse = (typeof global_mouseEvent !== "undefined") ? global_mouseEvent : null;
 		if (!mouse)
 			return false;
-		let slop = 10 * (mouse.KoefPixToMM || 1);
+		let slop = 3 * (mouse.KoefPixToMM || 1);
 		return Math.abs(mouse.X - mouse.LastX) <= slop && Math.abs(mouse.Y - mouse.LastY) <= slop;
 	};
 

@@ -31,12 +31,42 @@ const isFormValueChangeLocked = sandbox.AscPDF.isFormValueChangeLocked;
 const pdfSessionCanFillForms = sandbox.AscPDF.pdfSessionCanFillForms;
 const editModePressEditsValue = sandbox.AscPDF.editModePressEditsValue;
 
-sandbox.global_mouseEvent = { X: 100, Y: 100, LastX: 104, LastY: 98, KoefPixToMM: 1 };
+// A release within the editor's 3 px click tolerance is a click. Any more is a drag that moved the widget.
+sandbox.global_mouseEvent = { X: 100, Y: 100, LastX: 102, LastY: 97, KoefPixToMM: 1 };
 assert.strictEqual(editModePressEditsValue(), true);
+sandbox.global_mouseEvent = { X: 100, Y: 100, LastX: 104, LastY: 100, KoefPixToMM: 1 };
+assert.strictEqual(editModePressEditsValue(), false);
 sandbox.global_mouseEvent = { X: 100, Y: 100, LastX: 130, LastY: 100, KoefPixToMM: 1 };
 assert.strictEqual(editModePressEditsValue(), false);
 sandbox.global_mouseEvent = null;
 assert.strictEqual(editModePressEditsValue(), false);
+
+// Edit mode: the first click selects a widget. A click on the widget that is already the only
+// selection fills its value. Typing text keeps the caret in the value.
+const editModeFieldPress = sandbox.AscPDF.editModeFieldPress;
+sandbox.AscPDF.FIELD_TYPES = { button: 27, radiobutton: 28, checkbox: 29, text: 30, combobox: 31, listbox: 32, signature: 33 };
+const T = sandbox.AscPDF.FIELD_TYPES;
+function press(over) {
+	return editModeFieldPress(Object.assign({ type: T.text, wasSelected: true, selectedCount: 1, ctrl: false, shift: false, button: 0, inForm: false, locked: false }, over));
+}
+assert.strictEqual(press({ wasSelected: false }), "select", "first click only selects");
+assert.strictEqual(press({}), "release", "click on the selected text field fills it on release");
+assert.strictEqual(press({ inForm: true }), "press", "a press in the typed value places the caret");
+assert.strictEqual(press({ type: T.combobox, inForm: true }), "press");
+assert.strictEqual(press({ type: T.checkbox, inForm: true }), "release", "a toggled checkbox can still be dragged");
+assert.strictEqual(press({ type: T.radiobutton }), "release");
+assert.strictEqual(press({ type: T.listbox }), "release");
+assert.strictEqual(press({ type: T.button }), "select", "push button actions do not run in Edit");
+assert.strictEqual(press({ type: T.signature }), "select");
+assert.strictEqual(press({ locked: true }), "select", "View and Comment never fill");
+assert.strictEqual(press({ locked: undefined }), "select", "an unknown lock state does not fill");
+assert.strictEqual(press({ selectedCount: 2 }), "select", "a multi selection stays a selection");
+assert.strictEqual(press({ ctrl: true }), "select");
+assert.strictEqual(press({ shift: true }), "select");
+assert.strictEqual(press({ button: 2 }), "select", "right click opens the menu");
+assert.strictEqual(editModeFieldPress(null), "select");
+sandbox.AscPDF.FIELD_TYPES = undefined;
+assert.strictEqual(press({}), "select");
 
 function allow(state) {
 	assert.strictEqual(formValueChangeAllowed(state), true, JSON.stringify(state));
@@ -197,6 +227,17 @@ has(apiSrc, "this.canFillPdfForms() !== true");
 assert.strictEqual(docSrc.split("pdfSessionCanFillForms() !== true").length - 1, 3);
 has(docSrc, "formEditBlocked");
 has(docSrc, "editModePressEditsValue");
+has(docSrc, "AscPDF.editModeFieldPress(");
+has(docSrc, "wasSelected:    oCurObject === oMouseDownField && !!isFloatSelected");
+// The typed value is the controller's text target, so Backspace, select all, and the clipboard edit
+// the text instead of deleting or copying the widget. Undo keeps that target for the typed field only.
+for (const src of [textSrc, comboSrc]) {
+	has(src, "oController.selection.textSelection = this;");
+	has(src, "this.selectStartPage = this.GetPage();");
+	has(src, "new AscFormat.TextAddState(oController, this");
+}
+has(docSrc, "CPDFDoc.prototype.IsEditModeValueText = function");
+assert.strictEqual(docSrc.split("this.IsEditModeValueText(").length - 1, 2, "selection restore and co-editing reload");
 has(textSrc, "enterValue !== true");
 has(comboSrc, "enterValue !== true");
 has(listSrc, "enterValue !== true");
