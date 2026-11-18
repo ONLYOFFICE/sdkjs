@@ -3753,10 +3753,15 @@
 			return false;
 		return api.canFillPdfForms() === true;
 	};
-	// Edit mode selects a widget on the first click, the same way a text callout does.
-	// The second click enters the value. Form filling is not edit mode, so it is not gated here.
-	window["AscPDF"].editModeActivatesFormValue = function(clickCount) {
-		return clickCount >= 2;
+	// Edit mode starts a widget drag on mouse down. A release that barely moved is a click and
+	// enters the value. A few pixels of jitter must not count as a drag: that movement already
+	// clears ClickCount, so a real double click never reached the value.
+	window["AscPDF"].editModePressEditsValue = function() {
+		let mouse = (typeof global_mouseEvent !== "undefined") ? global_mouseEvent : null;
+		if (!mouse)
+			return false;
+		let slop = 10 * (mouse.KoefPixToMM || 1);
+		return Math.abs(mouse.X - mouse.LastX) <= slop && Math.abs(mouse.Y - mouse.LastY) <= slop;
 	};
 
 	CBaseField.prototype.updateSelectionState = function() {

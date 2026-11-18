@@ -617,7 +617,7 @@
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
     
-    CListBoxField.prototype.onMouseDown = function(x, y, e) {
+    CListBoxField.prototype.onMouseDown = function(x, y, e, nPage, enterValue) {
         if (AscPDF.isFormValueChangeLocked(this))
             return;
         let oDoc            = this.GetDocument();
@@ -631,7 +631,7 @@
         
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode() && !AscPDF.editModeActivatesFormValue(global_mouseEvent.ClickCount)) {
+        if (oDoc.IsEditFieldsMode() && enterValue !== true) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }

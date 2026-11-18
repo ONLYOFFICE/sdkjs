@@ -29,12 +29,14 @@ vm.runInNewContext(source.slice(start, end), sandbox);
 const formValueChangeAllowed = sandbox.AscPDF.formValueChangeAllowed;
 const isFormValueChangeLocked = sandbox.AscPDF.isFormValueChangeLocked;
 const pdfSessionCanFillForms = sandbox.AscPDF.pdfSessionCanFillForms;
-const editModeActivatesFormValue = sandbox.AscPDF.editModeActivatesFormValue;
+const editModePressEditsValue = sandbox.AscPDF.editModePressEditsValue;
 
-assert.strictEqual(editModeActivatesFormValue(1), false);
-assert.strictEqual(editModeActivatesFormValue(0), false);
-assert.strictEqual(editModeActivatesFormValue(2), true);
-assert.strictEqual(editModeActivatesFormValue(3), true);
+sandbox.global_mouseEvent = { X: 100, Y: 100, LastX: 104, LastY: 98, KoefPixToMM: 1 };
+assert.strictEqual(editModePressEditsValue(), true);
+sandbox.global_mouseEvent = { X: 100, Y: 100, LastX: 130, LastY: 100, KoefPixToMM: 1 };
+assert.strictEqual(editModePressEditsValue(), false);
+sandbox.global_mouseEvent = null;
+assert.strictEqual(editModePressEditsValue(), false);
 
 function allow(state) {
 	assert.strictEqual(formValueChangeAllowed(state), true, JSON.stringify(state));
@@ -194,10 +196,10 @@ has(apiSrc, "isFormValueChangeLocked(oField)");
 has(apiSrc, "this.canFillPdfForms() !== true");
 assert.strictEqual(docSrc.split("pdfSessionCanFillForms() !== true").length - 1, 3);
 has(docSrc, "formEditBlocked");
-has(docSrc, "editModeActivatesFormValue");
-has(textSrc, "editModeActivatesFormValue");
-has(comboSrc, "editModeActivatesFormValue");
-has(listSrc, "editModeActivatesFormValue");
+has(docSrc, "editModePressEditsValue");
+has(textSrc, "enterValue !== true");
+has(comboSrc, "enterValue !== true");
+has(listSrc, "enterValue !== true");
 {
 	const hit = listSrc.indexOf("this.content.Internal_GetContentPosByXY");
 	assert.ok(hit > 0, "list click hit test");
@@ -205,7 +207,7 @@ has(listSrc, "editModeActivatesFormValue");
 	const guard = listSrc.indexOf("if (!oPara)", hit);
 	assert.ok(guard > hit && guard < listSrc.indexOf("oPara.Pr.Shd", hit), "a missed list row does not throw");
 }
-has(checkSrc, "editModeActivatesFormValue");
+has(checkSrc, "enterValue !== true");
 has(docSrc, "_keepFormValueOnRestriction");
 has(apiSrc, "viewRestriction");
 function guardBeforeFocus(src, fnName) {

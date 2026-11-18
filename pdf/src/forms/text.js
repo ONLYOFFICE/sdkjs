@@ -1179,7 +1179,7 @@
         };
 		return this.contentClipRect;
     };
-    CTextField.prototype.onMouseDown = function(x, y, e) {
+    CTextField.prototype.onMouseDown = function(x, y, e, nPage, enterValue) {
         if (AscPDF.isFormValueChangeLocked(this))
             return;
         let oViewer         = editor.getDocumentRenderer();
@@ -1192,7 +1192,7 @@
 
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode() && !AscPDF.editModeActivatesFormValue(global_mouseEvent.ClickCount)) {
+        if (oDoc.IsEditFieldsMode() && enterValue !== true) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }

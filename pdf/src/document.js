@@ -2851,11 +2851,13 @@ var CPresentation = CPresentation || function(){};
 
         if (this.mouseDownField) {
             if (this.IsEditFieldsMode()) {
-                let enterValue = oMouseUpField == this.mouseDownField && AscPDF.editModeActivatesFormValue(global_mouseEvent.ClickCount) && !AscPDF.isFormValueChangeLocked(this.mouseDownField);
-                if (enterValue)
-                    this.OnMouseUpField(this.mouseDownField);
-                else
-                    oController.OnMouseUp(e, X, Y, pageObjectMM.index);
+                let field = this.mouseDownField;
+                let enterValue = oMouseUpField == field && AscPDF.editModePressEditsValue() && !AscPDF.isFormValueChangeLocked(field);
+                oController.OnMouseUp(e, X, Y, pageObjectMM.index);
+                if (enterValue) {
+                    field.onMouseDown(x, y, e, pageObjectMM.index, true);
+                    this.OnMouseUpField(field);
+                }
             }
             else {
                 if (oMouseUpField == this.mouseDownField) {
