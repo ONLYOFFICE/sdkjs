@@ -562,8 +562,17 @@ var CPresentation = CPresentation || function(){};
             isEditMode = true;
         }
 
-        if (this.activeForm || this.mouseDownField) {
-            this.BlurActiveObject();
+        // Finish a value that was typed before the mode changed, then drop focus.
+        // The flag is cleared in Blur before blur actions, and again here.
+        this._keepFormValueOnRestriction = true;
+        try {
+            if (Asc.editor && Asc.editor.End_CompositeInput)
+                Asc.editor.End_CompositeInput();
+            if (this.activeForm || this.mouseDownField)
+                this.BlurActiveObject();
+        }
+        finally {
+            this._keepFormValueOnRestriction = false;
         }
         
         this.widgets.forEach(function(field) {
@@ -1327,6 +1336,8 @@ var CPresentation = CPresentation || function(){};
 	 * @param {function(CBaseField): boolean} [checkFunc]
 	 */
     CPDFDoc.prototype.SelectNextForm = function(checkFunc) {
+		if (AscPDF.pdfSessionCanFillForms && AscPDF.pdfSessionCanFillForms() !== true)
+			return false;
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
 			return false;
@@ -1432,6 +1443,8 @@ var CPresentation = CPresentation || function(){};
 	 * @param {function(CBaseField): boolean} [checkFunc]
 	 */
     CPDFDoc.prototype.SelectPrevForm = function(checkFunc) {
+		if (AscPDF.pdfSessionCanFillForms && AscPDF.pdfSessionCanFillForms() !== true)
+			return false;
 		if (!this.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.fillForms)) {
 			Asc.editor.sendEvent("asc_onAskEditPassword");
 			return false;
@@ -1744,6 +1757,23 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
+        // Edit mode: a press on the widget that is already the only selection fills its value
+        this.editFieldPress = null;
+        if (this.IsEditFieldsMode() && oMouseDownField) {
+            let pressKind = AscPDF.editModeFieldPress({
+                type:           oMouseDownField.GetType(),
+                wasSelected:    oCurObject === oMouseDownField && !!isFloatSelected,
+                selectedCount:  oController.selectedObjects.length,
+                ctrl:           !!e.CtrlKey,
+                shift:          !!e.ShiftKey,
+                button:         AscCommon.getMouseButton(e || {}),
+                inForm:         oMouseDownField.IsInForm(),
+                locked:         AscPDF.isFormValueChangeLocked(oMouseDownField)
+            });
+            if (pressKind !== "select")
+                this.editFieldPress = { field: oMouseDownField, kind: pressKind };
+        }
+
         // keep current object in selection if clicked on the same one
         let isObjectSelected = (oCurObject && ([oMouseDownField, oMouseDownAnnot, oMouseDownDrawing, oMouseDownLink].includes(oCurObject)) || isFloatSelected);
         if (null == oCurObject || !isObjectSelected)
@@ -1773,7 +1803,8 @@ var CPresentation = CPresentation || function(){};
 
             // always allow left click, right click only once on first hit on object
             if (AscCommon.getMouseButton(e || {}) != 2 || (AscCommon.getMouseButton(e || {}) == 2 && oCurObject != oMouseDownObject)) {
-                oMouseDownObject.onMouseDown(x, y, e, nPage);
+                let pressValue = !!(this.editFieldPress && this.editFieldPress.kind === "press" && this.editFieldPress.field === oMouseDownObject);
+                oMouseDownObject.onMouseDown(x, y, e, nPage, pressValue);
 
                 // if no text select, then do mousedown in file
                 if ((IsOnRedact || IsOnLink) && null == oController.getTargetTextObject()) {
@@ -1896,6 +1927,13 @@ var CPresentation = CPresentation || function(){};
             this.activeDrawing          = null;
             this.mouseDownLinkObject    = null;
             
+            return;
+        }
+
+        // Before the same-widget early return, so a field that stayed down across a mode switch cannot press again.
+        if (oObject.IsForm && oObject.IsForm() && AscPDF.isFormValueChangeLocked(oObject)) {
+            if (this.activeForm === oObject || this.mouseDownField === oObject)
+                this.BlurActiveObject();
             return;
         }
 
@@ -2710,7 +2748,10 @@ var CPresentation = CPresentation || function(){};
             if (!pageObject)
                 return false;
 
-            if (this.IsEditFieldsMode()) {
+            if (AscPDF.pdfSessionCanFillForms && AscPDF.pdfSessionCanFillForms() !== true && !this.IsEditFieldsMode()) {
+                cursorType = defaultCursor;
+            }
+            else if (this.IsEditFieldsMode() && !(oMouseMoveField.IsInForm && oMouseMoveField.IsInForm())) {
                 cursorType = "pointer";
             }
             else {
@@ -2828,7 +2869,27 @@ var CPresentation = CPresentation || function(){};
 
         if (this.mouseDownField) {
             if (this.IsEditFieldsMode()) {
-                oController.OnMouseUp(e, X, Y, pageObjectMM.index);
+                let field = this.mouseDownField;
+                let pressKind = (this.editFieldPress && this.editFieldPress.field === field) ? this.editFieldPress.kind : "select";
+                this.editFieldPress = null;
+
+                if (pressKind === "press") {
+                    // the value is being typed: finish the caret or text selection as form filling does
+                    oController.OnMouseUp(e, X, Y, pageObjectMM.index);
+                    if (oMouseUpField == field)
+                        this.OnMouseUpField(field, e);
+                }
+                else {
+                    let enterValue = pressKind === "release" && oMouseUpField == field && AscPDF.editModePressEditsValue() && !AscPDF.isFormValueChangeLocked(field);
+                    oController.OnMouseUp(e, X, Y, pageObjectMM.index);
+                    if (enterValue) {
+                        field.onMouseDown(x, y, e, pageObjectMM.index, true);
+                        // a text value starts a caret press at the click point: release it there
+                        if (oController.curState instanceof AscFormat.TextAddState)
+                            oController.OnMouseUp(e, X, Y, pageObjectMM.index);
+                        this.OnMouseUpField(field);
+                    }
+                }
             }
             else {
                 if (oMouseUpField == this.mouseDownField) {
@@ -2896,6 +2957,8 @@ var CPresentation = CPresentation || function(){};
             if (this.IsCalcFieldsLocked()) {
                 return;
             }
+            if (AscPDF.isFormValueChangeLocked(oField))
+                return;
 
             this.DoAction(function() {
                 oField.onMouseUp();
@@ -8378,7 +8441,7 @@ var CPresentation = CPresentation || function(){};
 		this.CollaborativeEditing.UpdateDocumentPositionsByState(oState);
 
 		this.RemoveSelection();
-		if (!oState.DrawingsSelectionState.textObject || !oState.DrawingsSelectionState.textObject.IsForm() || !this.IsEditFieldsMode()) {
+		if (!oState.DrawingsSelectionState.textObject || !oState.DrawingsSelectionState.textObject.IsForm() || !this.IsEditFieldsMode() || this.IsEditModeValueText(oState.DrawingsSelectionState.textObject)) {
 			if (oState.activeObject && oState.activeObject.IsUseInDocument && oState.activeObject.IsUseInDocument()) {
 				this.SetMouseDownObject(oState.activeObject);
 
@@ -8904,11 +8967,16 @@ var CPresentation = CPresentation || function(){};
 
         return oSelectionState;
     };
+	// Edit mode does not put a field into its value when a selection is restored. The field whose value
+	// is being typed stays the text target, or keys and the clipboard would act on the widget.
+	CPDFDoc.prototype.IsEditModeValueText = function(textObject) {
+		return !!(textObject && this.IsEditFieldsMode() && textObject === this.activeForm && textObject.IsInForm && textObject.IsInForm());
+	};
 	CPDFDoc.prototype.SetSelectionState = function(oState) {
 		let oController = this.GetController();
 
 		this.RemoveSelection();
-		if (!oState.drawingSelection[0].textObject || !oState.drawingSelection[0].textObject.IsForm() || !this.IsEditFieldsMode()) {
+		if (!oState.drawingSelection[0].textObject || !oState.drawingSelection[0].textObject.IsForm() || !this.IsEditFieldsMode() || this.IsEditModeValueText(oState.drawingSelection[0].textObject)) {
 			if (oState.activeObject && oState.activeObject.IsUseInDocument && oState.activeObject.IsUseInDocument()) {
 				this.SetMouseDownObject(oState.activeObject);
 
@@ -11043,7 +11111,13 @@ var CPresentation = CPresentation || function(){};
 		
 		this.inUse = false;
 	};
+	CPDFCompositeInput.prototype.formEditBlocked = function() {
+		let controller = this.textController;
+		return !!(controller && controller.IsForm && controller.IsForm() && AscPDF.isFormValueChangeLocked(controller));
+	};
 	CPDFCompositeInput.prototype.add = function(codePoint) {
+		if (this.formEditBlocked())
+			return;
 		this.doAction(function() {
 			this.runInput.add(codePoint);
 			if (this.textController.checkExtentsByDocContent) {
@@ -11054,6 +11128,8 @@ var CPresentation = CPresentation || function(){};
 		}, AscDFH.historydescription_Document_CompositeInputReplace);
 	};
 	CPDFCompositeInput.prototype.remove = function(count) {
+		if (this.formEditBlocked())
+			return;
 		this.doAction(function() {
 			this.runInput.remove(count);
 			if (this.textController.checkExtentsByDocContent) {
@@ -11064,6 +11140,8 @@ var CPresentation = CPresentation || function(){};
 		}, AscDFH.historydescription_Document_CompositeInputReplace);
 	};
 	CPDFCompositeInput.prototype.replace = function(codePoints) {
+		if (this.formEditBlocked())
+			return;
 		this.doAction(function() {
 			this.runInput.replace(codePoints);
 			if (this.textController.checkExtentsByDocContent) {

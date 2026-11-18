@@ -2203,6 +2203,9 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.Reset = function() {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
             this.private_SetValue(defValue);
@@ -2916,6 +2919,9 @@
 	 */
     CBaseField.prototype.Blur = function() {
         let oDoc = this.GetDocument();
+        // The mode-switch commit already ran. Later blur actions are user-facing.
+        if (oDoc)
+            oDoc._keepFormValueOnRestriction = false;
         oDoc.SetGlobalHistory();
 
         this.SetInForm(false);
@@ -3704,7 +3710,80 @@
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
-    
+
+	// AcroForm values change in a session opened for editing, in any of its modes. A session opened for
+	// viewing does not change them. Annotation permission is a different capability. A missing state is not permission.
+	window["AscPDF"].formValueChangeAllowed = function(state) {
+		if (!state)
+			return false;
+		if (state.viewSession === true)
+			return false;
+		return state.editSession === true;
+	};
+	// Loading, undo, and the commit of a value typed before a mode switch are not user edits.
+	// History being off is not permission: setters turn history off around the write itself.
+	// A missing editor or permission method denies the change.
+	window["AscPDF"].isFormValueChangeLocked = function(field) {
+		if (!field)
+			return false;
+		if (AscCommon.History && AscCommon.History.UndoRedoInProgress)
+			return false;
+		if (field.IsUseInDocument && field.IsUseInDocument() !== true)
+			return false;
+		let doc = field.GetDocument && field.GetDocument();
+		if (doc && doc._keepFormValueOnRestriction)
+			return false;
+		let api = Asc.editor || (typeof editor !== "undefined" ? editor : null);
+		if (!api || typeof api.canFillPdfForms !== "function")
+			return true;
+		let renderer = api.getDocumentRenderer && api.getDocumentRenderer();
+		if (renderer && renderer.IsOpenFormsInProgress)
+			return false;
+		return api.canFillPdfForms() !== true;
+	};
+	// Tabbing into a field is a user action. An unknown session does not grant it.
+	window["AscPDF"].pdfSessionCanFillForms = function() {
+		let api = Asc.editor || (typeof editor !== "undefined" ? editor : null);
+		if (!api || typeof api.canFillPdfForms !== "function")
+			return false;
+		return api.canFillPdfForms() === true;
+	};
+	// Edit mode keeps a click on a widget for selection, so it can be moved, resized, and configured.
+	// A click on the widget that is already the only selection fills its value, the same way a
+	// click on a selected shape enters its text. A double click is a select and then a fill.
+	// "select": the press only selects or drags the widget.
+	// "release": the press may drag the widget. A release without a drag fills the value.
+	// "press": the value is already being typed, so the press places the caret or selects text.
+	// Push buttons and signatures have no value to fill, so their actions stay off in Edit.
+	window["AscPDF"].editModeFieldPress = function(state) {
+		if (!state || state.locked !== false || state.wasSelected !== true || state.selectedCount !== 1)
+			return "select";
+		if (state.ctrl || state.shift || state.button !== 0)
+			return "select";
+		let types = AscPDF.FIELD_TYPES;
+		if (!types)
+			return "select";
+		switch (state.type) {
+			case types.text:
+			case types.combobox:
+				return state.inForm === true ? "press" : "release";
+			case types.checkbox:
+			case types.radiobutton:
+			case types.listbox:
+				return "release";
+		}
+		return "select";
+	};
+	// The controller moves a widget on any movement, so only a release within the editor's own
+	// click tolerance counts as a click.
+	window["AscPDF"].editModePressEditsValue = function() {
+		let mouse = (typeof global_mouseEvent !== "undefined") ? global_mouseEvent : null;
+		if (!mouse)
+			return false;
+		let slop = 3 * (mouse.KoefPixToMM || 1);
+		return Math.abs(mouse.X - mouse.LastX) <= slop && Math.abs(mouse.Y - mouse.LastY) <= slop;
+	};
+
 	CBaseField.prototype.updateSelectionState = function() {
 		let oDoc = this.GetDocument();
 		let oDrDoc = oDoc.GetDrawingDocument();

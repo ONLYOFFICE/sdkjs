@@ -188,7 +188,9 @@
         }
         return this.contentClipRect;
     };
-    CComboBoxField.prototype.onMouseDown = function(x, y, e) {
+    CComboBoxField.prototype.onMouseDown = function(x, y, e, nPage, enterValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
         let oController     = oDoc.GetController();
@@ -199,7 +201,7 @@
 
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode()) {
+        if (oDoc.IsEditFieldsMode() && enterValue !== true) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }
@@ -211,7 +213,18 @@
 
             this.SetInForm(true);
             oDoc.SetLocalHistory();
-            oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
+            if (oDoc.IsEditFieldsMode()) {
+                // Edit mode hit-tests the widget's edit shape, so the controller would start a move.
+                // Place the caret and select text in the value itself, as form filling does. The value is
+                // the controller's text target, so keys, select all, and the clipboard edit the text, not the widget.
+                this.selectStartPage = this.GetPage();
+                oController.selection.textSelection = this;
+                this.selectionSetStart(e, pageObjectMM.x, pageObjectMM.y);
+                oController.changeCurrentState(new AscFormat.TextAddState(oController, this, pageObjectMM.x, pageObjectMM.y, e.Button));
+            }
+            else {
+                oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
+            }
             
             this.SetInForm(true);
 
@@ -258,6 +271,8 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.SelectOption = function(nIdx) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         if (this.GetCurIdxs().includes(nIdx))
             return;
         
@@ -325,6 +340,8 @@
     };
     
     CComboBoxField.prototype.SetValue = function(sValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
         let aIdxs = [];
         if (this.IsWidget()) {
             let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
@@ -425,6 +442,9 @@
         }
     };
 	CComboBoxField.prototype.EnterText = function(aChars) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
+
         let oKeystrokeEvent = this.DoKeystrokeAction(aChars);
 		if (!oKeystrokeEvent["rc"])
 			return false;
@@ -520,10 +540,12 @@
 		return AscPDF.CTextField.prototype.SetPlaceholder.call(this, sText);
 	};
 	CComboBoxField.prototype.InsertChars = function(aChars) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
 		this.content.EnterText(aChars);
 	};
 	CComboBoxField.prototype.canBeginCompositeInput = function() {
-		return this.IsEditable();
+		return this.IsEditable() && !AscPDF.isFormValueChangeLocked(this);
 	};
 	/**
 	 * Checks curValueIndex, corrects it and return.
@@ -574,7 +596,7 @@
     };
     CComboBoxField.prototype.IsCanEditText = function() {
         let oDoc = this.GetDocument();
-        if (oDoc.activeForm == this && this.IsEditable() && this.IsInForm() && !this.IsReadOnly())
+        if (oDoc.activeForm == this && this.IsEditable() && this.IsInForm() && !this.IsReadOnly() && !AscPDF.isFormValueChangeLocked(this))
             return true;
         
         return false;

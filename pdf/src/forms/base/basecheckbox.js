@@ -346,7 +346,9 @@
 
         return canvas;
     };
-    CBaseCheckBoxField.prototype.onMouseDown = function(x, y, e) {
+    CBaseCheckBoxField.prototype.onMouseDown = function(x, y, e, nPage, enterValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
@@ -354,7 +356,7 @@
         let isInFocus = oDoc.activeForm === this;
         oDoc.activeForm = this;
         
-        if (oDoc.IsEditFieldsMode()) {
+        if (oDoc.IsEditFieldsMode() && enterValue !== true) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }
@@ -413,6 +415,8 @@
 		if (this.IsReadOnly()) {
             return;
         }
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
 
 		let bCommit = false;
         if (this.IsChecked()) {
@@ -810,6 +814,8 @@
         return this._chStyle;
     };
     CBaseCheckBoxField.prototype.SetValue = function(value) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
         let oParent     = this.GetParent(true);
         let aOptions    = this.GetOptions();
 
@@ -852,6 +858,8 @@
      * @typeofeditors ["PDF"]
      */
     CBaseCheckBoxField.prototype.SetChecked = function(bChecked) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         if (bChecked == this.IsChecked())
             return;
 

@@ -647,12 +647,16 @@
 		if (codePoints.length == 1 && codePoints[0] == 32
 		&& doc.IsFillingFormMode() && doc.activeForm
 		&& (doc.activeForm.GetType() == AscPDF.FIELD_TYPES.checkbox || doc.activeForm.GetType() == AscPDF.FIELD_TYPES.radiobutton)) {
+			if (AscPDF.isFormValueChangeLocked(doc.activeForm))
+				return false;
 			doc.EnterDownActiveField();
 			return;
 		}
 
 		let textController = doc.getTextController(true);
 		if (!textController)
+			return false;
+		if (textController.IsForm && textController.IsForm() && AscPDF.isFormValueChangeLocked(textController))
 			return false;
 		if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
 			return false;
@@ -1814,6 +1818,9 @@
 		}, AscDFH.historydescription_Pdf_AddField, this);
 	};
 	PDFEditorApi.prototype.SetSignatureToField = function(signatureResult, fieldId) {
+		if (this.canFillPdfForms && this.canFillPdfForms() !== true)
+			return;
+
 		let oApi = this;
 		let oDoc = this.getPDFDoc();
 
@@ -4314,6 +4321,8 @@
 		let oActiveForm = oDoc.activeForm;
 		if (!oActiveForm)
 			return;
+		if (AscPDF.isFormValueChangeLocked(oActiveForm))
+			return;
 
 		let oDate = new Asc.cDate(oPr.GetFullDate());
 		let oCurDate = new Date();
@@ -4332,6 +4341,8 @@
 		let oField	= oDoc.activeForm;
 		let nIdx	= parseInt(sId);
 		if (!oField)
+			return;
+		if (AscPDF.isFormValueChangeLocked(oField))
 			return;
 				
 		oDoc.DoAction(function() {
@@ -5301,7 +5312,9 @@
 	};
 	PDFEditorApi.prototype.canEnterText = function()
 	{
-		return this.canEdit();
+		if (typeof this.canFillPdfForms !== "function")
+			return false;
+		return this.canFillPdfForms() === true;
 	};
 	PDFEditorApi.prototype.asc_GetTableOfContentsPr = function()
 	{
@@ -5601,6 +5614,16 @@
 	};
 	PDFEditorApi.prototype.asc_setPdfViewer = function(isPdfViewer) {
 		this.isPdfViewer = isPdfViewer;
+	};
+	// A document opened for viewing (editorConfig.mode "view") never changes form values. The editor reports
+	// that session with isPdfViewer: isViewMode is always false for PDF. An editing session fills forms in
+	// each of its modes. Annotating runs under a View restriction, so the restriction is not the session mode.
+	PDFEditorApi.prototype.canFillPdfForms = function() {
+		let viewSession = this.isViewMode === true || this.isPdfViewer === true;
+		return AscPDF.formValueChangeAllowed({
+			viewSession: viewSession,
+			editSession: !viewSession
+		});
 	};
 	PDFEditorApi.prototype.isLiveViewer = function() {
 		return this.isPdfViewer && AscCommon.CollaborativeEditing.Is_Fast() && !this.VersionHistory;

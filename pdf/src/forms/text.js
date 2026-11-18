@@ -132,7 +132,7 @@
     };
     CTextField.prototype.IsCanEditText = function() {
         let oDoc = this.GetDocument();
-        if (oDoc.activeForm == this && this.IsInForm() && !this.IsReadOnly())
+        if (oDoc.activeForm == this && this.IsInForm() && !this.IsReadOnly() && !AscPDF.isFormValueChangeLocked(this))
             return true;
         
         return false;
@@ -352,6 +352,8 @@
         return this._richText;
     };
 	CTextField.prototype.SetValue = function(sValue) {
+		if (AscPDF.isFormValueChangeLocked(this))
+			return false;
 		if (this.IsWidget()) {
             let isOnOpen = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
 
@@ -372,6 +374,8 @@
 		return true;
 	};
     CTextField.prototype.private_SetValue = function(sValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         if (this.IsWidget()) {
 			this.UpdateDisplayValue(sValue);
 		}
@@ -1175,7 +1179,9 @@
         };
 		return this.contentClipRect;
     };
-    CTextField.prototype.onMouseDown = function(x, y, e) {
+    CTextField.prototype.onMouseDown = function(x, y, e, nPage, enterValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
 		let oController		= oDoc.GetController();
@@ -1186,7 +1192,7 @@
 
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode()) {
+        if (oDoc.IsEditFieldsMode() && enterValue !== true) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }
@@ -1198,7 +1204,18 @@
 
             this.SetInForm(true);
             oDoc.SetLocalHistory();
-            oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
+            if (oDoc.IsEditFieldsMode()) {
+                // Edit mode hit-tests the widget's edit shape, so the controller would start a move.
+                // Place the caret and select text in the value itself, as form filling does. The value is
+                // the controller's text target, so keys, select all, and the clipboard edit the text, not the widget.
+                this.selectStartPage = this.GetPage();
+                oController.selection.textSelection = this;
+                this.selectionSetStart(e, pageObjectMM.x, pageObjectMM.y);
+                oController.changeCurrentState(new AscFormat.TextAddState(oController, this, pageObjectMM.x, pageObjectMM.y, e.Button));
+            }
+            else {
+                oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
+            }
             
             let pageObject = oViewer.getPageByCoords(x, y);
 
@@ -1578,6 +1595,9 @@
         }
     };
 	CTextField.prototype.EnterText = function(aChars, isOnCorrect) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
+
         let nEnteredCharsCount = aChars.length;
 
         AscCommon.History.ForbidUnionPoint();
@@ -1661,10 +1681,12 @@
         return this._needCheckAlign;
     };
     CTextField.prototype.InsertChars = function(aChars) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
 		this.content.EnterText(aChars);
 	};
 	CTextField.prototype.canBeginCompositeInput = function() {
-		return true;
+		return !AscPDF.isFormValueChangeLocked(this);
 	};
     CTextField.prototype.SelectAllText = function() {
         this.content.SelectAll();
@@ -1936,6 +1958,8 @@
 	 * @typeofeditors ["PDF"]
 	 */
 	CTextField.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord) {
+		if (AscPDF.isFormValueChangeLocked(this))
+			return false;
 		if (this.IsCanEditText() == false)
 			return false;
 		

@@ -1445,14 +1445,16 @@
         this._hovered = bValue;
     };
 
-    CPushButtonField.prototype.onMouseDown = function(x, y, e) {
+    CPushButtonField.prototype.onMouseDown = function(x, y, e, nPage, enterValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         let isInFocus   = oDoc.activeForm === this;
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode()) {
+        if (oDoc.IsEditFieldsMode() && enterValue !== true) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }

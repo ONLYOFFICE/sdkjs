@@ -300,6 +300,9 @@
     };
 
     CListBoxField.prototype.SelectOption = function(nIdx, isSingleSelect) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         let curIdxs = this.GetCurIdxs();
         if (Array.isArray(curIdxs)) {
             if (curIdxs.includes(nIdx) && curIdxs.length == 1)
@@ -333,6 +336,9 @@
         this.AddToRedraw();
     };
 	CListBoxField.prototype.UnselectOption = function(nIdx) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
 		let oShd = private_GetShd('nil');
 		let oPara = this.content.GetElement(nIdx);
 
@@ -539,6 +545,8 @@
         }
     };
     CListBoxField.prototype.SetValue = function(value) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return false;
         let aIndexes = [];
         let aOptions = this.GetOptions();
         if (this.IsWidget()) {
@@ -609,7 +617,9 @@
     };
     CListBoxField.prototype.private_SetValue = CListBoxField.prototype.SetValue;
     
-    CListBoxField.prototype.onMouseDown = function(x, y, e) {
+    CListBoxField.prototype.onMouseDown = function(x, y, e, nPage, enterValue) {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
@@ -621,7 +631,7 @@
         
         oDoc.activeForm = this;
 
-        if (oDoc.IsEditFieldsMode()) {
+        if (oDoc.IsEditFieldsMode() && enterValue !== true) {
             this.editShape.onMouseDown(x, y, e);
             return;
         }
@@ -639,12 +649,21 @@
             if (this.GetOptions().length == 0)
                 return;
 
+            // Edit mode draws the widget as a shape, so the option paragraphs have no
+            // positions until the field is laid out for value editing.
+            if (oDoc.IsEditFieldsMode()) {
+                this.SetNeedRecalc(true);
+                this.Recalculate();
+            }
+
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
             let X       = oPos["X"];
             let Y       = oPos["Y"];
 
             let nPos    = this.content.Internal_GetContentPosByXY(X, Y, 0);
             let oPara   = this.content.GetElement(nPos);
+            if (!oPara)
+                return;
             let oShd    = oPara.Pr.Shd;
 
             this.UpdateScroll(true);
@@ -703,6 +722,9 @@
         }
     };
     CListBoxField.prototype.MoveSelectDown = function() {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         this._bAutoShiftContentView = true;
         this.content.MoveCursorDown();
 
@@ -718,6 +740,9 @@
         this.UpdateScroll(true);
     };
     CListBoxField.prototype.MoveSelectUp = function() {
+        if (AscPDF.isFormValueChangeLocked(this))
+            return;
+
         this._bAutoShiftContentView = true;
         this.content.MoveCursorUp();
 
