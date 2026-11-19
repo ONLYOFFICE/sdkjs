@@ -4040,6 +4040,11 @@
 		let heightPx = ctx.canvas.height;
 		ctx.globalAlpha = 1.0;
 
+		// The page bitmap is reused by the next partial redraw. CGraphics.init()
+		// below saves the context once more, so both states are restored at the
+		// end. A state left on the stack keeps this dirty clip, and every later
+		// partial redraw of the page would only paint inside it.
+		ctx.save();
 		if (oDirtyBoundsMM) {
 			let oDoc = this.getPDFDoc();
 			let scaleX = widthPx / oDoc.GetPageWidthMM(nPage);
@@ -4048,7 +4053,6 @@
 			let dirtyY = Math.max(0, (Math.floor(oDirtyBoundsMM.t * scaleY)) - 1);
 			let dirtyR = Math.min(widthPx, (Math.ceil(oDirtyBoundsMM.r * scaleX)) + 1);
 			let dirtyB = Math.min(heightPx, (Math.ceil(oDirtyBoundsMM.b * scaleY)) + 1);
-			ctx.save();
 			ctx.beginPath();
 			ctx.rect(dirtyX, dirtyY, dirtyR - dirtyX, dirtyB - dirtyY);
 			ctx.clip();
@@ -4070,8 +4074,8 @@
 			annot.DrawOnPage(oGraphicsPDF, oGraphicsWord);
 		});
 
-		if (oDirtyBoundsMM)
-			ctx.restore();
+		ctx.restore(); // CGraphics.init
+		ctx.restore(); // the save above
 	};
 	CHtmlPage.prototype._paintDrawings = function() {
 		const ctx = this.canvas.getContext('2d');
