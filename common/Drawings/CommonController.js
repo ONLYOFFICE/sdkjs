@@ -11712,6 +11712,10 @@
 			return new AscFormat.PolyLineAddState(this.controller);
 		};
 		CInkDrawState.prototype.checkControllerState = function() {
+			// The stroke handler would put Pen back. A tool change already asked it to stop.
+			if (this.inkDrawer && this.inkDrawer.deferredOff) {
+				return;
+			}
 			let oControllerState = this.controller.curState;
 			if(oControllerState === this) {
 				return;

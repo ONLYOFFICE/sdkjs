@@ -14198,6 +14198,8 @@
 		return bChange;
 	};
 	CInkDrawer.prototype.startDraw = function(oAscPen) {
+		// A new drawing tool replaces a stop that was requested mid-gesture.
+		this.deferredOff = false;
 		this.pen = AscFormat.CorrectUniStroke(oAscPen);
 		if(!this.pen || !this.pen.Fill || !this.pen.Fill) {
 			this.pen = new AscFormat.CLn();
@@ -14209,6 +14211,7 @@
 		this.setState(INK_DRAWER_STATE_DRAW);
 	};
 	CInkDrawer.prototype.startErase = function() {
+		this.deferredOff = false;
 		this.pen = null;
 		this.setState(INK_DRAWER_STATE_ERASE);
 	};
@@ -14217,15 +14220,25 @@
 	};
 	CInkDrawer.prototype.endSilentMode = function() {
 		this.silentMode = false;
+		// A tool change during the gesture is applied once the gesture stops
+		// rewriting the drawer. Otherwise the saved draw state is put back.
+		if (this.deferredOff) {
+			this.turnOff();
+		}
 	};
 	CInkDrawer.prototype.isSilentMode = function() {
 		return this.silentMode;
 	};
 	CInkDrawer.prototype.turnOff = function() {
-		if(!this.isOn()) {
+		// Stroke handlers wrap the drawer in silent mode and then restore the
+		// state from before the event. A stop requested in that window has to
+		// survive the restore, or Pen stays active after the other tool.
+		if(this.isSilentMode()) {
+			this.deferredOff = true;
 			return;
 		}
-		if(this.isSilentMode()) {
+		this.deferredOff = false;
+		if(!this.isOn()) {
 			return;
 		}
 		this.pen = null;
@@ -14248,7 +14261,7 @@
 		return {state: this.state, pen: this.pen, silentMode: this.silentMode};
 	};
 	CInkDrawer.prototype.restoreState = function(oState) {
-		if(!oState) {
+		if(!oState || this.deferredOff) {
 			return;
 		}
 		this.state = oState.state;
