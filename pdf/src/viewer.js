@@ -2019,6 +2019,8 @@
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
 			AscCommon.check_MouseDownEvent(e, true);
+			// Before the hidden editor input is focused again by this gesture.
+			oThis.holdTextInputForPointer();
 
 			// down inside drawing (placeholders)
 			if (Asc.editor.canEdit()) {
@@ -2149,6 +2151,7 @@
 				return res;
 			}
 
+			oThis.releaseTextInputForPointer();
 			oThis.isFocusOnThumbnails = false;
 			//if (e && e.preventDefault)
 			//	e.preventDefault();
@@ -2336,6 +2339,98 @@
 				}
 			}
 			return false;
+		};
+		// A stamp, ink mark, or other non-text hit must not focus a writable
+		// input. Windows opens the touch keyboard when that input is focused.
+		this.fieldAcceptsKeyboard = function(field) {
+			if (!field || !field.GetType)
+				return false;
+			let nType = field.GetType();
+			if (nType !== AscPDF.FIELD_TYPES.text && nType !== AscPDF.FIELD_TYPES.combobox)
+				return false;
+			if (field.IsReadOnly && field.IsReadOnly())
+				return false;
+			// Absent on builds without the view-only fill lock: keep typing.
+			if (this.Api.canFillPdfForms)
+				return this.Api.canFillPdfForms() !== false;
+			return true;
+		};
+		// True when the gesture may lead to typing. The input is then left as the
+		// editor set it. Only gestures known to be non-text are held.
+		this.pointerTargetsText = function() {
+			let oDoc = this.getPDFDoc();
+			if (!oDoc)
+				return true;
+			if (this.Api.isInkDrawerOn && this.Api.isInkDrawerOn())
+				return false;
+			// Decide by what is under the pointer. A field being edited does not make
+			// a press on a stamp elsewhere a text gesture.
+			let oField = this.getPageFieldByMouse();
+			if (oField)
+				return this.fieldAcceptsKeyboard(oField);
+			let oAnnot = this.getPageAnnotByMouse();
+			if (oAnnot)
+				return !!(oAnnot.IsFreeText && oAnnot.IsFreeText());
+			// New shapes and text boxes, and text boxes, shapes and page text in
+			// Edit PDF, can all be typed into.
+			if (this.Api.isStartAddShape || this.getPageDrawingByMouse())
+				return true;
+			return false;
+		};
+		// e: the touch event, for a call made before the touch updates the mouse
+		// position (the touch manager focuses the input before that).
+		this.holdTextInputForPointer = function(e) {
+			let oInput = AscCommon.g_inputContext;
+			// Android and Sailfish already decide when the keyboard opens.
+			if (!oInput || !oInput.HtmlArea || oInput.isHardCheckKeyboard || AscCommon.AscBrowser.isAndroid)
+				return;
+			let bText;
+			let oPoint = e && e.touches && e.touches[0] ? e.touches[0] : e;
+			if (oPoint && (oPoint.pageX || oPoint.pageY)) {
+				let oMouse = AscCommon.global_mouseEvent;
+				let nX = oMouse.X, nY = oMouse.Y;
+				oMouse.X = (oPoint.pageX * AscCommon.AscBrowser.zoom) >> 0;
+				oMouse.Y = (oPoint.pageY * AscCommon.AscBrowser.zoom) >> 0;
+				bText = this.pointerTargetsText();
+				oMouse.X = nX;
+				oMouse.Y = nY;
+			}
+			else {
+				bText = this.pointerTargetsText();
+			}
+			if (bText) {
+				this.restoreTextInput();
+				return;
+			}
+			// A new token per gesture: a release left over from an earlier gesture
+			// must not make the input writable while this one is still down.
+			this.textInputGesture = {};
+			if (!this.textInputHeld) {
+				this.textInputHeld = {readOnly: oInput.HtmlArea.readOnly};
+				oInput.preventVirtualKeyboard_Hard();
+			}
+		};
+		this.restoreTextInput = function() {
+			let oHeld = this.textInputHeld;
+			if (!oHeld)
+				return;
+			this.textInputHeld = null;
+			let oInput = AscCommon.g_inputContext;
+			// Put back what the editor had, not always writable.
+			if (oInput && !oHeld.readOnly)
+				oInput.enableVirtualKeyboard_Hard();
+		};
+		this.releaseTextInputForPointer = function() {
+			if (!this.textInputHeld)
+				return;
+			let oViewer = this;
+			let oGesture = this.textInputGesture;
+			// After the browser has handled the tap, so the tap does not find a
+			// writable input. Restore even when the drag ended over text.
+			setTimeout(function() {
+				if (oViewer.textInputGesture === oGesture)
+					oViewer.restoreTextInput();
+			}, 0);
 		};
 		this.canMovePageByHand = function() {
 			return this.isMouseDown && this.MouseHandObject.Active && !this.doc.activeDrawing && !this.doc.mouseDownAnnot && !this.Api.isInkDrawerOn() && !this.Api.isStartAddShape;

@@ -518,6 +518,13 @@
 	{
 		this.IsTouching = false;
 
+		if (this.Api.isPdfEditor())
+		{
+			let oRenderer = this.Api.getDocumentRenderer();
+			if (oRenderer && oRenderer.releaseTextInputForPointer)
+				oRenderer.releaseTextInputForPointer();
+		}
+
 		if (this.delegate.IsReader())
 		{
 			this.checkPointerMultiTouchRemove(e);
@@ -760,6 +767,15 @@
 			return;
 
 		this.removeHandlersOnClick();
+
+		// PDF touch uses this word manager and never reaches the viewer's mouse
+		// path. Hold the input before asc_enableKeyEvents can focus it writable.
+		if (this.Api.isPdfEditor())
+		{
+			let oRenderer = this.Api.getDocumentRenderer();
+			if (oRenderer && oRenderer.holdTextInputForPointer)
+				oRenderer.holdTextInputForPointer(e);
+		}
 
 		if (!this.Api.asc_IsFocus() && !this.Api.isMobileVersion)
 			this.Api.asc_enableKeyEvents(true);
