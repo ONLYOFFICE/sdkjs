@@ -705,12 +705,13 @@
             let X = aOrigRect[0];
             let Y = aOrigRect[1];
 
-            if (this.IsHighlight())
-                AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
-            
-            oGraphicsPDF.SetGlobalAlpha(1);
+            let oCtx = oGraphicsPDF.GetContext();
+            if (!AscPDF.startBlendMode(oCtx, originView.ascBlendMode) && this.IsHighlight())
+                AscPDF.startMultiplyMode(oCtx);
+
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.DrawImageXY(originView, X, Y, undefined, true);
-            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
+            AscPDF.endMultiplyMode(oCtx);
         }
 
         // oGraphicsPDF.SetLineWidth(1);
@@ -750,6 +751,40 @@
 	 * @typeofeditors ["PDF"]
      * @returns {canvas}
 	 */
+    // The appearance is rasterized on a transparent buffer, so Multiply is not in the
+    // pixels. xpdf reports the mode on the appearance (BlendMode) via GetAnnotationsAP.
+    // Engines that still write 0 are answered once from the PDF dictionaries, cached
+    // on the file. Later paints do not read the bytes again.
+    CAnnotationBase.prototype._appearanceBlend = function(oFile, oApInfo) {
+        let mode = oApInfo ? (oApInfo["BlendMode"] || 0) : 0;
+        if (mode || !this.CanHaveAppearanceBlend())
+            return mode;
+        if (!oFile || typeof oFile["getFileBinary"] !== "function")
+            return 0;
+        if (!oFile.ascBlendByName) {
+            try {
+                oFile.ascBlendByName = AscPDF.indexAppearanceBlend(oFile["getFileBinary"]());
+            } catch (e) {
+                oFile.ascBlendByName = {};
+            }
+        }
+        let sName = this.GetName && this.GetName();
+        return (sName && oFile.ascBlendByName[sName]) || 0;
+    };
+    // Non-zero when this appearance must be composited onto the page image.
+    // The forms overlay is transparent, so Multiply there never sees the text.
+    CAnnotationBase.prototype.GetAppearanceBlendMode = function() {
+        let oCached = this._originView && this._originView.normal;
+        if (oCached && oCached.ascBlendMode)
+            return oCached.ascBlendMode;
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let fromFile = this._appearanceBlend(oViewer && oViewer.file, null);
+        if (fromFile)
+            return fromFile;
+        // A new highlighter has the tool opacity and no appearance stream yet.
+        // Multiply is what lets the page text show through. A solid pen stays Normal.
+        return AscPDF.blendModeForNewInk(this.IsInk && this.IsInk(), this.GetOpacity(), this.IsNeedDrawFromStream());
+    };
     CAnnotationBase.prototype.GetOriginView = function(nPageW, nPageH) {
         nPageW = Math.round(nPageW);
         nPageH = Math.round(nPageH);
@@ -767,6 +802,7 @@
         oSavedView = this._originView.normal;
         if (oSavedView) {
             if (oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]) {
+                oSavedView.ascBlendMode = this._appearanceBlend(oFile, oApInfoTmp);
                 return oSavedView;
             }
         }
@@ -780,6 +816,7 @@
 
         canvas.x    = oApearanceInfo["x"];
         canvas.y    = oApearanceInfo["y"];
+        canvas.ascBlendMode = this._appearanceBlend(oFile, oApInfoTmp);
         
         if (!oApInfoTmp)
             return null;
@@ -950,6 +987,11 @@
     };
     CAnnotationBase.prototype.IsStamp = function() {
         return false;
+    };
+    // Ink, stamps, and the shape annots whose appearance can carry /BM.
+    // Highlights and form fields have their own draw paths and must not scan the file.
+    CAnnotationBase.prototype.CanHaveAppearanceBlend = function() {
+        return this.IsInk() || this.IsStamp() || this.IsSquare() || this.IsCircle() || this.IsPolygon() || this.IsPolyLine() || this.IsLine();
     };
     CAnnotationBase.prototype.IsLink = function() {
         return false;
@@ -1242,11 +1284,19 @@
 
         this.Recalculate();
         let aRect = this.GetRect();
+        // Shape ink has no appearance bitmap. The page context has the text, so
+        // the blend mode has to be set here. DrawFromStream does this itself.
+        let nBlend = this.GetAppearanceBlendMode();
+        let oCtx = oGraphicsWord && oGraphicsWord.m_oContext;
+        if (nBlend && oCtx)
+            AscPDF.startBlendMode(oCtx, nBlend);
 
 		// add clip only for changed annots
 		this.IsChanged() && oGraphicsWord.AddClipRect(aRect[0] * g_dKoef_pt_to_mm, aRect[1] * g_dKoef_pt_to_mm, (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm, (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
         this.draw(oGraphicsWord);
         this.IsChanged() && oGraphicsWord.RemoveLastClip();
+        if (nBlend && oCtx)
+            AscPDF.endMultiplyMode(oCtx);
     };
     CAnnotationBase.prototype.changeFlipH = function () {
         return false;
@@ -2185,6 +2235,273 @@
 	window["AscPDF"].ConvertPx2Pt       = ConvertPx2Pt;
     window["AscPDF"].ParsePDFDate       = ParsePDFDate;
 
+    // GfxBlendMode order. The appearance bitmap is isolated, so the page composite
+    // has to apply this mode. 0 is Normal and stays source-over.
+    window["AscPDF"].BLEND_COMPOSITE = [
+        null, "multiply", "screen", "overlay", "darken", "lighten",
+        "color-dodge", "color-burn", "hard-light", "soft-light",
+        "difference", "exclusion", "hue", "saturation", "color", "luminosity"
+    ];
+    window["AscPDF"].indexAppearanceBlend = function(bytes) {
+        if (!bytes || !bytes.length)
+            return {};
+        let src = typeof bytes === "string" ? bytes : new TextDecoder("latin1").decode(bytes);
+        let objects = Object.create(null);
+        let re = /(\d+)\s+(\d+)\s+obj/g;
+        let m;
+        let table = ["Normal", "Multiply", "Screen", "Overlay", "Darken", "Lighten", "ColorDodge", "ColorBurn", "HardLight", "SoftLight", "Difference", "Exclusion", "Hue", "Saturation", "Color", "Luminosity"];
+        function modeIndex(name) {
+            let idx = table.indexOf(name);
+            return idx > 0 ? idx : 0;
+        }
+        function streamStart(dict, streamAt) {
+            let dataStart = streamAt + 6;
+            if (src.charCodeAt(dataStart) === 13)
+                dataStart++;
+            if (src.charCodeAt(dataStart) === 10)
+                dataStart++;
+            return dataStart;
+        }
+        while ((m = re.exec(src))) {
+            let num = m[1];
+            let gen = parseInt(m[2], 10);
+            let start = m.index + m[0].length;
+            let streamAt = src.indexOf("stream", start);
+            let endobj = src.indexOf("endobj", start);
+            if (endobj < 0)
+                continue;
+            let dictEnd = (streamAt >= 0 && streamAt < endobj) ? streamAt : endobj;
+            let dict = src.slice(start, dictEnd);
+            let prev = objects[num];
+            // Incremental updates append a higher generation. Keep that one.
+            if (prev && (gen < prev.gen || (gen === prev.gen && m.index < prev.pos))) {
+                if (streamAt >= 0 && streamAt < endobj) {
+                    let lengthMatch = /\/Length\s+(\d+)/.exec(dict);
+                    if (lengthMatch)
+                        re.lastIndex = streamStart(dict, streamAt) + parseInt(lengthMatch[1], 10);
+                    else {
+                        let endstream = src.indexOf("endstream", streamAt);
+                        if (endstream > 0)
+                            re.lastIndex = endstream + 9;
+                    }
+                }
+                continue;
+            }
+            let rec = { gen: gen, pos: m.index, dict: dict, stream: "" };
+            objects[num] = rec;
+            if (streamAt >= 0 && streamAt < endobj) {
+                let lengthMatch = /\/Length\s+(\d+)/.exec(dict);
+                let dataStart = streamStart(dict, streamAt);
+                let length = lengthMatch ? parseInt(lengthMatch[1], 10) : 0;
+                if (lengthMatch)
+                    re.lastIndex = dataStart + length;
+                else {
+                    let endstream = src.indexOf("endstream", streamAt);
+                    if (endstream > 0) {
+                        length = endstream - dataStart;
+                        re.lastIndex = endstream + 9;
+                    }
+                }
+                // Stream bodies are not dictionaries. Keep plaintext heads, and the
+                // whole body of an uncompressed object stream. Flate bytes are skipped
+                // so a compressed payload cannot be mistaken for /BM.
+                if (length > 0 && !/\/Filter\b/.test(dict)) {
+                    let isObjStm = /\/Type\s*\/ObjStm\b/.test(dict);
+                    let take = isObjStm ? length : Math.min(length, 200);
+                    rec.stream = src.slice(dataStart, dataStart + take);
+                }
+            }
+        }
+        // Uncompressed object streams. A direct object of the same number wins,
+        // which is the incremental-update replacement.
+        for (let num in objects) {
+            let rec = objects[num];
+            if (!rec.stream || !/\/Type\s*\/ObjStm\b/.test(rec.dict) || /\/Filter\b/.test(rec.dict))
+                continue;
+            let nMatch = /\/N\s+(\d+)/.exec(rec.dict);
+            let firstMatch = /\/First\s+(\d+)/.exec(rec.dict);
+            if (!nMatch || !firstMatch)
+                continue;
+            let count = parseInt(nMatch[1], 10);
+            let first = parseInt(firstMatch[1], 10);
+            let header = rec.stream.slice(0, first).trim().split(/\s+/);
+            for (let i = 0; i < count; i++) {
+                let objNum = header[i * 2];
+                let off = parseInt(header[i * 2 + 1], 10);
+                if (!objNum || isNaN(off))
+                    continue;
+                let existing = objects[objNum];
+                // A higher generation, or a direct object later in the file, stays.
+                // A later uncompressed object stream replaces an earlier generation-0 object.
+                if (existing && (existing.gen > 0 || existing.pos > rec.pos))
+                    continue;
+                let start = first + off;
+                let end = (i + 1 < count) ? first + parseInt(header[(i + 1) * 2 + 1], 10) : rec.stream.length;
+                objects[objNum] = { gen: 0, pos: -1, dict: rec.stream.slice(start, end), stream: "" };
+            }
+        }
+        function bmIn(dict) {
+            if (!dict)
+                return 0;
+            let foundRe = /\/BM\s*\/([A-Za-z]+)/g;
+            let found;
+            while ((found = foundRe.exec(dict))) {
+                let idx = modeIndex(found[1]);
+                if (idx > 0)
+                    return idx;
+            }
+            return 0;
+        }
+        function gsMode(dict, name, depth) {
+            if (!dict || depth > 5)
+                return null;
+            let inline = new RegExp("/" + name + "\\s*<<([\\s\\S]*?)>>").exec(dict);
+            if (inline)
+                return modeIndex((/\/BM\s*\/([A-Za-z]+)/.exec(inline[1]) || [])[1]);
+            let ref = new RegExp("/" + name + "\\s+(\\d+)\\s+\\d+\\s+R").exec(dict);
+            if (ref && objects[ref[1]]) {
+                let nested = /\/BM\s*\/([A-Za-z]+)/.exec(objects[ref[1]].dict);
+                if (nested)
+                    return modeIndex(nested[1]);
+            }
+            // /ExtGState can be an indirect resource dictionary holding several states.
+            let extRef = /\/ExtGState\s+(\d+)\s+\d+\s+R/.exec(dict);
+            if (extRef && objects[extRef[1]])
+                return gsMode(objects[extRef[1]].dict, name, depth + 1);
+            return null;
+        }
+        function selectedGs(dict, stream, depth) {
+            if (!dict || !stream || depth > 5)
+                return null;
+            // The last gs operator is the graphics state in effect for the appearance.
+            let gsRe = /\/([A-Za-z0-9]+)\s+gs\b/g;
+            let found, name = null;
+            while ((found = gsRe.exec(stream)))
+                name = found[1];
+            if (!name)
+                return null;
+            return gsMode(dict, name, depth);
+        }
+        function modeOf(rec, depth) {
+            if (!rec || depth > 5)
+                return 0;
+            let selected = selectedGs(rec.dict, rec.stream, depth);
+            if (selected !== null)
+                return selected;
+            let direct = bmIn(rec.dict);
+            if (direct)
+                return direct;
+            let extRef = /\/ExtGState\s+(\d+)\s+\d+\s+R/.exec(rec.dict);
+            if (extRef)
+                return modeOf(objects[extRef[1]], depth + 1);
+            let ext = /\/ExtGState\s*<<([\s\S]*?)>>/.exec(rec.dict);
+            if (!ext)
+                return 0;
+            let refRe = /(\d+)\s+\d+\s+R/g;
+            let ref;
+            while ((ref = refRe.exec(ext[1]))) {
+                let nested = modeOf(objects[ref[1]], depth + 1);
+                if (nested)
+                    return nested;
+            }
+            return 0;
+        }
+        function literal(dict, key) {
+            let at = dict.indexOf("/" + key);
+            if (at < 0)
+                return null;
+            let open = dict.indexOf("(", at);
+            if (open < 0 || open - at > 12)
+                return null;
+            let out = "";
+            for (let i = open + 1; i < dict.length; i++) {
+                let ch = dict[i];
+                if (ch === "\\") {
+                    let esc = dict[++i] || "";
+                    if (esc >= "0" && esc <= "7") {
+                        let oct = esc;
+                        for (let k = 0; k < 2; k++) {
+                            let digit = dict[i + 1];
+                            if (digit >= "0" && digit <= "7") {
+                                oct += digit;
+                                i++;
+                            }
+                            else
+                                break;
+                        }
+                        out += String.fromCharCode(parseInt(oct, 8));
+                    }
+                    else if (esc === "n") out += "\n";
+                    else if (esc === "r") out += "\r";
+                    else if (esc === "t") out += "\t";
+                    else if (esc === "b") out += "\b";
+                    else if (esc === "f") out += "\f";
+                    else out += esc;
+                    continue;
+                }
+                if (ch === ")")
+                    return out;
+                out += ch;
+            }
+            return null;
+        }
+        let byName = Object.create(null);
+        for (let num in objects) {
+            let rec = objects[num];
+            if (!/\/Subtype\s*\/(Ink|Square|Circle|Polygon|PolyLine|Line|Stamp)\b/.test(rec.dict))
+                continue;
+            let name = literal(rec.dict, "NM");
+            if (!name)
+                continue;
+            let ap = /\/AP\s*<<[^>]*\/N\s+(\d+)\s+\d+\s+R/.exec(rec.dict);
+            // An appearance that resolves to Normal must not pick up some other
+            // /BM on the annotation dictionary.
+            let mode = (ap && objects[ap[1]]) ? modeOf(objects[ap[1]], 0) : modeOf(rec, 0);
+            if (mode)
+                byName[name] = mode;
+        }
+        return byName;
+    };
+    // Non-markup annots drawn into the page bitmap, in Annots order.
+    // Includes a Normal annot that sits under a later Multiply annot, so the
+    // overlay does not paint that Normal annot back on top.
+    window["AscPDF"].annotsCompositedBeforeOverlay = function(aAnnots) {
+        let nLast = -1;
+        for (let i = 0; i < aAnnots.length; i++) {
+            let oAnnot = aAnnots[i];
+            if (oAnnot && !oAnnot.markup && oAnnot.blend)
+                nLast = i;
+        }
+        let aOnPage = [];
+        for (let i = 0; i <= nLast; i++) {
+            if (aAnnots[i] && !aAnnots[i].markup)
+                aOnPage.push(i);
+        }
+        return aOnPage;
+    };
+    // A new highlighter stores the tool opacity and has no appearance yet.
+    // Multiply lets the page text show through. A solid pen, and any ink that
+    // still draws its file appearance, stays on the mode read from /BM.
+    window["AscPDF"].blendModeForNewInk = function(isInk, opacity, drawsFromStream) {
+        if (!isInk || drawsFromStream)
+            return 0;
+        // The pen stores its opacity as a 0..255 byte (100% * 2.55 = 254.99999...), so a full pen
+        // arrives as 0.99999. Within half a step of 1 it is opaque; 254/255 is still translucent.
+        if (typeof opacity !== "number" || !(opacity < 1 - 1 / 510))
+            return 0;
+        return 1;
+    };
+    window["AscPDF"].startBlendMode = function(ctx, mode)
+    {
+        let op = AscPDF.BLEND_COMPOSITE[mode];
+        if (!ctx || !op)
+            return false;
+        if (!AscCommon.AscBrowser.isIE)
+            ctx.globalCompositeOperation = op;
+        else if (mode === 1)
+            AscPDF.startMultiplyMode(ctx);
+        return true;
+    };
     window["AscPDF"].startMultiplyMode = function(ctx)
     {
         if (!AscCommon.AscBrowser.isIE)

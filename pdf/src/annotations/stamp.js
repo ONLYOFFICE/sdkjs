@@ -394,12 +394,13 @@
             let X = oXfrm.offX / g_dKoef_pt_to_mm;
             let Y = oXfrm.offY / g_dKoef_pt_to_mm;
 
-            if (this.IsHighlight())
-                AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
-            
+            let oCtx = oGraphicsPDF.GetContext();
+            if (!AscPDF.startBlendMode(oCtx, originView.ascBlendMode) && this.IsHighlight())
+                AscPDF.startMultiplyMode(oCtx);
+
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.DrawImageXY(originView, X, Y, nRot, true);
-            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
+            AscPDF.endMultiplyMode(oCtx);
         }
 
         // if (oGraphicsPDF) {

@@ -1,0 +1,88 @@
+%PDF-1.7
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [3 0 R] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 180]
+/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >>
+/Annots [6 0 R 7 0 R 8 0 R] >>
+endobj
+4 0 obj
+<< /Length 111 >>
+stream
+BT
+/F1 16 Tf
+0 0 0 rg
+36 96 Td
+(UNDER MULTIPLY) Tj
+180 0 Td
+(UNDER NORMAL) Tj
+-180 -70 Td
+(HALF OPACITY) Tj
+ET
+
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Type /Annot /Subtype /Ink /Rect [20 80 190 140] /F 4 /CA 1 /C [1 1 0] /InkList [[24 110.0 186 110.0]] /AP << /N 9 0 R >> /NM (ink-9) >>
+endobj
+7 0 obj
+<< /Type /Annot /Subtype /Ink /Rect [200 80 370 140] /F 4 /CA 1 /C [1 1 0] /InkList [[204 110.0 366 110.0]] /AP << /N 10 0 R >> /NM (ink-10) >>
+endobj
+8 0 obj
+<< /Type /Annot /Subtype /Ink /Rect [20 15 190 70] /F 4 /CA 0.4 /C [1 1 0] /InkList [[24 42.5 186 42.5]] /AP << /N 11 0 R >> /NM (ink-11) >>
+endobj
+9 0 obj
+<< /Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 170 60] /Resources << /ExtGState << /R0 << /Type /ExtGState /BM /Multiply /CA 1 /ca 1 >> >> >> /Length 32 >>
+stream
+/R0 gs
+1 1 0 rg
+0 0 170 60 re
+f
+
+endstream
+endobj
+10 0 obj
+<< /Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 170 60] /Resources << /ExtGState << /R0 << /Type /ExtGState /BM /Normal /CA 1 /ca 1 >> >> >> /Length 32 >>
+stream
+/R0 gs
+1 1 0 rg
+0 0 170 60 re
+f
+
+endstream
+endobj
+11 0 obj
+<< /Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 170 55] /Resources << /ExtGState << /R0 << /Type /ExtGState /BM /Multiply /CA 1 /ca 1 >> >> >> /Length 32 >>
+stream
+/R0 gs
+1 1 0 rg
+0 0 170 55 re
+f
+
+endstream
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000269 00000 n 
+0000000431 00000 n 
+0000000501 00000 n 
+0000000656 00000 n 
+0000000815 00000 n 
+0000000971 00000 n 
+0000001201 00000 n 
+0000001430 00000 n 
+trailer << /Size 12 /Root 1 0 R >>
+startxref
+1661
+%%EOF
