@@ -63,12 +63,81 @@
         return this.editField;
     };
     CPdfShape.prototype.hitInTextRect = function(x, y) {
-        if (this.IsEditFieldShape()) {
+        if (this.IsEditFieldShape() || this.IsPageBackground()) {
             return false;
         }
-        
+
         return this.hitInTextRectWord(x, y);
     };
+    CPdfShape.prototype.hitInInnerArea = function(x, y) {
+        if (this.IsPageBackground()) {
+            return false;
+        }
+
+        return AscFormat.CShape.prototype.hitInInnerArea.call(this, x, y);
+    };
+    CPdfShape.prototype.hitInPath = function(x, y) {
+        if (this.IsPageBackground()) {
+            return false;
+        }
+
+        return AscFormat.CShape.prototype.hitInPath.apply(this, arguments);
+    };
+    /**
+     * Edit Text turns a fill that covers the page (often a white page background) into a shape.
+     * It is drawn under the rest of the page content and looks like the page itself, so a click
+     * goes through it: a click on empty space clears the selection instead of selecting a
+     * page-sized shape. It can still be selected with Select All.
+     * @returns {boolean}
+     */
+    CPdfShape.prototype.IsPageBackground = function() {
+        if (!this.IsFromScan() || this.IsEditFieldShape()) {
+            return false;
+        }
+
+        let oDoc    = this.GetDocument();
+        let nPage   = this.GetPage();
+        let oFile   = oDoc && oDoc.Viewer && oDoc.Viewer.file;
+        if (!oFile || !oFile.pages || !oFile.pages[nPage]) {
+            return false;
+        }
+
+        return IsPageBackgroundShape(this, oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
+    };
+
+    // Share of the page width and height a shape must cover to count as the page background.
+    const PAGE_BACKGROUND_COVERAGE = 0.9;
+
+    /**
+     * A shape with no text, no outline and no picture that covers the page.
+     * @param {CShape} oShape
+     * @param {number} nPageW page width in mm
+     * @param {number} nPageH page height in mm
+     * @returns {boolean}
+     */
+    function IsPageBackgroundShape(oShape, nPageW, nPageH) {
+        if (!oShape || !(nPageW > 0) || !(nPageH > 0)) {
+            return false;
+        }
+
+        let oXfrm = oShape.spPr && oShape.spPr.xfrm;
+        if (!oXfrm || oXfrm.rot) {
+            return false;
+        }
+        if (oShape.pen && oShape.pen.isVisible()) {
+            return false;
+        }
+        if (oShape.blipFill) {
+            return false;
+        }
+
+        let oContent = oShape.getDocContent && oShape.getDocContent();
+        if (oContent && !oContent.IsEmpty()) {
+            return false;
+        }
+
+        return oXfrm.extX >= nPageW * PAGE_BACKGROUND_COVERAGE && oXfrm.extY >= nPageH * PAGE_BACKGROUND_COVERAGE;
+    }
     CPdfShape.prototype.GetDocument = function() {
         if (this.IsEditFieldShape()) {
             return this.editField.GetDocument();
@@ -637,5 +706,6 @@
         return copy;
     };
     window["AscPDF"].CPdfShape = CPdfShape;
+    window["AscPDF"].IsPageBackgroundShape = IsPageBackgroundShape;
 })();
 
