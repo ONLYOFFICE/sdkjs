@@ -12872,7 +12872,7 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return false;
 
-		return logicDocument.EnterText(value);
+		return logicDocument.EnterText(value, true);
 	};
 	asc_docs_api.prototype.asc_correctEnterText = function(oldValue, newValue)
 	{

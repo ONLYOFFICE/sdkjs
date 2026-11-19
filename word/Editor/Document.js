@@ -8859,6 +8859,17 @@ CDocument.prototype.IsUseInDocument = function(Id)
 CDocument.prototype.OnKeyDown = function(e)
 {
 	this.sendEvent("asc_onBeforeKeyDown", e);
+	// separate Undo groups after navigation/shortcuts.
+	if (this._ooOvertypeEnabled && (e.CtrlKey || e.AltKey || e.MetaKey ||
+		[8,9,13,27,33,34,35,36,37,38,39,40,45,46].includes(e.KeyCode)))
+		this._ooOvertypeUndoEpoch = (this._ooOvertypeUndoEpoch || 0) + 1;
+	// plain Insert toggles overtype for this document.
+	// Ctrl+Insert (copy) and Shift+Insert (paste) retain their native behavior.
+	if (e.KeyCode === 45 && !e.CtrlKey && !e.ShiftKey && !e.AltKey && !e.MetaKey)
+	{
+		this._ooOvertypeEnabled = !this._ooOvertypeEnabled;
+		return keydownresult_PreventAll;
+	}
 	
 	// if (e.KeyCode < 34 || e.KeyCode > 40)
 	// 	this.CloseAllWindowsPopups();
@@ -10327,7 +10338,7 @@ CDocument.prototype.OnKeyPress = function(e)
 		Code = 0;//special char
 
 	if (Code > 0x20)
-		return this.EnterText(Code);
+		return this.EnterText(Code, true);
 
 	return false;
 };
@@ -10353,7 +10364,160 @@ CDocument.prototype.CheckEnterSpaceAction = function()
 	checkBox.SkipSpecialContentControlLock(false);
 	return result;
 };
-CDocument.prototype.EnterText = function(value)
+/* Native overtype character replacement. SPDX-License-Identifier: AGPL-3.0-only */
+/* OO_OVERTYPE_UNDO_RC5 -- ONLYOFFICE Overtype Native Undo RC5 -- native overtype history grouping.
+ * Targeted change: store continuation markers in a private WeakMap keyed by
+ * History point identity; SDKJS ClearAdditional() destroys point.Additional
+ * at the start of each new action. The markers survive ClearAdditional().
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+(function () {
+    "use strict";
+    var overtypeHistoryMarkers = new WeakMap();
+    function isTableDescription(item) {
+        return !!(item && item.Data && item.Data.Type === AscDFH.historyitem_TableId_Description);
+    }
+    function isLetterDescription(desc) {
+        return desc === AscDFH.historydescription_Document_AddLetter ||
+               desc === AscDFH.historydescription_Document_AddLetterUnion;
+    }
+    CDocument.prototype._ooMarkOvertypeUndoPoint = function () {
+        var h = this.History;
+        var serial = (this._ooOvertypeUndoSerial || 0) + 1;
+        this._ooOvertypeUndoSerial = serial;
+        this._ooOvertypePendingRC3 = {
+            epoch:this._ooOvertypeUndoEpoch || 0,
+            serial:serial, at:Date.now(),
+            point:h && h.Points && h.Points[h.Index]
+        };
+    };
+    CDocument.prototype._ooFinishOvertypeUndoRC3 = function () {
+        var pending = this._ooOvertypePendingRC3;
+        this._ooOvertypePendingRC3 = null;
+        if (!pending) return false;
+        var h = this.History;
+        var p = h && h.Points;
+        function no(reason) { return false; }
+        if (this.IsActionStarted()) return no('still-active-action');
+        if (!h || !p || h.Index !== p.length - 1 || h.Index < 0 || h.UndoRedoInProgress ||
+            !h.Is_On || !h.Is_On()) return no('bad-history-index-or-state');
+        var right = p[h.Index];
+        if (!right || !right.Additional || !right.Items || right !== pending.point)
+            return no('point-replaced-or-missing');
+        if (right.Items.length < 2) return no('right-too-few-items');
+        if (!isLetterDescription(right.Description)) return no('right-description');
+        // A TableId_Description as the FIRST history item is normal in upstream
+        // CheckUnionLastPoints (which strips it on union). RC3 incorrectly rejected it.
+        var meta = {epoch:pending.epoch,count:1,lastSerial:pending.serial,lastTime:pending.at};
+        overtypeHistoryMarkers.set(right, meta);
+        if (h.Index < 1) return true;
+        var left = p[h.Index - 1], a = left && overtypeHistoryMarkers.get(left);
+        if (!a) return true;
+        if (a.epoch !== meta.epoch || a.lastSerial + 1 !== pending.serial ||
+            a.count < 1 || a.count >= 32 || pending.at < a.lastTime ||
+            pending.at - a.lastTime > 10000)
+            return no('noncontiguous-epoch-serial-or-time');
+        if (!isLetterDescription(left.Description) || !left.Items || left.Items.length < 2)
+            return no('left-type-or-items');
+        if (left.Additional.FormFilling !== right.Additional.FormFilling)
+            return no('form-state-differs');
+        var border = p.length - 2;
+        if ((h.SavedIndex !== null && h.SavedIndex !== undefined && h.SavedIndex >= border) ||
+            (h.UserSavedIndex !== null && h.UserSavedIndex !== undefined && h.UserSavedIndex >= border))
+            return no('saved-boundary');
+        // Mirror SDKJS 9.4.0-129 History.CheckUnionLastPoints: disregard the
+        // optional TableId_Description prefix on EACH side. Keep actual changes
+        // in original order, to support the stock Undo/Redo implementation.
+        var lStart = isTableDescription(left.Items[0]) ? 1 : 0;
+        var rStart = isTableDescription(right.Items[0]) ? 1 : 0;
+        if (left.Items.length - lStart < 1 || right.Items.length - rStart < 1)
+            return no('only-table-id-items');
+        var info = {epoch:meta.epoch,count:a.count+1,
+                    lastSerial:pending.serial,lastTime:pending.at};
+        var extra = {};
+        if (left.Additional.FormFilling) extra.FormFilling = left.Additional.FormFilling;
+        var merged = {State:left.State,
+            Items:left.Items.slice(lStart).concat(right.Items.slice(rStart)),
+            Time:left.Time,Additional:extra,
+            Description:AscDFH.historydescription_Document_AddLetterUnion};
+        overtypeHistoryMarkers.set(merged,info);
+        p.splice(border,2,merged);
+        if (h.Index >= p.length) {
+            var delta = -h.Index + p.length - 1;
+            h.Index += delta;
+            h.RecIndex = Math.max(-1,h.RecIndex+delta);
+        }
+        return true;
+    };
+})();
+
+CDocument.prototype._ooTryOvertypeOne = function() {
+    // Fail closed: never attempt to overwrite an existing selection or an embedded object.
+    if (this.IsSelectionUse() || !this.GetCurrentParagraph || !this.GetSelectedElementsInfo || !this.StartSelectionFromCurPos)
+        return false;
+    if (this.IsTrackRevisions && this.IsTrackRevisions())
+        return false;
+    if (this.IsFillingFormMode && this.IsFillingFormMode())
+        return false;
+
+    let selectedInfo = this.GetSelectedElementsInfo();
+    if (!selectedInfo)
+        return false;
+    if ((selectedInfo.IsInTable && selectedInfo.IsInTable())
+        || (selectedInfo.GetMath && selectedInfo.GetMath())
+        || (selectedInfo.GetCheckBox && selectedInfo.GetCheckBox())
+        || (selectedInfo.IsDrawingObjSelected && selectedInfo.IsDrawingObjSelected())
+        || (selectedInfo.IsMixedSelection && selectedInfo.IsMixedSelection()))
+        return false;
+
+    let paragraph = this.GetCurrentParagraph();
+    if (!paragraph || !paragraph.IsCursorAtEnd || !paragraph.getCurrentPos
+        || !paragraph.Get_RightPos || !paragraph.SetSelectionContentPos
+        || !paragraph.GetSelectedText)
+        return false;
+    if (paragraph.IsCursorAtEnd())
+        return false;
+
+    if (this.Document_Is_SelectionLocked
+        && this.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, this.IsFormFieldEditing()))
+        return false;
+
+    let state = this.SaveDocumentState(false);
+    try {
+        let start = paragraph.getCurrentPos();
+        let next = new CParagraphSearchPos();
+        paragraph.Get_RightPos(next, start, false);
+        if (!next.IsFound()) {
+            this.LoadDocumentState(state);
+            return false;
+        }
+        this.StartSelectionFromCurPos();
+        if (!this.IsSelectionUse()) {
+            this.LoadDocumentState(state);
+            return false;
+        }
+        paragraph.SetSelectionContentPos(start, next.GetPos().Copy(), false);
+        let selectedText = paragraph.GetSelectedText(true);
+        // Do not remove paragraph boundaries, line breaks, or multi-codepoint graphemes.
+        // Combining marks are deliberately rejected until grapheme segmentation is validated.
+        if (typeof selectedText !== 'string' || Array.from(selectedText).length !== 1
+            || /[\r\n\u2028\u2029]/.test(selectedText)
+            || /\p{Mark}/u.test(selectedText)) {
+            this.LoadDocumentState(state);
+            return false;
+        }
+        // Selection has been validated, with no document mutation yet.
+    } catch (error) {
+        this.LoadDocumentState(state);
+        return false;
+    }
+    // Both deletion and insertion happen inside the caller's single StartAction.
+    // Never swallow a failed Remove: it could leave the document in a mutated state.
+    this.Remove(1, true, false, true);
+    return true;
+};
+
+CDocument.prototype.EnterText = function(value, allowOvertype)
 {
 	if (undefined === value
 		|| null === value
@@ -10374,6 +10538,12 @@ CDocument.prototype.EnterText = function(value)
 		return false;
 
 	this.StartAction(AscDFH.historydescription_Document_AddLetter, null, null, codePoints);
+	// one delete within the same Undo action.
+	// Failed eligibility checks must insert normally without deleting anything.
+	if (allowOvertype === true && this._ooOvertypeEnabled && !this.IsSelectionUse()
+		&& ((Array.isArray(codePoints) && codePoints.length === 1)
+			|| typeof codePoints === "number"))
+		if (this._ooTryOvertypeOne()) this._ooMarkOvertypeUndoPoint();
 	
 	this.DrawingDocument.TargetStart();
 	this.DrawingDocument.TargetShow();
@@ -10397,7 +10567,14 @@ CDocument.prototype.EnterText = function(value)
 	this.CheckLanguageOnTextAdd = false;
 
 	this.UpdateSelection();
-	this.FinalizeAction();
+	let actionCompleted = this.FinalizeAction();
+	if (this._ooOvertypePendingRC3)
+	{
+		if (actionCompleted && !this.IsActionStarted())
+			this._ooFinishOvertypeUndoRC3();
+		else
+			this._ooOvertypePendingRC3 = null;
+	}
 
 	return true;
 };
@@ -10520,6 +10697,9 @@ CDocument.prototype.canEnterText = function()
 };
 CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 {
+	// mouse repositioning breaks continuous typing.
+	if (this._ooOvertypeEnabled)
+		this._ooOvertypeUndoEpoch = (this._ooOvertypeUndoEpoch || 0) + 1;
 	if (PageIndex < 0)
 		return;
 	

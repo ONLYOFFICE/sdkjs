@@ -2307,6 +2307,16 @@
 		}
 	}
 
+	Api.prototype["pluginMethod_OOOvertypeToggle"] = function()
+	{
+		let doc = this.WordControl && this.WordControl.m_oLogicDocument;
+		if (!doc || typeof doc._ooTryOvertypeOne !== "function")
+			return null;
+		doc._ooOvertypeUndoEpoch = (doc._ooOvertypeUndoEpoch || 0) + 1;
+		doc._ooOvertypeEnabled = !doc._ooOvertypeEnabled;
+		return doc._ooOvertypeEnabled;
+	};
+
 	/**
 	 * Adds an item to the toolbar menu.
 	 * @undocumented
