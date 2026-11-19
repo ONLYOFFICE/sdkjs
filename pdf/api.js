@@ -829,6 +829,8 @@
 			oDoc.FinalizeAction(true);
 			return false;
 		}
+		// Edit Text replaces Pen: a click on the page must place the text cursor.
+		this.stopInkDrawer();
 		
 		const fEndCallback = function() {
 			oDoc.FinalizeAction();
