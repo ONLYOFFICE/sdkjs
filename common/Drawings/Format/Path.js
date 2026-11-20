@@ -1536,7 +1536,8 @@ function (window, undefined) {
 				}
 			}
 		}
-		return !!canvasContext.isPointInPath(x, y);
+		// the same fill rule the path is painted with: the hole of an even-odd frame is not inner area
+		return !!canvasContext.isPointInPath(x, y, this.fill === "evenOdd" ? "evenodd" : "nonzero");
 	};
 	Path.prototype.hitInPath = function (canvasContext, x, y, oAddingPoint, _path_index) {
 		let _arr_commands = this.ArrPathCommand;
