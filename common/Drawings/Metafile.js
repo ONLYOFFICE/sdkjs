@@ -1786,6 +1786,7 @@
 		this.ctPageEdit			= 206;
 		this.ctPageClear		= 207;
 		this.ctPageRotate		= 208;
+		this.ctPageOShapesDrop	= 209;
 
 		this.ctError = 255;
 	}

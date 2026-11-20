@@ -205,6 +205,30 @@
         image.requestHeight = requestH;
         return image;
     };
+    // Shapes the editor saved on a page as /OShapes marked content: [{mcid, data}], data is the stored shape.
+    // nMode 3 lists them, 4 lists them and stops drawing them on the page, 5 draws them again.
+    // An engine without these modes returns nothing.
+    CFile.prototype.scanSavedShapes = function(nOriginIndex, nMode) {
+        let aShapes = [];
+        if (!this.nativeFile || undefined === nOriginIndex)
+            return aShapes;
+
+        let aStrings = null;
+        try {
+            aStrings = this.nativeFile["scanPage"](nOriginIndex, nMode);
+        } catch (e) {
+            aStrings = null;
+        }
+        if (!Array.isArray(aStrings))
+            return aShapes;
+
+        for (let i = 0; i + 1 < aStrings.length; i += 2) {
+            let nMCID = parseInt(aStrings[i]);
+            if (!isNaN(nMCID) && aStrings[i + 1])
+                aShapes.push({mcid: nMCID, data: aStrings[i + 1]});
+        }
+        return aShapes;
+    };
     CFile.prototype.addPage = function(pageIndex, pageObj) {
         return this.nativeFile["addPage"](pageIndex, pageObj);
     };

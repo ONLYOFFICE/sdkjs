@@ -4341,6 +4341,7 @@
 	window['AscDFH'].historyitem_Pdf_Document_DisconnectEveryone	= window['AscDFH'].historyitem_type_PDF_Document | 23;
 	window['AscDFH'].historyitem_Pdf_Document_Final					= window['AscDFH'].historyitem_type_PDF_Document | 24;
 	window['AscDFH'].historyitem_Pdf_Document_Max_Ap_Idx			= window['AscDFH'].historyitem_type_PDF_Document | 25;
+	window['AscDFH'].historyitem_PDF_Document_RestoreSavedShapes	= window['AscDFH'].historyitem_type_PDF_Document | 26;
 
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;
 	AscDFH.historyitem_CustomPropertiesRemoveProperty = AscDFH.historyitem_type_CustomProperties | 1;

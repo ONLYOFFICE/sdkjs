@@ -175,6 +175,20 @@
 	// since there's no point in requesting links for invisible pages and pages we currently can't draw
 	// text - text commands. they are always requested if there's any page without text commands
 	// pages on screen have priority.
+	// Saved editor shapes that were restored as drawings are written again with the page's drawings,
+	// so the writer removes their old /OShapes blocks from the page content.
+	function writeRestoredShapesDrop(oMemory, oPageInfo) {
+		let aMCID = oPageInfo && oPageInfo.GetRestoredShapes();
+		if (!aMCID || !aMCID.length)
+			return;
+
+		oMemory.WriteByte(AscCommon.CommandType.ctPageOShapesDrop);
+		oMemory.WriteLong(8 + 4 * aMCID.length); // length field, count, MCIDs
+		oMemory.WriteLong(aMCID.length);
+		for (let i = 0; i < aMCID.length; i++)
+			oMemory.WriteLong(aMCID[i]);
+	}
+
 	function CPageInfo()
 	{
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
@@ -200,6 +214,9 @@
 		this.deleteLock = null;
 		this.rotateLock = null;
 		this.editPageLock = null;
+
+		this.restoredShapes = null;    // MCIDs of saved editor shapes (/OShapes) shown as live drawings
+		this.savedShapesBounds = null; // cached bounds of the page's saved shapes, for hit testing
 
 		this.SetLocks(new AscCommon.PropLocker(this.GetId()), new AscCommon.PropLocker(this.GetId()), new AscCommon.PropLocker(this.GetId()));
 	}
@@ -499,6 +516,35 @@
 				delete oPage.page.pageImage;
 			}
 		}
+	};
+	CPageInfo.prototype.SetRestoredShapes = function(aMCID) {
+		AscCommon.History.Add(new CChangesPDFDocumentRestoreSavedShapes(this, this.restoredShapes, aMCID));
+		this.private_SetRestoredShapes(aMCID);
+	};
+	CPageInfo.prototype.private_SetRestoredShapes = function(aMCID) {
+		let oDoc	= this.GetDocument();
+		let oViewer	= oDoc.Viewer;
+
+		this.restoredShapes = aMCID && aMCID.length ? aMCID.slice() : null;
+
+		// the page image must not draw the shapes that are now drawings
+		if (oViewer.file)
+			oViewer.file.scanSavedShapes(this.GetOriginIndex(), this.restoredShapes ? 4 : 5);
+
+		let nIndex = this.GetIndex();
+		if (oViewer.drawingPages && oViewer.drawingPages[nIndex]) {
+			delete oViewer.drawingPages[nIndex].Image;
+		}
+		let oThumbnails = oDoc.GetThumbnails && oDoc.GetThumbnails();
+		if (oThumbnails) {
+			let oPage = oThumbnails.getDrawingPage(nIndex);
+			if (oPage) {
+				delete oPage.page.pageImage;
+			}
+		}
+	};
+	CPageInfo.prototype.GetRestoredShapes = function() {
+		return this.restoredShapes;
 	};
 	CPageInfo.prototype.IsRecognized = function() {
 		let oDoc		= this.GetDocument();
@@ -4873,6 +4919,9 @@
 						oMemory.WriteByte(AscCommon.CommandType.ctPageClear);
 						oMemory.WriteLong(4);
 					}
+					else {
+						writeRestoredShapesDrop(oMemory, oPageInfo);
+					}
 				}
 				
 				// add page
@@ -5221,6 +5270,8 @@
 			})) bNeedEdit = true;
 			if (aRedactedForms.length != 0) bNeedEdit = true;
 			if (aDeletedObj.length != 0) bNeedEdit = true;
+			// restored saved shapes: their old copy must be removed even if the drawings were deleted
+			if (aPagesInfo[nPage] && aPagesInfo[nPage].GetRestoredShapes()) bNeedEdit = true;
 
 			return bNeedEdit;
 		}
@@ -5538,6 +5589,9 @@
 						oMemory.WriteByte(AscCommon.CommandType.ctPageClear);
 						oMemory.WriteLong(4);
 					}
+					else {
+						writeRestoredShapesDrop(oMemory, oPageInfo);
+					}
 				}
 				
 				// add page
@@ -5699,6 +5753,8 @@
 				return form.IsChanged();
 			})) bNeedEdit = true;
 			if (aDeletedObj.length != 0) bNeedEdit = true;
+			// restored saved shapes: their old copy must be removed even if the drawings were deleted
+			if (aPagesInfo[nPage] && aPagesInfo[nPage].GetRestoredShapes()) bNeedEdit = true;
 
 			return bNeedEdit;
 		}
