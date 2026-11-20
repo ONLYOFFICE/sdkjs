@@ -2456,18 +2456,20 @@
 				this.Memory.WriteLong(1);
 			}
 		},
-		df                        : function()
+		df                        : function(rule)
 		{
+			// 256 is nonzero winding, 512 is even-odd. The converter passes this to DrawPath.
+			var nFillType = (rule === "evenodd") ? 512 : 256;
 			if (null == this.VectorMemoryForPrint)
 			{
 				this.Memory.WriteByte(CommandType.ctDrawPath);
-				this.Memory.WriteLong(256);
+				this.Memory.WriteLong(nFillType);
 			}
 			else
 			{
 				this.Memory.Copy(this.VectorMemoryForPrint, 0, this.VectorMemoryForPrint.pos);
 				this.Memory.WriteByte(CommandType.ctDrawPath);
-				this.Memory.WriteLong(256);
+				this.Memory.WriteLong(nFillType);
 			}
 		},
 		WriteVectorMemoryForPrint : function()
@@ -3351,10 +3353,10 @@
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1].ds();
 	};
-	CDocumentRenderer.prototype.df = function()
+	CDocumentRenderer.prototype.df = function(rule)
 	{
 		if (0 != this.m_lPagesCount)
-			this.m_arrayPages[this.m_lPagesCount - 1].df();
+			this.m_arrayPages[this.m_lPagesCount - 1].df(rule);
 	};
 	CDocumentRenderer.prototype.drawpath = function(type)
 	{

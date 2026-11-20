@@ -1868,6 +1868,7 @@ CShapeDrawer.prototype.df = function (mode) {
         if (this.Graphics.isBoundsChecker() === true)
             return;
 
+        var sFillRule = (mode == "evenOdd") ? "evenodd" : "nonzero";
         var bIsIntegerGridTRUE = false;
         if (this.bIsTexture) {
             if (this.Graphics.m_bIntegerGrid === true) {
@@ -1957,13 +1958,13 @@ CShapeDrawer.prototype.df = function (mode) {
                         _ctx.globalAlpha = this.UniFill.transparent / 255;
 
                     _ctx.fillStyle = patt;
-                    _ctx.fill();
+                    _ctx.fill(sFillRule);
                     _ctx.globalAlpha = _old_global_alpha;
                 }
                 else
                 {
                     _ctx.fillStyle = patt;
-                    _ctx.fill();
+                    _ctx.fill(sFillRule);
                 }
 
                 _ctx.restore();
@@ -2058,12 +2059,12 @@ CShapeDrawer.prototype.df = function (mode) {
                 {
                     var _old_global_alpha = this.Graphics.m_oContext.globalAlpha;
                     _ctx.globalAlpha = this.UniFill.transparent / 255;
-                    _ctx.fill();
+                    _ctx.fill(sFillRule);
                     _ctx.globalAlpha = _old_global_alpha;
                 }
                 else
                 {
-                    _ctx.fill();
+                    _ctx.fill(sFillRule);
                 }
 
                 _gr.m_bPenColorInit = false;
@@ -2108,7 +2109,7 @@ CShapeDrawer.prototype.df = function (mode) {
                 rgba.A = this.UniFill.transparent;
             this.Graphics.b_color1(rgba.R, rgba.G, rgba.B, rgba.A);
         }
-        this.Graphics.df();
+        this.Graphics.df(sFillRule);
 };
 
 CShapeDrawer.prototype.isArrowPresent = function()
@@ -2455,21 +2456,23 @@ CShapeDrawer.prototype.drawFillStroke = function(bIsFill, fill_mode, bIsStroke)
                 }
             }
 
+            // 0x0100 nonzero winding, 0x0200 even-odd. The PDF writer emits f or f* from these bits.
+            var nFillType = (fill_mode == "evenOdd") ? 512 : 256;
             if (bIsFill && bIsStroke)
             {
                 if (this.bIsTexture || bIsPattern)
                 {
-                    this.Graphics.drawpath(256);
+                    this.Graphics.drawpath(nFillType);
                     this.Graphics.drawpath(1);
                 }
                 else
                 {
-                    this.Graphics.drawpath(256 + 1);
+                    this.Graphics.drawpath(nFillType + 1);
                 }
             }
             else if (bIsFill)
             {
-                this.Graphics.drawpath(256);
+                this.Graphics.drawpath(nFillType);
             }
             else if (bIsStroke)
             {
@@ -2479,7 +2482,7 @@ CShapeDrawer.prototype.drawFillStroke = function(bIsFill, fill_mode, bIsStroke)
             {
                 // такого быть не должно по идее
                 this.Graphics.b_color1(0, 0, 0, 0);
-                this.Graphics.drawpath(256);
+                this.Graphics.drawpath(nFillType);
             }
 
 			if (isArrowsPresent) {

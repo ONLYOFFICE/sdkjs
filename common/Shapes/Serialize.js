@@ -6530,6 +6530,7 @@ function BinaryPPTYLoader()
 				case Asc.c_oAscPathFillMode.LIGHTEN_LESS: fillMode = "lightenLess"; break;
 				case Asc.c_oAscPathFillMode.NONE:         fillMode = "none"; break;
 				case Asc.c_oAscPathFillMode.NORM:         fillMode = "norm"; break;
+				case Asc.c_oAscPathFillMode.EVEN_ODD:     fillMode = "evenOdd"; break;
 				default:                                  fillMode = "norm";
 			}
 

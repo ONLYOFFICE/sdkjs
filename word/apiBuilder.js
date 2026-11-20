@@ -4540,7 +4540,7 @@
 
 	/**
 	 * The path fill type.
-	 * @typedef {("none" | "norm" | "lighten" | "lightenLess" | "darken" | "darkenLess")} PathFillType
+	 * @typedef {("none" | "norm" | "evenOdd" | "lighten" | "lightenLess" | "darken" | "darkenLess")} PathFillType
 	 * @see office-js-api/Examples/Enumerations/PathFillType.js
 	 */
 
@@ -23164,7 +23164,7 @@
 
 	ApiPath.prototype.SetFill = function(sFill)
 	{
-		const FILL_ALLOWED = ["none", "norm", "lighten", "lightenLess", "darken", "darkenLess"];
+		const FILL_ALLOWED = ["none", "norm", "evenOdd", "lighten", "lightenLess", "darken", "darkenLess"];
 		if (FILL_ALLOWED.indexOf(sFill) === -1)
 		{
 			return;

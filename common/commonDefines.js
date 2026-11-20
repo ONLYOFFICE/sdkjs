@@ -1786,7 +1786,8 @@ window.AscCommon.g_cIsBeta = "false";
 		LIGHTEN: 2,
 		LIGHTEN_LESS: 3,
 		NONE: 4,
-		NORM: 5
+		NORM: 5,
+		EVEN_ODD: 6
 	};
 	var c_oAscFillGradType = {
 		GRAD_LINEAR : 1,
@@ -5442,6 +5443,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['LIGHTEN_LESS'] = prot.LIGHTEN_LESS;
 	prot['NONE']         = prot.NONE;
 	prot['NORM']         = prot.NORM;
+	prot['EVEN_ODD']     = prot.EVEN_ODD;
 
 	window['Asc']['c_oAscFillGradType'] = window['Asc'].c_oAscFillGradType = c_oAscFillGradType;
 	prot                                = c_oAscFillGradType;
