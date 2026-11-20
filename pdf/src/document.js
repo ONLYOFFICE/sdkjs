@@ -6455,6 +6455,21 @@ var CPresentation = CPresentation || function(){};
         return !!oPageInfo && this.Api.canEdit() && !oPageInfo.IsRecognized() && !oPageInfo.GetRestoredShapes() &&
             undefined !== oPageInfo.GetOriginIndex();
     };
+    // A saved shape that is the page background: a fill without text, outline or picture that covers at
+    // least 90% of the page width and height (saved, for example, after Edit Text converted the page).
+    // Restored shapes are drawn above the page image, so a restored background would cover the rest of
+    // the page content. A page that has one is not restored by a click; Edit Text converts it in order.
+    CPDFDoc.prototype.IsSavedPageBackground = function(nPage, oDrawing) {
+        let oXfrm = oDrawing && oDrawing.spPr && oDrawing.spPr.xfrm;
+        if (!oXfrm || oXfrm.rot || oDrawing.blipFill || (oDrawing.pen && oDrawing.pen.isVisible()))
+            return false;
+
+        let oContent = oDrawing.getDocContent && oDrawing.getDocContent();
+        if (oContent && !oContent.IsEmpty())
+            return false;
+
+        return oXfrm.extX >= 0.9 * this.GetPageWidthMM(nPage) && oXfrm.extY >= 0.9 * this.GetPageHeightMM(nPage);
+    };
     CPDFDoc.prototype.HitSavedShape = function(nPage, X, Y) {
         if (!this.CanRestoreSavedShapes(nPage))
             return false;
@@ -6472,6 +6487,11 @@ var CPresentation = CPresentation || function(){};
                 try {
                     for (let i = 0; i < aSaved.length; i++) {
                         let oDrawing = this.ReadSavedShape(aSaved[i].data);
+                        if (this.IsSavedPageBackground(nPage, oDrawing)) {
+                            // the page is restored by Edit Text only (see IsSavedPageBackground)
+                            oPageInfo.savedShapesBounds = [];
+                            break;
+                        }
                         let oXfrm = oDrawing && oDrawing.spPr && oDrawing.spPr.xfrm;
                         if (oXfrm)
                             oPageInfo.savedShapesBounds.push({x: oXfrm.offX, y: oXfrm.offY, w: oXfrm.extX, h: oXfrm.extY});
@@ -6499,7 +6519,7 @@ var CPresentation = CPresentation || function(){};
         for (let i = 0; i < aSaved.length; i++) {
             let oDrawing = this.ReadSavedShape(aSaved[i].data);
             // all or nothing: the page image hides every listed shape
-            if (!oDrawing)
+            if (!oDrawing || this.IsSavedPageBackground(nPage, oDrawing))
                 return null;
             aDrawings.push(oDrawing);
             aMCID.push(aSaved[i].mcid);
